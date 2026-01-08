@@ -2,10 +2,11 @@
 
 This repo contains a small Python helper (`smart_nicosia_api.py`) for querying the
 Nokia Smart Nicosia API and saving example payloads for offline analysis.
-
 ## What the Smart Nicosia API provides
 
-Base URL: `https://nokia.smartnicosia.eu/backend/openapi`
+API Docs URL: https://nokia.smartnicosia.eu/api-docs
+
+Base URL: https://nokia.smartnicosia.eu/backend/openapi
 
 The API exposes device inventory, telemetry, attributes, alarms, and traffic
 analytics endpoints. All endpoints in this repo are simple GET requests that
