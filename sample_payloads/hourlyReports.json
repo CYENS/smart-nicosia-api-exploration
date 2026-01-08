@@ -1,0 +1,1683 @@
+{
+  "WEDNESDAY": {
+    "0": {
+      "average_speed": "47.4",
+      "average_speed_miles": "29.4",
+      "cars": 11
+    },
+    "15": {
+      "average_speed": "41.2",
+      "average_speed_miles": "25.6",
+      "cars": 4
+    },
+    "30": {
+      "average_speed": "49.3",
+      "average_speed_miles": "30.7",
+      "cars": 12
+    },
+    "45": {
+      "average_speed": "51.8",
+      "average_speed_miles": "32.2",
+      "cars": 5
+    },
+    "60": {
+      "average_speed": "47.3",
+      "average_speed_miles": "29.4",
+      "cars": 6
+    },
+    "75": {
+      "average_speed": "56.7",
+      "average_speed_miles": "35.2",
+      "cars": 3
+    },
+    "90": {
+      "average_speed": "57.5",
+      "average_speed_miles": "35.7",
+      "cars": 2
+    },
+    "105": {
+      "average_speed": "49.1",
+      "average_speed_miles": "30.5",
+      "cars": 9
+    },
+    "120": {
+      "average_speed": "40.5",
+      "average_speed_miles": "25.2",
+      "cars": 2
+    },
+    "135": {
+      "average_speed": "66.0",
+      "average_speed_miles": "41.0",
+      "cars": 1
+    },
+    "150": {
+      "average_speed": "67.0",
+      "average_speed_miles": "41.6",
+      "cars": 1
+    },
+    "165": {
+      "average_speed": "42.5",
+      "average_speed_miles": "26.4",
+      "cars": 4
+    },
+    "180": {
+      "average_speed": "50.4",
+      "average_speed_miles": "31.3",
+      "cars": 8
+    },
+    "195": {
+      "average_speed": "49.0",
+      "average_speed_miles": "30.5",
+      "cars": 8
+    },
+    "210": {
+      "average_speed": "61.3",
+      "average_speed_miles": "38.1",
+      "cars": 3
+    },
+    "225": {
+      "average_speed": "45.0",
+      "average_speed_miles": "28.0",
+      "cars": 2
+    },
+    "255": {
+      "average_speed": "45.0",
+      "average_speed_miles": "28.0",
+      "cars": 1
+    },
+    "285": {
+      "average_speed": "44.3",
+      "average_speed_miles": "27.5",
+      "cars": 7
+    },
+    "300": {
+      "average_speed": "44.5",
+      "average_speed_miles": "27.7",
+      "cars": 10
+    },
+    "315": {
+      "average_speed": "47.5",
+      "average_speed_miles": "29.5",
+      "cars": 4
+    },
+    "330": {
+      "average_speed": "45.0",
+      "average_speed_miles": "28.0",
+      "cars": 7
+    },
+    "345": {
+      "average_speed": "45.5",
+      "average_speed_miles": "28.3",
+      "cars": 15
+    },
+    "360": {
+      "average_speed": "41.8",
+      "average_speed_miles": "26.0",
+      "cars": 12
+    },
+    "375": {
+      "average_speed": "41.7",
+      "average_speed_miles": "25.9",
+      "cars": 14
+    },
+    "390": {
+      "average_speed": "41.1",
+      "average_speed_miles": "25.5",
+      "cars": 15
+    },
+    "405": {
+      "average_speed": "37.4",
+      "average_speed_miles": "23.3",
+      "cars": 7
+    },
+    "420": {
+      "average_speed": "41.1",
+      "average_speed_miles": "25.6",
+      "cars": 16
+    },
+    "435": {
+      "average_speed": "42.2",
+      "average_speed_miles": "26.2",
+      "cars": 24
+    },
+    "450": {
+      "average_speed": "45.7",
+      "average_speed_miles": "28.4",
+      "cars": 23
+    },
+    "465": {
+      "average_speed": "38.6",
+      "average_speed_miles": "24.0",
+      "cars": 29
+    },
+    "480": {
+      "average_speed": "39.3",
+      "average_speed_miles": "24.4",
+      "cars": 35
+    },
+    "495": {
+      "average_speed": "37.3",
+      "average_speed_miles": "23.2",
+      "cars": 28
+    },
+    "510": {
+      "average_speed": "37.3",
+      "average_speed_miles": "23.2",
+      "cars": 37
+    },
+    "525": {
+      "average_speed": "44.0",
+      "average_speed_miles": "27.4",
+      "cars": 37
+    },
+    "540": {
+      "average_speed": "43.1",
+      "average_speed_miles": "26.8",
+      "cars": 22
+    },
+    "555": {
+      "average_speed": "42.4",
+      "average_speed_miles": "26.4",
+      "cars": 29
+    },
+    "570": {
+      "average_speed": "40.8",
+      "average_speed_miles": "25.4",
+      "cars": 34
+    },
+    "585": {
+      "average_speed": "45.3",
+      "average_speed_miles": "28.1",
+      "cars": 34
+    },
+    "600": {
+      "average_speed": "43.1",
+      "average_speed_miles": "26.8",
+      "cars": 37
+    },
+    "615": {
+      "average_speed": "47.4",
+      "average_speed_miles": "29.5",
+      "cars": 29
+    },
+    "630": {
+      "average_speed": "45.4",
+      "average_speed_miles": "28.2",
+      "cars": 44
+    },
+    "645": {
+      "average_speed": "49.5",
+      "average_speed_miles": "30.8",
+      "cars": 43
+    },
+    "660": {
+      "average_speed": "41.7",
+      "average_speed_miles": "25.9",
+      "cars": 37
+    },
+    "675": {
+      "average_speed": "46.7",
+      "average_speed_miles": "29.1",
+      "cars": 39
+    },
+    "690": {
+      "average_speed": "42.7",
+      "average_speed_miles": "26.5",
+      "cars": 38
+    },
+    "705": {
+      "average_speed": "43.2",
+      "average_speed_miles": "26.9",
+      "cars": 44
+    },
+    "720": {
+      "average_speed": "43.8",
+      "average_speed_miles": "27.2",
+      "cars": 49
+    },
+    "735": {
+      "average_speed": "43.6",
+      "average_speed_miles": "27.1",
+      "cars": 48
+    },
+    "750": {
+      "average_speed": "44.9",
+      "average_speed_miles": "27.9",
+      "cars": 37
+    },
+    "765": {
+      "average_speed": "44.4",
+      "average_speed_miles": "27.6",
+      "cars": 38
+    },
+    "780": {
+      "average_speed": "42.1",
+      "average_speed_miles": "26.2",
+      "cars": 34
+    },
+    "795": {
+      "average_speed": "38.7",
+      "average_speed_miles": "24.1",
+      "cars": 27
+    },
+    "810": {
+      "average_speed": "40.4",
+      "average_speed_miles": "25.1",
+      "cars": 21
+    },
+    "825": {
+      "average_speed": "39.4",
+      "average_speed_miles": "24.5",
+      "cars": 36
+    },
+    "840": {
+      "average_speed": "42.4",
+      "average_speed_miles": "26.4",
+      "cars": 32
+    },
+    "855": {
+      "average_speed": "44.8",
+      "average_speed_miles": "27.8",
+      "cars": 28
+    },
+    "870": {
+      "average_speed": "40.5",
+      "average_speed_miles": "25.2",
+      "cars": 20
+    },
+    "885": {
+      "average_speed": "38.0",
+      "average_speed_miles": "23.6",
+      "cars": 25
+    },
+    "900": {
+      "average_speed": "42.2",
+      "average_speed_miles": "26.2",
+      "cars": 52
+    },
+    "915": {
+      "average_speed": "43.3",
+      "average_speed_miles": "26.9",
+      "cars": 30
+    },
+    "930": {
+      "average_speed": "37.8",
+      "average_speed_miles": "23.5",
+      "cars": 21
+    },
+    "945": {
+      "average_speed": "27.6",
+      "average_speed_miles": "17.2",
+      "cars": 49
+    },
+    "960": {
+      "average_speed": "28.6",
+      "average_speed_miles": "17.8",
+      "cars": 21
+    },
+    "975": {
+      "average_speed": "35.5",
+      "average_speed_miles": "22.1",
+      "cars": 13
+    },
+    "990": {
+      "average_speed": "35.6",
+      "average_speed_miles": "22.1",
+      "cars": 23
+    },
+    "1005": {
+      "average_speed": "37.4",
+      "average_speed_miles": "23.2",
+      "cars": 27
+    },
+    "1020": {
+      "average_speed": "35.8",
+      "average_speed_miles": "22.3",
+      "cars": 13
+    },
+    "1035": {
+      "average_speed": "36.7",
+      "average_speed_miles": "22.8",
+      "cars": 3
+    },
+    "1050": {
+      "average_speed": "35.8",
+      "average_speed_miles": "22.2",
+      "cars": 8
+    },
+    "1065": {
+      "average_speed": "39.0",
+      "average_speed_miles": "24.2",
+      "cars": 12
+    },
+    "1080": {
+      "average_speed": "35.9",
+      "average_speed_miles": "22.3",
+      "cars": 9
+    },
+    "1095": {
+      "average_speed": "50.7",
+      "average_speed_miles": "31.5",
+      "cars": 11
+    },
+    "1110": {
+      "average_speed": "36.9",
+      "average_speed_miles": "22.9",
+      "cars": 11
+    },
+    "1125": {
+      "average_speed": "36.8",
+      "average_speed_miles": "22.8",
+      "cars": 16
+    },
+    "1140": {
+      "average_speed": "35.0",
+      "average_speed_miles": "21.8",
+      "cars": 11
+    },
+    "1155": {
+      "average_speed": "37.0",
+      "average_speed_miles": "23.0",
+      "cars": 3
+    },
+    "1170": {
+      "average_speed": "30.5",
+      "average_speed_miles": "19.0",
+      "cars": 2
+    },
+    "1185": {
+      "average_speed": "44.0",
+      "average_speed_miles": "27.3",
+      "cars": 3
+    },
+    "1200": {
+      "average_speed": "40.0",
+      "average_speed_miles": "24.9",
+      "cars": 1
+    },
+    "1230": {
+      "average_speed": "38.5",
+      "average_speed_miles": "23.9",
+      "cars": 4
+    },
+    "1245": {
+      "average_speed": "30.0",
+      "average_speed_miles": "18.6",
+      "cars": 1
+    },
+    "1260": {
+      "average_speed": "36.5",
+      "average_speed_miles": "22.7",
+      "cars": 6
+    },
+    "1275": {
+      "average_speed": "25.0",
+      "average_speed_miles": "15.5",
+      "cars": 1
+    },
+    "1290": {
+      "average_speed": "36.0",
+      "average_speed_miles": "22.4",
+      "cars": 4
+    },
+    "1305": {
+      "average_speed": "44.2",
+      "average_speed_miles": "27.5",
+      "cars": 4
+    },
+    "1320": {
+      "average_speed": "39.5",
+      "average_speed_miles": "24.5",
+      "cars": 6
+    },
+    "1335": {
+      "average_speed": "35.0",
+      "average_speed_miles": "21.8",
+      "cars": 4
+    },
+    "1350": {
+      "average_speed": "41.9",
+      "average_speed_miles": "26.0",
+      "cars": 10
+    },
+    "1380": {
+      "average_speed": "36.9",
+      "average_speed_miles": "22.9",
+      "cars": 38
+    },
+    "1395": {
+      "average_speed": "45.3",
+      "average_speed_miles": "28.2",
+      "cars": 3
+    },
+    "1410": {
+      "average_speed": "45.5",
+      "average_speed_miles": "28.3",
+      "cars": 4
+    },
+    "1425": {
+      "average_speed": "41.6",
+      "average_speed_miles": "25.9",
+      "cars": 10
+    }
+  },
+  "MONDAY": {
+    "120": {
+      "average_speed": "43.4",
+      "average_speed_miles": "27.0",
+      "cars": 10
+    },
+    "135": {
+      "average_speed": "49.8",
+      "average_speed_miles": "30.9",
+      "cars": 4
+    },
+    "165": {
+      "average_speed": "37.5",
+      "average_speed_miles": "23.3",
+      "cars": 2
+    },
+    "180": {
+      "average_speed": "37.5",
+      "average_speed_miles": "23.3",
+      "cars": 2
+    },
+    "195": {
+      "average_speed": "49.7",
+      "average_speed_miles": "30.9",
+      "cars": 3
+    },
+    "210": {
+      "average_speed": "50.3",
+      "average_speed_miles": "31.3",
+      "cars": 3
+    },
+    "225": {
+      "average_speed": "48.0",
+      "average_speed_miles": "29.8",
+      "cars": 1
+    },
+    "240": {
+      "average_speed": "47.0",
+      "average_speed_miles": "29.2",
+      "cars": 4
+    },
+    "255": {
+      "average_speed": "48.7",
+      "average_speed_miles": "30.2",
+      "cars": 3
+    },
+    "270": {
+      "average_speed": "36.0",
+      "average_speed_miles": "22.4",
+      "cars": 1
+    },
+    "285": {
+      "average_speed": "53.2",
+      "average_speed_miles": "33.1",
+      "cars": 4
+    },
+    "300": {
+      "average_speed": "41.8",
+      "average_speed_miles": "26.0",
+      "cars": 6
+    },
+    "315": {
+      "average_speed": "58.5",
+      "average_speed_miles": "36.4",
+      "cars": 2
+    },
+    "330": {
+      "average_speed": "51.2",
+      "average_speed_miles": "31.9",
+      "cars": 4
+    },
+    "345": {
+      "average_speed": "46.8",
+      "average_speed_miles": "29.1",
+      "cars": 12
+    },
+    "360": {
+      "average_speed": "38.9",
+      "average_speed_miles": "24.2",
+      "cars": 10
+    },
+    "375": {
+      "average_speed": "43.2",
+      "average_speed_miles": "26.8",
+      "cars": 10
+    },
+    "390": {
+      "average_speed": "48.8",
+      "average_speed_miles": "30.3",
+      "cars": 9
+    },
+    "405": {
+      "average_speed": "36.4",
+      "average_speed_miles": "22.6",
+      "cars": 5
+    },
+    "420": {
+      "average_speed": "40.5",
+      "average_speed_miles": "25.2",
+      "cars": 17
+    },
+    "435": {
+      "average_speed": "37.4",
+      "average_speed_miles": "23.3",
+      "cars": 19
+    },
+    "450": {
+      "average_speed": "40.2",
+      "average_speed_miles": "25.0",
+      "cars": 20
+    },
+    "465": {
+      "average_speed": "40.4",
+      "average_speed_miles": "25.1",
+      "cars": 33
+    },
+    "480": {
+      "average_speed": "39.9",
+      "average_speed_miles": "24.8",
+      "cars": 29
+    },
+    "495": {
+      "average_speed": "40.7",
+      "average_speed_miles": "25.3",
+      "cars": 23
+    },
+    "510": {
+      "average_speed": "41.3",
+      "average_speed_miles": "25.7",
+      "cars": 29
+    },
+    "525": {
+      "average_speed": "39.1",
+      "average_speed_miles": "24.3",
+      "cars": 25
+    },
+    "540": {
+      "average_speed": "37.4",
+      "average_speed_miles": "23.2",
+      "cars": 26
+    },
+    "555": {
+      "average_speed": "41.5",
+      "average_speed_miles": "25.8",
+      "cars": 30
+    },
+    "570": {
+      "average_speed": "48.6",
+      "average_speed_miles": "30.2",
+      "cars": 22
+    },
+    "585": {
+      "average_speed": "42.2",
+      "average_speed_miles": "26.2",
+      "cars": 21
+    },
+    "600": {
+      "average_speed": "43.7",
+      "average_speed_miles": "27.2",
+      "cars": 29
+    },
+    "615": {
+      "average_speed": "34.8",
+      "average_speed_miles": "21.6",
+      "cars": 24
+    },
+    "630": {
+      "average_speed": "41.5",
+      "average_speed_miles": "25.8",
+      "cars": 17
+    },
+    "645": {
+      "average_speed": "43.4",
+      "average_speed_miles": "26.9",
+      "cars": 14
+    },
+    "660": {
+      "average_speed": "39.2",
+      "average_speed_miles": "24.4",
+      "cars": 18
+    },
+    "675": {
+      "average_speed": "38.8",
+      "average_speed_miles": "24.1",
+      "cars": 12
+    },
+    "690": {
+      "average_speed": "45.6",
+      "average_speed_miles": "28.4",
+      "cars": 16
+    },
+    "705": {
+      "average_speed": "41.2",
+      "average_speed_miles": "25.6",
+      "cars": 23
+    },
+    "720": {
+      "average_speed": "40.4",
+      "average_speed_miles": "25.1",
+      "cars": 40
+    },
+    "735": {
+      "average_speed": "39.0",
+      "average_speed_miles": "24.2",
+      "cars": 34
+    },
+    "750": {
+      "average_speed": "43.6",
+      "average_speed_miles": "27.1",
+      "cars": 23
+    },
+    "765": {
+      "average_speed": "38.5",
+      "average_speed_miles": "23.9",
+      "cars": 18
+    },
+    "780": {
+      "average_speed": "44.6",
+      "average_speed_miles": "27.7",
+      "cars": 30
+    },
+    "795": {
+      "average_speed": "39.9",
+      "average_speed_miles": "24.8",
+      "cars": 27
+    },
+    "810": {
+      "average_speed": "40.0",
+      "average_speed_miles": "24.8",
+      "cars": 34
+    },
+    "825": {
+      "average_speed": "41.9",
+      "average_speed_miles": "26.0",
+      "cars": 29
+    },
+    "840": {
+      "average_speed": "38.0",
+      "average_speed_miles": "23.6",
+      "cars": 25
+    },
+    "855": {
+      "average_speed": "40.6",
+      "average_speed_miles": "25.2",
+      "cars": 28
+    },
+    "870": {
+      "average_speed": "40.9",
+      "average_speed_miles": "25.4",
+      "cars": 29
+    },
+    "885": {
+      "average_speed": "41.8",
+      "average_speed_miles": "25.9",
+      "cars": 28
+    },
+    "900": {
+      "average_speed": "41.6",
+      "average_speed_miles": "25.9",
+      "cars": 32
+    },
+    "915": {
+      "average_speed": "42.3",
+      "average_speed_miles": "26.3",
+      "cars": 33
+    },
+    "930": {
+      "average_speed": "46.8",
+      "average_speed_miles": "29.1",
+      "cars": 31
+    },
+    "945": {
+      "average_speed": "41.5",
+      "average_speed_miles": "25.8",
+      "cars": 26
+    },
+    "960": {
+      "average_speed": "40.4",
+      "average_speed_miles": "25.1",
+      "cars": 20
+    },
+    "975": {
+      "average_speed": "40.2",
+      "average_speed_miles": "25.0",
+      "cars": 32
+    },
+    "990": {
+      "average_speed": "40.2",
+      "average_speed_miles": "25.0",
+      "cars": 26
+    },
+    "1005": {
+      "average_speed": "40.3",
+      "average_speed_miles": "25.1",
+      "cars": 24
+    },
+    "1020": {
+      "average_speed": "39.8",
+      "average_speed_miles": "24.8",
+      "cars": 6
+    },
+    "1035": {
+      "average_speed": "35.6",
+      "average_speed_miles": "22.1",
+      "cars": 11
+    },
+    "1050": {
+      "average_speed": "35.0",
+      "average_speed_miles": "21.8",
+      "cars": 12
+    },
+    "1065": {
+      "average_speed": "44.0",
+      "average_speed_miles": "27.3",
+      "cars": 10
+    },
+    "1080": {
+      "average_speed": "40.5",
+      "average_speed_miles": "25.2",
+      "cars": 15
+    },
+    "1095": {
+      "average_speed": "44.2",
+      "average_speed_miles": "27.5",
+      "cars": 17
+    },
+    "1110": {
+      "average_speed": "45.2",
+      "average_speed_miles": "28.1",
+      "cars": 12
+    },
+    "1125": {
+      "average_speed": "40.2",
+      "average_speed_miles": "25.0",
+      "cars": 24
+    },
+    "1140": {
+      "average_speed": "41.0",
+      "average_speed_miles": "25.5",
+      "cars": 14
+    },
+    "1155": {
+      "average_speed": "43.1",
+      "average_speed_miles": "26.8",
+      "cars": 9
+    },
+    "1170": {
+      "average_speed": "39.4",
+      "average_speed_miles": "24.5",
+      "cars": 17
+    },
+    "1185": {
+      "average_speed": "41.1",
+      "average_speed_miles": "25.5",
+      "cars": 15
+    },
+    "1200": {
+      "average_speed": "38.2",
+      "average_speed_miles": "23.7",
+      "cars": 13
+    },
+    "1215": {
+      "average_speed": "41.2",
+      "average_speed_miles": "25.6",
+      "cars": 9
+    },
+    "1230": {
+      "average_speed": "58.3",
+      "average_speed_miles": "36.3",
+      "cars": 9
+    },
+    "1245": {
+      "average_speed": "41.7",
+      "average_speed_miles": "25.9",
+      "cars": 14
+    },
+    "1260": {
+      "average_speed": "38.6",
+      "average_speed_miles": "24.0",
+      "cars": 14
+    },
+    "1275": {
+      "average_speed": "36.4",
+      "average_speed_miles": "22.6",
+      "cars": 14
+    },
+    "1290": {
+      "average_speed": "39.1",
+      "average_speed_miles": "24.3",
+      "cars": 10
+    },
+    "1305": {
+      "average_speed": "42.1",
+      "average_speed_miles": "26.2",
+      "cars": 12
+    },
+    "1320": {
+      "average_speed": "40.3",
+      "average_speed_miles": "25.0",
+      "cars": 7
+    },
+    "1335": {
+      "average_speed": "44.5",
+      "average_speed_miles": "27.6",
+      "cars": 15
+    },
+    "1350": {
+      "average_speed": "42.7",
+      "average_speed_miles": "26.5",
+      "cars": 6
+    },
+    "1365": {
+      "average_speed": "44.6",
+      "average_speed_miles": "27.7",
+      "cars": 7
+    },
+    "1380": {
+      "average_speed": "37.0",
+      "average_speed_miles": "23.0",
+      "cars": 6
+    },
+    "1395": {
+      "average_speed": "42.6",
+      "average_speed_miles": "26.5",
+      "cars": 13
+    },
+    "1410": {
+      "average_speed": "43.2",
+      "average_speed_miles": "26.9",
+      "cars": 9
+    },
+    "1425": {
+      "average_speed": "40.4",
+      "average_speed_miles": "25.1",
+      "cars": 9
+    }
+  },
+  "THURSDAY": {
+    "0": {
+      "average_speed": "108.4",
+      "average_speed_miles": "67.4",
+      "cars": 5
+    },
+    "15": {
+      "average_speed": "33.5",
+      "average_speed_miles": "20.8",
+      "cars": 2
+    },
+    "30": {
+      "average_speed": "47.0",
+      "average_speed_miles": "29.2",
+      "cars": 4
+    },
+    "45": {
+      "average_speed": "50.0",
+      "average_speed_miles": "31.1",
+      "cars": 3
+    },
+    "60": {
+      "average_speed": "52.0",
+      "average_speed_miles": "32.3",
+      "cars": 2
+    },
+    "75": {
+      "average_speed": "46.8",
+      "average_speed_miles": "29.1",
+      "cars": 6
+    },
+    "90": {
+      "average_speed": "46.0",
+      "average_speed_miles": "28.6",
+      "cars": 1
+    },
+    "105": {
+      "average_speed": "39.5",
+      "average_speed_miles": "24.5",
+      "cars": 2
+    },
+    "120": {
+      "average_speed": "39.0",
+      "average_speed_miles": "24.2",
+      "cars": 1
+    },
+    "135": {
+      "average_speed": "45.0",
+      "average_speed_miles": "28.0",
+      "cars": 2
+    },
+    "150": {
+      "average_speed": "48.5",
+      "average_speed_miles": "30.1",
+      "cars": 2
+    },
+    "180": {
+      "average_speed": "44.0",
+      "average_speed_miles": "27.3",
+      "cars": 1
+    },
+    "195": {
+      "average_speed": "56.0",
+      "average_speed_miles": "34.8",
+      "cars": 1
+    },
+    "210": {
+      "average_speed": "59.7",
+      "average_speed_miles": "37.1",
+      "cars": 6
+    },
+    "240": {
+      "average_speed": "50.5",
+      "average_speed_miles": "31.4",
+      "cars": 2
+    },
+    "255": {
+      "average_speed": "41.5",
+      "average_speed_miles": "25.8",
+      "cars": 4
+    },
+    "270": {
+      "average_speed": "31.0",
+      "average_speed_miles": "19.3",
+      "cars": 1
+    },
+    "285": {
+      "average_speed": "42.0",
+      "average_speed_miles": "26.1",
+      "cars": 5
+    },
+    "300": {
+      "average_speed": "43.5",
+      "average_speed_miles": "27.0",
+      "cars": 2
+    },
+    "315": {
+      "average_speed": "44.3",
+      "average_speed_miles": "27.6",
+      "cars": 3
+    },
+    "330": {
+      "average_speed": "44.6",
+      "average_speed_miles": "27.7",
+      "cars": 5
+    },
+    "345": {
+      "average_speed": "43.6",
+      "average_speed_miles": "27.1",
+      "cars": 20
+    },
+    "360": {
+      "average_speed": "39.5",
+      "average_speed_miles": "24.5",
+      "cars": 6
+    },
+    "375": {
+      "average_speed": "41.6",
+      "average_speed_miles": "25.9",
+      "cars": 15
+    },
+    "390": {
+      "average_speed": "43.9",
+      "average_speed_miles": "27.3",
+      "cars": 13
+    },
+    "405": {
+      "average_speed": "102.6",
+      "average_speed_miles": "63.8",
+      "cars": 8
+    },
+    "420": {
+      "average_speed": "39.4",
+      "average_speed_miles": "24.5",
+      "cars": 17
+    },
+    "435": {
+      "average_speed": "39.8",
+      "average_speed_miles": "24.7",
+      "cars": 27
+    },
+    "450": {
+      "average_speed": "44.7",
+      "average_speed_miles": "27.8",
+      "cars": 19
+    },
+    "465": {
+      "average_speed": "35.4",
+      "average_speed_miles": "22.0",
+      "cars": 36
+    },
+    "480": {
+      "average_speed": "36.3",
+      "average_speed_miles": "22.6",
+      "cars": 44
+    },
+    "495": {
+      "average_speed": "42.0",
+      "average_speed_miles": "26.1",
+      "cars": 24
+    },
+    "510": {
+      "average_speed": "43.1",
+      "average_speed_miles": "26.8",
+      "cars": 40
+    },
+    "525": {
+      "average_speed": "39.8",
+      "average_speed_miles": "24.7",
+      "cars": 32
+    },
+    "540": {
+      "average_speed": "43.3",
+      "average_speed_miles": "26.9",
+      "cars": 34
+    },
+    "555": {
+      "average_speed": "42.6",
+      "average_speed_miles": "26.4",
+      "cars": 36
+    },
+    "570": {
+      "average_speed": "36.6",
+      "average_speed_miles": "22.7",
+      "cars": 34
+    },
+    "585": {
+      "average_speed": "43.1",
+      "average_speed_miles": "26.8",
+      "cars": 34
+    },
+    "600": {
+      "average_speed": "41.8",
+      "average_speed_miles": "26.0",
+      "cars": 28
+    },
+    "615": {
+      "average_speed": "46.9",
+      "average_speed_miles": "29.2",
+      "cars": 33
+    },
+    "630": {
+      "average_speed": "39.8",
+      "average_speed_miles": "24.8",
+      "cars": 32
+    },
+    "645": {
+      "average_speed": "44.2",
+      "average_speed_miles": "27.5",
+      "cars": 25
+    },
+    "660": {
+      "average_speed": "41.1",
+      "average_speed_miles": "25.6",
+      "cars": 33
+    },
+    "675": {
+      "average_speed": "41.6",
+      "average_speed_miles": "25.9",
+      "cars": 35
+    },
+    "690": {
+      "average_speed": "47.1",
+      "average_speed_miles": "29.3",
+      "cars": 33
+    },
+    "705": {
+      "average_speed": "45.9",
+      "average_speed_miles": "28.6",
+      "cars": 35
+    },
+    "720": {
+      "average_speed": "44.5",
+      "average_speed_miles": "27.6",
+      "cars": 44
+    },
+    "735": {
+      "average_speed": "44.7",
+      "average_speed_miles": "27.8",
+      "cars": 47
+    },
+    "750": {
+      "average_speed": "44.1",
+      "average_speed_miles": "27.4",
+      "cars": 42
+    },
+    "765": {
+      "average_speed": "44.2",
+      "average_speed_miles": "27.4",
+      "cars": 44
+    },
+    "780": {
+      "average_speed": "43.1",
+      "average_speed_miles": "26.8",
+      "cars": 50
+    },
+    "795": {
+      "average_speed": "45.0",
+      "average_speed_miles": "27.9",
+      "cars": 34
+    },
+    "810": {
+      "average_speed": "45.7",
+      "average_speed_miles": "28.4",
+      "cars": 37
+    },
+    "825": {
+      "average_speed": "38.2",
+      "average_speed_miles": "23.8",
+      "cars": 25
+    },
+    "840": {
+      "average_speed": "40.4",
+      "average_speed_miles": "25.1",
+      "cars": 35
+    },
+    "855": {
+      "average_speed": "44.9",
+      "average_speed_miles": "27.9",
+      "cars": 37
+    },
+    "870": {
+      "average_speed": "42.1",
+      "average_speed_miles": "26.2",
+      "cars": 35
+    },
+    "885": {
+      "average_speed": "39.3",
+      "average_speed_miles": "24.4",
+      "cars": 23
+    },
+    "900": {
+      "average_speed": "37.3",
+      "average_speed_miles": "23.2",
+      "cars": 47
+    },
+    "915": {
+      "average_speed": "38.6",
+      "average_speed_miles": "24.0",
+      "cars": 38
+    },
+    "930": {
+      "average_speed": "38.4",
+      "average_speed_miles": "23.9",
+      "cars": 34
+    }
+  },
+  "SUNDAY": {},
+  "FRIDAY": {},
+  "TUESDAY": {
+    "0": {
+      "average_speed": "42.1",
+      "average_speed_miles": "26.2",
+      "cars": 11
+    },
+    "15": {
+      "average_speed": "49.9",
+      "average_speed_miles": "31.0",
+      "cars": 10
+    },
+    "30": {
+      "average_speed": "37.5",
+      "average_speed_miles": "23.3",
+      "cars": 2
+    },
+    "45": {
+      "average_speed": "47.5",
+      "average_speed_miles": "29.5",
+      "cars": 6
+    },
+    "60": {
+      "average_speed": "56.2",
+      "average_speed_miles": "34.9",
+      "cars": 9
+    },
+    "75": {
+      "average_speed": "51.9",
+      "average_speed_miles": "32.3",
+      "cars": 10
+    },
+    "90": {
+      "average_speed": "44.0",
+      "average_speed_miles": "27.3",
+      "cars": 8
+    },
+    "105": {
+      "average_speed": "41.3",
+      "average_speed_miles": "25.7",
+      "cars": 14
+    },
+    "120": {
+      "average_speed": "49.9",
+      "average_speed_miles": "31.0",
+      "cars": 10
+    },
+    "135": {
+      "average_speed": "40.2",
+      "average_speed_miles": "25.0",
+      "cars": 6
+    },
+    "150": {
+      "average_speed": "48.5",
+      "average_speed_miles": "30.1",
+      "cars": 6
+    },
+    "165": {
+      "average_speed": "41.3",
+      "average_speed_miles": "25.7",
+      "cars": 7
+    },
+    "180": {
+      "average_speed": "57.7",
+      "average_speed_miles": "35.8",
+      "cars": 3
+    },
+    "195": {
+      "average_speed": "50.0",
+      "average_speed_miles": "31.1",
+      "cars": 1
+    },
+    "210": {
+      "average_speed": "39.5",
+      "average_speed_miles": "24.5",
+      "cars": 2
+    },
+    "225": {
+      "average_speed": "47.1",
+      "average_speed_miles": "29.3",
+      "cars": 10
+    },
+    "240": {
+      "average_speed": "40.3",
+      "average_speed_miles": "25.1",
+      "cars": 3
+    },
+    "255": {
+      "average_speed": "28.0",
+      "average_speed_miles": "17.4",
+      "cars": 1
+    },
+    "270": {
+      "average_speed": "32.0",
+      "average_speed_miles": "19.9",
+      "cars": 3
+    },
+    "285": {
+      "average_speed": "42.0",
+      "average_speed_miles": "26.1",
+      "cars": 1
+    },
+    "315": {
+      "average_speed": "41.3",
+      "average_speed_miles": "25.7",
+      "cars": 3
+    },
+    "330": {
+      "average_speed": "46.2",
+      "average_speed_miles": "28.7",
+      "cars": 4
+    },
+    "360": {
+      "average_speed": "47.5",
+      "average_speed_miles": "29.5",
+      "cars": 6
+    },
+    "375": {
+      "average_speed": "46.6",
+      "average_speed_miles": "29.0",
+      "cars": 5
+    },
+    "390": {
+      "average_speed": "52.0",
+      "average_speed_miles": "32.3",
+      "cars": 2
+    },
+    "405": {
+      "average_speed": "36.4",
+      "average_speed_miles": "22.6",
+      "cars": 8
+    },
+    "420": {
+      "average_speed": "42.8",
+      "average_speed_miles": "26.6",
+      "cars": 14
+    },
+    "435": {
+      "average_speed": "43.2",
+      "average_speed_miles": "26.9",
+      "cars": 16
+    },
+    "450": {
+      "average_speed": "43.0",
+      "average_speed_miles": "26.7",
+      "cars": 10
+    },
+    "465": {
+      "average_speed": "40.9",
+      "average_speed_miles": "25.4",
+      "cars": 8
+    },
+    "480": {
+      "average_speed": "41.8",
+      "average_speed_miles": "26.0",
+      "cars": 14
+    },
+    "495": {
+      "average_speed": "48.5",
+      "average_speed_miles": "30.1",
+      "cars": 11
+    },
+    "510": {
+      "average_speed": "47.6",
+      "average_speed_miles": "29.6",
+      "cars": 10
+    },
+    "525": {
+      "average_speed": "43.6",
+      "average_speed_miles": "27.1",
+      "cars": 16
+    },
+    "540": {
+      "average_speed": "45.6",
+      "average_speed_miles": "28.4",
+      "cars": 17
+    },
+    "555": {
+      "average_speed": "46.3",
+      "average_speed_miles": "28.8",
+      "cars": 13
+    },
+    "570": {
+      "average_speed": "47.9",
+      "average_speed_miles": "29.8",
+      "cars": 18
+    },
+    "585": {
+      "average_speed": "45.3",
+      "average_speed_miles": "28.2",
+      "cars": 22
+    },
+    "600": {
+      "average_speed": "46.6",
+      "average_speed_miles": "29.0",
+      "cars": 17
+    },
+    "615": {
+      "average_speed": "43.6",
+      "average_speed_miles": "27.1",
+      "cars": 13
+    },
+    "630": {
+      "average_speed": "47.7",
+      "average_speed_miles": "29.6",
+      "cars": 9
+    },
+    "645": {
+      "average_speed": "47.6",
+      "average_speed_miles": "29.6",
+      "cars": 9
+    },
+    "660": {
+      "average_speed": "48.4",
+      "average_speed_miles": "30.1",
+      "cars": 7
+    },
+    "675": {
+      "average_speed": "51.8",
+      "average_speed_miles": "32.2",
+      "cars": 11
+    },
+    "690": {
+      "average_speed": "45.5",
+      "average_speed_miles": "28.3",
+      "cars": 6
+    },
+    "705": {
+      "average_speed": "38.7",
+      "average_speed_miles": "24.0",
+      "cars": 24
+    },
+    "720": {
+      "average_speed": "45.3",
+      "average_speed_miles": "28.2",
+      "cars": 13
+    },
+    "735": {
+      "average_speed": "38.2",
+      "average_speed_miles": "23.7",
+      "cars": 16
+    },
+    "750": {
+      "average_speed": "52.6",
+      "average_speed_miles": "32.7",
+      "cars": 16
+    },
+    "765": {
+      "average_speed": "48.6",
+      "average_speed_miles": "30.2",
+      "cars": 24
+    },
+    "780": {
+      "average_speed": "42.2",
+      "average_speed_miles": "26.2",
+      "cars": 27
+    },
+    "795": {
+      "average_speed": "45.1",
+      "average_speed_miles": "28.0",
+      "cars": 31
+    },
+    "810": {
+      "average_speed": "39.8",
+      "average_speed_miles": "24.7",
+      "cars": 13
+    },
+    "825": {
+      "average_speed": "40.7",
+      "average_speed_miles": "25.3",
+      "cars": 25
+    },
+    "840": {
+      "average_speed": "43.8",
+      "average_speed_miles": "27.2",
+      "cars": 12
+    },
+    "855": {
+      "average_speed": "45.6",
+      "average_speed_miles": "28.3",
+      "cars": 23
+    },
+    "870": {
+      "average_speed": "44.9",
+      "average_speed_miles": "27.9",
+      "cars": 17
+    },
+    "885": {
+      "average_speed": "42.8",
+      "average_speed_miles": "26.6",
+      "cars": 18
+    },
+    "900": {
+      "average_speed": "45.1",
+      "average_speed_miles": "28.1",
+      "cars": 22
+    },
+    "915": {
+      "average_speed": "37.0",
+      "average_speed_miles": "23.0",
+      "cars": 18
+    },
+    "930": {
+      "average_speed": "43.2",
+      "average_speed_miles": "26.8",
+      "cars": 25
+    },
+    "945": {
+      "average_speed": "43.4",
+      "average_speed_miles": "27.0",
+      "cars": 18
+    },
+    "960": {
+      "average_speed": "42.6",
+      "average_speed_miles": "26.5",
+      "cars": 30
+    },
+    "975": {
+      "average_speed": "39.3",
+      "average_speed_miles": "24.4",
+      "cars": 17
+    },
+    "990": {
+      "average_speed": "39.3",
+      "average_speed_miles": "24.4",
+      "cars": 19
+    },
+    "1005": {
+      "average_speed": "40.8",
+      "average_speed_miles": "25.4",
+      "cars": 16
+    },
+    "1020": {
+      "average_speed": "43.7",
+      "average_speed_miles": "27.2",
+      "cars": 10
+    },
+    "1035": {
+      "average_speed": "27.3",
+      "average_speed_miles": "17.0",
+      "cars": 3
+    },
+    "1050": {
+      "average_speed": "39.0",
+      "average_speed_miles": "24.2",
+      "cars": 3
+    },
+    "1065": {
+      "average_speed": "44.8",
+      "average_speed_miles": "27.8",
+      "cars": 8
+    },
+    "1080": {
+      "average_speed": "42.0",
+      "average_speed_miles": "26.1",
+      "cars": 26
+    },
+    "1095": {
+      "average_speed": "40.9",
+      "average_speed_miles": "25.4",
+      "cars": 10
+    },
+    "1110": {
+      "average_speed": "40.6",
+      "average_speed_miles": "25.2",
+      "cars": 7
+    },
+    "1125": {
+      "average_speed": "37.1",
+      "average_speed_miles": "23.0",
+      "cars": 15
+    },
+    "1140": {
+      "average_speed": "43.1",
+      "average_speed_miles": "26.8",
+      "cars": 8
+    },
+    "1155": {
+      "average_speed": "37.3",
+      "average_speed_miles": "23.2",
+      "cars": 11
+    },
+    "1170": {
+      "average_speed": "38.0",
+      "average_speed_miles": "23.6",
+      "cars": 10
+    },
+    "1185": {
+      "average_speed": "44.8",
+      "average_speed_miles": "27.8",
+      "cars": 18
+    },
+    "1200": {
+      "average_speed": "42.4",
+      "average_speed_miles": "26.4",
+      "cars": 5
+    },
+    "1215": {
+      "average_speed": "34.7",
+      "average_speed_miles": "21.6",
+      "cars": 7
+    },
+    "1230": {
+      "average_speed": "44.2",
+      "average_speed_miles": "27.5",
+      "cars": 4
+    },
+    "1245": {
+      "average_speed": "42.9",
+      "average_speed_miles": "26.6",
+      "cars": 7
+    },
+    "1260": {
+      "average_speed": "34.0",
+      "average_speed_miles": "21.1",
+      "cars": 5
+    },
+    "1275": {
+      "average_speed": "41.3",
+      "average_speed_miles": "25.7",
+      "cars": 14
+    },
+    "1290": {
+      "average_speed": "39.6",
+      "average_speed_miles": "24.6",
+      "cars": 9
+    },
+    "1305": {
+      "average_speed": "40.1",
+      "average_speed_miles": "24.9",
+      "cars": 16
+    },
+    "1320": {
+      "average_speed": "43.5",
+      "average_speed_miles": "27.0",
+      "cars": 6
+    },
+    "1335": {
+      "average_speed": "39.2",
+      "average_speed_miles": "24.4",
+      "cars": 13
+    },
+    "1350": {
+      "average_speed": "43.1",
+      "average_speed_miles": "26.8",
+      "cars": 10
+    },
+    "1365": {
+      "average_speed": "43.2",
+      "average_speed_miles": "26.9",
+      "cars": 9
+    },
+    "1380": {
+      "average_speed": "50.0",
+      "average_speed_miles": "31.1",
+      "cars": 8
+    },
+    "1395": {
+      "average_speed": "51.7",
+      "average_speed_miles": "32.1",
+      "cars": 3
+    },
+    "1410": {
+      "average_speed": "45.5",
+      "average_speed_miles": "28.3",
+      "cars": 4
+    },
+    "1425": {
+      "average_speed": "43.7",
+      "average_speed_miles": "27.2",
+      "cars": 10
+    }
+  },
+  "SATURDAY": {}
+}

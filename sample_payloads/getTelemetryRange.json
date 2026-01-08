@@ -1,0 +1,1582 @@
+[
+  {
+    "key": "active",
+    "timestamp": "1767860388175",
+    "value": "false"
+  },
+  {
+    "key": "ts",
+    "timestamp": "1767860388175",
+    "value": "1767860388209"
+  },
+  {
+    "key": "level",
+    "timestamp": "1767845058232",
+    "value": "100"
+  },
+  {
+    "key": "state",
+    "timestamp": "1767845058232",
+    "value": "Dimmed"
+  },
+  {
+    "key": "last_lamp_status",
+    "timestamp": "1767845058232",
+    "value": "True"
+  },
+  {
+    "key": "powerstats",
+    "timestamp": "1767845058232",
+    "value": "{\"last_volt\":235,\"last_volt_avg\":236,\"last_volt_min\":235,\"last_volt_max\":238,\"last_pwr_act\":54.3,\"last_pwr_act_avg\":54.2,\"last_pwr_react_avg\":8.4,\"last_pwr_app_avg\":60.9,\"last_pf\":97,\"last_energy_act\":47970,\"last_energy_react\":17307,\"last_energy_app\":60252}"
+  },
+  {
+    "key": "uc",
+    "timestamp": "1767845058232",
+    "value": "smartlight"
+  },
+  {
+    "key": "topic",
+    "timestamp": "1767845058232",
+    "value": "data"
+  },
+  {
+    "key": "active",
+    "timestamp": "1767845058232",
+    "value": "true"
+  },
+  {
+    "key": "ts",
+    "timestamp": "1767845058232",
+    "value": "1767845058232"
+  },
+  {
+    "key": "level",
+    "timestamp": "1767845058149",
+    "value": "100"
+  },
+  {
+    "key": "state",
+    "timestamp": "1767845058149",
+    "value": "Dimmed"
+  },
+  {
+    "key": "last_lamp_status",
+    "timestamp": "1767845058149",
+    "value": "True"
+  },
+  {
+    "key": "powerstats",
+    "timestamp": "1767845058149",
+    "value": "{\"last_poll_ts\":1767844980}"
+  },
+  {
+    "key": "uc",
+    "timestamp": "1767845058149",
+    "value": "smartlight"
+  },
+  {
+    "key": "topic",
+    "timestamp": "1767845058149",
+    "value": "data"
+  },
+  {
+    "key": "active",
+    "timestamp": "1767845058149",
+    "value": "true"
+  },
+  {
+    "key": "ts",
+    "timestamp": "1767845058149",
+    "value": "1767845058149"
+  },
+  {
+    "key": "level",
+    "timestamp": "1767841458243",
+    "value": "100"
+  },
+  {
+    "key": "state",
+    "timestamp": "1767841458243",
+    "value": "Dimmed"
+  },
+  {
+    "key": "last_lamp_status",
+    "timestamp": "1767841458243",
+    "value": "True"
+  },
+  {
+    "key": "powerstats",
+    "timestamp": "1767841458243",
+    "value": "{\"last_volt\":237,\"last_volt_avg\":237,\"last_volt_min\":237,\"last_volt_max\":238,\"last_pwr_act\":54.3,\"last_pwr_act_avg\":54.2,\"last_pwr_react_avg\":8.4,\"last_pwr_app_avg\":60.9,\"last_pf\":97,\"last_energy_act\":47917,\"last_energy_react\":17299,\"last_energy_app\":60198}"
+  },
+  {
+    "key": "uc",
+    "timestamp": "1767841458243",
+    "value": "smartlight"
+  },
+  {
+    "key": "topic",
+    "timestamp": "1767841458243",
+    "value": "data"
+  },
+  {
+    "key": "active",
+    "timestamp": "1767841458243",
+    "value": "true"
+  },
+  {
+    "key": "ts",
+    "timestamp": "1767841458243",
+    "value": "1767841458243"
+  },
+  {
+    "key": "level",
+    "timestamp": "1767841458157",
+    "value": "100"
+  },
+  {
+    "key": "state",
+    "timestamp": "1767841458157",
+    "value": "Dimmed"
+  },
+  {
+    "key": "last_lamp_status",
+    "timestamp": "1767841458157",
+    "value": "True"
+  },
+  {
+    "key": "powerstats",
+    "timestamp": "1767841458157",
+    "value": "{\"last_poll_ts\":1767841440}"
+  },
+  {
+    "key": "topic",
+    "timestamp": "1767841458157",
+    "value": "data"
+  },
+  {
+    "key": "uc",
+    "timestamp": "1767841458157",
+    "value": "smartlight"
+  },
+  {
+    "key": "active",
+    "timestamp": "1767841458157",
+    "value": "true"
+  },
+  {
+    "key": "ts",
+    "timestamp": "1767841458157",
+    "value": "1767841458157"
+  },
+  {
+    "key": "level",
+    "timestamp": "1767837863260",
+    "value": "100"
+  },
+  {
+    "key": "state",
+    "timestamp": "1767837863260",
+    "value": "Dimmed"
+  },
+  {
+    "key": "last_lamp_status",
+    "timestamp": "1767837863260",
+    "value": "True"
+  },
+  {
+    "key": "powerstats",
+    "timestamp": "1767837863260",
+    "value": "{\"last_volt\":238,\"last_volt_avg\":238,\"last_volt_min\":238,\"last_volt_max\":239,\"last_pwr_act\":54.3,\"last_pwr_act_avg\":54.2,\"last_pwr_react_avg\":8.5,\"last_pwr_app_avg\":60.9,\"last_pf\":97,\"last_energy_act\":47863,\"last_energy_react\":17291,\"last_energy_app\":60143}"
+  },
+  {
+    "key": "topic",
+    "timestamp": "1767837863260",
+    "value": "data"
+  },
+  {
+    "key": "uc",
+    "timestamp": "1767837863260",
+    "value": "smartlight"
+  },
+  {
+    "key": "active",
+    "timestamp": "1767837863260",
+    "value": "true"
+  },
+  {
+    "key": "ts",
+    "timestamp": "1767837863260",
+    "value": "1767837863260"
+  },
+  {
+    "key": "level",
+    "timestamp": "1767837863177",
+    "value": "100"
+  },
+  {
+    "key": "state",
+    "timestamp": "1767837863177",
+    "value": "Dimmed"
+  },
+  {
+    "key": "last_lamp_status",
+    "timestamp": "1767837863177",
+    "value": "True"
+  },
+  {
+    "key": "powerstats",
+    "timestamp": "1767837863177",
+    "value": "{\"last_poll_ts\":1767837840}"
+  },
+  {
+    "key": "topic",
+    "timestamp": "1767837863177",
+    "value": "data"
+  },
+  {
+    "key": "uc",
+    "timestamp": "1767837863177",
+    "value": "smartlight"
+  },
+  {
+    "key": "active",
+    "timestamp": "1767837863177",
+    "value": "true"
+  },
+  {
+    "key": "ts",
+    "timestamp": "1767837863177",
+    "value": "1767837863177"
+  },
+  {
+    "key": "level",
+    "timestamp": "1767837848671",
+    "value": "100"
+  },
+  {
+    "key": "state",
+    "timestamp": "1767837848671",
+    "value": "Dimmed"
+  },
+  {
+    "key": "last_lamp_status",
+    "timestamp": "1767837848671",
+    "value": "True"
+  },
+  {
+    "key": "powerstats",
+    "timestamp": "1767837848671",
+    "value": "{\"last_volt\":238,\"last_volt_avg\":238,\"last_volt_min\":238,\"last_volt_max\":239,\"last_pwr_act\":54.3,\"last_pwr_act_avg\":54.2,\"last_pwr_react_avg\":8.5,\"last_pwr_app_avg\":60.9,\"last_pf\":97,\"last_energy_act\":47863,\"last_energy_react\":17291,\"last_energy_app\":60143}"
+  },
+  {
+    "key": "uc",
+    "timestamp": "1767837848671",
+    "value": "smartlight"
+  },
+  {
+    "key": "topic",
+    "timestamp": "1767837848671",
+    "value": "data"
+  },
+  {
+    "key": "active",
+    "timestamp": "1767837848671",
+    "value": "true"
+  },
+  {
+    "key": "ts",
+    "timestamp": "1767837848671",
+    "value": "1767837848671"
+  },
+  {
+    "key": "level",
+    "timestamp": "1767837848570",
+    "value": "100"
+  },
+  {
+    "key": "state",
+    "timestamp": "1767837848570",
+    "value": "Dimmed"
+  },
+  {
+    "key": "last_lamp_status",
+    "timestamp": "1767837848570",
+    "value": "True"
+  },
+  {
+    "key": "powerstats",
+    "timestamp": "1767837848570",
+    "value": "{\"last_poll_ts\":1767837840}"
+  },
+  {
+    "key": "uc",
+    "timestamp": "1767837848570",
+    "value": "smartlight"
+  },
+  {
+    "key": "topic",
+    "timestamp": "1767837848570",
+    "value": "data"
+  },
+  {
+    "key": "active",
+    "timestamp": "1767837848570",
+    "value": "true"
+  },
+  {
+    "key": "ts",
+    "timestamp": "1767837848570",
+    "value": "1767837848570"
+  },
+  {
+    "key": "level",
+    "timestamp": "1767834295056",
+    "value": "100"
+  },
+  {
+    "key": "state",
+    "timestamp": "1767834295056",
+    "value": "Dimmed"
+  },
+  {
+    "key": "last_lamp_status",
+    "timestamp": "1767834295056",
+    "value": "True"
+  },
+  {
+    "key": "powerstats",
+    "timestamp": "1767834295056",
+    "value": "{\"last_volt\":238,\"last_volt_avg\":237,\"last_volt_min\":237,\"last_volt_max\":238,\"last_pwr_act\":54.3,\"last_pwr_act_avg\":54.2,\"last_pwr_react_avg\":8.5,\"last_pwr_app_avg\":60.9,\"last_pf\":97,\"last_energy_act\":47810,\"last_energy_react\":17282,\"last_energy_app\":60088}"
+  },
+  {
+    "key": "uc",
+    "timestamp": "1767834295056",
+    "value": "smartlight"
+  },
+  {
+    "key": "topic",
+    "timestamp": "1767834295056",
+    "value": "data"
+  },
+  {
+    "key": "active",
+    "timestamp": "1767834295056",
+    "value": "true"
+  },
+  {
+    "key": "ts",
+    "timestamp": "1767834295056",
+    "value": "1767834295056"
+  },
+  {
+    "key": "level",
+    "timestamp": "1767834294959",
+    "value": "100"
+  },
+  {
+    "key": "state",
+    "timestamp": "1767834294959",
+    "value": "Dimmed"
+  },
+  {
+    "key": "last_lamp_status",
+    "timestamp": "1767834294959",
+    "value": "True"
+  },
+  {
+    "key": "powerstats",
+    "timestamp": "1767834294959",
+    "value": "{\"last_poll_ts\":1767834180}"
+  },
+  {
+    "key": "topic",
+    "timestamp": "1767834294959",
+    "value": "data"
+  },
+  {
+    "key": "uc",
+    "timestamp": "1767834294959",
+    "value": "smartlight"
+  },
+  {
+    "key": "active",
+    "timestamp": "1767834294959",
+    "value": "true"
+  },
+  {
+    "key": "ts",
+    "timestamp": "1767834294959",
+    "value": "1767834294959"
+  },
+  {
+    "key": "level",
+    "timestamp": "1767834265901",
+    "value": "100"
+  },
+  {
+    "key": "state",
+    "timestamp": "1767834265901",
+    "value": "Dimmed"
+  },
+  {
+    "key": "last_lamp_status",
+    "timestamp": "1767834265901",
+    "value": "True"
+  },
+  {
+    "key": "powerstats",
+    "timestamp": "1767834265901",
+    "value": "{\"last_volt\":238,\"last_volt_avg\":237,\"last_volt_min\":237,\"last_volt_max\":238,\"last_pwr_act\":54.3,\"last_pwr_act_avg\":54.2,\"last_pwr_react_avg\":8.5,\"last_pwr_app_avg\":60.9,\"last_pf\":97,\"last_energy_act\":47810,\"last_energy_react\":17282,\"last_energy_app\":60088}"
+  },
+  {
+    "key": "topic",
+    "timestamp": "1767834265901",
+    "value": "data"
+  },
+  {
+    "key": "uc",
+    "timestamp": "1767834265901",
+    "value": "smartlight"
+  },
+  {
+    "key": "active",
+    "timestamp": "1767834265901",
+    "value": "true"
+  },
+  {
+    "key": "ts",
+    "timestamp": "1767834265901",
+    "value": "1767834265901"
+  },
+  {
+    "key": "level",
+    "timestamp": "1767834265815",
+    "value": "100"
+  },
+  {
+    "key": "state",
+    "timestamp": "1767834265815",
+    "value": "Dimmed"
+  },
+  {
+    "key": "last_lamp_status",
+    "timestamp": "1767834265815",
+    "value": "True"
+  },
+  {
+    "key": "powerstats",
+    "timestamp": "1767834265815",
+    "value": "{\"last_poll_ts\":1767834180}"
+  },
+  {
+    "key": "uc",
+    "timestamp": "1767834265815",
+    "value": "smartlight"
+  },
+  {
+    "key": "topic",
+    "timestamp": "1767834265815",
+    "value": "data"
+  },
+  {
+    "key": "active",
+    "timestamp": "1767834265815",
+    "value": "true"
+  },
+  {
+    "key": "ts",
+    "timestamp": "1767834265815",
+    "value": "1767834265815"
+  },
+  {
+    "key": "level",
+    "timestamp": "1767830606265",
+    "value": "100"
+  },
+  {
+    "key": "state",
+    "timestamp": "1767830606265",
+    "value": "Dimmed"
+  },
+  {
+    "key": "last_lamp_status",
+    "timestamp": "1767830606265",
+    "value": "True"
+  },
+  {
+    "key": "powerstats",
+    "timestamp": "1767830606265",
+    "value": "{\"last_volt\":237,\"last_volt_avg\":236,\"last_volt_min\":235,\"last_volt_max\":237,\"last_pwr_act\":54.2,\"last_pwr_act_avg\":54.1,\"last_pwr_react_avg\":8.4,\"last_pwr_app_avg\":60.9,\"last_pf\":97,\"last_energy_act\":47703,\"last_energy_react\":17265,\"last_energy_app\":59978}"
+  },
+  {
+    "key": "uc",
+    "timestamp": "1767830606265",
+    "value": "smartlight"
+  },
+  {
+    "key": "topic",
+    "timestamp": "1767830606265",
+    "value": "data"
+  },
+  {
+    "key": "active",
+    "timestamp": "1767830606265",
+    "value": "true"
+  },
+  {
+    "key": "ts",
+    "timestamp": "1767830606265",
+    "value": "1767830606265"
+  },
+  {
+    "key": "level",
+    "timestamp": "1767830606192",
+    "value": "100"
+  },
+  {
+    "key": "state",
+    "timestamp": "1767830606192",
+    "value": "Dimmed"
+  },
+  {
+    "key": "last_lamp_status",
+    "timestamp": "1767830606192",
+    "value": "True"
+  },
+  {
+    "key": "powerstats",
+    "timestamp": "1767830606192",
+    "value": "{\"last_poll_ts\":1767826920}"
+  },
+  {
+    "key": "uc",
+    "timestamp": "1767830606192",
+    "value": "smartlight"
+  },
+  {
+    "key": "topic",
+    "timestamp": "1767830606192",
+    "value": "data"
+  },
+  {
+    "key": "active",
+    "timestamp": "1767830606192",
+    "value": "true"
+  },
+  {
+    "key": "ts",
+    "timestamp": "1767830606192",
+    "value": "1767830606192"
+  },
+  {
+    "key": "level",
+    "timestamp": "1767826995180",
+    "value": "100"
+  },
+  {
+    "key": "state",
+    "timestamp": "1767826995180",
+    "value": "Dimmed"
+  },
+  {
+    "key": "last_lamp_status",
+    "timestamp": "1767826995180",
+    "value": "True"
+  },
+  {
+    "key": "powerstats",
+    "timestamp": "1767826995180",
+    "value": "{\"last_volt\":237,\"last_volt_avg\":236,\"last_volt_min\":235,\"last_volt_max\":237,\"last_pwr_act\":54.2,\"last_pwr_act_avg\":54.1,\"last_pwr_react_avg\":8.4,\"last_pwr_app_avg\":60.9,\"last_pf\":97,\"last_energy_act\":47703,\"last_energy_react\":17265,\"last_energy_app\":59978}"
+  },
+  {
+    "key": "uc",
+    "timestamp": "1767826995180",
+    "value": "smartlight"
+  },
+  {
+    "key": "topic",
+    "timestamp": "1767826995180",
+    "value": "data"
+  },
+  {
+    "key": "active",
+    "timestamp": "1767826995180",
+    "value": "true"
+  },
+  {
+    "key": "ts",
+    "timestamp": "1767826995180",
+    "value": "1767826995180"
+  },
+  {
+    "key": "level",
+    "timestamp": "1767826995108",
+    "value": "100"
+  },
+  {
+    "key": "state",
+    "timestamp": "1767826995108",
+    "value": "Dimmed"
+  },
+  {
+    "key": "last_lamp_status",
+    "timestamp": "1767826995108",
+    "value": "True"
+  },
+  {
+    "key": "powerstats",
+    "timestamp": "1767826995108",
+    "value": "{\"last_poll_ts\":1767826920}"
+  },
+  {
+    "key": "uc",
+    "timestamp": "1767826995108",
+    "value": "smartlight"
+  },
+  {
+    "key": "topic",
+    "timestamp": "1767826995108",
+    "value": "data"
+  },
+  {
+    "key": "active",
+    "timestamp": "1767826995108",
+    "value": "true"
+  },
+  {
+    "key": "ts",
+    "timestamp": "1767826995108",
+    "value": "1767826995108"
+  },
+  {
+    "key": "level",
+    "timestamp": "1767823358261",
+    "value": "100"
+  },
+  {
+    "key": "state",
+    "timestamp": "1767823358261",
+    "value": "Dimmed"
+  },
+  {
+    "key": "last_lamp_status",
+    "timestamp": "1767823358261",
+    "value": "True"
+  },
+  {
+    "key": "powerstats",
+    "timestamp": "1767823358261",
+    "value": "{\"last_volt\":236,\"last_volt_avg\":235,\"last_volt_min\":235,\"last_volt_max\":236,\"last_pwr_act\":54.1,\"last_pwr_act_avg\":54,\"last_pwr_react_avg\":8.3,\"last_pwr_app_avg\":60.9,\"last_pf\":97,\"last_energy_act\":47650,\"last_energy_react\":17257,\"last_energy_app\":59923}"
+  },
+  {
+    "key": "uc",
+    "timestamp": "1767823358261",
+    "value": "smartlight"
+  },
+  {
+    "key": "topic",
+    "timestamp": "1767823358261",
+    "value": "data"
+  },
+  {
+    "key": "active",
+    "timestamp": "1767823358261",
+    "value": "true"
+  },
+  {
+    "key": "ts",
+    "timestamp": "1767823358261",
+    "value": "1767823358261"
+  },
+  {
+    "key": "level",
+    "timestamp": "1767823358155",
+    "value": "100"
+  },
+  {
+    "key": "state",
+    "timestamp": "1767823358155",
+    "value": "Dimmed"
+  },
+  {
+    "key": "last_lamp_status",
+    "timestamp": "1767823358155",
+    "value": "True"
+  },
+  {
+    "key": "powerstats",
+    "timestamp": "1767823358155",
+    "value": "{\"last_poll_ts\":1767823320}"
+  },
+  {
+    "key": "uc",
+    "timestamp": "1767823358155",
+    "value": "smartlight"
+  },
+  {
+    "key": "topic",
+    "timestamp": "1767823358155",
+    "value": "data"
+  },
+  {
+    "key": "active",
+    "timestamp": "1767823358155",
+    "value": "true"
+  },
+  {
+    "key": "ts",
+    "timestamp": "1767823358155",
+    "value": "1767823358155"
+  },
+  {
+    "key": "level",
+    "timestamp": "1767819710471",
+    "value": "100"
+  },
+  {
+    "key": "state",
+    "timestamp": "1767819710471",
+    "value": "Dimmed"
+  },
+  {
+    "key": "last_lamp_status",
+    "timestamp": "1767819710471",
+    "value": "True"
+  },
+  {
+    "key": "powerstats",
+    "timestamp": "1767819710471",
+    "value": "{\"last_volt\":235,\"last_volt_avg\":236,\"last_volt_min\":234,\"last_volt_max\":237,\"last_pwr_act\":54.1,\"last_pwr_act_avg\":54,\"last_pwr_react_avg\":8.3,\"last_pwr_app_avg\":60.9,\"last_pf\":97,\"last_energy_act\":47595,\"last_energy_react\":17248,\"last_energy_app\":59868}"
+  },
+  {
+    "key": "uc",
+    "timestamp": "1767819710471",
+    "value": "smartlight"
+  },
+  {
+    "key": "topic",
+    "timestamp": "1767819710471",
+    "value": "data"
+  },
+  {
+    "key": "active",
+    "timestamp": "1767819710471",
+    "value": "true"
+  },
+  {
+    "key": "ts",
+    "timestamp": "1767819710471",
+    "value": "1767819710471"
+  },
+  {
+    "key": "level",
+    "timestamp": "1767819710217",
+    "value": "100"
+  },
+  {
+    "key": "state",
+    "timestamp": "1767819710217",
+    "value": "Dimmed"
+  },
+  {
+    "key": "last_lamp_status",
+    "timestamp": "1767819710217",
+    "value": "True"
+  },
+  {
+    "key": "powerstats",
+    "timestamp": "1767819710217",
+    "value": "{\"last_poll_ts\":1767819660}"
+  },
+  {
+    "key": "topic",
+    "timestamp": "1767819710217",
+    "value": "data"
+  },
+  {
+    "key": "uc",
+    "timestamp": "1767819710217",
+    "value": "smartlight"
+  },
+  {
+    "key": "active",
+    "timestamp": "1767819710217",
+    "value": "true"
+  },
+  {
+    "key": "ts",
+    "timestamp": "1767819710217",
+    "value": "1767819710217"
+  },
+  {
+    "key": "level",
+    "timestamp": "1767816112330",
+    "value": "100"
+  },
+  {
+    "key": "state",
+    "timestamp": "1767816112330",
+    "value": "Dimmed"
+  },
+  {
+    "key": "last_lamp_status",
+    "timestamp": "1767816112330",
+    "value": "True"
+  },
+  {
+    "key": "powerstats",
+    "timestamp": "1767816112330",
+    "value": "{\"last_volt\":237,\"last_volt_avg\":236,\"last_volt_min\":236,\"last_volt_max\":237,\"last_pwr_act\":54.1,\"last_pwr_act_avg\":54,\"last_pwr_react_avg\":8.4,\"last_pwr_app_avg\":60.9,\"last_pf\":97,\"last_energy_act\":47542,\"last_energy_react\":17240,\"last_energy_app\":59813}"
+  },
+  {
+    "key": "topic",
+    "timestamp": "1767816112330",
+    "value": "data"
+  },
+  {
+    "key": "uc",
+    "timestamp": "1767816112330",
+    "value": "smartlight"
+  },
+  {
+    "key": "active",
+    "timestamp": "1767816112330",
+    "value": "true"
+  },
+  {
+    "key": "ts",
+    "timestamp": "1767816112330",
+    "value": "1767816112330"
+  },
+  {
+    "key": "level",
+    "timestamp": "1767816112257",
+    "value": "100"
+  },
+  {
+    "key": "state",
+    "timestamp": "1767816112257",
+    "value": "Dimmed"
+  },
+  {
+    "key": "last_lamp_status",
+    "timestamp": "1767816112257",
+    "value": "True"
+  },
+  {
+    "key": "powerstats",
+    "timestamp": "1767816112257",
+    "value": "{\"last_poll_ts\":1767816060}"
+  },
+  {
+    "key": "topic",
+    "timestamp": "1767816112257",
+    "value": "data"
+  },
+  {
+    "key": "uc",
+    "timestamp": "1767816112257",
+    "value": "smartlight"
+  },
+  {
+    "key": "active",
+    "timestamp": "1767816112257",
+    "value": "true"
+  },
+  {
+    "key": "ts",
+    "timestamp": "1767816112257",
+    "value": "1767816112257"
+  },
+  {
+    "key": "level",
+    "timestamp": "1767812549058",
+    "value": "100"
+  },
+  {
+    "key": "state",
+    "timestamp": "1767812549058",
+    "value": "Dimmed"
+  },
+  {
+    "key": "last_lamp_status",
+    "timestamp": "1767812549058",
+    "value": "True"
+  },
+  {
+    "key": "powerstats",
+    "timestamp": "1767812549058",
+    "value": "{\"last_volt\":237,\"last_volt_avg\":236,\"last_volt_min\":236,\"last_volt_max\":239,\"last_pwr_act\":54.1,\"last_pwr_act_avg\":54.1,\"last_pwr_react_avg\":8.4,\"last_pwr_app_avg\":60.9,\"last_pf\":97,\"last_energy_act\":47489,\"last_energy_react\":17231,\"last_energy_app\":59758}"
+  },
+  {
+    "key": "topic",
+    "timestamp": "1767812549058",
+    "value": "data"
+  },
+  {
+    "key": "uc",
+    "timestamp": "1767812549058",
+    "value": "smartlight"
+  },
+  {
+    "key": "active",
+    "timestamp": "1767812549058",
+    "value": "true"
+  },
+  {
+    "key": "ts",
+    "timestamp": "1767812549058",
+    "value": "1767812549058"
+  },
+  {
+    "key": "level",
+    "timestamp": "1767812548975",
+    "value": "100"
+  },
+  {
+    "key": "state",
+    "timestamp": "1767812548975",
+    "value": "Dimmed"
+  },
+  {
+    "key": "last_lamp_status",
+    "timestamp": "1767812548975",
+    "value": "True"
+  },
+  {
+    "key": "powerstats",
+    "timestamp": "1767812548975",
+    "value": "{\"last_poll_ts\":1767812460}"
+  },
+  {
+    "key": "uc",
+    "timestamp": "1767812548975",
+    "value": "smartlight"
+  },
+  {
+    "key": "topic",
+    "timestamp": "1767812548975",
+    "value": "data"
+  },
+  {
+    "key": "active",
+    "timestamp": "1767812548975",
+    "value": "true"
+  },
+  {
+    "key": "ts",
+    "timestamp": "1767812548975",
+    "value": "1767812548975"
+  },
+  {
+    "key": "level",
+    "timestamp": "1767812533285",
+    "value": "100"
+  },
+  {
+    "key": "state",
+    "timestamp": "1767812533285",
+    "value": "Dimmed"
+  },
+  {
+    "key": "last_lamp_status",
+    "timestamp": "1767812533285",
+    "value": "True"
+  },
+  {
+    "key": "powerstats",
+    "timestamp": "1767812533285",
+    "value": "{\"last_volt\":237,\"last_volt_avg\":236,\"last_volt_min\":236,\"last_volt_max\":239,\"last_pwr_act\":54.1,\"last_pwr_act_avg\":54.1,\"last_pwr_react_avg\":8.4,\"last_pwr_app_avg\":60.9,\"last_pf\":97,\"last_energy_act\":47489,\"last_energy_react\":17231,\"last_energy_app\":59758}"
+  },
+  {
+    "key": "uc",
+    "timestamp": "1767812533285",
+    "value": "smartlight"
+  },
+  {
+    "key": "topic",
+    "timestamp": "1767812533285",
+    "value": "data"
+  },
+  {
+    "key": "active",
+    "timestamp": "1767812533285",
+    "value": "true"
+  },
+  {
+    "key": "ts",
+    "timestamp": "1767812533285",
+    "value": "1767812533285"
+  },
+  {
+    "key": "level",
+    "timestamp": "1767812533190",
+    "value": "100"
+  },
+  {
+    "key": "state",
+    "timestamp": "1767812533190",
+    "value": "Dimmed"
+  },
+  {
+    "key": "last_lamp_status",
+    "timestamp": "1767812533190",
+    "value": "True"
+  },
+  {
+    "key": "powerstats",
+    "timestamp": "1767812533190",
+    "value": "{\"last_poll_ts\":1767812460}"
+  },
+  {
+    "key": "uc",
+    "timestamp": "1767812533190",
+    "value": "smartlight"
+  },
+  {
+    "key": "topic",
+    "timestamp": "1767812533190",
+    "value": "data"
+  },
+  {
+    "key": "active",
+    "timestamp": "1767812533190",
+    "value": "true"
+  },
+  {
+    "key": "ts",
+    "timestamp": "1767812533190",
+    "value": "1767812533190"
+  },
+  {
+    "key": "level",
+    "timestamp": "1767808915401",
+    "value": "100"
+  },
+  {
+    "key": "state",
+    "timestamp": "1767808915401",
+    "value": "Dimmed"
+  },
+  {
+    "key": "last_lamp_status",
+    "timestamp": "1767808915401",
+    "value": "True"
+  },
+  {
+    "key": "powerstats",
+    "timestamp": "1767808915401",
+    "value": "{\"last_volt\":239,\"last_volt_avg\":237,\"last_volt_min\":237,\"last_volt_max\":239,\"last_pwr_act\":54.2,\"last_pwr_act_avg\":54.1,\"last_pwr_react_avg\":8.4,\"last_pwr_app_avg\":60.9,\"last_pf\":97,\"last_energy_act\":47435,\"last_energy_react\":17223,\"last_energy_app\":59703}"
+  },
+  {
+    "key": "uc",
+    "timestamp": "1767808915401",
+    "value": "smartlight"
+  },
+  {
+    "key": "topic",
+    "timestamp": "1767808915401",
+    "value": "data"
+  },
+  {
+    "key": "active",
+    "timestamp": "1767808915401",
+    "value": "true"
+  },
+  {
+    "key": "ts",
+    "timestamp": "1767808915401",
+    "value": "1767808915401"
+  },
+  {
+    "key": "level",
+    "timestamp": "1767808915300",
+    "value": "100"
+  },
+  {
+    "key": "state",
+    "timestamp": "1767808915300",
+    "value": "Dimmed"
+  },
+  {
+    "key": "last_lamp_status",
+    "timestamp": "1767808915300",
+    "value": "True"
+  },
+  {
+    "key": "powerstats",
+    "timestamp": "1767808915300",
+    "value": "{\"last_poll_ts\":1767808800}"
+  },
+  {
+    "key": "topic",
+    "timestamp": "1767808915300",
+    "value": "data"
+  },
+  {
+    "key": "uc",
+    "timestamp": "1767808915300",
+    "value": "smartlight"
+  },
+  {
+    "key": "active",
+    "timestamp": "1767808915300",
+    "value": "true"
+  },
+  {
+    "key": "ts",
+    "timestamp": "1767808915300",
+    "value": "1767808915300"
+  },
+  {
+    "key": "level",
+    "timestamp": "1767805317731",
+    "value": "100"
+  },
+  {
+    "key": "state",
+    "timestamp": "1767805317731",
+    "value": "Dimmed"
+  },
+  {
+    "key": "last_lamp_status",
+    "timestamp": "1767805317731",
+    "value": "True"
+  },
+  {
+    "key": "powerstats",
+    "timestamp": "1767805317731",
+    "value": "{\"last_volt\":237,\"last_volt_avg\":236,\"last_volt_min\":236,\"last_volt_max\":237,\"last_pwr_act\":54.2,\"last_pwr_act_avg\":54.2,\"last_pwr_react_avg\":8.4,\"last_pwr_app_avg\":60.9,\"last_pf\":97,\"last_energy_act\":47382,\"last_energy_react\":17215,\"last_energy_app\":59649}"
+  },
+  {
+    "key": "uc",
+    "timestamp": "1767805317731",
+    "value": "smartlight"
+  },
+  {
+    "key": "topic",
+    "timestamp": "1767805317731",
+    "value": "data"
+  },
+  {
+    "key": "active",
+    "timestamp": "1767805317731",
+    "value": "true"
+  },
+  {
+    "key": "ts",
+    "timestamp": "1767805317731",
+    "value": "1767805317731"
+  },
+  {
+    "key": "level",
+    "timestamp": "1767805317591",
+    "value": "100"
+  },
+  {
+    "key": "state",
+    "timestamp": "1767805317591",
+    "value": "Dimmed"
+  },
+  {
+    "key": "last_lamp_status",
+    "timestamp": "1767805317591",
+    "value": "True"
+  },
+  {
+    "key": "powerstats",
+    "timestamp": "1767805317591",
+    "value": "{\"last_poll_ts\":1767805200}"
+  },
+  {
+    "key": "topic",
+    "timestamp": "1767805317591",
+    "value": "data"
+  },
+  {
+    "key": "uc",
+    "timestamp": "1767805317591",
+    "value": "smartlight"
+  },
+  {
+    "key": "active",
+    "timestamp": "1767805317591",
+    "value": "true"
+  },
+  {
+    "key": "ts",
+    "timestamp": "1767805317591",
+    "value": "1767805317591"
+  },
+  {
+    "key": "level",
+    "timestamp": "1767805302274",
+    "value": "100"
+  },
+  {
+    "key": "state",
+    "timestamp": "1767805302274",
+    "value": "Dimmed"
+  },
+  {
+    "key": "last_lamp_status",
+    "timestamp": "1767805302274",
+    "value": "True"
+  },
+  {
+    "key": "powerstats",
+    "timestamp": "1767805302274",
+    "value": "{\"last_volt\":237,\"last_volt_avg\":236,\"last_volt_min\":236,\"last_volt_max\":237,\"last_pwr_act\":54.2,\"last_pwr_act_avg\":54.2,\"last_pwr_react_avg\":8.4,\"last_pwr_app_avg\":60.9,\"last_pf\":97,\"last_energy_act\":47382,\"last_energy_react\":17215,\"last_energy_app\":59649}"
+  },
+  {
+    "key": "uc",
+    "timestamp": "1767805302274",
+    "value": "smartlight"
+  },
+  {
+    "key": "topic",
+    "timestamp": "1767805302274",
+    "value": "data"
+  },
+  {
+    "key": "active",
+    "timestamp": "1767805302274",
+    "value": "true"
+  },
+  {
+    "key": "ts",
+    "timestamp": "1767805302274",
+    "value": "1767805302274"
+  },
+  {
+    "key": "level",
+    "timestamp": "1767805302211",
+    "value": "100"
+  },
+  {
+    "key": "state",
+    "timestamp": "1767805302211",
+    "value": "Dimmed"
+  },
+  {
+    "key": "last_lamp_status",
+    "timestamp": "1767805302211",
+    "value": "True"
+  },
+  {
+    "key": "powerstats",
+    "timestamp": "1767805302211",
+    "value": "{\"last_poll_ts\":1767805200}"
+  },
+  {
+    "key": "topic",
+    "timestamp": "1767805302211",
+    "value": "data"
+  },
+  {
+    "key": "uc",
+    "timestamp": "1767805302211",
+    "value": "smartlight"
+  },
+  {
+    "key": "active",
+    "timestamp": "1767805302211",
+    "value": "true"
+  },
+  {
+    "key": "ts",
+    "timestamp": "1767805302211",
+    "value": "1767805302211"
+  },
+  {
+    "key": "level",
+    "timestamp": "1767801722752",
+    "value": "100"
+  },
+  {
+    "key": "state",
+    "timestamp": "1767801722752",
+    "value": "Dimmed"
+  },
+  {
+    "key": "last_lamp_status",
+    "timestamp": "1767801722752",
+    "value": "True"
+  },
+  {
+    "key": "powerstats",
+    "timestamp": "1767801722752",
+    "value": "{\"last_volt\":236,\"last_volt_avg\":236,\"last_volt_min\":236,\"last_volt_max\":237,\"last_pwr_act\":54.3,\"last_pwr_act_avg\":54.7,\"last_pwr_react_avg\":8.5,\"last_pwr_app_avg\":60.9,\"last_pf\":97,\"last_energy_act\":47328,\"last_energy_react\":17206,\"last_energy_app\":59594}"
+  },
+  {
+    "key": "topic",
+    "timestamp": "1767801722752",
+    "value": "data"
+  },
+  {
+    "key": "uc",
+    "timestamp": "1767801722752",
+    "value": "smartlight"
+  },
+  {
+    "key": "active",
+    "timestamp": "1767801722752",
+    "value": "true"
+  },
+  {
+    "key": "ts",
+    "timestamp": "1767801722752",
+    "value": "1767801722752"
+  },
+  {
+    "key": "level",
+    "timestamp": "1767801722647",
+    "value": "100"
+  },
+  {
+    "key": "state",
+    "timestamp": "1767801722647",
+    "value": "Dimmed"
+  },
+  {
+    "key": "last_lamp_status",
+    "timestamp": "1767801722647",
+    "value": "True"
+  },
+  {
+    "key": "powerstats",
+    "timestamp": "1767801722647",
+    "value": "{\"last_poll_ts\":1767801660}"
+  },
+  {
+    "key": "uc",
+    "timestamp": "1767801722647",
+    "value": "smartlight"
+  },
+  {
+    "key": "topic",
+    "timestamp": "1767801722647",
+    "value": "data"
+  },
+  {
+    "key": "active",
+    "timestamp": "1767801722647",
+    "value": "true"
+  },
+  {
+    "key": "ts",
+    "timestamp": "1767801722647",
+    "value": "1767801722647"
+  },
+  {
+    "key": "level",
+    "timestamp": "1767801707689",
+    "value": "100"
+  },
+  {
+    "key": "state",
+    "timestamp": "1767801707689",
+    "value": "Dimmed"
+  },
+  {
+    "key": "last_lamp_status",
+    "timestamp": "1767801707689",
+    "value": "True"
+  },
+  {
+    "key": "powerstats",
+    "timestamp": "1767801707689",
+    "value": "{\"last_volt\":236,\"last_volt_avg\":236,\"last_volt_min\":236,\"last_volt_max\":237,\"last_pwr_act\":54.3,\"last_pwr_act_avg\":54.7,\"last_pwr_react_avg\":8.5,\"last_pwr_app_avg\":60.9,\"last_pf\":97,\"last_energy_act\":47328,\"last_energy_react\":17206,\"last_energy_app\":59594}"
+  },
+  {
+    "key": "uc",
+    "timestamp": "1767801707689",
+    "value": "smartlight"
+  },
+  {
+    "key": "topic",
+    "timestamp": "1767801707689",
+    "value": "data"
+  },
+  {
+    "key": "active",
+    "timestamp": "1767801707689",
+    "value": "true"
+  },
+  {
+    "key": "ts",
+    "timestamp": "1767801707689",
+    "value": "1767801707689"
+  },
+  {
+    "key": "level",
+    "timestamp": "1767801707605",
+    "value": "100"
+  },
+  {
+    "key": "state",
+    "timestamp": "1767801707605",
+    "value": "Dimmed"
+  },
+  {
+    "key": "last_lamp_status",
+    "timestamp": "1767801707605",
+    "value": "True"
+  },
+  {
+    "key": "powerstats",
+    "timestamp": "1767801707605",
+    "value": "{\"last_poll_ts\":1767801660}"
+  },
+  {
+    "key": "uc",
+    "timestamp": "1767801707605",
+    "value": "smartlight"
+  },
+  {
+    "key": "topic",
+    "timestamp": "1767801707605",
+    "value": "data"
+  },
+  {
+    "key": "active",
+    "timestamp": "1767801707605",
+    "value": "true"
+  },
+  {
+    "key": "ts",
+    "timestamp": "1767801707605",
+    "value": "1767801707605"
+  },
+  {
+    "key": "level",
+    "timestamp": "1767801692704",
+    "value": "100"
+  },
+  {
+    "key": "state",
+    "timestamp": "1767801692704",
+    "value": "Dimmed"
+  },
+  {
+    "key": "last_lamp_status",
+    "timestamp": "1767801692704",
+    "value": "True"
+  },
+  {
+    "key": "powerstats",
+    "timestamp": "1767801692704",
+    "value": "{\"last_volt\":236,\"last_volt_avg\":236,\"last_volt_min\":236,\"last_volt_max\":237,\"last_pwr_act\":54.3,\"last_pwr_act_avg\":54.7,\"last_pwr_react_avg\":8.5,\"last_pwr_app_avg\":60.9,\"last_pf\":97,\"last_energy_act\":47328,\"last_energy_react\":17206,\"last_energy_app\":59594}"
+  },
+  {
+    "key": "topic",
+    "timestamp": "1767801692704",
+    "value": "data"
+  },
+  {
+    "key": "uc",
+    "timestamp": "1767801692704",
+    "value": "smartlight"
+  },
+  {
+    "key": "active",
+    "timestamp": "1767801692704",
+    "value": "true"
+  },
+  {
+    "key": "ts",
+    "timestamp": "1767801692704",
+    "value": "1767801692704"
+  },
+  {
+    "key": "level",
+    "timestamp": "1767801692629",
+    "value": "100"
+  },
+  {
+    "key": "state",
+    "timestamp": "1767801692629",
+    "value": "Dimmed"
+  },
+  {
+    "key": "last_lamp_status",
+    "timestamp": "1767801692629",
+    "value": "True"
+  },
+  {
+    "key": "powerstats",
+    "timestamp": "1767801692629",
+    "value": "{\"last_poll_ts\":1767801660}"
+  },
+  {
+    "key": "topic",
+    "timestamp": "1767801692629",
+    "value": "data"
+  },
+  {
+    "key": "uc",
+    "timestamp": "1767801692629",
+    "value": "smartlight"
+  },
+  {
+    "key": "active",
+    "timestamp": "1767801692629",
+    "value": "true"
+  },
+  {
+    "key": "ts",
+    "timestamp": "1767801692629",
+    "value": "1767801692629"
+  },
+  {
+    "key": "active",
+    "timestamp": "1767798062901",
+    "value": "true"
+  },
+  {
+    "key": "ts",
+    "timestamp": "1767798062901",
+    "value": "1767798062901"
+  },
+  {
+    "key": "level",
+    "timestamp": "1767798062843",
+    "value": "100"
+  },
+  {
+    "key": "state",
+    "timestamp": "1767798062843",
+    "value": "Dimmed"
+  },
+  {
+    "key": "last_lamp_status",
+    "timestamp": "1767798062843",
+    "value": "True"
+  },
+  {
+    "key": "powerstats",
+    "timestamp": "1767798062843",
+    "value": "{\"last_poll_ts\":1767798000}"
+  },
+  {
+    "key": "topic",
+    "timestamp": "1767798062843",
+    "value": "data"
+  },
+  {
+    "key": "uc",
+    "timestamp": "1767798062843",
+    "value": "smartlight"
+  },
+  {
+    "key": "active",
+    "timestamp": "1767798062843",
+    "value": "true"
+  },
+  {
+    "key": "ts",
+    "timestamp": "1767798062843",
+    "value": "1767798062843"
+  }
+]

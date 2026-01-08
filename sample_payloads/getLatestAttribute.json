@@ -1,0 +1,52 @@
+[
+  {
+    "key": "active",
+    "timestamp": "1767860388175",
+    "value": "false"
+  },
+  {
+    "key": "inactivityAlarmTime",
+    "timestamp": "1767860388175",
+    "value": "1767860388174"
+  },
+  {
+    "key": "inactivityTimeout",
+    "timestamp": "1711017407899",
+    "value": "15300000"
+  },
+  {
+    "key": "lastActivityTime",
+    "timestamp": "1767845078115",
+    "value": "1767845058237"
+  },
+  {
+    "key": "lastConnectTime",
+    "timestamp": "1767845058218",
+    "value": "1767845058218"
+  },
+  {
+    "key": "lastDisconnectTime",
+    "timestamp": "1767845378127",
+    "value": "1767845378127"
+  },
+  {
+    "key": "latitude",
+    "timestamp": "1699995150674",
+    "value": "35.166797"
+  },
+  {
+    "key": "longitude",
+    "timestamp": "1699995150674",
+    "value": "33.36082"
+  },
+  {
+    "key": "metadata",
+    "timestamp": "1699995150674",
+    "value": "{\"vertical\":\"Lighting\",\"sensorid\":\"YL1015\",\"extra\":{\"cost\":\"0.2\"},\"deveui\":\"70B3D5BF100346E3\",\"join_ts\":0}"
+  },
+  {
+    "key": "name",
+    "timestamp": "1699995150734",
+    "value": "Mnasiadou 2"
+  }
+]

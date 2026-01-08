@@ -1,0 +1,47 @@
+[
+  {
+    "key": "isAlert",
+    "timestamp": "1767412779000",
+    "value": "false"
+  },
+  {
+    "key": "topic",
+    "timestamp": "1767845058232",
+    "value": "data"
+  },
+  {
+    "key": "ts",
+    "timestamp": "1767860388175",
+    "value": "1767860388209"
+  },
+  {
+    "key": "active",
+    "timestamp": "1767860388175",
+    "value": "false"
+  },
+  {
+    "key": "level",
+    "timestamp": "1767845058232",
+    "value": "100"
+  },
+  {
+    "key": "uc",
+    "timestamp": "1767845058232",
+    "value": "smartlight"
+  },
+  {
+    "key": "state",
+    "timestamp": "1767845058232",
+    "value": "Dimmed"
+  },
+  {
+    "key": "powerstats",
+    "timestamp": "1767845058232",
+    "value": "{\"last_volt\":235,\"last_volt_avg\":236,\"last_volt_min\":235,\"last_volt_max\":238,\"last_pwr_act\":54.3,\"last_pwr_act_avg\":54.2,\"last_pwr_react_avg\":8.4,\"last_pwr_app_avg\":60.9,\"last_pf\":97,\"last_energy_act\":47970,\"last_energy_react\":17307,\"last_energy_app\":60252}"
+  },
+  {
+    "key": "last_lamp_status",
+    "timestamp": "1767845058232",
+    "value": "True"
+  }
+]
