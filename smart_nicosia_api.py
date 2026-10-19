@@ -102,6 +102,28 @@ def parse_response(body: str) -> Any:
     return json.loads(body)
 
 
+class IncoresoftError(Exception):
+    """An error the traffic/speed endpoints return with HTTP 200, e.g.
+    [{"type": "ERROR_FAILED_TO_PROCESS_REQUEST", "args": [...], "field": null}]."""
+
+    def __init__(self, error_type: str, args: Any = None):
+        super().__init__(f"{error_type}: {args}" if args else error_type)
+        self.error_type = error_type
+        self.error_args = args
+
+
+def raise_for_incoresoft_error(data: Any) -> Any:
+    """Raise IncoresoftError if a parsed body is an Incoresoft error list; else return it."""
+    if (
+        isinstance(data, list)
+        and data
+        and isinstance(data[0], dict)
+        and str(data[0].get("type", "")).startswith("ERROR_")
+    ):
+        raise IncoresoftError(data[0]["type"], data[0].get("args"))
+    return data
+
+
 def get_json(
     base_url: str,
     params: Dict[str, str],

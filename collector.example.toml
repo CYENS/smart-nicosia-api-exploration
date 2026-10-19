@@ -1,0 +1,49 @@
+# Copy to collector.toml (git-ignored) and change what you need. Every setting is optional.
+# Check the request volume with `uv run collector budget` after editing.
+
+# db_path = "data/smart_nicosia.duckdb"
+# log_file = "data/collector.log"
+# camera_csv = "data/camera_locations.csv"
+
+# Politeness towards the Smart Nicosia API.
+# request_delay_s = 0.1        # minimum gap between request starts
+# concurrency = 1              # parallel requests for per-device jobs
+# timeout_s = 60
+# daily_request_budget = 25000 # `budget` and `status` warn above this
+
+# alarm_states = ["ACTIVE_UNACK"]   # add "ACTIVE_ACK" to also track acknowledged alarms
+
+# Job cadences (minutes). Defaults shown; night_only = between sunset and sunrise.
+# [jobs.devices]
+# every_minutes = 1440
+# [jobs.attributes]
+# every_minutes = 1440
+# [jobs.cameras_map]
+# every_minutes = 1440
+# [jobs.stream]          # every device message via the TENANT time series
+# every_minutes = 5
+# [jobs.events]          # TENANT toastDesc: the city's alarm log
+# every_minutes = 5
+# [jobs.alarms]
+# every_minutes = 5
+# [jobs.travel_times]    # national Bluetooth travel times (not the Smart Nicosia API)
+# every_minutes = 5
+# [jobs.parking]         # 303 requests per run
+# every_minutes = 60
+# [jobs.lamps]           # 240 requests per run
+# every_minutes = 30
+# night_only = true
+# [jobs.bins]            # 139 requests per run
+# every_minutes = 30
+# [jobs.infopoints]
+# every_minutes = 30
+# [jobs.air]
+# every_minutes = 60
+# [jobs.cameras]
+# every_minutes = 60
+# [jobs.traffic_daily]
+# every_minutes = 1440
+# [jobs.traffic_hourly]
+# every_minutes = 60
+# [jobs.speed]
+# every_minutes = 60

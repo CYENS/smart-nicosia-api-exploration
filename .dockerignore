@@ -1,0 +1,10 @@
+.venv
+.git
+.idea
+__pycache__
+.pytest_cache
+data
+tests
+sample_payloads
+*.ipynb
+collector.toml

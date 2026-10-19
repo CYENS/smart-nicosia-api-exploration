@@ -337,3 +337,102 @@ Exact requests used for each sample payload:
 - `sample_payloads/hourlyReports.json`
   - `GET /hourlyReports?week=<iso_week_utc>&year=<iso_year_utc>`
 
+
+## Collector: building history in DuckDB
+
+`collector/` polls the Smart Nicosia API (and the national Bluetooth travel-time feed) into a
+local DuckDB file, so the chatbot has weeks of history to work with. It is Phase 0 of the
+digital-twin plan (`docs/digital-twin-research.md`, sections 2, 7 and 8).
+
+```bash
+uv sync
+uv run collector run --once      # one pass over the jobs that are due, then exit
+uv run collector status          # last runs, row counts, freshness, device health, errors
+uv run collector budget          # requests per day at the configured cadences
+uv run collector backfill        # gentle one-off history fetch (default: last 30 days)
+uv run pytest
+```
+
+Data goes to `data/smart_nicosia.duckdb` and the log to `data/collector.log`. Copy
+`collector.example.toml` to `collector.toml` to change cadences or paths.
+
+### What it stores
+
+| Table | Contents |
+|---|---|
+| `devices`, `attributes` | Inventory (740 devices) with street names, metadata, `lastActivityTime` |
+| `telemetry` | `(device, key, ts, value, value_num, source)`, deduplicated on `(device, key, ts)` |
+| `state_changes` | Parking occupied/free, lamp lit/dark, bin fill band, CAQI band, camera and screen state |
+| `events`, `alarms` | The city's alarm log (TENANT `toastDesc`) and `getAlarms` (`ACTIVE_UNACK`) |
+| `traffic_counts` | Daily counts per camera, counting line and object type; hourly city-wide counts |
+| `speeds` | City-wide average speed, 5-minute buckets |
+| `travel_times` | Cyprus NAP Bluetooth travel time and speed per road segment, every 5 minutes |
+| `traffic_cameras` | 68 analytics feeds: 29 linked to Camera devices by exact name, the rest from `data/camera_locations.csv` |
+| `job_runs`, `api_errors` | What ran, how many requests, what failed |
+
+`collector/interpret.py` is the one place that turns raw values into meaning (a lamp is on only if
+it reported in the last 70 minutes; parking `status` 1 = occupied; bin and CAQI bands; online or
+offline from `lastActivityTime`), always with a staleness flag.
+
+### Polling volume
+
+The defaults come to about 23,500 Smart Nicosia requests a day (`collector budget`), below the
+25,000 we aim for until the polling agreement with the API owners is in place. The `stream` job
+makes that possible: the TENANT time series repeats every device message (`deviceName` plus
+`status`/`level`/`state` at the message's timestamp), so a few hundred requests a day record every
+parking, lamp and bin change. That is why parking is polled per sensor only hourly (every 5 minutes
+would be 87,000 requests a day on its own). This TENANT behaviour isn't documented, so confirm it
+with the API owners too.
+
+Hand-geocode the 39 camera feeds without coordinates by filling `lat`/`lon` in
+`data/camera_locations.csv`. The next `cameras_map` run (daily) picks them up.
+
+### Running unattended on Windows (Task Scheduler)
+
+Run one pass every 5 minutes. Each pass runs only the jobs that are due, and a lock stops passes
+from overlapping. In PowerShell (adjust `$repo`):
+
+```powershell
+$repo = "C:\Users\<you>\projects\smart-nicosia-api-exploration"
+$uv = "$env:USERPROFILE\.local\bin\uv.exe"
+$action = New-ScheduledTaskAction -Execute $uv -Argument "run collector run --once" -WorkingDirectory $repo
+$trigger = New-ScheduledTaskTrigger -Once -At (Get-Date).AddMinutes(1) -RepetitionInterval (New-TimeSpan -Minutes 5)
+$settings = New-ScheduledTaskSettingsSet -MultipleInstances IgnoreNew -StartWhenAvailable -ExecutionTimeLimit (New-TimeSpan -Minutes 30)
+$principal = New-ScheduledTaskPrincipal -UserId "$env:USERDOMAIN\$env:USERNAME" -LogonType S4U
+Register-ScheduledTask -TaskName "SmartNicosiaCollector" -Action $action -Trigger $trigger -Settings $settings -Principal $principal
+```
+
+The S4U principal runs the task in the background, whether or not you are logged on, without a
+console window popping up. If Windows refuses to register it, run PowerShell as administrator,
+or leave out `-Principal` (the task then runs only while you are logged on). Keep the PC awake, or
+let `-StartWhenAvailable` catch up after sleep. Check on it with `uv run collector status`, and
+remove it with `Unregister-ScheduledTask SmartNicosiaCollector`.
+
+### Running in Docker
+
+The container runs `collector run`, which loops and runs each job when it is due:
+
+```bash
+docker build -t smart-nicosia-collector .
+docker run -d --name collector --restart unless-stopped -v "$PWD/data:/app/data" smart-nicosia-collector
+docker exec collector uv run --no-sync collector status
+```
+
+Mount the repo's `data/` folder so the database outlives the container and the camera CSV is
+used. Don't point Task Scheduler and Docker at the same database.
+
+### Backfill
+
+`collector backfill` pages `getTelemetryRange` backwards for each device (1,000 records per
+page, shared across keys), with at most 2 requests in flight and 0.5 s between requests. It saves
+its progress, so you can stop it and run it again later:
+
+```bash
+uv run collector backfill --since 30d                    # events, speed, traffic, then telemetry
+uv run collector backfill --since 2026-01-01 --what traffic,speed
+uv run collector backfill --types Parking --max-requests 2000 --concurrency 2
+```
+
+Traffic requests never span more than 30 days, because longer ranges take 30–60 s or time out.
+The API's `endTs` is inclusive, so each page ends at the previous page's oldest timestamp, not one
+millisecond before it. That way records split across a page boundary aren't lost.
