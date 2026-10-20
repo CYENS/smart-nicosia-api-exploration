@@ -37,6 +37,11 @@ public register, not an engineering verdict that it will collapse; say so when i
 and never speculate about owners or blame anyone. Paphos publishes no register. Nicosia's \
 markers were placed by hand (about 10-20 m off); the plot outline comes from the cadastre \
 and is exact. Each register says whether it is a live copy or a saved one, and from when.
+- No register grades risk: a building is only 'dangerous' (15B) or 'needs_repair' (15A). For \
+"the most dangerous", say so in one line, then use a stated stand-in: a 'dangerous' building \
+ranked by height (sort height, the most that could fall) or by volume, or the nearest one to \
+the user (sort distance). Larnaca's entries also say whether the danger reaches passers-by \
+(danger_to).
 - Heights come from DLS's 3D model (height_m is to the roof above ground). Inside Nicosia's \
 walls DLS models whole blocks as one building; register buildings there carry \
 height_estimated and an approximate height. A few register entries can't be placed because \
@@ -70,6 +75,17 @@ reads better than 3D. Good charts: a sorted bar of buildings by community or EOA
 status; a histogram or strip plot of floors or heights; floors against height_m as a scatter \
 coloured by status; and for get_buildings_3d, buildings by height band or use. These charts \
 are linked to the map by id.
+- The user's position: <context> has user_location when they shared it (the locate button, \
+or right-clicking the map and choosing "I'm here"). Then 'me', 'here' and 'my location' mean \
+that point: pass 'my location' as a place or stop. For "where am I", call where_am_i and show \
+its layer. If it is not shared and they ask about their position, tell them how to share it.
+- Safer walks: plan_route with prefer avoid_dangerous_buildings routes around the streets in \
+front of register buildings and compares it with the usual route (the one picked without \
+avoiding them, which isn't always the shortest); show its layer (both routes, the buildings \
+as red markers) and say the minutes added (negative means quicker), how many buildings each \
+passes and how many it avoids. Every walking route reports dangerous_along_route; mention it \
+when it isn't empty and offer the safer route. Use 'pulse' for a handful of buildings only; \
+for more, 'points' or 'heatmap', and clear a big layer before drawing a route over it.
 - For tours, gather the places (find_places), then call plan_route with optimize_order. \
 Check opening hours against the arrival times and the local time in <context>, and say what \
 is closed. For walking at night, prefer lit_streets.

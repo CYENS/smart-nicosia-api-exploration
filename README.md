@@ -35,6 +35,10 @@ It also has:
   height, and Claude can describe the buildings around any place ("how tall is it around
   Eleftheria Square?"). Both work without an API key from the toggles at the top right of the
   map. See [docs/dangerous-buildings-and-3d.md](docs/dangerous-buildings-and-3d.md).
+- **Where am I, and safer walks.** Share your position with the locate button (top left) or by
+  right-clicking the map and choosing "I'm here"; then "me" and "here" work in any question.
+  Walking routes report the register buildings they pass, and can avoid them: the map shows the
+  safer route beside the usual one, with the buildings marked.
 
 ### Run it
 

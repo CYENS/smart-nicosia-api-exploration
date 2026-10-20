@@ -169,6 +169,15 @@ def distance_to_boundary_m(geom: dict, lon: float, lat: float) -> float:
     return best
 
 
+def distance_to_path_m(path: list[list[float]], lon: float, lat: float) -> float:
+    """Metres from a point to the nearest segment of a line ([[lon, lat], ...])."""
+    if not path:
+        return math.inf
+    if len(path) == 1:
+        path = path * 2
+    return distance_to_boundary_m({"type": "Polygon", "coordinates": [path]}, lon, lat)
+
+
 def _round_geom(geom: dict) -> dict:
     def r(c):
         return [round(c[0], 6), round(c[1], 6)] if isinstance(c[0], (int, float)) else [r(x) for x in c]

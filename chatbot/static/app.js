@@ -25,6 +25,8 @@ const SUGGESTIONS = [
   "Which communities have the most dangerous buildings? Chart it and map it",
   "How tall are the buildings around Eleftheria Square? Show the skyline in 3D",
   "Are there dangerous high-rise buildings in Strovolos?",
+  "Where am I, and are there dangerous buildings near me?",
+  "Walk me to the Cyprus Museum, avoiding the dangerous buildings",
 ];
 const TOOL_LABELS = {
   city_overview: "Reading the city's sensors", find_devices: "Finding devices",
@@ -34,6 +36,7 @@ const TOOL_LABELS = {
   geocode: "Looking up a place", find_places: "Searching places", plan_route: "Planning the route",
   reachable_area: "Working out the reachable area", show_on_map: "Drawing on the map",
   find_dangerous_buildings: "Reading the dangerous-building registers",
+  where_am_i: "Working out where you are",
   get_buildings_3d: "Reading the DLS 3D buildings",
   map_fly_to: "Moving the map", map_callouts: "Adding callouts", map_clear: "Clearing the map",
   show_chart: "Drawing a chart", show_visual: "Drawing a custom visual", web_search: "Searching the web",
@@ -94,6 +97,59 @@ const map = new maplibregl.Map({
 });
 map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), "top-left");
 map.addControl(new maplibregl.ScaleControl({ unit: "metric" }), "bottom-right");
+
+// ---------------------------------------------------------------------------------------------
+// "Where am I": the user's position, from the device (the locate button) or set by
+// right-clicking the map. It goes to the assistant with each message, only once shared.
+
+const me = { loc: null, marker: null };
+
+function setMyLocation(lat, lon, accuracy, source) {
+  me.loc = { lat, lon, accuracy_m: Number.isFinite(accuracy) ? Math.round(accuracy) : null, source };
+  if (!me.marker) {
+    const el = document.createElement("div");
+    el.className = "me-dot";
+    el.title = "You are here";
+    me.marker = new maplibregl.Marker({ element: el }).setLngLat([lon, lat]).addTo(map);
+  } else {
+    me.marker.setLngLat([lon, lat]);
+  }
+  renderMyLocation();
+}
+
+function forgetMyLocation() {
+  me.loc = null;
+  me.marker?.remove();
+  me.marker = null;
+  renderMyLocation();
+}
+
+function renderMyLocation(error) {
+  const el = $("me-status");
+  if (error) { el.textContent = error; return; }
+  if (!me.loc) { el.textContent = "Right-click the map to set where you are"; return; }
+  el.innerHTML = `You: ${escapeHtml(me.loc.source)}${me.loc.accuracy_m ? ` (±${me.loc.accuracy_m} m)` : ""}, shared with the assistant <button type="button" class="linkish" id="me-forget">forget</button>`;
+  $("me-forget").addEventListener("click", forgetMyLocation);
+}
+
+const geolocate = new maplibregl.GeolocateControl({
+  positionOptions: { enableHighAccuracy: true }, trackUserLocation: false, showUserLocation: false,
+  fitBoundsOptions: { maxZoom: 16.5 },
+});
+map.addControl(geolocate, "top-left");
+geolocate.on("geolocate", (pos) => setMyLocation(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy, "device location"));
+geolocate.on("error", () => renderMyLocation("Couldn't read your location here: right-click the map where you are instead"));
+
+map.on("contextmenu", (e) => {
+  const box = document.createElement("div");
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "me-btn";
+  button.textContent = "I'm here";
+  box.appendChild(button);
+  const popup = new maplibregl.Popup({ closeButton: false, offset: 6 }).setLngLat(e.lngLat).setDOMContent(box).addTo(map);
+  button.addEventListener("click", () => { setMyLocation(e.lngLat.lat, e.lngLat.lng, NaN, "set on the map"); popup.remove(); });
+});
 // A page opened in a hidden tab measures a 0-size container; keep the canvas in step.
 new ResizeObserver(() => map.resize()).observe($("map"));
 map.on("load", () => map.resize());
@@ -188,20 +244,7 @@ function addToMap(entry) {
   if (spec.style === "buildings_3d") {
     // Real footprints at their DLS heights, plot outlines on the ground, and markers that
     // carry the layer when zoomed out (where the buildings are too small to see).
-    const footprints = ["==", ["get", "_kind"], "footprint"];
-    addLayerSafe({
-      id: `${ref}::plots`, type: "line", source: src, filter: ["==", ["get", "_kind"], "parcel"],
-      paint: { "line-color": ["get", "color"], "line-width": ["interpolate", ["linear"], ["zoom"], 14, 0.5, 18, 2.4], "line-opacity": 0.9 },
-    }, entry.ids);
-    addLayerSafe({
-      id: `${ref}::extrude`, type: "fill-extrusion", source: src, filter: footprints,
-      paint: { "fill-extrusion-color": ["get", "color"], "fill-extrusion-height": ["get", "height_m"], "fill-extrusion-base": 0, "fill-extrusion-opacity": 0.93 },
-    }, entry.ids);
-    addLayerSafe({
-      id: `${ref}::hl3d`, type: "fill-extrusion", source: src, filter: hl3dFilter(hlValue),
-      paint: { "fill-extrusion-color": "#ff2d55", "fill-extrusion-height": ["+", ["get", "height_m"], 0.6], "fill-extrusion-opacity": 0.96 },
-    }, entry.ids);
-    state.hl3d.add(`${ref}::hl3d`);
+    addExtrusions(entry, src, 0);
     addLayerSafe({
       id: `${ref}::circle`, type: "circle", source: src, filter: points,
       paint: {
@@ -212,9 +255,7 @@ function addToMap(entry) {
         "circle-stroke-opacity": ["interpolate", ["linear"], ["zoom"], 15.5, 1, 17.5, 0.25],
       },
     }, entry.ids);
-    bindPopup(`${ref}::extrude`);
     bindPopup(`${ref}::circle`);
-    syncCityClaims();
     return;
   }
 
@@ -251,16 +292,22 @@ function addToMap(entry) {
 
   if (spec.style === "route") {
     const lines = ["==", ["geometry-type"], "LineString"];
-    addLayerSafe({ id: `${ref}::casing`, type: "line", source: src, filter: lines, layout: { "line-join": "round", "line-cap": "round" }, paint: { "line-color": "#ffffff", "line-width": 10, "line-opacity": 0.85 } }, entry.ids);
-    addLayerSafe({ id: `${ref}::line`, type: "line", source: src, filter: lines, layout: { "line-join": "round", "line-cap": "round" }, paint: { "line-color": ["get", "color"], "line-width": 5.5 } }, entry.ids);
-    addLayerSafe({ id: `${ref}::dash`, type: "line", source: src, filter: lines, layout: { "line-join": "round", "line-cap": "round" }, paint: { "line-color": "#ffffff", "line-width": 2.5, "line-dasharray": [0, 4, 3] } }, entry.ids);
+    // A route avoiding dangerous buildings comes with the usual route: thinner, grey, still.
+    const alt = ["==", ["get", "state"], "usual route"];
+    addLayerSafe({ id: `${ref}::casing`, type: "line", source: src, filter: lines, layout: { "line-join": "round", "line-cap": "round" }, paint: { "line-color": "#ffffff", "line-width": ["case", alt, 6.5, 10], "line-opacity": 0.85 } }, entry.ids);
+    addLayerSafe({ id: `${ref}::line`, type: "line", source: src, filter: lines, layout: { "line-join": "round", "line-cap": "round" }, paint: { "line-color": ["get", "color"], "line-width": ["case", alt, 3.5, 5.5] } }, entry.ids);
+    addLayerSafe({ id: `${ref}::dash`, type: "line", source: src, filter: ["all", lines, ["!", alt]], layout: { "line-join": "round", "line-cap": "round" }, paint: { "line-color": "#ffffff", "line-width": 2.5, "line-dasharray": [0, 4, 3] } }, entry.ids);
     state.dashLayers.add(`${ref}::dash`);
-    addLayerSafe({ id: `${ref}::stops`, type: "circle", source: src, filter: points, paint: { "circle-radius": 11, "circle-color": ["get", "color"], "circle-stroke-color": "#fff", "circle-stroke-width": 2 } }, entry.ids);
+    // Stops are numbered; register buildings along the way are smaller red "!" markers.
+    addLayerSafe({ id: `${ref}::stops`, type: "circle", source: src, filter: points, paint: { "circle-radius": ["case", ["==", ["to-string", ["get", "n"]], "!"], 8.5, 11], "circle-color": ["get", "color"], "circle-stroke-color": "#fff", "circle-stroke-width": 2 } }, entry.ids);
     addLayerSafe({ id: `${ref}::num`, type: "symbol", source: src, filter: points, layout: { "text-field": ["to-string", ["get", "n"]], "text-font": FONT_BOLD, "text-size": 12, "text-allow-overlap": true }, paint: { "text-color": "#fff" } }, entry.ids);
     bindPopup(`${ref}::stops`);
     if (spec.labels !== false) addLabels(entry, src, points, 1.6);
     return;
   }
+
+  // A building layer shown as markers still stands up in 3D once zoomed in to street level.
+  if (data.features.some((f) => f.properties?._kind === "footprint")) addExtrusions(entry, src, 15);
 
   if (spec.style === "pulse") {
     const id = `${ref}::halo`;
@@ -277,6 +324,28 @@ function addToMap(entry) {
   }, entry.ids);
   bindPopup(`${ref}::circle`);
   if (spec.labels) addLabels(entry, src, points, 1.1);
+}
+
+// The 3D part of a building layer: plot outlines, footprints extruded at their DLS heights, and
+// a highlight extrusion for the hovered building. From `minzoom` (0 for 'buildings_3d').
+function addExtrusions(entry, src, minzoom) {
+  const ref = entry.spec.ref;
+  entry.extruded = true;
+  addLayerSafe({
+    id: `${ref}::plots`, type: "line", source: src, minzoom, filter: ["==", ["get", "_kind"], "parcel"],
+    paint: { "line-color": ["get", "color"], "line-width": ["interpolate", ["linear"], ["zoom"], 14, 0.5, 18, 2.4], "line-opacity": 0.9 },
+  }, entry.ids);
+  addLayerSafe({
+    id: `${ref}::extrude`, type: "fill-extrusion", source: src, minzoom, filter: ["==", ["get", "_kind"], "footprint"],
+    paint: { "fill-extrusion-color": ["get", "color"], "fill-extrusion-height": ["get", "height_m"], "fill-extrusion-base": 0, "fill-extrusion-opacity": 0.93 },
+  }, entry.ids);
+  addLayerSafe({
+    id: `${ref}::hl3d`, type: "fill-extrusion", source: src, minzoom, filter: hl3dFilter(hlValue),
+    paint: { "fill-extrusion-color": "#ff2d55", "fill-extrusion-height": ["+", ["get", "height_m"], 0.6], "fill-extrusion-opacity": 0.96 },
+  }, entry.ids);
+  state.hl3d.add(`${ref}::hl3d`);
+  bindPopup(`${ref}::extrude`);
+  syncCityClaims();
 }
 
 function frameStats(frames, field) {
@@ -385,9 +454,12 @@ async function showLayer(spec, prefetched = null) {
   state.layers.set(spec.ref, entry);
   const tilts = spec.style === "columns_3d" || spec.style === "buildings_3d";
   const pitch = tilts ? Math.max(55, map.getPitch()) : map.getPitch();
+  const askedAt = spec.askedAt ?? performance.now();
   const draw = () => {
     addToMap(entry);
-    if (spec.fit !== false) fitTo(data, pitch);
+    // A camera move asked for alongside this layer (tools run in parallel, so just before it)
+    // or after it, while it loaded, wins over fitting to it.
+    if (spec.fit !== false && !(state.flownAt > askedAt - 3000)) fitTo(data, pitch);
     else if (spec.style === "buildings_3d" && map.getZoom() >= 15 && map.getPitch() < 45) map.easeTo({ pitch: 55, duration: 900 });
     renderLegend();
     syncHighlight();
@@ -438,8 +510,8 @@ function setBaseBuildings(visible) {
 function syncCityClaims() {
   if (!map.getLayer("city3d::fill")) return;
   const claimed = new Set(), ghosts = new Set();
-  for (const { spec, data } of state.layers.values()) {
-    if (spec.style !== "buildings_3d") continue;
+  for (const { extruded, data } of state.layers.values()) {
+    if (!extruded) continue;
     for (const f of data.features) {
       if (f.properties?.bid !== undefined) claimed.add(f.properties.bid);
       if (f.properties?.ghost_bid !== undefined) ghosts.add(f.properties.ghost_bid);
@@ -902,9 +974,10 @@ requestAnimationFrame(animate);
 function applyUi(ev, msg) {
   switch (ev.action) {
     case "show_layer":
-      showLayer(ev.layer).catch((e) => msg.note(`Couldn't draw layer: ${e.message}`, true));
+      showLayer({ ...ev.layer, askedAt: performance.now() }).catch((e) => msg.note(`Couldn't draw layer: ${e.message}`, true));
       break;
     case "fly_to": {
+      state.flownAt = performance.now();
       const opts = { essential: true, duration: 2200 };
       if (ev.center) opts.center = ev.center;
       for (const k of ["zoom", "pitch", "bearing"]) if (ev[k] !== undefined) opts[k] = ev[k];
@@ -1202,6 +1275,7 @@ function mapContext() {
     map_view: { center: [c.lng, c.lat], zoom: map.getZoom() },
     layers_on_map: [...state.layers.values()].map((l) => `${l.spec.ref} (${l.spec.title})`),
     city_3d: CITY.on,
+    user_location: me.loc,
     visual_errors: state.visualErrors.splice(0),
   };
 }

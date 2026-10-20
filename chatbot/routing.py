@@ -13,7 +13,8 @@ from chatbot.settings import Settings
 from chatbot.web import WebError, get_json
 
 MODES = {"walk": "pedestrian", "drive": "auto", "bike": "bicycle", "wheelchair": "pedestrian"}
-PREFERENCES = ("fastest", "lit_streets", "quiet", "less_hills", "accessible")
+PREFERENCES = ("fastest", "lit_streets", "quiet", "less_hills", "accessible",
+               "avoid_dangerous_buildings")
 MAX_TOUR_STOPS = 12
 
 
@@ -66,16 +67,24 @@ class Router:
         self.s = settings
 
     def _call(self, action: str, body: dict, timeout: float = 30.0) -> dict:
+        text = json.dumps(body, separators=(",", ":"))
+        if len(text) > 1500:  # polygons to avoid outgrow a URL: post the body instead
+            return get_json(f"{self.s.valhalla_url}/{action}", user_agent=self.s.user_agent,
+                            data=text.encode(), timeout=timeout)
         return get_json(f"{self.s.valhalla_url}/{action}", user_agent=self.s.user_agent,
-                        params={"json": json.dumps(body, separators=(",", ":"))}, timeout=timeout)
+                        params={"json": text}, timeout=timeout)
 
-    def route(self, stops: list[tuple[float, float]], mode: str, prefer: list[str]) -> dict:
+    def route(self, stops: list[tuple[float, float]], mode: str, prefer: list[str],
+              avoid: list[list[list[float]]] | None = None) -> dict:
+        """`avoid`: rings ([[lon, lat], ...]) whose streets the route must not use."""
         body = {
             "locations": [{"lat": lat, "lon": lon, "type": "break"} for lat, lon in stops],
             "costing": MODES[mode],
             "costing_options": costing_options(mode, prefer),
             "directions_options": {"units": "kilometers", "language": "en-US"},
         }
+        if avoid:
+            body["exclude_polygons"] = avoid
         trip = self._call("route", body)["trip"]
         coords: list[list[float]] = []
         legs = []

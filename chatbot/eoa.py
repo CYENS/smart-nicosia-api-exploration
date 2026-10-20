@@ -528,6 +528,34 @@ class Registry:
 # -- presentation helpers (shared by the tool and the /api/dangerous endpoint) ---------------------
 
 
+def anchor(r: dict) -> tuple[float, float] | None:
+    """Where a record really is, as (lon, lat): its plot's centre if known (hand-placed markers
+    can be 10-20 m off), else its marker."""
+    if r.get("parcel_geometry"):
+        c = centroid(r["parcel_geometry"])
+        if c:
+            return c
+    return (r["lon"], r["lat"]) if r.get("lat") is not None else None
+
+
+def avoid_zone(r: dict, margin_m: float = 10) -> list[list[float]] | None:
+    """A rectangle around a record's plot, `margin_m` wider on each side, as a closed ring.
+    Streets crossing it pass right in front of the building, so a route avoiding the ring
+    keeps clear of it."""
+    if r.get("parcel_geometry"):
+        w, s, e, n = bbox_of(r["parcel_geometry"])
+    elif r.get("lat") is not None:
+        w = e = r["lon"]
+        s = n = r["lat"]
+        margin_m += 8  # a marker only: allow for a plot around it
+    else:
+        return None
+    dlat = margin_m / 110574
+    dlon = margin_m / (111320 * math.cos(math.radians((s + n) / 2)))
+    w, s, e, n = w - dlon, s - dlat, e + dlon, n + dlat
+    return [[w, s], [e, s], [e, n], [w, n], [w, s]]
+
+
 def place_of(r: dict) -> str:
     return ", ".join(x for x in (r.get("community"), r.get("municipality")) if x) or "?"
 
@@ -561,8 +589,8 @@ def row(r: dict, distance_m: float | None = None) -> dict:
            "height_estimated": r.get("height_estimated"), "match_3d": r.get("match_3d"),
            "buildings_3d": r.get("buildings_3d"), "building_type": r.get("building_type"),
            "footprint_m2": r.get("footprint_m2"), "volume_m3": r.get("volume_m3"),
-           "declared": r.get("declared"), "plot": f"{r.get('sheet')}/{r.get('plan')} "
-                                                  f"parcel {r.get('parcel')}",
+           "declared": r.get("declared"), "danger_to": r.get("danger_to"),
+           "plot": f"{r.get('sheet')}/{r.get('plan')} parcel {r.get('parcel')}",
            "lat": r.get("lat"), "lon": r.get("lon")}
     if distance_m is not None:
         out["distance_m"] = round(distance_m)
