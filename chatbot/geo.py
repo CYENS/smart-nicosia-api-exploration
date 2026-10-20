@@ -17,7 +17,7 @@ import time
 import unicodedata
 import urllib.parse
 
-from chatbot.settings import CACHE_DIR, NICOSIA_BBOX, Settings
+from chatbot.settings import CACHE_DIR, NICOSIA_BBOX, NICOSIA_CENTER, Settings
 from chatbot.web import Throttle, WebError, get_json
 
 log = logging.getLogger(__name__)
@@ -56,6 +56,7 @@ CATEGORIES: dict[str, list[tuple[str, str]]] = {
 KEEP_TAGS = ("opening_hours", "website", "phone", "wheelchair", "cuisine", "fee", "addr:street",
              "description", "wikipedia")
 PLACES_TTL_S = 7 * 86400
+SAME_PLACE_M = 300  # objects sharing a name this close together are one place
 OVERPASS_MIRRORS = (
     "https://overpass-api.de/api/interpreter",
     "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
@@ -111,6 +112,17 @@ def loose_match(query: str | None, text: str | None) -> bool:
 
 def in_bbox(lat: float, lon: float, bbox=NICOSIA_BBOX) -> bool:
     return bbox[0] <= lon <= bbox[2] and bbox[1] <= lat <= bbox[3]
+
+
+def rank_namesakes(places: list[dict], near: tuple[float, float]) -> list[dict]:
+    """Places sharing a name, best first. A landmark is often mapped as several kinds of object
+    close together (Famagusta Gate is a park and a historic site 140 m apart), so a lone object
+    of that name elsewhere is likely a stray and goes last. Otherwise, as with a chain's
+    branches, the one nearest `near` wins."""
+    def backed(p: dict) -> int:
+        return sum(1 for q in places if q["category"] != p["category"]
+                   and haversine_m(p["lat"], p["lon"], q["lat"], q["lon"]) <= SAME_PLACE_M)
+    return sorted(places, key=lambda p: (-backed(p), haversine_m(*near, p["lat"], p["lon"])))
 
 
 class Places:
@@ -251,19 +263,23 @@ class Places:
 
     # -- geocoding -------------------------------------------------------------------------
 
+    def named(self, text: str, near: tuple[float, float] | None = None) -> list[dict]:
+        """Places in the index called exactly `text`, best first (see rank_namesakes)."""
+        key = norm(text)
+        exact = [p for p in self._places
+                 if key in (norm(p.get("name")), norm(p.get("name_local")))]
+        return rank_namesakes(exact, near or NICOSIA_CENTER)
+
     def geocode(self, text: str, limit: int = 3) -> list[dict]:
         """Best matches inside Nicosia: the places index, then Nominatim, then Photon."""
+        exact = self.named(text)
+        if exact:
+            return [{"name": p["name"], "lat": p["lat"], "lon": p["lon"],
+                     "kind": p["category"], "source": "places index"} for p in exact[:limit]]
         key = norm(text)
         if key in self._geocode_cache:
             return self._geocode_cache[key]
-        results: list[dict] = []
-        if self._places:
-            exact = [p for p in self._places
-                     if key in (norm(p.get("name")), norm(p.get("name_local")))]
-            results = [{"name": p["name"], "lat": p["lat"], "lon": p["lon"],
-                        "kind": p["category"], "source": "places index"} for p in exact[:limit]]
-        if not results:
-            results = self._nominatim_search(text, limit)
+        results = self._nominatim_search(text, limit)
         if not results:
             results = self._photon_search(text, limit)
         self._geocode_cache[key] = results

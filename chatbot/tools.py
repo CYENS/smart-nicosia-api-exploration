@@ -431,9 +431,8 @@ def resolve_place(ctx: ToolContext, text: str) -> dict:
     if norm(text) in ME:
         return my_location(ctx)
     if ctx.places.ready:
-        key = norm(text)
-        exact, _ = ctx.places.find(query=text, limit=50)
-        exact = [p for p in exact if key in (norm(p.get("name")), norm(p.get("name_local")))]
+        loc = ctx.user_location
+        exact = ctx.places.named(text, (loc["lat"], loc["lon"]) if loc else None)
         if exact:
             return exact[0]
     hits = ctx.places.geocode(text)
