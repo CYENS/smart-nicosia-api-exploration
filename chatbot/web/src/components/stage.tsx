@@ -81,7 +81,10 @@ const KIND = {
 
 function Filmstrip({ items, focusId }: { items: StageItem[]; focusId: string }) {
   return (
-    <nav aria-label="Visuals in this conversation" className="flex w-48 shrink-0 flex-col gap-1.5 overflow-y-auto border-l border-line p-2">
+    <nav
+      aria-label="Visuals in this conversation"
+      className="flex shrink-0 gap-1.5 border-line p-2 max-md:overflow-x-auto max-md:border-t md:w-48 md:flex-col md:overflow-y-auto md:border-l"
+    >
       {items.map((it) => {
         const Icon = KIND[it.kind].icon
         const on = it.id === focusId
@@ -92,7 +95,7 @@ function Filmstrip({ items, focusId }: { items: StageItem[]; focusId: string }) 
             aria-current={on}
             onClick={() => focusStage(it.id)}
             className={cn(
-              "flex items-start gap-2 rounded-lg border px-2.5 py-2 text-left text-[12.5px] leading-snug transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
+              "flex items-start gap-2 rounded-lg border px-2.5 py-2 text-left text-[12.5px] leading-snug transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/50 max-md:w-44 max-md:shrink-0",
               on ? "border-sodium/50 bg-sodium/[0.07]" : "border-line hover:bg-accent/60",
             )}
           >
@@ -133,7 +136,7 @@ export function Stage() {
     : { left: 8, right: 8, top: STRIP_H + 8, height: expanded ? `calc(100% - ${STRIP_H + 16}px)` : g.stageH }
 
   return (
-    <section aria-label="Visual stage" className="panel-float absolute z-10 flex overflow-hidden rounded-xl" style={style}>
+    <section aria-label="Visual stage" className="panel-float absolute z-10 flex overflow-hidden rounded-xl max-md:flex-col" style={style}>
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="flex h-11 shrink-0 items-center gap-2.5 border-b border-line pr-2 pl-4">
           <Icon className="size-4 shrink-0 text-sodium" />

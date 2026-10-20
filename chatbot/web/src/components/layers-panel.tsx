@@ -112,7 +112,7 @@ export function LayersPanel() {
   return (
     <aside
       aria-label="Map layers"
-      className="panel-float absolute top-[64px] right-3 z-10 flex w-[min(264px,calc(100%-24px))] flex-col overflow-hidden rounded-xl"
+      className="panel-float absolute top-[64px] right-3 z-10 flex w-[min(264px,calc(100%-24px))] flex-col overflow-hidden rounded-xl max-md:z-30"
       style={{ maxHeight: `calc(100% - ${76 + layersBottom}px)` }}
     >
       <div className="flex h-12 shrink-0 items-center justify-between border-b border-line pr-2 pl-4">
