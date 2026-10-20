@@ -1,4 +1,7 @@
-import { LayersIcon, LocateFixedIcon, MoonIcon, PanelRightCloseIcon, SunIcon, SunMoonIcon, XIcon } from "lucide-react"
+import {
+  LayersIcon, LocateFixedIcon, MoonIcon, NavigationIcon, PanelRightCloseIcon, SquareIcon, SunIcon,
+  SunMoonIcon, XIcon,
+} from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Field, FieldContent, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field"
@@ -10,8 +13,8 @@ import { useGeometry } from "@/lib/geometry"
 import { useLayout } from "@/lib/layout"
 import type { Basemap } from "@/lib/map/basemap"
 import {
-  RAMP, cityHeights, fmt, forgetMyLocation, locateMe, nicosiaTime, removeLayer, setBasemapMode,
-  setCity3d, setNightLights, showRegisters, useMapUi,
+  RAMP, cityHeights, flyRoute, fmt, forgetMyLocation, locateMe, nicosiaTime, removeLayer,
+  setBasemapMode, setCity3d, setNightLights, showRegisters, stopFlight, useMapUi,
   type LayerSummary,
 } from "@/lib/map/engine"
 
@@ -86,6 +89,7 @@ export function LayersPanel() {
   const city = useMapUi((s) => s.city)
   const registers = useMapUi((s) => s.registers)
   const me = useMapUi((s) => s.me)
+  const flying = useMapUi((s) => s.flying)
   const { layersBottom } = useGeometry()
 
   if (!open) {
@@ -204,6 +208,18 @@ export function LayersPanel() {
               {layers.map((l) => (
                 <LayerRow key={l.ref} title={l.title} count={l.count} removeLabel="Remove this layer" onRemove={() => removeLayer(l.ref)}>
                   <Keys layer={l} />
+                  {l.style === "route" && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="self-start"
+                      aria-pressed={flying === l.ref}
+                      onClick={() => (flying === l.ref ? stopFlight() : flyRoute(l.ref))}
+                    >
+                      {flying === l.ref ? <SquareIcon data-icon="inline-start" /> : <NavigationIcon data-icon="inline-start" />}
+                      {flying === l.ref ? "Stop the flight" : "Fly the route"}
+                    </Button>
+                  )}
                 </LayerRow>
               ))}
               {city.on && (
