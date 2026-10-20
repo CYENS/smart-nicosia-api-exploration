@@ -10,3 +10,10 @@ data/*.duckdb.wal
 data/*.lock
 data/*.log*
 collector.toml
+
+# Chatbot: secrets and caches
+.env
+data/chatbot_cache/
+
+# Claude Code desktop worktrees (launch.json is shared)
+.claude/worktrees/

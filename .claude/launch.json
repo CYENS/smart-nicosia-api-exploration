@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "chatbot",
+      "runtimeExecutable": "uv",
+      "runtimeArgs": ["run", "chatbot"],
+      "port": 8000
+    }
+  ]
+}

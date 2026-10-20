@@ -1,7 +1,57 @@
 # Smart Nicosia API Exploration
 
 This repo contains a small Python helper (`smart_nicosia_api.py`) for querying the
-Nokia Smart Nicosia API and saving example payloads for offline analysis.
+Nokia Smart Nicosia API and saving example payloads for offline analysis. It also has a
+data collector (below) and a digital-twin chatbot.
+See [docs/digital-twin-research.md](docs/digital-twin-research.md) for the research and plan.
+
+## Chatbot: Nicosia digital twin
+
+A web app with a live map and a chat panel, powered by Claude Sonnet 5.5 (`claude-sonnet-5-5`).
+It answers questions for residents and visitors from the live city sensors. It reads street
+lights, parking, bins, air and noise, traffic counts, city speed and alarms. It also finds places
+from OpenStreetMap, plans walks, drives and tours with Valhalla, and checks the weather with
+Open-Meteo. It draws its answers on the map (markers, pulsing highlights, heatmaps, 3D columns,
+animated routes, reachable areas, callouts) and as Vega-Lite charts in the chat.
+
+### Run it
+
+1. Copy `.env.example` to `.env` and set `ANTHROPIC_API_KEY` (create a key at
+   https://platform.claude.com under API keys). `.env` is in `.gitignore`.
+2. Start it:
+
+   ```bash
+   uv run chatbot
+   ```
+
+3. Open http://127.0.0.1:8000 (set `CHATBOT_PORT` to use another port).
+
+The map and the "no key" notice work without a key; questions need one. Optional settings
+are in `.env.example`: `CHATBOT_MODEL`, `CHATBOT_EFFORT` (default `medium`),
+`CHATBOT_WEB_SEARCH`.
+
+### How it works
+
+- [chatbot/agent.py](chatbot/agent.py) streams each turn from Claude. It runs the requested tools
+  in parallel and loops until Claude answers. History is append-only. The system prompt and
+  tool list are fixed, so prompt caching works. Refused requests retry on a fallback model
+  (`fallbacks: "default"`).
+- [chatbot/tools.py](chatbot/tools.py) defines 16 tools plus Claude's web search. Every input is
+  validated against its JSON schema.
+  - **Data tools** return compact JSON. They store big results (map GeoJSON, chart rows) in the
+    session and pass Claude a `layer_ref` or `data_ref`.
+  - **Map and chart tools** push commands to the browser. The server fills each chart from a
+    `data_ref` and validates the spec against the Vega-Lite schema, so every number comes from
+    a tool.
+- [chatbot/city.py](chatbot/city.py) reads the Smart Nicosia API on demand, at most every 5
+  minutes per device type. It interprets readings with the collector's `collector/interpret.py`,
+  so a lamp is "on" only if it reported in the last 70 minutes.
+- [chatbot/static/](chatbot/static/) is the page: MapLibre GL with OpenFreeMap tiles, vega-embed
+  and marked. There is no build step.
+- Caches (device attributes, the OSM places index, the Vega-Lite schema) live in
+  `data/chatbot_cache/`. The places index takes about a minute to build from Overpass on first
+  start; until then place search falls back to Photon.
+
 ## What the Smart Nicosia API provides
 
 API Docs URL: https://nokia.smartnicosia.eu/api-docs
