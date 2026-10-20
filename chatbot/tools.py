@@ -815,7 +815,8 @@ def h_plan_route(ctx: ToolContext, a: dict) -> dict:
             res["avoidance"] = {"note": "the usual route already passes no register buildings "
                                         "(or only ones within 40 m of a stop)"}
         else:
-            res["avoidance"] = {"note": "no way round them was found; this is the usual route"}
+            res["avoidance"] = {"note": "no way round them passes fewer register buildings, so "
+                                        "this is the usual route"}
     if mode == "drive":
         try:
             sp = context.speed(ctx.city, 2)["rows"]
@@ -1000,10 +1001,13 @@ def route_avoiding(ctx: ToolContext, path: list[tuple[float, float]], mode: str,
                    prefer: list[str], first: dict, records: list[dict]):
     """Re-route around the streets in front of the register buildings a route passes: exclude
     them, re-route, and repeat for any the new route passes (3 rounds at most). Buildings
-    within 40 m of a stop can't be avoided and stay. Returns (route, avoided ids)."""
+    within 40 m of a stop can't be avoided and stay. Returns (route, avoided ids): the route
+    passing the fewest of them, which stays `first` when no detour passes fewer (in a dense old
+    town a detour can run past more than it dodges)."""
     stops = [(lon, lat) for lat, lon in path]
     zones: dict[str, list] = {}
-    current = first
+    current = best = first
+    fewest = len(passed_by(first["coordinates"], records))
     for _ in range(3):
         new = []
         for r, _d in passed_by(current["coordinates"], records):
@@ -1022,7 +1026,9 @@ def route_avoiding(ctx: ToolContext, path: list[tuple[float, float]], mode: str,
         except WebError as e:  # the zones cut off every way through
             log.info("no way round the dangerous buildings: %s", e)
             break
-    return current, list(zones)
+        if (n := len(passed_by(current["coordinates"], records))) < fewest:
+            best, fewest = current, n
+    return best, list(zones)
 
 
 def height_band(h: float) -> tuple[str, str]:
