@@ -5,8 +5,9 @@ Since the 2024 local-government reform the EOAs handle dangerous buildings under
 and Buildings Regulation Law: article 15B "dangerous" (επικίνδυνη) and article 15A "needs
 repair" (χρήζει επισκευής). Four of the five publish a register, each in its own way:
 
-- Nicosia (ndlgo.org.cy): a self-contained map page; the records are embedded as JSON with
-  hand-placed coordinates and, in the notes, the DLS parcel OBJECTID.
+- Nicosia (ndlgo.org.cy): the live register's map page; the records are embedded as JSON with
+  hand-placed coordinates, the file number, urban or rural, and, in the notes, the DLS parcel
+  OBJECTID.
 - Limassol (eoalemesos.org.cy): an ArcGIS Online WebGIS; layer 13 holds the plots as polygons.
 - Larnaca (eoal.org.cy): a WordPress table filled through admin-ajax, with the declaration
   date and public instructions but no block number and no coordinates.
@@ -44,8 +45,9 @@ TTL_S = 86400
 # The registers as published on the day this was built: the fallback when a site is down or
 # asks for a human check (Nicosia's does after a few quick requests from one address).
 SEED_PATH = ROOT / "data" / "eoa_registers_seed.json"
-NICOSIA_URL = ("https://ndlgo.org.cy/wp-content/uploads/2026/07/"
-               "EOA_Xartis_Epikindynes_Oikodomes.html")
+# The live register's map page. The standalone file it replaced
+# (wp-content/uploads/2026/07/EOA_Xartis_Epikindynes_Oikodomes.html) stopped at 711 records.
+NICOSIA_URL = "https://ndlgo.org.cy/en/hazardousbldsmap/"
 LIMASSOL_URL = ("https://services-eu1.arcgis.com/mRIyMyDt3UXNMvgd/arcgis/rest/services/"
                 "EOA_WebGIS_EXT_v1/FeatureServer/13")
 LARNACA_URL = "https://eoal.org.cy/epikindyna-ktiria/"
@@ -56,8 +58,7 @@ FAMAGUSTA_URL = ("https://eoaa.org.cy/%CE%B5%CF%80%CE%B9%CE%BA%CE%AF%CE%BD%CE%B4
 
 EOAS = {
     "nicosia": {"name": "ΕΟΑ Λευκωσίας", "name_en": "Nicosia DLGO",
-                "page": "https://ndlgo.org.cy/wp-content/uploads/2026/07/"
-                        "EOA_Landing_Epikindynes_Oikodomes.html"},
+                "page": "https://ndlgo.org.cy/en/hazardousbldslist/"},
     "limassol": {"name": "ΕΟΑ Λεμεσού", "name_en": "Limassol DLGO",
                  "page": "https://eoalemesos.org.cy/"},
     "larnaca": {"name": "ΕΟΑ Λάρνακας", "name_en": "Larnaca DLGO", "page": LARNACA_URL},
