@@ -283,9 +283,16 @@ TOOL_DEFS: list[dict] = [
                                      "building that could fail), 'distance' (nearest first, the "
                                      "default with a place) or 'declared' (newest first; only "
                                      "Larnaca dates its declarations)."},
+             "ids": {"type": "array", "maxItems": 50, "items": {"type": "string"},
+                     "description": "Only these register ids, e.g. ['NIC-409'], for buildings "
+                                    "an earlier answer named (to show or describe them)."},
+             "top": {"type": "integer", "minimum": 1, "maximum": 200,
+                     "description": "Keep only the first N matches after sorting, in the layer "
+                                    "and data_ref too: top 1 with near_place 'my location' is "
+                                    "the closest one, top 5 with sort 'height' the five tallest."},
              "limit": {"type": "integer", "minimum": 1, "maximum": 50,
                        "description": "How many buildings to list in the reply (default 12). "
-                                      "The layer and data_ref always hold every match."},
+                                      "The layer and data_ref hold every match (or the top N)."},
          })),
     tool("where_am_i",
          "Where the user is, from the position they shared (the locate button, or 'I'm here' "
@@ -877,10 +884,19 @@ def registers_ready(ctx: ToolContext) -> list[dict]:
     return records
 
 
+def distance_to(center: tuple[float, float], r: dict) -> float | None:
+    """Metres from a point to a register building: to its plot's centre when known, as
+    where_am_i measures, so the two tools agree (hand-placed markers can be 10-20 m off)."""
+    spot = eoa.anchor(r)
+    return haversine_m(center[0], center[1], spot[1], spot[0]) if spot else None
+
+
 def h_find_dangerous_buildings(ctx: ToolContext, a: dict) -> dict:
     records = registers_ready(ctx)
+    wanted = {i.strip().upper() for i in a.get("ids") or []}
     sel = [r for r in records
-           if (not a.get("eoa") or r["eoa"] == a["eoa"])
+           if (not wanted or r["id"].upper() in wanted)
+           and (not a.get("eoa") or r["eoa"] == a["eoa"])
            and (not a.get("status") or r["status"] == a["status"])
            and (not a.get("area") or any(loose_match(a["area"], r.get(k))
                                          for k in ("municipality", "community", "parish")))
@@ -893,11 +909,16 @@ def h_find_dangerous_buildings(ctx: ToolContext, a: dict) -> dict:
            and (r.get("height_m") or 0) >= (a.get("min_height_m") or 0)]
     center = resolve_point(ctx, a.get("near_place"), a.get("near_lat"), a.get("near_lon"))
     dist: dict[str, float] = {}
+    beyond: list[dict] = []
     if center:
         radius = a.get("radius_m") or 1000
-        dist = {r["id"]: haversine_m(center[0], center[1], r["lat"], r["lon"])
-                for r in sel if r.get("lat") is not None}
-        sel = [r for r in sel if dist.get(r["id"], 1e12) <= radius]
+        dist = {r["id"]: d for r in sel if (d := distance_to(center, r)) is not None}
+        inside = [r for r in sel if dist.get(r["id"], 1e12) <= radius]
+        if not inside:  # say how far the nearest ones are, so a retry needn't guess a radius
+            beyond = [eoa.row(r, dist[r["id"]])
+                      for r in sorted((r for r in sel if r["id"] in dist),
+                                      key=lambda r: dist[r["id"]])[:3]]
+        sel = inside
     order = a.get("sort") or ("distance" if center else "height")
     if order == "distance" and not center:
         raise ToolError("sort 'distance' needs near_place (or 'my location') or near_lat/near_lon")
@@ -908,8 +929,13 @@ def h_find_dangerous_buildings(ctx: ToolContext, a: dict) -> dict:
                                "height": lambda r: -(r.get("height_m") or 0),
                                "floors": lambda r: -(r.get("floors") or 0),
                                "volume": lambda r: -(r.get("volume_m3") or 0)}[order])
+    matched = len(sel)
+    if a.get("top"):
+        sel = sel[:a["top"]]
 
     parts = [eoa.EOAS[a["eoa"]]["name_en"] if a.get("eoa") else "EOA registers"]
+    if wanted:
+        parts.append(", ".join(sorted(wanted)))
     parts += [a[k] for k in ("status", "area", "zone", "street") if a.get(k)]
     parts += [f"{k.replace('_', ' ')} {a[k]}" for k in ("file_number", "plot") if a.get(k)]
     title = "Dangerous buildings: " + ", ".join(p.replace("_", " ") for p in parts)
@@ -931,7 +957,8 @@ def h_find_dangerous_buildings(ctx: ToolContext, a: dict) -> dict:
                           "copy": v.get("copy"), "as_of": v.get("as_of"),
                           "page": eoa.EOAS[k]["page"]}
                       for k, v in ctx.registers.sources.items()},
-        "total_on_registers": len(records), "matched": len(sel),
+        "total_on_registers": len(records), "matched": matched,
+        **({"kept_top": len(sel)} if a.get("top") else {}),
         "by_eoa": dict(Counter(r["eoa"] for r in sel).most_common()),
         "by_status": dict(Counter(r["status"] for r in sel).most_common()),
         "by_zone": dict(Counter(r["setting"] for r in sel if r.get("setting")).most_common()),
@@ -947,7 +974,12 @@ def h_find_dangerous_buildings(ctx: ToolContext, a: dict) -> dict:
         res["note"] = "3D heights are still being linked; ask again in a few minutes for them"
     if center:
         res["near"] = {"name": center[2], "lat": center[0], "lon": center[1],
-                       "radius_m": a.get("radius_m") or 1000}
+                       "radius_m": a.get("radius_m") or 1000,
+                       "distances_to": "each plot's centre (its marker where no plot is known)"}
+    if beyond:
+        res["nearest_beyond_radius"] = beyond
+    if wanted - {r["id"].upper() for r in records}:
+        res["unknown_ids"] = sorted(wanted - {r["id"].upper() for r in records})
     res["_summary"] = f"{len(sel)} of {len(records)} register buildings"
     return res
 
@@ -970,8 +1002,7 @@ def h_where_am_i(ctx: ToolContext, a: dict) -> dict:
     near = []
     if ctx.registers is not None and ctx.registers.ready:
         for r in ctx.registers.records():
-            spot = eoa.anchor(r)
-            if spot and (d := haversine_m(lat, lon, spot[1], spot[0])) <= radius:
+            if (d := distance_to((lat, lon), r)) is not None and d <= radius:
                 near.append((r, d))
     near.sort(key=lambda t: t[1])
     you = point(lon, lat, {"id": "you", "label": "You are here", "state": "you",
