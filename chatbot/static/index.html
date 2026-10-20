@@ -1,88 +1,15 @@
 <!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Nicosia Digital Twin</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/maplibre-gl@5.24.0/dist/maplibre-gl.css">
-  <link rel="stylesheet" href="/static/style.css">
-  <script src="https://cdn.jsdelivr.net/npm/maplibre-gl@5.24.0/dist/maplibre-gl.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/vega@6.4.0/build/vega.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/vega-lite@6.5.0/build/vega-lite.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/vega-embed@7.3.0/build/vega-embed.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/marked@18.1.1/lib/marked.umd.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/dompurify@3.4.17/dist/purify.min.js"></script>
-</head>
-<body>
-  <div class="app">
-    <main class="map-wrap" aria-label="Map of Nicosia">
-      <div id="map"></div>
-      <div class="map-tools">
-        <label class="basemap">
-          <span class="sr-only">Base map</span>
-          <select id="basemap" aria-label="Base map">
-            <option value="liberty">3D city</option>
-            <option value="positron">Clean light</option>
-            <option value="dark">Dark</option>
-          </select>
-        </label>
-        <div class="toggles" role="group" aria-label="Map layers">
-          <label title="Every building at its real height, from the Department of Lands and Surveys 3D model. Draws from street zoom.">
-            <input type="checkbox" id="tg-city3d" aria-label="3D city (DLS)"> 3D city (DLS)
-          </label>
-          <label title="Buildings on the public dangerous-building registers of the Nicosia, Limassol, Larnaca and Famagusta district organisations (ΕΟΑ).">
-            <input type="checkbox" id="tg-dangerous" aria-label="Dangerous buildings"> Dangerous buildings
-          </label>
-          <p id="city-status" class="toggle-status" aria-live="polite"></p>
-          <p id="me-status" class="toggle-status" aria-live="polite">Right-click the map to set where you are</p>
-        </div>
-      </div>
-      <section id="legend" class="legend" aria-label="Map layers" hidden></section>
-      <div id="tl-clock" class="tl-clock" aria-hidden="true" hidden></div>
-      <div id="timeline" class="timeline" role="group" aria-label="Time-lapse" hidden>
-        <button id="tl-play" type="button" aria-label="Play">▶</button>
-        <div class="tl-main">
-          <div class="tl-row"><span id="tl-title" class="tl-title"></span><span id="tl-time" class="tl-time"></span></div>
-          <input id="tl-slider" type="range" min="0" max="0" value="0" aria-label="Time">
-        </div>
-        <button id="tl-speed" type="button" class="tl-speed" title="Playback speed">1×</button>
-        <button id="tl-close" type="button" class="tl-close" aria-label="Close time-lapse">×</button>
-      </div>
-    </main>
-
-    <aside class="chat" aria-label="Chat">
-      <header class="chat-head">
-        <div class="brand">
-          <span class="brand-dot" aria-hidden="true"></span>
-          <div>
-            <h1>Nicosia Digital Twin</h1>
-            <p class="sub">Live city sensors, places and routes</p>
-          </div>
-        </div>
-        <button id="new-chat" class="ghost" type="button" title="Start a new conversation">New chat</button>
-      </header>
-
-      <div id="banner" class="banner" hidden></div>
-
-      <div id="messages" class="messages" aria-live="polite">
-        <div class="welcome" id="welcome">
-          <p>Ask me anything about the city right now. I can read Nicosia's street lights,
-            parking sensors, bins, air and noise stations and traffic cameras, find places,
-            plan walks, explore the dangerous-building registers and the 3D city, and draw it
-            all on the map.</p>
-          <div class="suggestions" id="suggestions"></div>
-        </div>
-      </div>
-
-      <form id="composer" class="composer">
-        <textarea id="input" rows="1" placeholder="Ask about Nicosia…" aria-label="Message"></textarea>
-        <button id="send" type="submit" aria-label="Send">
-          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M3 11.5 20.5 3 14 21l-2.6-7.4L3 11.5Z" fill="currentColor"/></svg>
-        </button>
-      </form>
-      <p class="footnote" id="footnote">Data: Smart Nicosia, OpenStreetMap, Open-Meteo, Valhalla, DLS Cyprus (cadastre and 3D buildings), the ΕΟΑ dangerous-building registers. Answers can be wrong; check what matters.</p>
-    </aside>
-  </div>
-  <script src="/static/app.js"></script>
-</body>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#0e1828" />
+    <title>Nicosia Digital Twin</title>
+    <script type="module" crossorigin src="/static/assets/index-CCTKwN57.js"></script>
+    <link rel="stylesheet" crossorigin href="/static/assets/index-DWdR6Dpr.css">
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
 </html>
