@@ -21,6 +21,10 @@ const SUGGESTIONS = [
   "Is it a good afternoon for a walk?",
   "Replay the street lights over the last 24 hours as a time-lapse, with a chart of lit lamps",
   "Draw a radial 24-hour clock of how parking occupancy changed since yesterday",
+  "Show the dangerous buildings in the old town in 3D",
+  "Which communities have the most dangerous buildings? Chart it and map it",
+  "How tall are the buildings around Eleftheria Square? Show the skyline in 3D",
+  "Are there dangerous high-rise buildings in Strovolos?",
 ];
 const TOOL_LABELS = {
   city_overview: "Reading the city's sensors", find_devices: "Finding devices",
@@ -29,6 +33,8 @@ const TOOL_LABELS = {
   get_speed: "Checking traffic speed", get_weather: "Checking the weather",
   geocode: "Looking up a place", find_places: "Searching places", plan_route: "Planning the route",
   reachable_area: "Working out the reachable area", show_on_map: "Drawing on the map",
+  find_dangerous_buildings: "Reading the dangerous-building registers",
+  get_buildings_3d: "Reading the DLS 3D buildings",
   map_fly_to: "Moving the map", map_callouts: "Adding callouts", map_clear: "Clearing the map",
   show_chart: "Drawing a chart", show_visual: "Drawing a custom visual", web_search: "Searching the web",
 };
@@ -58,7 +64,17 @@ const state = {
   timeCharts: [], // {view, min, max, last} charts over time, with a rule at `_t`
   visuals: [], // {iframe, title, card} sandboxed custom visuals
   visualErrors: [], // runtime errors to report with the next message
+  hl3d: new Set(), // extrusion layers that light up the hovered building
 };
+// The DLS 3D city: z16 tiles of buildings streamed from /api/buildings3d as the view moves.
+const CITY = {
+  on: false, features: [], ids: new Set(), tiles: new Set(), inflight: new Set(), queue: [],
+};
+const CITY_SRC = "city3d::src";
+const CITY_MIN_ZOOM = 14.5;
+const CITY_RADIUS = 3; // tiles around the centre (each ~500 m), so pitched views stay bounded
+const CITY_HEIGHTS = [0, "#e5e7eb", 6, "#cbd5e1", 12, "#93c5fd", 20, "#3b82f6", 35, "#1d4ed8", 60, "#312e81"];
+const REGISTERS_REF = "eoa_registers";
 
 // ---------------------------------------------------------------------------------------------
 // Map
@@ -94,6 +110,7 @@ $("basemap").addEventListener("change", (e) => {
   styleReady = false;
   map.setStyle(BASEMAPS[e.target.value]);
   map.once("style.load", () => {
+    if (CITY.on) addCityLayer();
     for (const entry of state.layers.values()) addToMap(entry);
     syncHighlight();
   });
@@ -168,6 +185,39 @@ function addToMap(entry) {
 
   map.addSource(src, { type: "geojson", data });
 
+  if (spec.style === "buildings_3d") {
+    // Real footprints at their DLS heights, plot outlines on the ground, and markers that
+    // carry the layer when zoomed out (where the buildings are too small to see).
+    const footprints = ["==", ["get", "_kind"], "footprint"];
+    addLayerSafe({
+      id: `${ref}::plots`, type: "line", source: src, filter: ["==", ["get", "_kind"], "parcel"],
+      paint: { "line-color": ["get", "color"], "line-width": ["interpolate", ["linear"], ["zoom"], 14, 0.5, 18, 2.4], "line-opacity": 0.9 },
+    }, entry.ids);
+    addLayerSafe({
+      id: `${ref}::extrude`, type: "fill-extrusion", source: src, filter: footprints,
+      paint: { "fill-extrusion-color": ["get", "color"], "fill-extrusion-height": ["get", "height_m"], "fill-extrusion-base": 0, "fill-extrusion-opacity": 0.93 },
+    }, entry.ids);
+    addLayerSafe({
+      id: `${ref}::hl3d`, type: "fill-extrusion", source: src, filter: hl3dFilter(hlValue),
+      paint: { "fill-extrusion-color": "#ff2d55", "fill-extrusion-height": ["+", ["get", "height_m"], 0.6], "fill-extrusion-opacity": 0.96 },
+    }, entry.ids);
+    state.hl3d.add(`${ref}::hl3d`);
+    addLayerSafe({
+      id: `${ref}::circle`, type: "circle", source: src, filter: points,
+      paint: {
+        "circle-color": ["get", "color"],
+        "circle-radius": ["interpolate", ["linear"], ["zoom"], 8, 2.2, 12, 3.6, 15, 5, 17, 3.5],
+        "circle-stroke-color": "#ffffff", "circle-stroke-width": 1.1,
+        "circle-opacity": ["interpolate", ["linear"], ["zoom"], 15.5, 0.95, 17.5, 0.25],
+        "circle-stroke-opacity": ["interpolate", ["linear"], ["zoom"], 15.5, 1, 17.5, 0.25],
+      },
+    }, entry.ids);
+    bindPopup(`${ref}::extrude`);
+    bindPopup(`${ref}::circle`);
+    syncCityClaims();
+    return;
+  }
+
   if (spec.style === "heatmap") {
     const st = entry.stats;
     const weight = st && st.max > st.min
@@ -192,7 +242,9 @@ function addToMap(entry) {
   }
 
   if (spec.style === "area") {
-    const polys = ["match", ["geometry-type"], ["Polygon", "MultiPolygon"], true, false];
+    // Building layers draw their plots here, not the 3D footprints.
+    const polys = ["all", ["match", ["geometry-type"], ["Polygon", "MultiPolygon"], true, false],
+      ["!=", ["coalesce", ["get", "_kind"], ""], "footprint"]];
     addLayerSafe({ id: `${ref}::fill`, type: "fill", source: src, filter: polys, paint: { "fill-color": ["get", "color"], "fill-opacity": 0.16 } }, entry.ids);
     addLayerSafe({ id: `${ref}::outline`, type: "line", source: src, filter: polys, paint: { "line-color": ["get", "color"], "line-width": 2.2 } }, entry.ids);
   }
@@ -268,6 +320,7 @@ function removeFromMap(ref) {
     if (map.getLayer(id)) map.removeLayer(id);
     state.pulses.delete(id);
     state.dashLayers.delete(id);
+    state.hl3d.delete(id);
   }
   if (map.getSource(`${ref}::src`)) map.removeSource(`${ref}::src`);
 }
@@ -276,6 +329,8 @@ function removeLayer(ref) {
   removeFromMap(ref);
   state.layers.delete(ref);
   if (state.timelapse?.ref === ref) stopTimelapse();
+  if (ref === REGISTERS_REF) $("tg-dangerous").checked = false;
+  syncCityClaims();
   renderLegend();
   syncHighlight();
 }
@@ -283,8 +338,10 @@ function removeLayer(ref) {
 function clearMap() {
   for (const ref of [...state.layers.keys()]) removeFromMap(ref);
   state.layers.clear();
+  $("tg-dangerous").checked = false;
   stopTimelapse();
   clearCallouts();
+  syncCityClaims();
   renderLegend();
   syncHighlight();
 }
@@ -316,23 +373,192 @@ function fitTo(data, pitch = map.getPitch()) {
   map.fitBounds(b, { padding: { top: 60, bottom: 70, left: 60, right: 60 }, maxZoom: 17, duration: 1400, pitch });
 }
 
-async function showLayer(spec) {
-  const res = await fetch(spec.url);
-  if (!res.ok) throw new Error(`layer ${spec.ref}: HTTP ${res.status}`);
-  const data = await res.json();
+async function showLayer(spec, prefetched = null) {
+  let data = prefetched;
+  if (!data) {
+    const res = await fetch(spec.url);
+    if (!res.ok) throw new Error(`layer ${spec.ref}: HTTP ${res.status}`);
+    data = await res.json();
+  }
   if (state.layers.has(spec.ref)) removeFromMap(spec.ref);
   const entry = { spec, data, ids: [] };
   state.layers.set(spec.ref, entry);
-  const pitch = spec.style === "columns_3d" ? Math.max(55, map.getPitch()) : map.getPitch();
+  const tilts = spec.style === "columns_3d" || spec.style === "buildings_3d";
+  const pitch = tilts ? Math.max(55, map.getPitch()) : map.getPitch();
   const draw = () => {
     addToMap(entry);
     if (spec.fit !== false) fitTo(data, pitch);
+    else if (spec.style === "buildings_3d" && map.getZoom() >= 15 && map.getPitch() < 45) map.easeTo({ pitch: 55, duration: 900 });
     renderLegend();
     syncHighlight();
     if (data.frames) startTimelapse(spec.ref);
   };
   whenStyleReady(draw);
 }
+
+// ---------------------------------------------------------------------------------------------
+// The DLS 3D city: every building in view at its real height (from the Department of Lands and
+// Surveys), coloured by height. It replaces the base map's own 3D buildings while on. Buildings
+// that a 'buildings_3d' layer redraws are hidden here (no z-fighting); an old-town block that
+// only holds a register plot turns into a translucent ghost, so the plot shows inside it.
+
+function cityPaint(opacity) {
+  return {
+    "fill-extrusion-color": ["interpolate", ["linear"], ["get", "h"], ...CITY_HEIGHTS],
+    "fill-extrusion-height": ["get", "h"], "fill-extrusion-base": 0, "fill-extrusion-opacity": opacity,
+  };
+}
+
+function addCityLayer() {
+  if (!map.getSource(CITY_SRC)) {
+    map.addSource(CITY_SRC, { type: "geojson", data: { type: "FeatureCollection", features: CITY.features } });
+  }
+  // Below any layer the assistant drew, so its buildings and markers stay on top.
+  const before = map.getStyle().layers.find((l) => l.id.includes("::") && !l.id.startsWith("city3d::"))?.id;
+  if (!map.getLayer("city3d::fill")) map.addLayer({ id: "city3d::fill", type: "fill-extrusion", source: CITY_SRC, minzoom: CITY_MIN_ZOOM - 0.5, paint: cityPaint(0.92) }, before);
+  if (!map.getLayer("city3d::ghost")) map.addLayer({ id: "city3d::ghost", type: "fill-extrusion", source: CITY_SRC, minzoom: CITY_MIN_ZOOM - 0.5, filter: ["in", ["id"], ["literal", []]], paint: cityPaint(0.28) }, before);
+  setBaseBuildings(false);
+  syncCityClaims();
+  bindCityPopup();
+}
+
+function removeCityLayer() {
+  for (const id of ["city3d::ghost", "city3d::fill"]) if (map.getLayer(id)) map.removeLayer(id);
+  if (map.getSource(CITY_SRC)) map.removeSource(CITY_SRC);
+  setBaseBuildings(true);
+}
+
+// The base map's own (OpenStreetMap) 3D buildings.
+function setBaseBuildings(visible) {
+  for (const l of map.getStyle()?.layers || []) {
+    if (l.type === "fill-extrusion" && !l.id.includes("::")) map.setLayoutProperty(l.id, "visibility", visible ? "visible" : "none");
+  }
+}
+
+function syncCityClaims() {
+  if (!map.getLayer("city3d::fill")) return;
+  const claimed = new Set(), ghosts = new Set();
+  for (const { spec, data } of state.layers.values()) {
+    if (spec.style !== "buildings_3d") continue;
+    for (const f of data.features) {
+      if (f.properties?.bid !== undefined) claimed.add(f.properties.bid);
+      if (f.properties?.ghost_bid !== undefined) ghosts.add(f.properties.ghost_bid);
+    }
+  }
+  map.setFilter("city3d::fill", ["!", ["in", ["id"], ["literal", [...claimed, ...ghosts]]]]);
+  map.setFilter("city3d::ghost", ["in", ["id"], ["literal", [...ghosts].filter((g) => !claimed.has(g))]]);
+}
+
+function cityTilesInView() {
+  if (map.getZoom() < CITY_MIN_ZOOM) return [];
+  const n = 2 ** 16;
+  const tx = (lon) => Math.floor(((lon + 180) / 360) * n);
+  const ty = (lat) => Math.floor(((1 - Math.asinh(Math.tan((lat * Math.PI) / 180)) / Math.PI) / 2) * n);
+  const b = map.getBounds(), c = map.getCenter();
+  const cx = tx(c.lng), cy = ty(c.lat);
+  const out = [];
+  for (let x = Math.max(tx(b.getWest()), cx - CITY_RADIUS); x <= Math.min(tx(b.getEast()), cx + CITY_RADIUS); x++) {
+    for (let y = Math.max(ty(b.getNorth()), cy - CITY_RADIUS); y <= Math.min(ty(b.getSouth()), cy + CITY_RADIUS); y++) {
+      if (!CITY.tiles.has(`${x}/${y}`)) out.push([x, y, (x - cx) ** 2 + (y - cy) ** 2]);
+    }
+  }
+  return out.sort((p, q) => p[2] - q[2]); // nearest the centre first
+}
+
+function pumpCity() {
+  while (CITY.on && CITY.queue.length && CITY.inflight.size < 6) {
+    const [x, y] = CITY.queue.shift();
+    const key = `${x}/${y}`;
+    if (CITY.tiles.has(key) || CITY.inflight.has(key)) continue;
+    CITY.inflight.add(key);
+    fetch(`/api/buildings3d/16/${x}/${y}`)
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`))))
+      .then((fc) => {
+        CITY.tiles.add(key);
+        const add = fc.features.filter((f) => !CITY.ids.has(f.id));
+        for (const f of add) { CITY.ids.add(f.id); CITY.features.push(f); }
+        if (add.length) map.getSource(CITY_SRC)?.updateData({ add });
+      })
+      .catch(() => { /* leave it unloaded; the next move retries it */ })
+      .finally(() => { CITY.inflight.delete(key); cityStatus(); pumpCity(); });
+  }
+  cityStatus();
+}
+
+function refreshCity() {
+  if (!CITY.on) return;
+  CITY.queue = cityTilesInView().map(([x, y]) => [x, y]);
+  pumpCity();
+}
+
+function cityStatus() {
+  const el = $("city-status");
+  if (!CITY.on) { el.textContent = ""; return; }
+  if (map.getZoom() < CITY_MIN_ZOOM) el.textContent = "Zoom in to see the 3D buildings";
+  else if (CITY.inflight.size || CITY.queue.length) el.textContent = `Loading 3D buildings (${CITY.inflight.size + CITY.queue.length} areas left)`;
+  else el.textContent = `${CITY.features.length.toLocaleString()} DLS buildings loaded`;
+}
+
+function setCity3d(on) {
+  CITY.on = on;
+  $("tg-city3d").checked = on;
+  whenStyleReady(() => {
+    if (on) {
+      addCityLayer();
+      if (map.getPitch() < 40 && map.getZoom() >= CITY_MIN_ZOOM) map.easeTo({ pitch: 55, duration: 900 });
+      refreshCity();
+    } else {
+      CITY.queue = [];
+      removeCityLayer();
+    }
+    cityStatus();
+    renderLegend();
+  });
+}
+
+map.on("moveend", refreshCity);
+map.on("zoomend", cityStatus);
+
+let cityPopupBound = false;
+function bindCityPopup() {
+  if (cityPopupBound) return;
+  cityPopupBound = true;
+  map.on("click", "city3d::fill", (e) => {
+    // An assistant layer under the pointer has its own popup.
+    if (map.queryRenderedFeatures(e.point).some((f) => f.layer.id.includes("::") && !f.layer.id.startsWith("city3d::"))) return;
+    const f = e.features?.[0];
+    if (!f) return;
+    const p = f.properties;
+    const lines = [`${p.t || "Building"} · DLS 3D #${f.id}`,
+      `${p.h} m to the roof, eave ${p.e} m${p.f ? `, ${p.f} floors` : ""}`,
+      [p.r, p.v ? `${Math.round(p.v).toLocaleString()} m³` : "", p.a ? `${Math.round(p.a).toLocaleString()} m² footprint` : ""].filter(Boolean).join(" · ")];
+    new maplibregl.Popup({ offset: 10 }).setLngLat(e.lngLat).setHTML(lines.filter(Boolean).map(escapeHtml).join("<br>")).addTo(map);
+  });
+  map.on("mouseenter", "city3d::fill", () => (map.getCanvas().style.cursor = "pointer"));
+  map.on("mouseleave", "city3d::fill", () => (map.getCanvas().style.cursor = ""));
+}
+
+$("tg-city3d").addEventListener("change", (e) => setCity3d(e.target.checked));
+
+async function showRegisters(on) {
+  if (!on) { removeLayer(REGISTERS_REF); return; }
+  const status = $("city-status");
+  status.textContent = "Loading the dangerous-building registers...";
+  try {
+    const res = await fetch("/api/dangerous");
+    if (!res.ok) throw new Error((await res.json().catch(() => ({}))).detail || `HTTP ${res.status}`);
+    const data = await res.json();
+    await showLayer({
+      ref: REGISTERS_REF, url: "/api/dangerous", style: "buildings_3d", title: data.meta.title,
+      fit: false, labels: false, legend: data.meta.legend, count: data.meta.count, value_field: null,
+    }, data);
+    cityStatus();
+  } catch (e) {
+    $("tg-dangerous").checked = false;
+    status.textContent = `Couldn't load the registers: ${e.message}`;
+  }
+}
+$("tg-dangerous").addEventListener("change", (e) => showRegisters(e.target.checked));
 
 // ---------------------------------------------------------------------------------------------
 // Time-lapse: a layer with `frames` replays per-frame states and values on its features.
@@ -451,18 +677,31 @@ function syncHighlight() {
   }
 }
 
+function hl3dFilter(value) {
+  return ["all", ["==", ["get", "_kind"], "footprint"], ["==", ["to-string", ["get", "id"]], value === null || value === undefined ? "\u0000" : String(value)]];
+}
+
+function centerOf(geom) {
+  const pts = coordsOf(geom, []);
+  return [pts.reduce((s, p) => s + p[0], 0) / pts.length, pts.reduce((s, p) => s + p[1], 0) / pts.length];
+}
+
 function highlightOnMap(value) {
   hlFeatures = [];
   if (value !== null && value !== undefined) {
     const want = String(value);
+    let shapes = [];
     for (const e of state.layers.values()) {
       for (const f of e.data.features) {
-        if (f.geometry?.type === "Point" && String(f.properties?.id) === want) {
-          hlFeatures.push({ type: "Feature", geometry: f.geometry, properties: {} });
-        }
+        if (String(f.properties?.id) !== want) continue;
+        if (f.geometry?.type === "Point") hlFeatures.push({ type: "Feature", geometry: f.geometry, properties: {} });
+        else if (f.properties._kind === "footprint") shapes.push(f);
       }
     }
+    // A building with no marker (get_buildings_3d) rings its footprint's centre instead.
+    if (!hlFeatures.length) hlFeatures = shapes.map((f) => ({ type: "Feature", geometry: { type: "Point", coordinates: centerOf(f.geometry) }, properties: {} }));
   }
+  for (const id of state.hl3d) if (map.getLayer(id)) map.setFilter(id, hl3dFilter(value));
   syncHighlight();
 }
 
@@ -608,8 +847,13 @@ window.addEventListener("message", (e) => {
 
 function renderLegend() {
   const el = $("legend");
-  if (!state.layers.size) { el.hidden = true; el.innerHTML = ""; return; }
+  if (!state.layers.size && !CITY.on) { el.hidden = true; el.innerHTML = ""; return; }
   el.hidden = false;
+  const stops = [];
+  for (let i = 0; i < CITY_HEIGHTS.length; i += 2) stops.push(`${CITY_HEIGHTS[i + 1]} ${Math.round((100 * CITY_HEIGHTS[i]) / 60)}%`);
+  const city = CITY.on
+    ? `<div class="layer"><div class="row"><span class="title">3D city (DLS)</span><button class="x" data-city="1" title="Turn off the 3D city" aria-label="Turn off the 3D city">×</button></div><div class="ramp" style="background:linear-gradient(90deg, ${stops.join(", ")})"></div><div class="ramp-labels"><span>0 m</span><span>height to roof</span><span>60 m+</span></div></div>`
+    : "";
   el.innerHTML = [...state.layers.values()].map(({ spec, stats }) => {
     let keys = "";
     if ((spec.style === "columns_3d" || spec.style === "heatmap") && stats) {
@@ -618,8 +862,8 @@ function renderLegend() {
       keys = `<div class="keys">${Object.entries(spec.legend || {}).map(([k, c]) => `<span class="key"><span class="sw" style="background:${escapeHtml(c)}"></span>${escapeHtml(k.replace(/_/g, " "))}</span>`).join("")}</div>`;
     }
     return `<div class="layer"><div class="row"><span class="title">${escapeHtml(spec.title)} <span style="color:var(--muted);font-weight:400">(${spec.count})</span></span><button class="x" data-ref="${escapeHtml(spec.ref)}" title="Remove layer" aria-label="Remove layer">×</button></div>${keys}</div>`;
-  }).join("");
-  el.querySelectorAll("button.x").forEach((b) => b.addEventListener("click", () => removeLayer(b.dataset.ref)));
+  }).join("") + city;
+  el.querySelectorAll("button.x").forEach((b) => b.addEventListener("click", () => (b.dataset.city ? setCity3d(false) : removeLayer(b.dataset.ref))));
 }
 
 function fmt(v) { return Math.abs(v) >= 100 ? Math.round(v).toLocaleString() : (Math.round(v * 10) / 10).toString(); }
@@ -669,6 +913,9 @@ function applyUi(ev, msg) {
     }
     case "callouts":
       addCallouts(ev.items, ev.clear_previous);
+      break;
+    case "city_3d":
+      setCity3d(Boolean(ev.on));
       break;
     case "clear":
       ev.ref ? removeLayer(ev.ref) : clearMap();
@@ -954,6 +1201,7 @@ function mapContext() {
   return {
     map_view: { center: [c.lng, c.lat], zoom: map.getZoom() },
     layers_on_map: [...state.layers.values()].map((l) => `${l.spec.ref} (${l.spec.title})`),
+    city_3d: CITY.on,
     visual_errors: state.visualErrors.splice(0),
   };
 }

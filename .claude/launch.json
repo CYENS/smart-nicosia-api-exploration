@@ -6,6 +6,12 @@
       "runtimeExecutable": "uv",
       "runtimeArgs": ["run", "chatbot"],
       "port": 8000
+    },
+    {
+      "name": "chatbot-8010",
+      "runtimeExecutable": "uv",
+      "runtimeArgs": ["run", "python", "-c", "import os; os.environ['CHATBOT_PORT'] = '8010'; from chatbot.server import main; main()"],
+      "port": 8010
     }
   ]
 }

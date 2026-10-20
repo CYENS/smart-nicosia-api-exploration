@@ -10,6 +10,7 @@ from __future__ import annotations
 import copy
 import json
 import logging
+import math
 import threading
 from collections import Counter
 from collections.abc import Callable
@@ -22,9 +23,10 @@ from jsonschema.exceptions import best_match
 
 from collector.http import ApiError
 
-from chatbot import context, history
+from chatbot import context, eoa, history
 from chatbot.city import KINDS, CityData
-from chatbot.geo import CATEGORIES, Places, haversine_m, norm
+from chatbot.dls import DLS, area_m2
+from chatbot.geo import CATEGORIES, Places, haversine_m, loose_match, norm
 from chatbot.routing import MAX_TOUR_STOPS, MODES, PREFERENCES, Router, best_order
 from chatbot.settings import CACHE_DIR, TIMEZONE, Settings
 from chatbot.store import STATE_COLORS, SessionStore, legend_for, point
@@ -42,9 +44,18 @@ KIND_STATES = {
     "camera": ["connected", "disconnected", "unknown"],
 }
 POINT_STYLES = ["points", "pulse", "heatmap", "columns_3d"]
+STYLES_FOR = {"point": POINT_STYLES, "route": ["route"], "area": ["area"],
+              "buildings": [*POINT_STYLES, "buildings_3d", "area"]}
 HISTORY_KINDS = ["street_light", "parking_sensor", "waste_bin", "air_station"]
 VISUAL_LIBRARIES = ["d3", "plot", "echarts", "three"]
 MAX_VISUAL_DATA_CHARS = 3_000_000
+STATUSES = ["dangerous", "needs_repair"]
+# DLS 3D buildings coloured by height (upper bound in m, label, colour); dangerous ones stay red.
+HEIGHT_BANDS = [(6, "under 6 m", "#cbd5e1"), (12, "6-12 m", "#93c5fd"), (20, "12-20 m", "#3b82f6"),
+                (35, "20-35 m", "#1d4ed8"), (float("inf"), "35 m and up", "#312e81")]
+MAX_BUILDINGS = 4000
+# The walled city, where DLS models whole blocks as one building.
+WALLED_CITY = (35.1745, 33.3635, 750)
 
 
 class ToolError(Exception):
@@ -60,6 +71,8 @@ class ToolContext:
     store: SessionStore
     emit: Callable[[dict], None]
     conversation_id: str
+    dls: DLS | None = None
+    registers: eoa.Registry | None = None
 
 
 # -- schema helpers -----------------------------------------------------------------------------
@@ -214,16 +227,69 @@ TOOL_DEFS: list[dict] = [
                          "items": {"type": "integer", "minimum": 1, "maximum": 60}},
              "mode": {"type": "string", "enum": ["walk", "bike", "drive"]},
          }, ["minutes", "mode"])),
+    tool("find_dangerous_buildings",
+         "Buildings on the public dangerous-building registers of the District Local Government "
+         "Organisations (ΕΟΑ) of Nicosia, Limassol, Larnaca and Famagusta (Paphos publishes "
+         "none): 'dangerous' (article 15B, επικίνδυνη) or 'needs_repair' (15A, χρήζει "
+         "επισκευής). Each is tied to its DLS land parcel and to the DLS 3D buildings on it, so "
+         "most have a real height_m and floors. Filter by eoa, status, area (municipality, "
+         "community or parish; Greek or Latin spelling), street, distance from a place, or "
+         "size. Returns counts by EOA, status and area, height and floor statistics, the "
+         "tallest matches (or the nearest, with a place), a layer_ref and a data_ref (one row "
+         "per building: eoa, status, municipality, community, parish, address, height_m, "
+         "floors, building_type, footprint_m2, volume_m3, declared). Show the layer with "
+         "style 'buildings_3d' to extrude the buildings at their real heights (red dangerous, "
+         "amber needing repair), or 'pulse', 'heatmap', or 'columns_3d' with value_field "
+         "floors or height_m.",
+         obj({
+             "eoa": {"type": "string", "enum": list(eoa.EOAS),
+                     "description": "Which district's register (default all four)."},
+             "status": {"type": "string", "enum": STATUSES},
+             "area": {"type": "string",
+                      "description": "Municipality, community or parish, e.g. 'Strovolos', "
+                                     "'ΑΓΛΑΝΤΖΙΑ', 'Paralimni'."},
+             "street": {"type": "string", "description": "Street name in the address."},
+             **NEAR,
+             "min_floors": {"type": "integer", "minimum": 1, "maximum": 60},
+             "min_height_m": {"type": "number", "minimum": 0, "maximum": 300},
+             "limit": {"type": "integer", "minimum": 1, "maximum": 50,
+                       "description": "How many buildings to list in the reply (default 12). "
+                                      "The layer and data_ref always hold every match."},
+         })),
+    tool("get_buildings_3d",
+         "The Department of Lands and Surveys (DLS) 3D buildings model around a place: every "
+         "building's roof and eave height above ground (m), floors, use (e.g. 'High "
+         "residential building'), roof type, volume, footprint and ground height above sea "
+         "level. Returns height and floor statistics, counts by use, roof type and height "
+         "band, built-up share of the circle, the tallest buildings, any dangerous-register "
+         "buildings among them, a layer_ref (show it with style 'buildings_3d': footprints "
+         "extruded at real heights and coloured by height, dangerous ones red) and a data_ref "
+         "(one row per building) for charts. In the walled old town DLS models whole blocks "
+         "as one building.",
+         obj({
+             **{k: v for k, v in NEAR.items() if k != "radius_m"},
+             "radius_m": {"type": "number", "minimum": 20, "maximum": 800,
+                          "description": "Radius in metres (default 300)."},
+             "min_height_m": {"type": "number", "minimum": 0, "maximum": 300},
+             "min_floors": {"type": "integer", "minimum": 1, "maximum": 60},
+             "use": {"type": "string",
+                     "description": "Only buildings whose use contains this, e.g. 'residential', "
+                                    "'commercial', 'church', 'industrial'."},
+             "limit": {"type": "integer", "minimum": 1, "maximum": 30,
+                       "description": "How many of the tallest to list (default 10)."},
+         })),
     tool("show_on_map",
          "Draw a layer from a data tool (its layer_ref) on the user's map. Styles for point "
          "layers: 'points' (coloured by state), 'pulse' (animated halo, to highlight a few "
          "important features), 'heatmap' (density weighted by value_field) and 'columns_3d' (3D "
          "bars whose height is value_field; tilts the map). Route layers use 'route', area "
-         "layers use 'area'. Use fit to zoom the map to the layer. Show a layer whenever "
-         "something has a location; the map is half of the answer.",
+         "layers use 'area'. Building layers (find_dangerous_buildings, get_buildings_3d) also "
+         "take 'buildings_3d': the real footprints extruded at their DLS heights, with plot "
+         "outlines; it tilts the map. Use fit to zoom the map to the layer. Show a layer "
+         "whenever something has a location; the map is half of the answer.",
          obj({
              "layer_ref": {"type": "string"},
-             "style": {"type": "string", "enum": POINT_STYLES + ["route", "area"]},
+             "style": {"type": "string", "enum": POINT_STYLES + ["buildings_3d", "route", "area"]},
              "value_field": {"type": "string",
                              "description": "Numeric property for heatmap/columns_3d, e.g. "
                                             "level_pct, noise_db, caqi, power_w, people, total."},
@@ -233,7 +299,10 @@ TOOL_DEFS: list[dict] = [
          }, ["layer_ref", "style"])),
     tool("map_fly_to",
          "Move the map camera: to a place name or coordinates, with zoom (11 city, 14 district, "
-         "16 street, 18 building), pitch (0-70 degrees, tilt for 3D) and bearing.",
+         "16 street, 18 building), pitch (0-70 degrees, tilt for 3D) and bearing. city_3d true "
+         "swaps the base map's buildings for the DLS 3D city model (real heights for every "
+         "building in Cyprus, coloured by height, dangerous-register buildings in red); it "
+         "draws from zoom 15, so pair it with zoom 16-17 and pitch 55-65.",
          obj({
              "place": {"type": "string"},
              "lat": {"type": "number"},
@@ -241,6 +310,8 @@ TOOL_DEFS: list[dict] = [
              "zoom": {"type": "number", "minimum": 3, "maximum": 20},
              "pitch": {"type": "number", "minimum": 0, "maximum": 70},
              "bearing": {"type": "number", "minimum": -180, "maximum": 180},
+             "city_3d": {"type": "boolean",
+                         "description": "Turn the DLS 3D city model on (true) or off (false)."},
          })),
     tool("map_callouts",
          "Pin short labelled callouts on the map (up to 12), e.g. to point out sights on a tour "
@@ -676,6 +747,168 @@ def h_reachable_area(ctx: ToolContext, a: dict) -> dict:
             "_summary": f"{', '.join(map(str, a['minutes']))} min by {a['mode']}"}
 
 
+# -- dangerous buildings and the DLS 3D model -----------------------------------------------------
+
+
+def registers_ready(ctx: ToolContext) -> list[dict]:
+    if ctx.registers is None:
+        raise ToolError("the dangerous-building registers aren't connected in this app")
+    records = ctx.registers.records(wait_s=90)
+    if not records:
+        raise ToolError("the registers are still loading (the first load takes about a minute); "
+                        "try again shortly")
+    return records
+
+
+def h_find_dangerous_buildings(ctx: ToolContext, a: dict) -> dict:
+    records = registers_ready(ctx)
+    sel = [r for r in records
+           if (not a.get("eoa") or r["eoa"] == a["eoa"])
+           and (not a.get("status") or r["status"] == a["status"])
+           and (not a.get("area") or any(loose_match(a["area"], r.get(k))
+                                         for k in ("municipality", "community", "parish")))
+           and (not a.get("street") or loose_match(a["street"], r.get("address"))
+                or loose_match(a["street"], r.get("name")))
+           and (r.get("floors") or 0) >= (a.get("min_floors") or 0)
+           and (r.get("height_m") or 0) >= (a.get("min_height_m") or 0)]
+    center = resolve_point(ctx, a.get("near_place"), a.get("near_lat"), a.get("near_lon"))
+    dist: dict[str, float] = {}
+    if center:
+        radius = a.get("radius_m") or 1000
+        dist = {r["id"]: haversine_m(center[0], center[1], r["lat"], r["lon"])
+                for r in sel if r.get("lat") is not None}
+        sel = sorted((r for r in sel if dist.get(r["id"], 1e12) <= radius),
+                     key=lambda r: dist[r["id"]])
+    else:
+        sel = sorted(sel, key=lambda r: -(r.get("height_m") or 0))
+
+    parts = [eoa.EOAS[a["eoa"]]["name_en"] if a.get("eoa") else "EOA registers"]
+    parts += [a[k] for k in ("status", "area", "street") if a.get(k)]
+    title = "Dangerous buildings: " + ", ".join(p.replace("_", " ") for p in parts)
+    if center:
+        title += f" near {center[2]}"
+    rows = [eoa.row(r, dist.get(r["id"])) for r in sel]
+    features = eoa.layer_features(sel, STATE_COLORS)
+    layer = ctx.store.add_layer("dangerous", features, geometry="buildings", title=title,
+                                legend=legend_for([s for s in STATUSES
+                                                   if any(r["status"] == s for r in sel)]),
+                                value_fields=["height_m", "floors", "volume_m3"])
+    data = ctx.store.add_dataset("dangerous", rows, title=title, link={"key": "id"})
+    heights = [r["height_m"] for r in sel if r.get("height_m") and not r.get("height_estimated")]
+    floors = [r["floors"] for r in sel if r.get("floors")]
+    limit = a.get("limit") or 12
+    res = {
+        "registers": {k: {"name": eoa.EOAS[k]["name"], "records": v.get("count"),
+                          "copy": v.get("copy"), "as_of": v.get("as_of"),
+                          "page": eoa.EOAS[k]["page"]}
+                      for k, v in ctx.registers.sources.items()},
+        "total_on_registers": len(records), "matched": len(sel),
+        "by_eoa": dict(Counter(r["eoa"] for r in sel).most_common()),
+        "by_status": dict(Counter(r["status"] for r in sel).most_common()),
+        "top_areas": dict(Counter(eoa.place_of(r) for r in sel).most_common(12)),
+        "with_3d_building": sum(1 for r in sel if r.get("footprints")),
+        "not_on_map": sum(1 for r in sel if r.get("lat") is None),
+        "height_m": eoa.summary(heights), "floors": eoa.summary(floors),
+        "five_floors_or_more": sum(1 for f in floors if f >= 5),
+        "layer_ref": layer, "data_ref": data,
+        "items": rows[:limit],
+    }
+    if not ctx.registers.linked_3d:
+        res["note"] = "3D heights are still being linked; ask again in a few minutes for them"
+    if center:
+        res["near"] = {"name": center[2], "lat": center[0], "lon": center[1],
+                       "radius_m": a.get("radius_m") or 1000}
+    res["_summary"] = f"{len(sel)} of {len(records)} register buildings"
+    return res
+
+
+def height_band(h: float) -> tuple[str, str]:
+    return next((label, color) for top, label, color in HEIGHT_BANDS if h < top)
+
+
+def h_get_buildings_3d(ctx: ToolContext, a: dict) -> dict:
+    if ctx.dls is None:
+        raise ToolError("the DLS 3D buildings model isn't connected in this app")
+    center = resolve_point(ctx, a.get("near_place"), a.get("near_lat"), a.get("near_lon"))
+    if not center:
+        raise ToolError("give near_place or near_lat and near_lon")
+    radius = a.get("radius_m") or 300
+    near = ctx.dls.buildings_near(center[0], center[1], radius)
+    near = [(b, d) for b, d in near
+            if b["properties"]["h"] >= (a.get("min_height_m") or 0)
+            and (b["properties"].get("f") or 0) >= (a.get("min_floors") or 0)
+            and (not a.get("use") or norm(a["use"]) in norm(b["properties"].get("t")))]
+    capped = len(near) > MAX_BUILDINGS
+    near = near[:MAX_BUILDINGS]
+    on_register: dict[int, dict] = {}
+    if ctx.registers is not None:
+        for r in ctx.registers.records():
+            for fp in r.get("footprints") or []:
+                if r.get("match_3d") != "block":
+                    on_register[fp["bid"]] = r
+
+    features, rows = [], []
+    for b, d in near:
+        p = b["properties"]
+        band, color = height_band(p["h"])
+        rec = on_register.get(b["id"])
+        state = rec["status"] if rec else band
+        popup = [f"{p.get('t') or 'Building'} · DLS 3D #{b['id']}",
+                 f"{p['h']} m to the roof, eave {p['e']} m"
+                 + (f", {p['f']} floors" if p.get("f") else ""),
+                 " · ".join(x for x in (p.get("r"), p.get("v") and f"{p['v']:,.0f} m³",
+                                        p.get("a") and f"{p['a']:,.0f} m² footprint") if x)]
+        if p.get("g") is not None:
+            popup.append(f"ground {p['g']} m above sea level")
+        if rec:
+            popup.append(f"On the {eoa.EOAS[rec['eoa']]['name']} register: "
+                         f"{eoa.STATUS_GR[rec['status']]} ({rec['id']})")
+        features.append({"type": "Feature", "geometry": b["geometry"], "properties": {
+            "id": f"B{b['id']}", "bid": b["id"], "_kind": "footprint",
+            "label": p.get("t") or "building", "state": state,
+            "color": STATE_COLORS[rec["status"]] if rec else color,
+            "height_m": p["h"], "eave_m": p["e"], "floors": p.get("f"),
+            "popup": "\n".join(x for x in popup if x)}})
+        rows.append({k: v for k, v in {
+            "id": f"B{b['id']}", "height_m": p["h"], "eave_m": p["e"], "floors": p.get("f"),
+            "use": p.get("t"), "roof": p.get("r"), "volume_m3": p.get("v"),
+            "footprint_m2": p.get("a"), "ground_m": p.get("g"), "distance_m": round(d),
+            "height_band": band, "register": rec["status"] if rec else None,
+            "register_id": rec["id"] if rec else None}.items() if v is not None})
+
+    title = f"DLS 3D buildings within {radius:g} m of {center[2]}"
+    legend = {label: color for _, label, color in HEIGHT_BANDS
+              if any(r["height_band"] == label for r in rows)}
+    legend.update({s: STATE_COLORS[s] for s in STATUSES if any(r.get("register") == s for r in rows)})
+    layer = ctx.store.add_layer("buildings_3d", features, geometry="buildings", title=title,
+                                legend=legend, value_fields=["height_m", "floors", "eave_m"])
+    data = ctx.store.add_dataset("buildings_3d", rows, title=title, link={"key": "id"})
+    footprint = sum(b["properties"].get("a") or area_m2(b["geometry"]) for b, _ in near)
+    limit = a.get("limit") or 10
+    res = {
+        "center": {"name": center[2], "lat": center[0], "lon": center[1]}, "radius_m": radius,
+        "buildings": len(near), "capped_at": MAX_BUILDINGS if capped else None,
+        "height_m": eoa.summary([r["height_m"] for r in rows]),
+        "floors": eoa.summary([r["floors"] for r in rows if r.get("floors")]),
+        "by_height_band": dict(Counter(r["height_band"] for r in rows).most_common()),
+        "by_use": dict(Counter(r.get("use") or "?" for r in rows).most_common(8)),
+        "by_roof": dict(Counter(r.get("roof") or "?" for r in rows).most_common(6)),
+        "built_up_pct": round(100 * footprint / (math.pi * radius ** 2), 1),
+        "total_volume_m3": round(sum(r.get("volume_m3") or 0 for r in rows)),
+        "tallest": sorted(rows, key=lambda r: -r["height_m"])[:limit],
+        "on_dangerous_registers": [{"id": r["register_id"], "status": r["register"],
+                                    "height_m": r["height_m"], "building": r["id"]}
+                                   for r in rows if r.get("register_id")][:20],
+        "layer_ref": layer, "data_ref": data,
+        "source": "DLS INSPIRE BU3 3D buildings (Department of Lands and Surveys, Cyprus)",
+    }
+    if haversine_m(center[0], center[1], WALLED_CITY[0], WALLED_CITY[1]) < WALLED_CITY[2] + radius:
+        res["note"] = ("inside the walls DLS models whole blocks as one building, so a block's "
+                       "height is its tallest part")
+    res["_summary"] = f"{len(near)} buildings, tallest {res['height_m']['max'] if rows else 0} m"
+    return res
+
+
 # -- UI tools ------------------------------------------------------------------------------------
 
 
@@ -686,7 +919,7 @@ def h_show_on_map(ctx: ToolContext, a: dict) -> dict:
         raise ToolError(f"unknown layer_ref {ref!r}; known: {list(ctx.store.layers)[-10:]}")
     meta = layer["meta"]
     style = a["style"]
-    allowed = {"point": POINT_STYLES, "route": ["route"], "area": ["area"]}[meta["geometry"]]
+    allowed = STYLES_FOR[meta["geometry"]]
     if style not in allowed:
         raise ToolError(f"layer {ref} is a {meta['geometry']} layer; use style {allowed}")
     vf = a.get("value_field")
@@ -708,14 +941,22 @@ def h_show_on_map(ctx: ToolContext, a: dict) -> dict:
 
 def h_map_fly_to(ctx: ToolContext, a: dict) -> dict:
     center = resolve_point(ctx, a.get("place"), a.get("lat"), a.get("lon"))
+    if a.get("city_3d") is not None:
+        ctx.emit({"type": "ui", "action": "city_3d", "on": a["city_3d"]})
     cmd = {"type": "ui", "action": "fly_to"}
     if center:
         cmd["center"] = [center[1], center[0]]
     for k in ("zoom", "pitch", "bearing"):
         if a.get(k) is not None:
             cmd[k] = a[k]
-    ctx.emit(cmd)
-    return {"ok": True, **({"center": center[2]} if center else {}), "_summary": "map: fly"}
+    if len(cmd) > 2:
+        ctx.emit(cmd)
+    res = {"ok": True, **({"center": center[2]} if center else {}), "_summary": "map: fly"}
+    if a.get("city_3d") is not None:
+        res["city_3d"] = "on" if a["city_3d"] else "off"
+        if a["city_3d"]:
+            res["note"] = "the 3D city draws from zoom 15; buildings stream in as the view moves"
+    return res
 
 
 def h_map_callouts(ctx: ToolContext, a: dict) -> dict:
@@ -862,18 +1103,28 @@ def add_time_rule(spec: dict) -> str | None:
     return field
 
 
+BAND_COLORS = {label: color for _, label, color in HEIGHT_BANDS}
+NAMED_COLORS = {**STATE_COLORS, **BAND_COLORS}
+COLOR_ORDERS = [*KIND_STATES.values(), STATUSES, list(BAND_COLORS)]
+COLOR_FIELDS = ("state", "status", "register", "height_band")
+
+
 def color_states(spec: dict, rows: list[dict]) -> None:
-    """Colour a `state` field with the map's colours (in place), so a full bin is the same red
-    in the chart as on the map. Leaves any scale the model chose alone."""
-    present = [s for s in dict.fromkeys(r.get("state") for r in rows) if s in STATE_COLORS]
-    if not present:
-        return
-    order = next((v for v in KIND_STATES.values() if set(present) <= set(v)), present)
-    states = [s for s in order if s in present]
+    """Colour a state-like field (state, status, register, height_band) with the map's colours
+    (in place), so a full bin or a dangerous building is the same red in the chart as on the
+    map. Leaves any scale the model chose alone."""
     for unit in [spec, *[u for u in spec.get("layer", []) if isinstance(u, dict)]]:
         color = (unit.get("encoding") or {}).get("color")
-        if isinstance(color, dict) and color.get("field") == "state" and "scale" not in color:
-            color["scale"] = {"domain": states, "range": [STATE_COLORS[s] for s in states]}
+        if not (isinstance(color, dict) and color.get("field") in COLOR_FIELDS
+                and "scale" not in color):
+            continue
+        field = color["field"]
+        present = [s for s in dict.fromkeys(r.get(field) for r in rows) if s in NAMED_COLORS]
+        if not present:
+            continue
+        order = next((v for v in COLOR_ORDERS if set(present) <= set(v)), present)
+        values = [s for s in order if s in present]
+        color["scale"] = {"domain": values, "range": [NAMED_COLORS[s] for s in values]}
 
 
 def h_show_chart(ctx: ToolContext, a: dict) -> dict:
@@ -950,6 +1201,8 @@ HANDLERS: dict[str, Callable[[ToolContext, dict], dict]] = {
     "find_places": h_find_places,
     "plan_route": h_plan_route,
     "reachable_area": h_reachable_area,
+    "find_dangerous_buildings": h_find_dangerous_buildings,
+    "get_buildings_3d": h_get_buildings_3d,
     "show_on_map": h_show_on_map,
     "map_fly_to": h_map_fly_to,
     "map_callouts": h_map_callouts,
