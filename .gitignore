@@ -1,0 +1,12 @@
+# Python / uv
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Collector output (the camera CSV in data/ is tracked)
+data/*.duckdb
+data/*.duckdb.wal
+data/*.lock
+data/*.log*
+collector.toml
