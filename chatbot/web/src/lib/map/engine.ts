@@ -4,6 +4,7 @@ import maplibregl, { type GeoJSONSource, type LayerSpecification, type Map as Ml
 import { create } from "zustand"
 
 import { BASEMAP_URLS, transformStyle, type Basemap } from "@/lib/map/basemap"
+import { lightFor, nicosiaWallToDate, skyAt, skyFor, type Sky } from "@/lib/map/sky"
 import { WALLS_RING } from "@/lib/walls"
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -18,7 +19,11 @@ export type LayerSpec = {
   legend?: Record<string, string>; value_field?: string | null; fit?: boolean; labels?: boolean
   askedAt?: number
 }
-type Entry = { spec: LayerSpec; data: FC; ids: string[]; stats: Stats | null; half?: number; extruded?: boolean }
+type Entry = {
+  spec: LayerSpec; data: FC; ids: string[]; stats: Stats | null; half?: number
+  extruded?: boolean // has 3D footprints
+  lamps?: boolean // street lights, which glow after dark
+}
 type Stats = { min: number; max: number }
 
 export const RAMP = ["#16a34a", "#84cc16", "#eab308", "#f97316", "#dc2626"]
@@ -30,8 +35,9 @@ const HOME = { center: [33.3615, 35.1725] as [number, number], zoom: 14.2, pitch
 export const REGISTERS_REF = "eoa_registers"
 const SPEEDS = [1, 2, 4]
 
-// The DLS 3D city glows brighter the taller it stands: the skyline reads at a glance.
-const CITY_HEIGHTS_NIGHT = [0, "#1f3150", 6, "#2a4469", 12, "#3a5f92", 20, "#5584c4", 35, "#86b4ee", 60, "#d6e8ff"]
+// The DLS 3D city stays dark slate and lightens only as it climbs: the skyline reads at a glance,
+// and the assistant's layers (red registers, blue routes) still stand out against it.
+const CITY_HEIGHTS_NIGHT = [0, "#1a2840", 6, "#203250", 12, "#2a4064", 20, "#37547f", 35, "#5577a6", 60, "#93b3dc"]
 const CITY_HEIGHTS_DAY = [0, "#e5e7eb", 6, "#cbd5e1", 12, "#93c5fd", 20, "#3b82f6", 35, "#1d4ed8", 60, "#312e81"]
 const CITY_SRC = "city3d::src"
 const CITY_MIN_ZOOM = 14.5
@@ -49,7 +55,10 @@ export type TimelapseUi = {
 }
 type MapUi = {
   ready: boolean
-  basemap: Basemap
+  basemap: Basemap // the base map shown
+  basemapMode: "auto" | Basemap // auto follows the sun
+  skyNow: Sky // the real sky right now, for the strip and the map panel
+  nightLights: boolean // street lights glow after dark
   layers: LayerSummary[]
   city: { on: boolean; status: string }
   registers: { on: boolean; status: string }
@@ -60,6 +69,9 @@ export type MyLocation = { lat: number; lon: number; accuracy_m: number | null; 
 export const useMapUi = create<MapUi>(() => ({
   ready: false,
   basemap: "night",
+  basemapMode: "auto",
+  skyNow: skyAt(new Date()),
+  nightLights: true,
   layers: [],
   city: { on: false, status: "" },
   registers: { on: false, status: "" },
@@ -117,6 +129,10 @@ export function escapeHtml(s: unknown) {
   return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!)
 }
 
+export function nicosiaTime(d: Date) {
+  return d.toLocaleTimeString("en-GB", { timeZone: "Asia/Nicosia", hour: "2-digit", minute: "2-digit" })
+}
+
 export function fmt(v: number) {
   return Math.abs(v) >= 100 ? Math.round(v).toLocaleString() : (Math.round(v * 10) / 10).toString()
 }
@@ -157,25 +173,144 @@ export function initMap(container: HTMLElement) {
   map.on("style.load", () => {
     styleReady = true
     addWalls()
+    addAmbientLamps()
     if (CITY.on) addCityLayer()
     for (const entry of state.layers.values()) addToMap(entry)
     syncHighlight()
+    applySky()
   })
   map.on("load", () => setUi({ ready: true }))
   map.on("moveend", refreshCity)
   map.on("zoomend", cityStatus)
-  setBasemap("night")
+  showSky(new Date())
   requestAnimationFrame(animate)
   setInterval(() => { if (!state.timelapse) setTimeAll(nicosiaNowMs()) }, 30e3)
+  // The sky moves on: every minute the light, the sky and (at dusk and dawn) the base map follow.
+  setInterval(() => {
+    setUi({ skyNow: skyAt(new Date()) })
+    if (!state.timelapse) showSky(new Date())
+  }, 60e3)
   window.addEventListener("message", onVisualMessage)
   return map
 }
 
-export function setBasemap(b: Basemap) {
+let styleShown: Basemap | null = null
+
+function loadBasemap(b: Basemap) {
   styleReady = false
+  styleShown = b
   setUi({ basemap: b })
   // A full reload, not a diff: the style.load handler redraws everything on top.
   map.setStyle(BASEMAP_URLS[b], { diff: false, transformStyle: transformStyle(b) })
+}
+
+// Auto shows Night from civil dusk to civil dawn and Day otherwise; Night and Day stay put.
+export function setBasemapMode(mode: "auto" | Basemap) {
+  setUi({ basemapMode: mode })
+  showSky(shown.at)
+}
+
+// ---------------------------------------------------------------------------------------------
+// The sky: the map shows the real sun and moon over Nicosia, at the current moment or, while a
+// time-lapse plays, at the moment of its frame.
+
+let shown: Sky = skyAt(new Date())
+
+function showSky(at: Date) {
+  shown = skyAt(at)
+  const mode = useMapUi.getState().basemapMode
+  const want: Basemap = mode === "auto" ? (shown.dark ? "night" : "day") : mode
+  if (want !== styleShown) loadBasemap(want) // applySky runs once it has loaded
+  else applySky()
+}
+
+function applySky() {
+  if (!styleReady) return
+  map.setLight(lightFor(shown))
+  try { map.setSky(skyFor(shown)) } catch { /* a style without sky support */ }
+  syncNightLights()
+}
+
+export function setNightLights(on: boolean) {
+  setUi({ nightLights: on })
+  syncNightLights()
+}
+
+// Street lights glow from dusk to dawn: the city's own lamps (live from /api/lamps), any street
+// light layer the assistant draws (following a time-lapse frame by frame), and a faint warm
+// wash along the streets of the Night base map.
+const nightLayers = new Set<string>(["street-glow"])
+let lamps: FC | null = null
+let lampsAt = 0
+
+function lampLayerOnMap() {
+  for (const e of state.layers.values()) if (e.lamps) return true
+  return false
+}
+
+function syncNightLights() {
+  if (!styleReady) return
+  const on = shown.dark && useMapUi.getState().nightLights
+  if (on && Date.now() - lampsAt > 5 * 60e3) loadLamps()
+  const ambient = on && !lampLayerOnMap()
+  for (const id of nightLayers) {
+    if (!map.getLayer(id)) continue
+    const visible = id.startsWith("lamps-") ? ambient : on
+    map.setLayoutProperty(id, "visibility", visible ? "visible" : "none")
+  }
+}
+
+function loadLamps() {
+  lampsAt = Date.now()
+  fetch("/api/lamps")
+    .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`))))
+    .then((fc: FC) => {
+      lamps = fc
+      const src = map.getSource("lamps") as GeoJSONSource | undefined
+      if (src) src.setData(fc as any)
+      else addAmbientLamps()
+    })
+    .catch(() => { lampsAt = 0 }) // try again on the next minute
+}
+
+function addAmbientLamps() {
+  if (!lamps || map.getSource("lamps")) return
+  map.addSource("lamps", { type: "geojson", data: lamps as any })
+  const ids: string[] = []
+  addLampGlow("lamps", "lamps", ["==", ["get", "state"], "on"], ids, glowBelow())
+  syncNightLights()
+}
+
+// Light pools under the 3D buildings, so it shows in the streets between them.
+function glowBelow() {
+  return ["city3d::fill", "base-3d"].find((id) => map.getLayer(id))
+}
+
+function addLampGlow(prefix: string, src: string, lit: any, ids: string[], before?: string) {
+  const points: any = ["all", ["==", ["geometry-type"], "Point"], lit]
+  const visibility = shown.dark && useMapUi.getState().nightLights ? "visible" : "none"
+  map.addLayer({
+    id: `${prefix}-pool`, type: "heatmap", source: src, filter: points, layout: { visibility },
+    paint: {
+      "heatmap-weight": 1,
+      "heatmap-intensity": ["interpolate", ["linear"], ["zoom"], 12, 1.4, 15, 1.1, 18, 0.9],
+      // About 30 m of light round each lamp close up, a little more when zoomed out to stay seen.
+      "heatmap-radius": ["interpolate", ["exponential", 2], ["zoom"], 12, 9, 14, 22, 15, 36, 17, 120, 19, 460],
+      "heatmap-color": ["interpolate", ["linear"], ["heatmap-density"],
+        0, "rgba(255,160,60,0)", 0.1, "rgba(255,150,55,0.12)", 0.3, "rgba(255,165,70,0.3)",
+        0.55, "rgba(255,190,105,0.46)", 0.8, "rgba(255,214,150,0.6)", 1, "rgba(255,236,200,0.72)"],
+      "heatmap-opacity": 0.95,
+    },
+  }, before)
+  map.addLayer({
+    id: `${prefix}-bulb`, type: "circle", source: src, filter: points, minzoom: 13, layout: { visibility },
+    paint: {
+      "circle-radius": ["interpolate", ["linear"], ["zoom"], 13, 1, 16, 2.4, 19, 5],
+      "circle-color": "#fff3d6",
+      "circle-blur": 0.35,
+    },
+  }, before)
+  for (const id of [`${prefix}-pool`, `${prefix}-bulb`]) { ids.push(id); nightLayers.add(id) }
 }
 
 // The space the floating panels cover, so the camera centres on the open part of the map.
@@ -380,6 +515,11 @@ function addToMap(entry: Entry) {
   // A building layer shown as markers still stands up in 3D once zoomed in to street level.
   if (data.features.some((f) => f.properties?._kind === "footprint")) addExtrusions(entry, src, 15)
 
+  // Street lights glow after dark (the lit ones), and follow a time-lapse frame by frame.
+  const legend = spec.legend || {}
+  entry.lamps = data.features.some((f) => f.properties?.kind === "street_light") || ("on" in legend && "offline" in legend)
+  if (entry.lamps) addLampGlow(`${ref}::lamps`, src, ["==", ["get", "state"], "on"], entry.ids, glowBelow())
+
   if (spec.style === "pulse") {
     const id = `${ref}::halo`
     addLayerSafe({ id, type: "circle", source: src, filter: points, paint: { "circle-radius": 10, "circle-color": ["get", "color"], "circle-opacity": 0.4, "circle-blur": 0.4 } }, entry.ids)
@@ -465,6 +605,7 @@ function removeFromMap(ref: string) {
     state.pulses.delete(id)
     state.dashLayers.delete(id)
     state.hl3d.delete(id)
+    nightLayers.delete(id)
   }
   if (map.getSource(`${ref}::src`)) map.removeSource(`${ref}::src`)
 }
@@ -476,6 +617,7 @@ function publishLayers() {
       legend: spec.legend || {}, stats, valueField: spec.value_field ?? null,
     })),
   })
+  syncNightLights() // the city's own lamps make way for a street light layer
 }
 
 export function removeLayer(ref: string) {
@@ -752,6 +894,7 @@ function applyFrame(k: number) {
   for (const c of state.charts) if (c.link.key === "frame" && c.link.layer === tl.ref) setChartHighlight(c, k)
   setTimeAll(frameMs(entry, k))
   for (const v of state.visuals) postToVisual(v, k, "frame")
+  showSky(nicosiaWallToDate(fr.iso[k])) // the sun, the moon and the lamps of that moment
   publishTimelapse()
 }
 
@@ -768,6 +911,7 @@ export function stopTimelapse() {
   state.timelapse = null
   publishTimelapse()
   setTimeAll(nicosiaNowMs()) // back to the "now" line
+  showSky(new Date()) // and back to tonight's (or today's) sky
 }
 
 export function playTimelapse() {

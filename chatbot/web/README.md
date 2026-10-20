@@ -23,6 +23,8 @@ npm run dev
 - `src/lib/map/engine.ts`: the map and everything the assistant draws on it (layers, the DLS 3D
   city, the registers, time-lapses, linked highlights, callouts).
 - `src/lib/map/basemap.ts`: the Night base map (OpenFreeMap dark, recoloured) and Day (liberty).
+- `src/lib/map/sky.ts`: the real sun and moon over Nicosia (SunCalc), and the light, sky colours
+  and dusk/dawn switch the map takes from them.
 - `src/lib/chat.ts`: the conversation stream from `/api/chat` and the stage's contents.
 - `src/lib/charts.ts`, `src/lib/visual.ts`: charts and the sandbox for custom visuals.
 - `src/components/`: the strip, the conversation, the stage, the map panel and the time-lapse.
