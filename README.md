@@ -26,6 +26,15 @@ It also has:
 - **Custom visuals.** For charts Vega-Lite can't draw (radial clocks, sankeys, networks, 3D),
   Claude writes JavaScript using d3, Observable Plot, ECharts or three.js. The code runs in a
   sandboxed iframe with no network access.
+- **Dangerous buildings.** The public registers of the Nicosia, Limassol, Larnaca and Famagusta
+  district organisations (ΕΟΑ), 925 buildings, each tied to its land parcel and to the 3D
+  buildings on it. Claude can filter them by district, status, area, street or distance, chart
+  them, and extrude them on the map at their real heights (red dangerous, amber needing repair).
+- **The 3D city.** The Department of Lands and Surveys (DLS) 3D model of every building in
+  Cyprus, with roof heights, floors, use and volume. It streams in as the map moves, coloured by
+  height, and Claude can describe the buildings around any place ("how tall is it around
+  Eleftheria Square?"). Both work without an API key from the toggles at the top right of the
+  map. See [docs/dangerous-buildings-and-3d.md](docs/dangerous-buildings-and-3d.md).
 
 ### Run it
 
@@ -49,7 +58,7 @@ are in `.env.example`: `CHATBOT_MODEL`, `CHATBOT_EFFORT` (default `medium`),
   in parallel and loops until Claude answers. History is append-only. The system prompt and
   tool list are fixed, so prompt caching works. Refused requests retry on a fallback model
   (`fallbacks: "default"`).
-- [chatbot/tools.py](chatbot/tools.py) defines 18 tools plus Claude's web search. Every input is
+- [chatbot/tools.py](chatbot/tools.py) defines 20 tools plus Claude's web search. Every input is
   validated against its JSON schema.
   - **Data tools** return compact JSON. They store big results (map GeoJSON, chart rows) in the
     session and pass Claude a `layer_ref` or `data_ref`.
@@ -74,6 +83,13 @@ are in `.env.example`: `CHATBOT_MODEL`, `CHATBOT_EFFORT` (default `medium`),
 - [chatbot/city.py](chatbot/city.py) reads the Smart Nicosia API on demand, at most every 5
   minutes per device type. It interprets readings with the collector's `collector/interpret.py`,
   so a lamp is "on" only if it reported in the last 70 minutes.
+- [chatbot/dls.py](chatbot/dls.py) reads the DLS cadastre and 3D buildings (public ArcGIS
+  services, throttled). The map gets the 3D buildings as z16 tiles from `/api/buildings3d`,
+  cached on disk for 30 days.
+- [chatbot/eoa.py](chatbot/eoa.py) reads the four EOA registers once a day, links each building
+  to its parcel and its 3D buildings, and caches the result. If a register is unreachable (or
+  asks for a CAPTCHA, which Nicosia's does after a few quick requests) it uses the last good
+  copy, then the seed in `data/eoa_registers_seed.json`. The first build takes about 2 minutes.
 - [chatbot/static/](chatbot/static/) is the page: MapLibre GL with OpenFreeMap tiles, vega-embed
   and marked. There is no build step.
 - Caches (device attributes, the OSM places index, the Vega-Lite schema) live in

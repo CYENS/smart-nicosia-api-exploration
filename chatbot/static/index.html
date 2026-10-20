@@ -26,6 +26,15 @@
             <option value="dark">Dark</option>
           </select>
         </label>
+        <div class="toggles" role="group" aria-label="Map layers">
+          <label title="Every building at its real height, from the Department of Lands and Surveys 3D model. Draws from street zoom.">
+            <input type="checkbox" id="tg-city3d" aria-label="3D city (DLS)"> 3D city (DLS)
+          </label>
+          <label title="Buildings on the public dangerous-building registers of the Nicosia, Limassol, Larnaca and Famagusta district organisations (ΕΟΑ).">
+            <input type="checkbox" id="tg-dangerous" aria-label="Dangerous buildings"> Dangerous buildings
+          </label>
+          <p id="city-status" class="toggle-status" aria-live="polite"></p>
+        </div>
       </div>
       <section id="legend" class="legend" aria-label="Map layers" hidden></section>
       <div id="tl-clock" class="tl-clock" aria-hidden="true" hidden></div>
@@ -58,7 +67,8 @@
         <div class="welcome" id="welcome">
           <p>Ask me anything about the city right now. I can read Nicosia's street lights,
             parking sensors, bins, air and noise stations and traffic cameras, find places,
-            plan walks, and draw it all on the map.</p>
+            plan walks, explore the dangerous-building registers and the 3D city, and draw it
+            all on the map.</p>
           <div class="suggestions" id="suggestions"></div>
         </div>
       </div>
@@ -69,7 +79,7 @@
           <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M3 11.5 20.5 3 14 21l-2.6-7.4L3 11.5Z" fill="currentColor"/></svg>
         </button>
       </form>
-      <p class="footnote" id="footnote">Data: Smart Nicosia, OpenStreetMap, Open-Meteo, Valhalla. Answers can be wrong; check what matters.</p>
+      <p class="footnote" id="footnote">Data: Smart Nicosia, OpenStreetMap, Open-Meteo, Valhalla, DLS Cyprus (cadastre and 3D buildings), the ΕΟΑ dangerous-building registers. Answers can be wrong; check what matters.</p>
     </aside>
   </div>
   <script src="/static/app.js"></script>

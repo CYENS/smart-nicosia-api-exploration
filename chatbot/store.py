@@ -21,6 +21,7 @@ STATE_COLORS: dict[str, str] = {
     "ok": "#16a34a", "no_heartbeat": "#f97316", "not_reported": "#dc2626",
     "place": "#7c3aed", "stop": "#0f766e", "route": "#2563eb", "alarm": "#dc2626",
     "camera": "#0ea5e9",
+    "dangerous": "#dc2626", "needs_repair": "#f59e0b",
 }
 
 

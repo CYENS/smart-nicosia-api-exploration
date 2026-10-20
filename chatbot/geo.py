@@ -83,6 +83,32 @@ def norm(text: str | None) -> str:
     return re.sub(r"\s+", " ", t).strip().lower()
 
 
+GREEK_PAIRS = (("θ", "th"), ("χ", "ch"), ("ψ", "ps"), ("ου", "u"), ("αυ", "av"), ("ευ", "ev"))
+GREEK_LATIN = str.maketrans("αβγδεζικλμνξοπρσςτυφω", "avgdeziklmnxoprsstyfo")
+LATIN_PAIRS = (("ayi", "agi"), ("ou", "u"), ("ei", "i"), ("oi", "i"), ("ai", "e"), ("y", "i"),
+               ("ch", "h"), ("th", "t"), ("ph", "f"), ("f", "v"), ("mp", "b"), ("nt", "d"),
+               ("gk", "g"), ("ng", "g"), ("tz", "z"), ("ts", "z"), ("c", "k"))
+
+
+def loose(text: str | None, eta: str = "i") -> str:
+    """A spelling-tolerant key that matches Greek and Latin forms of a name ('Strovolos' and
+    'ΣΤΡΟΒΟΛΟΣ', 'Ayios Andreas' and 'ΑΓΙΟΣ ΑΝΔΡΕΑΣ'). η reads as `eta`: 'i' fits most names,
+    'e' fits some ('Ledras' for 'ΛΗΔΡΑΣ'), so loose_match tries both."""
+    t = norm(text).replace("η", eta)
+    for a, b in GREEK_PAIRS:
+        t = t.replace(a, b)
+    t = t.translate(GREEK_LATIN)
+    for a, b in LATIN_PAIRS:
+        t = t.replace(a, b)
+    return re.sub(r"(.)\1", r"\1", t)
+
+
+def loose_match(query: str | None, text: str | None) -> bool:
+    """Whether `query` occurs in `text`, ignoring script, accents and common spelling variants."""
+    q = loose(query)
+    return bool(q and text) and (q in loose(text) or q in loose(text, eta="e"))
+
+
 def in_bbox(lat: float, lon: float, bbox=NICOSIA_BBOX) -> bool:
     return bbox[0] <= lon <= bbox[2] and bbox[1] <= lat <= bbox[3]
 

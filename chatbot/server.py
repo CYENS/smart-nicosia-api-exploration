@@ -12,16 +12,21 @@ from contextlib import asynccontextmanager
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from chatbot.agent import Agent, describe_api_error
 from chatbot.city import CityData
+from chatbot.dls import DLS, TILE_ZOOM
+from chatbot.eoa import Registry, layer_features
 from chatbot.geo import Places
 from chatbot.routing import Router
 from chatbot.settings import ROOT, STATIC_DIR, load_settings
+from chatbot.store import STATE_COLORS, legend_for
 from chatbot.tools import vega_lite_validator
+from chatbot.web import WebError
 
 log = logging.getLogger("chatbot")
 
@@ -45,13 +50,19 @@ def _warm_up(agent: Agent) -> None:
 async def lifespan(app: FastAPI):
     load_dotenv(ROOT / ".env")
     settings = load_settings()
-    agent = Agent(settings, CityData(settings), Places(settings), Router(settings))
+    dls = DLS(settings)
+    registers = Registry(settings, dls)
+    agent = Agent(settings, CityData(settings), Places(settings), Router(settings), dls=dls,
+                  registers=registers)
     app.state.agent = agent
     threading.Thread(target=_warm_up, args=(agent,), daemon=True).start()
+    # The registers refresh daily; the first build (parcels, then 3D heights) takes ~2 minutes.
+    threading.Thread(target=registers.refresh_if_needed, daemon=True).start()
     yield
 
 
 app = FastAPI(title="Nicosia digital twin", lifespan=lifespan)
+app.add_middleware(GZipMiddleware, minimum_size=4096)  # the register layer and 3D tiles are big
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 
@@ -75,7 +86,38 @@ def health() -> dict:
         "has_credentials": bool(os.environ.get("ANTHROPIC_API_KEY")
                                 or os.environ.get("ANTHROPIC_AUTH_TOKEN")),
         "places_ready": agent.places.ready,
+        "registers_ready": agent.registers.ready,
+        "registers_3d_linked": agent.registers.linked_3d,
     }
+
+
+@app.get("/api/buildings3d/{z}/{x}/{y}")
+def buildings_3d(z: int, x: int, y: int) -> JSONResponse:
+    """DLS 3D buildings in one z16 tile, for the map's 3D city layer."""
+    if z != TILE_ZOOM or not (0 <= x < 2 ** z and 0 <= y < 2 ** z):
+        raise HTTPException(404, f"tiles are z{TILE_ZOOM} only")
+    try:
+        feats = app.state.agent.dls.tile(x, y)
+    except WebError as e:
+        raise HTTPException(502, str(e)) from None
+    return JSONResponse({"type": "FeatureCollection", "features": feats},
+                        headers={"Cache-Control": "public, max-age=86400"})
+
+
+@app.get("/api/dangerous")
+def dangerous() -> JSONResponse:
+    """Every register building as a map layer (markers, plot outlines and 3D footprints)."""
+    registers: Registry = app.state.agent.registers
+    records = registers.records(wait_s=90)
+    if not records:
+        raise HTTPException(503, "the registers are still loading; try again in a minute")
+    features = layer_features(records, STATE_COLORS)
+    return JSONResponse({
+        "type": "FeatureCollection", "features": features,
+        "meta": {"ref": "eoa_registers", "title": "Dangerous buildings (EOA registers)",
+                 "geometry": "buildings", "count": len(records),
+                 "legend": legend_for(["dangerous", "needs_repair"]),
+                 "sources": registers.sources, "linked_3d": registers.linked_3d}})
 
 
 @app.post("/api/chat")

@@ -18,6 +18,8 @@ from zoneinfo import ZoneInfo
 import anthropic
 
 from chatbot.city import CityData
+from chatbot.dls import DLS
+from chatbot.eoa import Registry
 from chatbot.geo import Places
 from chatbot.prompt import SYSTEM_PROMPT
 from chatbot.routing import Router
@@ -49,6 +51,8 @@ def format_context(context: dict | None, now: datetime) -> str:
     layers = (context or {}).get("layers_on_map")
     if layers:
         lines.append(f"layers_on_map: {', '.join(layers)}")
+    if (context or {}).get("city_3d"):
+        lines.append("city_3d: on")
     errors = (context or {}).get("visual_errors")
     if errors:
         lines.append("visual_errors: " + "; ".join(str(e)[:300] for e in errors[:3]))
@@ -57,11 +61,14 @@ def format_context(context: dict | None, now: datetime) -> str:
 
 class Agent:
     def __init__(self, settings: Settings, city: CityData, places: Places, router: Router,
-                 client: anthropic.AsyncAnthropic | None = None):
+                 client: anthropic.AsyncAnthropic | None = None, dls: DLS | None = None,
+                 registers: Registry | None = None):
         self.settings = settings
         self.city = city
         self.places = places
         self.router = router
+        self.dls = dls
+        self.registers = registers
         self._client = client
         self.tools = TOOL_DEFS + ([WEB_SEARCH] if settings.web_search else [])
         self.conversations: dict[str, Conversation] = {}
@@ -89,7 +96,7 @@ class Agent:
             loop.call_soon_threadsafe(emit, event)
 
         tool_ctx = ToolContext(self.settings, self.city, self.places, self.router, conv.store,
-                               emit_threadsafe, conv.id)
+                               emit_threadsafe, conv.id, self.dls, self.registers)
         conv.messages.append({"role": "user", "content": [
             {"type": "text", "text": format_context(context, self.city.now()) + text}]})
 
