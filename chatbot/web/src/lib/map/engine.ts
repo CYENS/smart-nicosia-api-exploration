@@ -18,7 +18,7 @@ export type LayerSpec = {
   legend?: Record<string, string>; value_field?: string | null; fit?: boolean; labels?: boolean
   askedAt?: number
 }
-type Entry = { spec: LayerSpec; data: FC; ids: string[]; stats: Stats | null; half?: number }
+type Entry = { spec: LayerSpec; data: FC; ids: string[]; stats: Stats | null; half?: number; extruded?: boolean }
 type Stats = { min: number; max: number }
 
 export const RAMP = ["#16a34a", "#84cc16", "#eab308", "#f97316", "#dc2626"]
@@ -54,7 +54,9 @@ type MapUi = {
   city: { on: boolean; status: string }
   registers: { on: boolean; status: string }
   timelapse: TimelapseUi | null
+  me: { loc: MyLocation | null; error: string }
 }
+export type MyLocation = { lat: number; lon: number; accuracy_m: number | null; source: string }
 export const useMapUi = create<MapUi>(() => ({
   ready: false,
   basemap: "night",
@@ -62,6 +64,7 @@ export const useMapUi = create<MapUi>(() => ({
   city: { on: false, status: "" },
   registers: { on: false, status: "" },
   timelapse: null,
+  me: { loc: null, error: "" },
 }))
 const setUi = useMapUi.setState
 
@@ -133,6 +136,21 @@ export function initMap(container: HTMLElement) {
   })
   map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), "bottom-right")
   map.addControl(new maplibregl.ScaleControl({ unit: "metric" }), "bottom-left")
+  geolocate = new maplibregl.GeolocateControl({
+    positionOptions: { enableHighAccuracy: true }, trackUserLocation: false, showUserLocation: false,
+    fitBoundsOptions: { maxZoom: 16.5 },
+  })
+  map.addControl(geolocate, "bottom-right")
+  geolocate.on("geolocate", (pos: GeolocationPosition) => setMyLocation(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy, "device location"))
+  geolocate.on("error", () => setUi({ me: { loc: useMapUi.getState().me.loc, error: "Couldn't read your location here. Right-click the map where you are instead." } }))
+  map.on("contextmenu", (e) => {
+    const button = document.createElement("button")
+    button.type = "button"
+    button.className = "me-btn"
+    button.textContent = "I'm here"
+    const popup = new maplibregl.Popup({ closeButton: false, offset: 6 }).setLngLat(e.lngLat).setDOMContent(button).addTo(map)
+    button.addEventListener("click", () => { setMyLocation(e.lngLat.lat, e.lngLat.lng, NaN, "set on the map"); popup.remove() })
+  })
   // A page opened in a hidden tab measures a 0-size container; keep the canvas in step.
   new ResizeObserver(() => map.resize()).observe(container)
 
@@ -168,6 +186,35 @@ export function setInsets(padding: { top: number; right: number; bottom: number;
 
 export function resetView() {
   map.flyTo({ ...HOME, essential: true })
+}
+
+// "Where am I": the user's position, from the device (the locate button) or set by
+// right-clicking the map. It goes to the assistant with each message, only once shared.
+
+let geolocate: maplibregl.GeolocateControl
+let meMarker: maplibregl.Marker | null = null
+
+export function setMyLocation(lat: number, lon: number, accuracy: number, source: string) {
+  const loc = { lat, lon, accuracy_m: Number.isFinite(accuracy) ? Math.round(accuracy) : null, source }
+  if (!meMarker) {
+    const el = document.createElement("div")
+    el.className = "me-dot"
+    el.title = "You are here"
+    meMarker = new maplibregl.Marker({ element: el }).setLngLat([lon, lat]).addTo(map)
+  } else {
+    meMarker.setLngLat([lon, lat])
+  }
+  setUi({ me: { loc, error: "" } })
+}
+
+export function forgetMyLocation() {
+  meMarker?.remove()
+  meMarker = null
+  setUi({ me: { loc: null, error: "" } })
+}
+
+export function locateMe() {
+  geolocate.trigger()
 }
 
 // The Venetian walls: a faint sodium ring that keeps the old town readable at any zoom.
@@ -268,20 +315,7 @@ function addToMap(entry: Entry) {
   if (spec.style === "buildings_3d") {
     // Real footprints at their DLS heights, plot outlines on the ground, and markers that
     // carry the layer when zoomed out (where the buildings are too small to see).
-    const footprints: any = ["==", ["get", "_kind"], "footprint"]
-    addLayerSafe({
-      id: `${ref}::plots`, type: "line", source: src, filter: ["==", ["get", "_kind"], "parcel"],
-      paint: { "line-color": ["get", "color"], "line-width": ["interpolate", ["linear"], ["zoom"], 14, 0.5, 18, 2.4], "line-opacity": 0.9 },
-    }, entry.ids)
-    addLayerSafe({
-      id: `${ref}::extrude`, type: "fill-extrusion", source: src, filter: footprints,
-      paint: { "fill-extrusion-color": ["get", "color"], "fill-extrusion-height": ["get", "height_m"], "fill-extrusion-base": 0, "fill-extrusion-opacity": 0.93 },
-    }, entry.ids)
-    addLayerSafe({
-      id: `${ref}::hl3d`, type: "fill-extrusion", source: src, filter: hl3dFilter(hlValue),
-      paint: { "fill-extrusion-color": SODIUM, "fill-extrusion-height": ["+", ["get", "height_m"], 0.6], "fill-extrusion-opacity": 0.96 },
-    }, entry.ids)
-    state.hl3d.add(`${ref}::hl3d`)
+    addExtrusions(entry, src, 0)
     addLayerSafe({
       id: `${ref}::circle`, type: "circle", source: src, filter: points,
       paint: {
@@ -292,9 +326,7 @@ function addToMap(entry: Entry) {
         "circle-stroke-opacity": ["interpolate", ["linear"], ["zoom"], 15.5, 1, 17.5, 0.25],
       },
     }, entry.ids)
-    bindPopup(`${ref}::extrude`)
     bindPopup(`${ref}::circle`)
-    syncCityClaims()
     return
   }
 
@@ -331,8 +363,8 @@ function addToMap(entry: Entry) {
 
   if (spec.style === "route") {
     const lines: any = ["==", ["geometry-type"], "LineString"]
-    // A route avoiding dangerous buildings comes with the shortest route: thinner, grey, still.
-    const alt: any = ["==", ["get", "state"], "shortest route"]
+    // A route avoiding dangerous buildings comes with the usual route: thinner, grey, still.
+    const alt: any = ["==", ["get", "state"], "usual route"]
     addLayerSafe({ id: `${ref}::casing`, type: "line", source: src, filter: lines, layout: { "line-join": "round", "line-cap": "round" }, paint: { "line-color": stroke, "line-width": ["case", alt, 6.5, 10], "line-opacity": 0.85 } }, entry.ids)
     addLayerSafe({ id: `${ref}::line`, type: "line", source: src, filter: lines, layout: { "line-join": "round", "line-cap": "round" }, paint: { "line-color": ["get", "color"], "line-width": ["case", alt, 3.5, 5.5] } }, entry.ids)
     addLayerSafe({ id: `${ref}::dash`, type: "line", source: src, filter: ["all", lines, ["!", alt]], layout: { "line-join": "round", "line-cap": "round" }, paint: { "line-color": "#ffffff", "line-width": 2.5, "line-dasharray": [0, 4, 3] } }, entry.ids)
@@ -344,6 +376,9 @@ function addToMap(entry: Entry) {
     if (spec.labels !== false) addLabels(entry, src, points, 1.6)
     return
   }
+
+  // A building layer shown as markers still stands up in 3D once zoomed in to street level.
+  if (data.features.some((f) => f.properties?._kind === "footprint")) addExtrusions(entry, src, 15)
 
   if (spec.style === "pulse") {
     const id = `${ref}::halo`
@@ -361,6 +396,28 @@ function addToMap(entry: Entry) {
   }, entry.ids)
   bindPopup(`${ref}::circle`)
   if (spec.labels) addLabels(entry, src, points, 1.1)
+}
+
+// The 3D part of a building layer: plot outlines, footprints extruded at their DLS heights, and
+// a highlight extrusion for the hovered building. From `minzoom` (0 for 'buildings_3d').
+function addExtrusions(entry: Entry, src: string, minzoom: number) {
+  const ref = entry.spec.ref
+  entry.extruded = true
+  addLayerSafe({
+    id: `${ref}::plots`, type: "line", source: src, minzoom, filter: ["==", ["get", "_kind"], "parcel"],
+    paint: { "line-color": ["get", "color"], "line-width": ["interpolate", ["linear"], ["zoom"], 14, 0.5, 18, 2.4], "line-opacity": 0.9 },
+  }, entry.ids)
+  addLayerSafe({
+    id: `${ref}::extrude`, type: "fill-extrusion", source: src, minzoom, filter: ["==", ["get", "_kind"], "footprint"],
+    paint: { "fill-extrusion-color": ["get", "color"], "fill-extrusion-height": ["get", "height_m"], "fill-extrusion-base": 0, "fill-extrusion-opacity": 0.93 },
+  }, entry.ids)
+  addLayerSafe({
+    id: `${ref}::hl3d`, type: "fill-extrusion", source: src, minzoom, filter: hl3dFilter(hlValue),
+    paint: { "fill-extrusion-color": SODIUM, "fill-extrusion-height": ["+", ["get", "height_m"], 0.6], "fill-extrusion-opacity": 0.96 },
+  }, entry.ids)
+  state.hl3d.add(`${ref}::hl3d`)
+  bindPopup(`${ref}::extrude`)
+  syncCityClaims()
 }
 
 function frameStats(frames: Frames, field: string): Stats | null {
@@ -537,8 +594,8 @@ function setBaseBuildings(visible: boolean) {
 function syncCityClaims() {
   if (!map.getLayer("city3d::fill")) return
   const claimed = new Set<any>(), ghosts = new Set<any>()
-  for (const { spec, data } of state.layers.values()) {
-    if (spec.style !== "buildings_3d") continue
+  for (const { extruded, data } of state.layers.values()) {
+    if (!extruded) continue
     for (const f of data.features) {
       if (f.properties?.bid !== undefined) claimed.add(f.properties.bid)
       if (f.properties?.ghost_bid !== undefined) ghosts.add(f.properties.ghost_bid)
@@ -1003,6 +1060,7 @@ export function mapContext() {
     map_view: { center: [c.lng, c.lat], zoom: map.getZoom() },
     layers_on_map: [...state.layers.values()].map((l) => `${l.spec.ref} (${l.spec.title})`),
     city_3d: CITY.on,
+    user_location: useMapUi.getState().me.loc,
     visual_errors: state.visualErrors.splice(0),
   }
 }

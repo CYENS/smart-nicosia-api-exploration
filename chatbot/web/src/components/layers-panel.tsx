@@ -1,4 +1,4 @@
-import { LayersIcon, MoonIcon, PanelRightCloseIcon, SunIcon, XIcon } from "lucide-react"
+import { LayersIcon, LocateFixedIcon, MoonIcon, PanelRightCloseIcon, SunIcon, XIcon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Field, FieldContent, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field"
@@ -9,7 +9,8 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { useLayout } from "@/lib/layout"
 import type { Basemap } from "@/lib/map/basemap"
 import {
-  RAMP, cityHeights, fmt, removeLayer, setBasemap, setCity3d, showRegisters, useMapUi,
+  RAMP, cityHeights, fmt, forgetMyLocation, locateMe, removeLayer, setBasemap, setCity3d,
+  showRegisters, useMapUi,
   type LayerSummary,
 } from "@/lib/map/engine"
 
@@ -81,6 +82,7 @@ export function LayersPanel() {
   const layers = useMapUi((s) => s.layers)
   const city = useMapUi((s) => s.city)
   const registers = useMapUi((s) => s.registers)
+  const me = useMapUi((s) => s.me)
 
   if (!open) {
     return (
@@ -147,6 +149,24 @@ export function LayersPanel() {
               <FieldDescription>The ΕΟΑ registers of four districts</FieldDescription>
             </FieldContent>
             <Switch id="tg-dangerous" checked={registers.on} onCheckedChange={(on) => showRegisters(on)} />
+          </Field>
+          <Field>
+            <FieldLabel>Your position</FieldLabel>
+            <FieldDescription aria-live="polite">
+              {me.loc ? (
+                <>
+                  {me.loc.source === "device location" ? "From this device" : "Set on the map"}
+                  {me.loc.accuracy_m ? `, within ${me.loc.accuracy_m} m` : ""}, shared with the assistant.{" "}
+                  <button type="button" className="underline underline-offset-3 hover:text-foreground" onClick={forgetMyLocation}>Forget it</button>
+                </>
+              ) : me.error || "Right-click the map where you are, or locate this device."}
+            </FieldDescription>
+            {!me.loc && (
+              <Button variant="outline" size="sm" className="self-start" onClick={locateMe}>
+                <LocateFixedIcon data-icon="inline-start" />
+                Locate me
+              </Button>
+            )}
           </Field>
         </FieldGroup>
         {status.length > 0 && (
