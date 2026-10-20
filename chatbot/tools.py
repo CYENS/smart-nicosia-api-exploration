@@ -50,7 +50,8 @@ HISTORY_KINDS = ["street_light", "parking_sensor", "waste_bin", "air_station"]
 VISUAL_LIBRARIES = ["d3", "plot", "echarts", "three"]
 MAX_VISUAL_DATA_CHARS = 3_000_000
 STATUSES = ["dangerous", "needs_repair"]
-SORTS = ["height", "floors", "volume", "distance", "declared"]
+ZONES = ["urban", "rural"]
+SORTS =["height", "floors", "volume", "distance", "declared"]
 PASS_BY_M = 25  # a register building this close to a route's line is "passed"
 MAX_AVOID_ZONES = 40  # Valhalla caps the total perimeter of polygons to avoid
 # DLS 3D buildings coloured by height (upper bound in m, label, colour); dangerous ones stay red.
@@ -245,14 +246,15 @@ TOOL_DEFS: list[dict] = [
          "none): 'dangerous' (article 15B, επικίνδυνη) or 'needs_repair' (15A, χρήζει "
          "επισκευής). Each is tied to its DLS land parcel and to the DLS 3D buildings on it, so "
          "most have a real height_m and floors. Filter by eoa, status, area (municipality, "
-         "community or parish; Greek or Latin spelling), street, distance from a place, or "
-         "size. Returns counts by EOA, status and area, height and floor statistics, the "
-         "tallest matches (or the nearest, with a place), a layer_ref and a data_ref (one row "
-         "per building: eoa, status, municipality, community, parish, address, height_m, "
-         "floors, building_type, footprint_m2, volume_m3, declared). Show the layer with "
-         "style 'buildings_3d' to extrude the buildings at their real heights (red dangerous, "
-         "amber needing repair), or 'pulse', 'heatmap', or 'columns_3d' with value_field "
-         "floors or height_m.",
+         "community or parish; Greek or Latin spelling), zone (Nicosia's urban areas or rural "
+         "communities), street, file number, plot, distance from a place, or size. Returns "
+         "counts by EOA, status, zone and area, height and floor statistics, the tallest "
+         "matches (or the nearest, with a place), a layer_ref and a data_ref (one row per "
+         "building: eoa, status, municipality, community, parish, zone, file_number, address, "
+         "plot, height_m, floors, building_type, footprint_m2, volume_m3, declared). Show the "
+         "layer with style 'buildings_3d' to extrude the buildings at their real heights (red "
+         "dangerous, amber needing repair), or 'pulse', 'heatmap', or 'columns_3d' with "
+         "value_field floors or height_m.",
          obj({
              "eoa": {"type": "string", "enum": list(eoa.EOAS),
                      "description": "Which district's register (default all four)."},
@@ -261,6 +263,17 @@ TOOL_DEFS: list[dict] = [
                       "description": "Municipality, community or parish, e.g. 'Strovolos', "
                                      "'ΑΓΛΑΝΤΖΙΑ', 'Paralimni'."},
              "street": {"type": "string", "description": "Street name in the address."},
+             "zone": {"type": "string", "enum": ZONES,
+                      "description": "'urban' (urban areas) or 'rural' (communities), as "
+                                     "Nicosia's register groups them; the other registers "
+                                     "don't say, so this keeps to Nicosia."},
+             "file_number": {"type": "string",
+                             "description": "Register file number (ΑΕΟ), e.g. '540/2024'. Only "
+                                            "Nicosia's register publishes them."},
+             "plot": {"type": "string",
+                      "description": "Plot reference: sheet/plan and parcel, e.g. "
+                                     "'21/460512 130', or just a plan or parcel number. Every "
+                                     "number given must match."},
              **NEAR,
              "min_floors": {"type": "integer", "minimum": 1, "maximum": 60},
              "min_height_m": {"type": "number", "minimum": 0, "maximum": 300},
@@ -873,6 +886,9 @@ def h_find_dangerous_buildings(ctx: ToolContext, a: dict) -> dict:
                                          for k in ("municipality", "community", "parish")))
            and (not a.get("street") or loose_match(a["street"], r.get("address"))
                 or loose_match(a["street"], r.get("name")))
+           and (not a.get("zone") or r.get("setting") == a["zone"])
+           and (not a.get("file_number") or eoa.file_matches(a["file_number"], r))
+           and (not a.get("plot") or eoa.plot_matches(a["plot"], r))
            and (r.get("floors") or 0) >= (a.get("min_floors") or 0)
            and (r.get("height_m") or 0) >= (a.get("min_height_m") or 0)]
     center = resolve_point(ctx, a.get("near_place"), a.get("near_lat"), a.get("near_lon"))
@@ -894,7 +910,8 @@ def h_find_dangerous_buildings(ctx: ToolContext, a: dict) -> dict:
                                "volume": lambda r: -(r.get("volume_m3") or 0)}[order])
 
     parts = [eoa.EOAS[a["eoa"]]["name_en"] if a.get("eoa") else "EOA registers"]
-    parts += [a[k] for k in ("status", "area", "street") if a.get(k)]
+    parts += [a[k] for k in ("status", "area", "zone", "street") if a.get(k)]
+    parts += [f"{k.replace('_', ' ')} {a[k]}" for k in ("file_number", "plot") if a.get(k)]
     title = "Dangerous buildings: " + ", ".join(p.replace("_", " ") for p in parts)
     if center:
         title += f" near {center[2]}"
@@ -917,6 +934,7 @@ def h_find_dangerous_buildings(ctx: ToolContext, a: dict) -> dict:
         "total_on_registers": len(records), "matched": len(sel),
         "by_eoa": dict(Counter(r["eoa"] for r in sel).most_common()),
         "by_status": dict(Counter(r["status"] for r in sel).most_common()),
+        "by_zone": dict(Counter(r["setting"] for r in sel if r.get("setting")).most_common()),
         "top_areas": dict(Counter(eoa.place_of(r) for r in sel).most_common(12)),
         "with_3d_building": sum(1 for r in sel if r.get("footprints")),
         "not_on_map": sum(1 for r in sel if r.get("lat") is None),

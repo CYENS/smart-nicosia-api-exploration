@@ -197,9 +197,11 @@ def records_for_registry():
     nic = {"id": "NIC-1", "eoa": "nicosia", "status": "dangerous", "community": "ΣΤΡΟΒΟΛΟΣ",
            "municipality": "ΣΤΡΟΒΟΛΟΣ", "address": "ΣΤΑΣΙΝΟΥ 44", "sheet": "21",
            "plan": "550403", "block": "1", "parcel": "902", "lat": LAT, "lon": LON,
-           "position": "published", "_oids": [101]}
+           "position": "published", "_oids": [101], "file_number": "540/2024",
+           "setting": "rural"}
     old_town = {**nic, "id": "NIC-2", "community": "ΛΕΥΚΩΣΙΑ", "municipality": "ΛΕΥΚΩΣΙΑ",
-                "address": "ΟΝΑΣΑΓΟΡΟΥ 32",
+                "address": "ΟΝΑΣΑΓΟΡΟΥ 32", "file_number": "ΑΕΟ/059/2026, 5.33.15.154.5",
+                "setting": "urban", "parcel": "130",
                 "lat": LAT, "lon": LON + 0.002, "_oids": [102]}
     lar = {"id": "LAR-120", "eoa": "larnaca", "status": "dangerous", "community": "Σκάλα",
            "address": "Γρηγόρη Αυξεντίου", "sheet": "40", "plan": "640302", "block": None,
@@ -359,6 +361,29 @@ def test_most_dangerous_sorts(tmp_path, monkeypatch):
     assert err and "needs near_place" in res["error"]
     res, _ = run_tool(ctx, "find_dangerous_buildings", {"sort": "volume"})
     assert res["items"][0]["id"] == "NIC-1"  # the only plot with a measured volume ranks first
+
+
+def test_filters_by_zone_file_number_and_plot(tmp_path, monkeypatch):
+    ctx = tool_ctx(tmp_path, monkeypatch, [])
+
+    def ids(**a):
+        res, err = run_tool(ctx, "find_dangerous_buildings", a)
+        assert not err, res
+        return sorted(i["id"] for i in res["items"])
+
+    res, _ = run_tool(ctx, "find_dangerous_buildings", {})
+    assert res["by_zone"] == {"rural": 1, "urban": 1}
+    assert ids(zone="urban") == ["NIC-2"] and ids(zone="rural") == ["NIC-1"]
+    assert ids(file_number="540/2024") == ["NIC-1"]
+    assert ids(file_number="59/2026") == ["NIC-2"]  # 'ΑΕΟ/059/2026' as typed without the prefix
+    assert ids(file_number="5.33.15.154.5") == ["NIC-2"]
+    assert ids(file_number="9/2026") == [] and ids(file_number="40/2024") == []
+    assert ids(plot="21/550403 902") == ["NIC-1"]
+    assert ids(plot="550403") == ["NIC-1", "NIC-2"] and ids(plot="130") == ["NIC-2"]
+    assert ids(plot="40/640302 74") == ["LAR-120"]
+    row = next(i for i in res["items"] if i["id"] == "NIC-1")
+    assert row["zone"] == "rural" and row["file_number"] == "540/2024"
+    assert eoa.codes("Φ/Σ 21/4605Ε2, τεμ. 0130") == ["21", "4605E2", "130"]
 
 
 def test_avoid_zone_and_distance_to_a_path():

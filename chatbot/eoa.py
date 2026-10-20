@@ -33,8 +33,8 @@ import urllib.parse
 from collections import Counter
 from collections.abc import Callable
 
-from chatbot.dls import (DISTRICT_CODES, DLS, ParcelRef, area_m2, bbox_of, centroid,
-                         parcel_refs, tiles_for_bbox)
+from chatbot.dls import (DISTRICT_CODES, DLS, GREEK_TO_LATIN, ParcelRef, area_m2, bbox_of,
+                         centroid, parcel_refs, tiles_for_bbox)
 from chatbot.geo import haversine_m
 from chatbot.settings import CACHE_DIR, ROOT, Settings
 from chatbot.web import WebError, get_json, request
@@ -557,6 +557,33 @@ def avoid_zone(r: dict, margin_m: float = 10) -> list[list[float]] | None:
     return [[w, s], [e, s], [e, n], [w, n], [w, s]]
 
 
+def codes(text: str | None) -> list[str]:
+    """The reference numbers in a file number or plot ('ΑΕΟ/059/2026' -> ['59', '2026'],
+    '21/4605Ε2 parcel 130' -> ['21', '4605E2', '130']): words without a digit go, Greek
+    look-alike capitals become Latin and leading zeros drop, as people type them both ways."""
+    out = []
+    for t in re.split(r"[^0-9A-Za-zΑ-Ωα-ω]+", str(text or "").upper().translate(GREEK_TO_LATIN)):
+        if any(c.isdigit() for c in t):
+            out.append((t.lstrip("0") or "0") if t.isdigit() else t)
+    return out
+
+
+def file_matches(query: str, r: dict) -> bool:
+    """Whether a register file number ('540/2024', 'ΑΕΟ/59/2026') is among a record's (some
+    hold several, e.g. '60/2026 5.33.15.154.5'): its numbers in a row, so '59/2026' is not
+    '159/2026'."""
+    q, have = codes(query), codes(r.get("file_number"))
+    return bool(q) and any(have[i:i + len(q)] == q for i in range(len(have) - len(q) + 1))
+
+
+def plot_matches(query: str, r: dict) -> bool:
+    """Whether every number in a plot reference is among the record's sheet, plan, block and
+    parcel ('21/460512 130', 'plan 460512 parcel 130', or a parcel number alone)."""
+    q = codes(query)
+    return bool(q) and set(q) <= set(codes(" ".join(str(r.get(k) or "") for k in
+                                                     ("sheet", "plan", "block", "parcel"))))
+
+
 def place_of(r: dict) -> str:
     return ", ".join(x for x in (r.get("community"), r.get("municipality")) if x) or "?"
 
@@ -569,6 +596,9 @@ def popup(r: dict) -> str:
     if r.get("block"):
         plot += f" block {r['block']}"
     lines.append(f"{plot} parcel {r.get('parcel')}")
+    if r.get("file_number"):
+        zone = {"urban": ", urban area", "rural": ", rural community"}.get(r.get("setting"), "")
+        lines.append(f"File {r['file_number']}{zone}")
     if r.get("height_estimated"):
         lines.append(f"DLS 3D: about {r['height_m']} m (old-town block model)")
     elif r.get("height_m"):
@@ -586,7 +616,8 @@ def row(r: dict, distance_m: float | None = None) -> dict:
     out = {"id": r["id"], "eoa": r["eoa"], "status": r["status"],
            "municipality": r.get("municipality"), "community": r.get("community"),
            "parish": r.get("parish"), "address": r.get("address"), "name": r.get("name"),
-           "setting": r.get("setting"), "height_m": r.get("height_m"), "floors": r.get("floors"),
+           "zone": r.get("setting"), "file_number": r.get("file_number"),
+           "height_m": r.get("height_m"), "floors": r.get("floors"),
            "height_estimated": r.get("height_estimated"), "match_3d": r.get("match_3d"),
            "buildings_3d": r.get("buildings_3d"), "building_type": r.get("building_type"),
            "footprint_m2": r.get("footprint_m2"), "volume_m3": r.get("volume_m3"),
