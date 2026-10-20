@@ -245,8 +245,8 @@ TOOL_DEFS: list[dict] = [
 
 WEB_SEARCH = {
     "type": "web_search_20260209", "name": "web_search", "max_uses": 3,
-    "user_location": {"type": "approximate", "city": "Nicosia", "country": "CY",
-                      "timezone": TIMEZONE},
+    # No "country": the API rejects "CY" as an unsupported country code for web search.
+    "user_location": {"type": "approximate", "city": "Nicosia", "timezone": TIMEZONE},
 }
 
 SCHEMAS = {t["name"]: t["input_schema"] for t in TOOL_DEFS}
