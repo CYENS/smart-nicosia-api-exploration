@@ -1,4 +1,5 @@
-"""The live strip across the top of the page: a few city-wide readouts, cached briefly."""
+"""Live data the page shows without being asked, cached briefly: the strip of city-wide readouts
+across the top, and the street lamps that light the map at night."""
 
 from __future__ import annotations
 
@@ -12,6 +13,7 @@ from typing import TYPE_CHECKING, Any
 from collector.interpret import caqi_band
 
 from chatbot.context import weather
+from chatbot.store import point
 
 if TYPE_CHECKING:
     from chatbot.agent import Agent
@@ -72,3 +74,13 @@ def live_strip(agent: Agent) -> dict:
     if agent.registers.ready:
         out["registers"] = {"buildings": len(agent.registers.records())}
     return out
+
+
+def live_lamps(agent: Agent) -> dict:
+    """Every smart street lamp and whether it is lit, for the map's night lighting."""
+    states = _cached("lamps", CITY_TTL_S, lambda: agent.city.states("Lighting")) or []
+    return {"type": "FeatureCollection", "features": [
+        point(s.device.lon, s.device.lat, {"id": s.device.name, "label": s.label,
+                                           "state": s.interp.state,
+                                           "power_w": s.interp.detail.get("power_w")})
+        for s in states if s.device.lat is not None and s.device.lon is not None]}

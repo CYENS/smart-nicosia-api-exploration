@@ -1,9 +1,13 @@
+import { SunIcon } from "lucide-react"
 import { useEffect, useState, type ReactNode } from "react"
 
+import { MoonGlyph } from "@/components/moon-glyph"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { WallsMark } from "@/components/walls-mark"
 import { send, useChat } from "@/lib/chat"
+import { nicosiaTime, useMapUi } from "@/lib/map/engine"
+import { moonName } from "@/lib/map/sky"
 import { cn } from "@/lib/utils"
 
 type Overview = {
@@ -80,6 +84,29 @@ const Of = ({ children }: { children: ReactNode }) => (
   <span className="text-[14px] font-normal text-muted-foreground">{children}</span>
 )
 
+// The real sky: when it gets dark (or light) next, with the moon's phase. The map follows it.
+function SkyReadout() {
+  const sky = useMapUi((s) => s.skyNow)
+  const { moon, sun } = sky
+  return (
+    <Tooltip>
+      <TooltipTrigger
+        render={<div tabIndex={0} className="hidden shrink-0 cursor-default items-center gap-2.5 border-l border-line px-4 outline-none focus-visible:bg-accent/60 lg:flex" />}
+      >
+        {sky.dark ? <MoonGlyph phase={moon.phase} className="size-6" /> : <SunIcon className="size-5 text-sodium" />}
+        <div className="flex flex-col gap-0.5 leading-none">
+          <span className="font-condensed text-[12px] text-muted-foreground">{sky.dark ? "Light at" : "Dark at"}</span>
+          <span className="font-readout text-[19px] font-semibold">{nicosiaTime(sky.next.at)}</span>
+        </div>
+      </TooltipTrigger>
+      <TooltipContent side="bottom">
+        {moonName(moon.phase)}, {Math.round(moon.lit * 100)}% lit. The sun is {Math.abs(Math.round(sun.altitude))}°{" "}
+        {sun.altitude >= 0 ? "above" : "below"} the horizon.
+      </TooltipContent>
+    </Tooltip>
+  )
+}
+
 export function StatusStrip() {
   const data = useOverview()
   const busy = useChat((s) => s.busy)
@@ -130,6 +157,7 @@ export function StatusStrip() {
         )}
       </div>
 
+      <SkyReadout />
       <div className="hidden shrink-0 items-center gap-3 border-l border-line px-4 sm:flex">
         <span className="flex items-center gap-2 text-[12px] text-muted-foreground">
           <span className="live-dot size-2 rounded-full bg-sodium" aria-hidden="true" />

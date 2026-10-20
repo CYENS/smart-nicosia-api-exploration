@@ -12,9 +12,22 @@ It answers questions for residents and visitors from the live city sensors. It r
 lights, parking, bins, air and noise, traffic counts, city speed and alarms. It also finds places
 from OpenStreetMap, plans walks, drives and tours with Valhalla, and checks the weather with
 Open-Meteo. It draws its answers on the map (markers, pulsing highlights, heatmaps, 3D columns,
-animated routes, reachable areas, callouts) and as Vega-Lite charts in the chat.
+animated routes, reachable areas, callouts) and as Vega-Lite charts on a stage under the map.
+
+The page is a control room for the city, built for showing it to people. The map fills the
+screen under a live strip of city readouts (lamps lit, free parking, full bins, air, weather,
+the registers, and when it next gets dark); click one to ask about it. The conversation floats
+on the left and shows the assistant's work as a timed trace. Charts and custom visuals land on
+the stage, with a filmstrip of earlier ones; the map panel on the right holds the base map, the
+3D city, the registers, your position and the legends. Ctrl K (Cmd K) lists prepared questions.
 
 It also has:
+
+- **The real sky.** The map follows the sun and moon over Nicosia (SunCalc): the Night base map
+  from civil dusk to civil dawn, so the switch moves through the year; 3D buildings lit from where
+  the sun (or, at night, the moon, as bright as its phase) really is; and after dark the city's
+  street lamps glow, live from the sensors. During a time-lapse the sky follows the replay's
+  clock, so lamps come on at dusk in the replay too. Night or Day can also be pinned.
 
 - **Time-lapses.** It can replay the last 3 days of lamps, parking, bins or air on the map,
   with a time slider, play/pause and speed controls.
@@ -34,10 +47,11 @@ It also has:
 - **The 3D city.** The Department of Lands and Surveys (DLS) 3D model of every building in
   Cyprus, with roof heights, floors, use and volume. It streams in as the map moves, coloured by
   height, and Claude can describe the buildings around any place ("how tall is it around
-  Eleftheria Square?"). Both work without an API key from the toggles at the top right of the
-  map. See [docs/dangerous-buildings-and-3d.md](docs/dangerous-buildings-and-3d.md).
-- **Where am I, and safer walks.** Share your position with the locate button (top left) or by
-  right-clicking the map and choosing "I'm here"; then "me" and "here" work in any question.
+  Eleftheria Square?"). Both work without an API key from the switches in the map panel.
+  See [docs/dangerous-buildings-and-3d.md](docs/dangerous-buildings-and-3d.md).
+- **Where am I, and safer walks.** Share your position with "Locate me" in the map panel (or the
+  locate button by the zoom controls), or by right-clicking the map and choosing "I'm here";
+  then "me" and "here" work in any question.
   Walking routes report the register buildings they pass, and can avoid them: the map shows the
   safer route beside the usual one, with the buildings marked.
 
@@ -95,8 +109,12 @@ are in `.env.example`: `CHATBOT_MODEL`, `CHATBOT_EFFORT` (default `medium`),
   to its parcel and its 3D buildings, and caches the result. If a register is unreachable (or
   asks for a CAPTCHA, which Nicosia's does after a few quick requests) it uses the last good
   copy, then the seed in `data/eoa_registers_seed.json`. The first build takes about 2 minutes.
-- [chatbot/static/](chatbot/static/) is the page: MapLibre GL with OpenFreeMap tiles, vega-embed
-  and marked. There is no build step.
+- [chatbot/web/](chatbot/web/) is the page's source: React, Vite, Tailwind and shadcn/ui, with
+  MapLibre GL (OpenFreeMap tiles), Vega-Lite and SunCalc. Its build is committed in
+  [chatbot/static/](chatbot/static/), so running the chatbot needs no Node; after changing the
+  page, run `npm install` and `npm run build` in `chatbot/web` (see its README for live editing).
+- [chatbot/overview.py](chatbot/overview.py) feeds the live strip (`/api/overview`) and the
+  street lamps that glow on the map at night (`/api/lamps`), cached for a minute.
 - Caches (device attributes, the OSM places index, the Vega-Lite schema) live in
   `data/chatbot_cache/`. The places index takes about a minute to build from Overpass on first
   start; until then place search falls back to Photon.

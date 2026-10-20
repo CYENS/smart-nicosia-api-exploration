@@ -82,6 +82,24 @@ const BASE_3D: LayerSpecification = {
   },
 }
 
+// Street lighting on every street: a faint warm wash along the roads, shown only after dark
+// (the map engine switches it on at dusk).
+const STREET_GLOW: LayerSpecification = {
+  id: "street-glow",
+  type: "line",
+  source: "openmaptiles",
+  "source-layer": "transportation",
+  minzoom: 12,
+  filter: ["match", ["get", "class"], ["primary", "secondary", "tertiary", "minor", "trunk", "service"], true, false],
+  layout: { "line-join": "round", "line-cap": "round", visibility: "none" },
+  paint: {
+    "line-color": "#ffb45a",
+    "line-opacity": ["interpolate", ["linear"], ["zoom"], 12, 0.1, 14, 0.17, 16, 0.2, 18, 0.18],
+    "line-width": ["interpolate", ["exponential", 2], ["zoom"], 12, 3, 14, 7, 16, 22, 18, 70],
+    "line-blur": ["interpolate", ["exponential", 2], ["zoom"], 12, 3, 14, 6, 16, 18, 18, 52],
+  },
+}
+
 function recolour(layer: LayerSpecification): LayerSpecification {
   const over = EXACT[layer.id] ?? PREFIX.find(([p]) => layer.id.startsWith(p))?.[1]
   if (!over || !("paint" in layer)) return layer
@@ -101,7 +119,7 @@ export function transformStyle(basemap: Basemap) {
     const layers = next.layers.map(recolour)
     // The 3D buildings go under the first label, so street names stay on top.
     const firstLabel = layers.findIndex((l) => l.type === "symbol")
-    layers.splice(firstLabel < 0 ? layers.length : firstLabel, 0, BASE_3D)
+    layers.splice(firstLabel < 0 ? layers.length : firstLabel, 0, STREET_GLOW, BASE_3D)
     return { ...next, layers }
   }
 }

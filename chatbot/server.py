@@ -22,7 +22,7 @@ from chatbot.city import CityData
 from chatbot.dls import DLS, TILE_ZOOM
 from chatbot.eoa import Registry, layer_features
 from chatbot.geo import Places
-from chatbot.overview import live_strip
+from chatbot.overview import live_lamps, live_strip
 from chatbot.routing import Router
 from chatbot.settings import ROOT, STATIC_DIR, load_settings
 from chatbot.store import STATE_COLORS, legend_for
@@ -97,6 +97,12 @@ def health() -> dict:
 def overview() -> dict:
     """The live strip: lamps lit, free parking, full bins, air, weather and the registers."""
     return live_strip(app.state.agent)
+
+
+@app.get("/api/lamps")
+def lamps() -> JSONResponse:
+    """The smart street lamps and whether each is lit, for the map's night lighting."""
+    return JSONResponse(live_lamps(app.state.agent), headers={"Cache-Control": "max-age=60"})
 
 
 @app.get("/api/buildings3d/{z}/{x}/{y}")
