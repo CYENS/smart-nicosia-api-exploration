@@ -418,3 +418,24 @@ def test_plan_route_avoids_dangerous_buildings(tmp_path, monkeypatch):
     feats = ctx.store.layers[res["layer_ref"]]["features"]
     assert [f["properties"]["state"] for f in feats[:2]] == ["usual route", "route"]
     assert any(f["properties"].get("n") == "!" and f["properties"]["id"] == "NIC-1" for f in feats)
+
+
+def test_namesakes_prefer_the_mapped_landmark_then_the_nearest():
+    from chatbot.geo import Places, rank_namesakes
+
+    gate = [{"name": "Famagusta Gate", "category": "attraction",  # a stray node 2.5 km east
+             "lat": 35.172799, "lon": 33.398607},
+            {"name": "Famagusta Gate", "category": "park", "lat": 35.17303, "lon": 33.371542},
+            {"name": "Famagusta Gate", "category": "historic_site",
+             "lat": 35.174238, "lon": 33.371194}]
+    east = (35.145, 33.41)  # nearer the stray than the gate
+    assert rank_namesakes(gate, east)[-1]["category"] == "attraction"
+    cafes = [{"name": "Starbucks", "category": "cafe", "lat": 35.163139, "lon": 33.358759},
+             {"name": "Starbucks", "category": "cafe", "lat": 35.172142, "lon": 33.36121}]
+    assert rank_namesakes(cafes, (35.1707, 33.36))[0]["lat"] == 35.172142
+    assert rank_namesakes(cafes, (35.16, 33.358))[0]["lat"] == 35.163139
+
+    places = Places(Settings())
+    places._places = gate
+    assert places.geocode("famagusta gate")[0]["kind"] in ("park", "historic_site")
+    assert places.named("Famagusta Gate", east)[0]["lon"] < 33.38
