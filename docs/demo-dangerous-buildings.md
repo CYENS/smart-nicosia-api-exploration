@@ -1,10 +1,19 @@
 # Demo script: dangerous buildings
 
-A 12-question walk through the dangerous-building registers, the DLS 3D city and safer
-routing, in five acts. Every question below was run against the chatbot on 20 Oct 2026 (21:45
-to 22:15, after dark). The expected numbers are what came back then. The Limassol, Larnaca
-and Famagusta registers and the camera counts are live, so a later run can differ slightly;
-Nicosia's register is a saved copy and won't move.
+A 15-question walk through the dangerous-building registers, the DLS 3D city and safer
+routing, in six acts. Every question below was run against the chatbot on 20 Oct 2026 (21:45
+to 23:10, after dark). The expected numbers are what came back then. The Limassol, Larnaca
+and Famagusta registers and the camera counts are live, so a later run can differ slightly.
+
+**Nicosia's numbers will change.** The chatbot now reads Nicosia's live register
+(ndlgo.org.cy/en/hazardousbldsmap/), which lists 806 buildings (743 dangerous, 63 needing
+repair). The site blocks the app after a few requests, so until the app gets through on a
+daily refresh it answers from its saved copy of 711, and the numbers below are from that copy.
+Once it has the live register, expect 1,020 buildings in all (instead of 925) and new counts
+in questions 1, 2, 9 and 13. The live list page shows what to expect for Nicosia: Nicosia
+city 211 (178 dangerous, 33 needing repair), Strovolos 58, Palaichori Morphou 32, Kato
+Moni 29, Kakopetria 24, Spilia 23; 336 in urban areas and 470 in rural communities. Check
+which copy it has with question 1: it says whether Nicosia's register is live or saved.
 
 ## Before you start
 
@@ -121,6 +130,29 @@ The status line under the map then says your position is shared with the assista
 - Answers in Greek, with the buildings in 3D.
 - Expect: 20 buildings, 16 dangerous and 4 needing repair; the tallest NIC-76 on
   Arrenagogeiou 8, 11.2 m.
+
+## Act 6: search like the register site
+
+The filters NDLGO's own pages offer: urban areas against communities, a file number (ΑΕΟ), a
+plot.
+
+**13. In Nicosia's register, how many buildings are in urban areas and how many in rural communities? Chart it by status.**
+
+- Chart: buildings by zone and status.
+- Expect: 309 in urban areas (268 dangerous, 41 needing repair) and 402 in rural communities
+  (388 and 14). Urban ones are taller: median 10.5 m against 6.6 m.
+- Talking point: almost every rural case is "dangerous"; repairs are an urban story.
+
+**14. Find register file 540/2024 and show it on the map.**
+
+- Map: one red building in 3D, in Alambra.
+- Expect: Grigori Avxentiou, plot 39/1102V01 parcel 9, one floor and about 4 m.
+
+**15. Which register buildings are on plan 21/460512? Show them in 3D.**
+
+- Map: nine red buildings in the old town, in Trypiotis parish.
+- Expect: 9, all dangerous, including the two 12-floor, 33.6 m towers on Konstantinou
+  Palaiologou and the 8-floor block at Ledras and Onasagorou.
 
 ## Avoid during the demo
 
