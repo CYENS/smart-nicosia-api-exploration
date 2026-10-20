@@ -1,40 +1,40 @@
 analytics_id,name,stream_name,status,line_names,lat,lon,note
-34,Kyriakou Matsi cam05,Kyriakou Matsi cam05,started,KM Daidalou OUT V | KM Daidalou IN V,,,
-45,Makariou Avenue cam02,Makariou Avenue cam02,started,MK Leventi (storm) V | MK Evagorou (istorm) V,,,
-48,Makariou Avenue cam03,Makariou Avenue cam03,started,MK istorm P,,,
-49,Makariou Avenue cam03,Makariou Avenue cam03,started,MK istorm OUT V | MK istorm IN V,,,
-57,Stasikratous cam34,Stasikratous cam34,started,ST Pathway cam34 P,,,
-59,Stasikratous cam26,Stasikratous cam26,stopped,ST Pathway cam26 P,,,
-62,Stasikratous (Mnasiadou) cam05,Stasikratous (Mnasiadou) cam05,started,ST Mnasiadou to Zinas Kanther OUT V | ST Mnasiadou to Zinas Kanther P | ST Mnasiadou to Zinas Kanther IN V,,,
-64,Stasikratous (Theophanous Theodotou) cam10,Stasikratous (Theophanous Theodotou) cam10,started,ST Theophanous Theodotou P,,,
-69,Stasikratous cam10,Stasikratous cam10,started,ST Promitheos IN V | ST Stasikratous cam10 P,,,
-83,Makariou Avenue Cam 12 - LPR,Makariou Avenue Cam 12 - LPR,started,MK (From Police St.) V OUT | MK (From Police St.) IN,,,
-84,Anastasiou Leventi 2,Anastasiou Leventi 2,started,A. Leventi (Entry) IN,,,
-85,Anastasiou Leventi (Ethniki Froura),Anastasiou Leventi (Ethniki Froura),started,A. Leventi (Ethniki Froura) IN,,,
-86,Makariou Entrance (i-storm) LRP,Makariou Entrance (i-storm) LRP,started,Makariou (i-storm) LPR  OUT | Makariou (i-storm) LPR IN,,,
-87,Kallipoleos,Kallipoleos,started,Kallipoleos V,,,
-88,Kallipoleos (Agora Agiou Antoniou),Kallipoleos (Agora Agiou Antoniou),started,Agora Agiou Ant. (Digeni Akrita pros Aglantzia) | Agora Agiou Ant. (Pros Kallipoleos) | Agora Agiou Ant. (From Evgenias/Theodotou) | Agora Agiou Ant. (Digenis Akritas pros Kentro),,,
-89,Kallipoleos (Ipatias),Kallipoleos (Ipatias),started,Ypatias (from Chalkokondyli) V | Ypatias (to Kallipoleos) V,,,
-90,Makariou (Annis Komninis),Makariou (Annis Komninis),started,MK Annis Komninis,,,
-91,Makariou (Arnaldas),Makariou (Arnaldas),started,MK Arnaldas,,,
-92,Makariou (Mpoumpoulinas),Makariou (Mpoumpoulinas),started,MK Mpoumpoulinas,,,
-97,Ledras (odofragma),Ledras (odofragma),started,Ledras (Odofragma),,,
-98,Ledras End (Hellenic Bank) Vehicles,Ledras End (Hellenic Bank) Vehicles,started,Ledras End (Hellenic Bank),,,
-99,Ledras End (Hellenic Bank) People,Ledras End (Hellenic Bank) People,started,Ledras End (Hellenic Bank) People,,,
-100,Ledras St. cam05 (H&M),Ledras St. cam05 (H&M),started,Ledras St. (H&M),,,
-102,Ledras Square,Ledras Square,started,Ledras Start (Square) | Rigenis Start (Ledras Square),,,
-103,Onasagorou (from Sofocleous),Onasagorou (from Sofocleous),started,Onasagorou (from Sofocleous),,,
-104,Faneromenis Church (from Neokleous),Faneromenis Church (from Neokleous),started,Faneromenis Church (from Neokleous),,,
-105,Onasagorou (from Ipokratous),Onasagorou (from Ipokratous),started,Onasagorou (from Ipokratous) | Ledras (from Ipokratous),,,
-106,Ermou,Ermou,started,Ermou,,,
-107,Ethnikis Frouras,Ethnikis Frouras,started,Ethnikis Frouras | Arch. Makariou (Ethnikis Froura Gonia),,,
-108,CYENS Centre,CYENS Centre,started,CYENS Centre (Platia Dimarxias) | CYENS Centre (from Alkiviadis),,,
-109,Onasagorou Start (Square),Onasagorou Start (Square),started,Onasagorou Start (Square),,,
-110,Ektoros End (Athinas Street cam),Ektoros End (Athinas Street cam),started,Ektoros End,,,
-111,Ledras St. (from Lykourgou),Ledras St. (from Lykourgou),started,Ledras (from Lykourgou),,,
-112,Arxaia (Next to Nicosia Mun.),Arxaia (Next to Nicosia Mun.),started,Arxaia (Next to Nicosia Mun.),,,
-114,Rigainis street,Rigainis street,started,Rigenis Street,,,
-115,Voulgaroktonou,Voulgaroktonou,started,Voulgaroktonou,,,
-117,Stasikratous (Mnasiadou crosspoint),Stasikratous (Mnasiadou crosspoint),started,Stasikratous (Mnasiadou crosspoint),,,
-118,Trikoupi Cam11,Trikoupi Cam11,started,Trikoupi (cam 11 from OXI),,,
-119,Trikoupi Cam17,Trikoupi Cam17,started,Trikoupi (cam17 from car park),,,
+34,Kyriakou Matsi cam05,Kyriakou Matsi cam05,started,KM Daidalou OUT V | KM Daidalou IN V,35.157531,33.353356,intersection: Daidalou x Kyriakou Matsi (OSM way node); fits between device cams 03 and 06. high
+45,Makariou Avenue cam02,Makariou Avenue cam02,started,MK Leventi (storm) V | MK Evagorou (istorm) V,35.168816,33.359208,intersection: Makariou x Evagorou x Leventi (shared OSM node); iStorm shop ~30 m away. high
+48,Makariou Avenue cam03,Makariou Avenue cam03,started,MK istorm P,35.168639,33.359166,iStorm shop (OSM POI) on Makariou Ave; same camera as 49. medium-high
+49,Makariou Avenue cam03,Makariou Avenue cam03,started,MK istorm OUT V | MK istorm IN V,35.168639,33.359166,iStorm shop (OSM POI) on Makariou Ave; same camera as 48. medium-high
+57,Stasikratous cam34,Stasikratous cam34,started,ST Pathway cam34 P,,,not placed: no point found for this street/pathway in OSM; left blank
+59,Stasikratous cam26,Stasikratous cam26,stopped,ST Pathway cam26 P,,,not placed: no point found for this street/pathway in OSM; left blank
+62,Stasikratous (Mnasiadou) cam05,Stasikratous (Mnasiadou) cam05,started,ST Mnasiadou to Zinas Kanther OUT V | ST Mnasiadou to Zinas Kanther P | ST Mnasiadou to Zinas Kanther IN V,35.166099,33.360401,"intersection Stasikratous x Mnasiadou (OSM); cam05 assumed at the crosspoint, looking to Zinas Kanther. low-medium"
+64,Stasikratous (Theophanous Theodotou) cam10,Stasikratous (Theophanous Theodotou) cam10,started,ST Theophanous Theodotou P,35.166819,33.358507,intersection Stasikratous x Theofanous Theodotou (OSM); matches device cam03 (Th. Dervi/Th. Theodotou) spot. medium
+69,Stasikratous cam10,Stasikratous cam10,started,ST Promitheos IN V | ST Stasikratous cam10 P,35.166577,33.359515,intersection Stasikratous x Promitheos (OSM; line 'ST Promitheos IN V'). medium
+83,Makariou Avenue Cam 12 - LPR,Makariou Avenue Cam 12 - LPR,started,MK (From Police St.) V OUT | MK (From Police St.) IN,35.164485,33.364002,south-east end of Makariou Ave next to Central Police Station ('from Police St.'); no exact junction found. low-medium
+84,Anastasiou Leventi 2,Anastasiou Leventi 2,started,A. Leventi (Entry) IN,35.168900,33.359000,Anastasiou Leventi near its Makariou end ('Entry'); street is only ~150 m. low
+85,Anastasiou Leventi (Ethniki Froura),Anastasiou Leventi (Ethniki Froura),started,A. Leventi (Ethniki Froura) IN,35.169191,33.358784,Anastasiou Leventi midpoint (OSM way node); 'Ethniki Froura' not found in OSM. low
+86,Makariou Entrance (i-storm) LRP,Makariou Entrance (i-storm) LRP,started,Makariou (i-storm) LPR  OUT | Makariou (i-storm) LPR IN,35.168639,33.359166,iStorm shop (OSM POI) at Makariou entrance; same spot as feeds 48/49. medium-high
+87,Kallipoleos,Kallipoleos,started,Kallipoleos V,,,not placed: no point found for this street/pathway in OSM; left blank
+88,Kallipoleos (Agora Agiou Antoniou),Kallipoleos (Agora Agiou Antoniou),started,Agora Agiou Ant. (Digeni Akrita pros Aglantzia) | Agora Agiou Ant. (Pros Kallipoleos) | Agora Agiou Ant. (From Evgenias/Theodotou) | Agora Agiou Ant. (Digenis Akritas pros Kentro),35.167695,33.371062,intersection Kallipoleos x Digeni Akrita Ave (start of Kallipoleos); Agora Agiou Antoniou lines reference Digeni Akrita/Evgenias/Kallipoleos but the market itself is not in OSM. low-medium
+89,Kallipoleos (Ipatias),Kallipoleos (Ipatias),started,Ypatias (from Chalkokondyli) V | Ypatias (to Kallipoleos) V,35.162667,33.373942,intersection Ypatias x Kallipoleos (shared OSM node). medium-high
+90,Makariou (Annis Komninis),Makariou (Annis Komninis),started,MK Annis Komninis,35.165340,33.363437,"same camera as device cam10 (Makariou Avenue cam10, 'MK Annis Komninis P'); this feed counts vehicles. high"
+91,Makariou (Arnaldas),Makariou (Arnaldas),started,MK Arnaldas,35.168821,33.359264,"same camera as device cam04 (Makariou Avenue cam04, 'MK Arnaldas P'); this feed counts vehicles. high"
+92,Makariou (Mpoumpoulinas),Makariou (Mpoumpoulinas),started,MK Mpoumpoulinas,35.165995,33.362583,"same camera as device cam08 (Makariou Avenue cam08, 'MK Mpoumpoulinas P'); this feed counts vehicles. high"
+97,Ledras (odofragma),Ledras (odofragma),started,Ledras (Odofragma),35.174542,33.361441,"Ledra Street crossing checkpoint node (OSM), 'odofragma' = barricade. high"
+98,Ledras End (Hellenic Bank) Vehicles,Ledras End (Hellenic Bank) Vehicles,started,Ledras End (Hellenic Bank),35.174200,33.361420,north end of Ledras (last block before checkpoint); Hellenic Bank branch not in OSM. low
+99,Ledras End (Hellenic Bank) People,Ledras End (Hellenic Bank) People,started,Ledras End (Hellenic Bank) People,35.174200,33.361420,north end of Ledras (last block before checkpoint); same spot as 98. low
+100,Ledras St. cam05 (H&M),Ledras St. cam05 (H&M),started,Ledras St. (H&M),35.171726,33.361345,H&M shop node (OSM) on Ledras. high
+102,Ledras Square,Ledras Square,started,Ledras Start (Square) | Rigenis Start (Ledras Square),35.170300,33.361050,south end of Ledras at Rigenis junction / Eleftheria Square. medium
+103,Onasagorou (from Sofocleous),Onasagorou (from Sofocleous),started,Onasagorou (from Sofocleous),35.172212,33.362378,intersection Onasagorou x Sophokleous (shared OSM node). high
+104,Faneromenis Church (from Neokleous),Faneromenis Church (from Neokleous),started,Faneromenis Church (from Neokleous),35.173481,33.362508,Faneromeni Church (OSM building centroid); 'from Neokleous' is a counting direction. medium
+105,Onasagorou (from Ipokratous),Onasagorou (from Ipokratous),started,Onasagorou (from Ipokratous) | Ledras (from Ipokratous),35.170600,33.361260,midpoint between Onasagorou x Ippokratous and Ledras x Ippokratous (~25 m apart); line names mention both. medium
+106,Ermou,Ermou,started,Ermou,,,not placed: no point found for this street/pathway in OSM; left blank
+107,Ethnikis Frouras,Ethnikis Frouras,started,Ethnikis Frouras | Arch. Makariou (Ethnikis Froura Gonia),35.159729,33.372438,intersection Archbishop Makarios Ave x Ethnikis Frouras (shared OSM node). medium-high
+108,CYENS Centre,CYENS Centre,started,CYENS Centre (Platia Dimarxias) | CYENS Centre (from Alkiviadis),35.173689,33.365034,CYENS building centroid (OSM) near Dimarchias Square / Alkiviadou. medium-high
+109,Onasagorou Start (Square),Onasagorou Start (Square),started,Onasagorou Start (Square),35.170113,33.361215,western start of Onasagorou by Ledras / Eleftheria Square. medium
+110,Ektoros End (Athinas Street cam),Ektoros End (Athinas Street cam),started,Ektoros End,35.175050,33.371310,intersection Ektoros x Athinas (shared OSM node); 'End' of Ektoros. medium
+111,Ledras St. (from Lykourgou),Ledras St. (from Lykourgou),started,Ledras (from Lykourgou),35.172533,33.361321,intersection Ledras x Lykourgou (shared OSM node). high
+112,Arxaia (Next to Nicosia Mun.),Arxaia (Next to Nicosia Mun.),started,Arxaia (Next to Nicosia Mun.),35.173700,33.366150,"next to Nicosia Town Hall (OSM, Dimarchias Sq.); 'Arxaia' not found. low"
+114,Rigainis street,Rigainis street,started,Rigenis Street,35.170548,33.360050,midpoint of Rigenis between Ledras and Voulgaroktonou; no counting-point detail. low
+115,Voulgaroktonou,Voulgaroktonou,started,Voulgaroktonou,35.173159,33.359839,midpoint of Voulgaroktonou (OSM way node) between Rigenis and Ermou. low
+117,Stasikratous (Mnasiadou crosspoint),Stasikratous (Mnasiadou crosspoint),started,Stasikratous (Mnasiadou crosspoint),35.166099,33.360401,intersection Stasikratous x Mnasiadou (shared OSM node). high
+118,Trikoupi Cam11,Trikoupi Cam11,started,Trikoupi (cam 11 from OXI),35.169666,33.364507,Trikoupi at OXI market junction ('from OXI'). medium
+119,Trikoupi Cam17,Trikoupi Cam17,started,Trikoupi (cam17 from car park),35.174000,33.364150,Trikoupi next to public car park (OSM) in the northern block. low
