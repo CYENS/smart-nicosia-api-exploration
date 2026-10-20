@@ -150,6 +150,7 @@ export function initMap(container: HTMLElement) {
     maxPitch: 75,
     attributionControl: { compact: true },
   })
+  ;(window as any).__map = map // a hook for scripted demos and browser tests (e.g. map.project)
   map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), "bottom-right")
   map.addControl(new maplibregl.ScaleControl({ unit: "metric" }), "bottom-left")
   geolocate = new maplibregl.GeolocateControl({
