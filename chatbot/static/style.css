@@ -195,6 +195,7 @@ details.thinking div { white-space: pre-wrap; padding: 4px 0 4px 12px; border-le
   background: var(--panel); color: var(--text); border: 1px solid var(--border); border-radius: 14px;
   padding: 8px 10px; box-shadow: var(--shadow);
 }
+.timeline[hidden] { display: none; }
 .timeline button { border: 0; background: transparent; color: var(--text); }
 #tl-play {
   width: 36px; height: 36px; flex: none; border-radius: 50%; background: var(--accent); color: var(--accent-text);
