@@ -16,6 +16,7 @@ export const TOOL_LABELS: Record<string, string> = {
   geocode: "Looking up a place", find_places: "Searching places", plan_route: "Planning the route",
   reachable_area: "Working out the reachable area", show_on_map: "Drawing on the map",
   find_dangerous_buildings: "Reading the dangerous-building registers",
+  where_am_i: "Working out where you are",
   get_buildings_3d: "Reading the DLS 3D buildings",
   map_fly_to: "Moving the map", map_callouts: "Adding callouts", map_clear: "Clearing the map",
   show_chart: "Drawing a chart", show_visual: "Drawing a custom visual", web_search: "Searching the web",

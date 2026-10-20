@@ -38,6 +38,8 @@ export const QUESTION_GROUPS: QuestionGroup[] = [
     title: "On foot",
     icon: Footprints,
     questions: [
+      "Where am I, and are there dangerous buildings near me?",
+      "Walk me to the Cyprus Museum, avoiding the dangerous buildings",
       "Plan a 3-hour walking tour of museums in the old town, starting at Eleftheria Square",
       "What can I reach on foot in 10 and 20 minutes from Eleftheria Square?",
     ],
@@ -45,5 +47,5 @@ export const QUESTION_GROUPS: QuestionGroup[] = [
 ]
 
 // One question per group opens the empty conversation: the ones that land best in a demo.
-const STARTER_PICKS = [2, 0, 0, 1]
+const STARTER_PICKS = [2, 0, 0, 3]
 export const STARTERS = QUESTION_GROUPS.map((g, i) => ({ icon: g.icon, group: g.title, question: g.questions[STARTER_PICKS[i]] }))

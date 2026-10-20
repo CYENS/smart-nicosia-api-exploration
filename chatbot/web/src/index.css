@@ -248,6 +248,27 @@
 .maplibregl-popup-anchor-left .maplibregl-popup-tip { border-right-color: var(--popover); }
 .maplibregl-popup-anchor-right .maplibregl-popup-tip { border-left-color: var(--popover); }
 
+/* You are here: blue, so it never reads as a live (sodium) or danger (signal) mark. */
+.me-dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #3d8bff;
+  border: 3px solid #e4ebf4;
+  box-shadow: 0 0 0 7px rgb(61 139 255 / 0.28), 0 1px 4px rgb(0 0 0 / 0.5);
+}
+.me-btn {
+  border: 0;
+  border-radius: 6px;
+  background: #e4ebf4;
+  color: var(--night);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 5px 11px;
+  cursor: pointer;
+}
+.me-btn:hover { background: #ffffff; }
+
 /* Map callouts the assistant places. */
 .callout {
   position: relative;

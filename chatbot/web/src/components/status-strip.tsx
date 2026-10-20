@@ -119,7 +119,7 @@ export function StatusStrip() {
           </Readout>
         )}
         {(loading || d.weather) && (
-          <Readout label={d.weather?.sky ?? "Weather"} question="Is it a good time for a walk around the old town?" loading={loading}>
+          <Readout label={d.weather ? d.weather.sky.replace(/^./, (c) => c.toUpperCase()) : "Weather"} question="Is it a good time for a walk around the old town?" loading={loading}>
             {d.weather ? Math.round(d.weather.temp_c) : ""}<Of>°C</Of>
           </Readout>
         )}
