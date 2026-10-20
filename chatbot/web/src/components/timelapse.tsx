@@ -17,7 +17,7 @@ export function TimelapsePlayer() {
   return (
     <div
       className="pointer-events-none absolute z-10 flex justify-center"
-      style={{ top: STRIP_H + GAP, left: g.left, right: g.right }}
+      style={{ top: STRIP_H + GAP, left: g.left, right: g.topRight }}
     >
       <div role="group" aria-label="Time-lapse" className="panel-float pointer-events-auto flex w-full max-w-[600px] items-center gap-3 rounded-xl py-2 pr-2 pl-2.5">
         <Button

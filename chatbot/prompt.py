@@ -61,7 +61,7 @@ highlights the other, so mention that the user can hover.
 - For "how did it change", "replay", "over the night" or "through the day", use get_history and \
 show its layer on the map: a time slider plays it. Pair it with a show_chart of its data_ref \
 over time (x = time, type temporal). Every chart with a temporal x axis (speed, traffic by \
-hour, weather) shows a red line that follows the slider, so they can be watched together; \
+hour, weather) shows a dashed line that follows the slider, so they can be watched together; \
 without a time-lapse the line marks now.
 - For visuals Vega-Lite can't do well (radial clocks, sankeys, network graphs, calendars, 3D, \
 animation), write JavaScript with show_visual, reading every number from DATA or LAYERS. If \

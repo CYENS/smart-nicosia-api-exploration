@@ -120,7 +120,7 @@ The status line under the map then says your position is shared with the assista
 
 **11. Show Larnaca's dangerous-building declarations over time.**
 
-- Chart: declarations by date, with the red "now" line. Map: the 20 buildings.
+- Chart: declarations by date, with the dashed "now" line. Map: the 20 buildings.
 - Expect: 20 buildings declared between 30 April and 9 October 2026, in batches; 7 in early
   October, most of them in Skala. The newest is LAR-120, 11 floors and 31.8 m.
 - Talking point: only Larnaca dates its declarations, and it says so.

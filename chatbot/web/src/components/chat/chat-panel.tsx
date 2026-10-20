@@ -14,6 +14,7 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { newChat, useChat } from "@/lib/chat"
+import { useGeometry } from "@/lib/geometry"
 import { useLayout } from "@/lib/layout"
 
 const SOURCES = [
@@ -34,6 +35,7 @@ export function ChatPanel() {
   const turns = useChat((s) => s.turns)
   const busy = useChat((s) => s.busy)
   const noKey = useCredentialsMissing()
+  const { desktop, chatW } = useGeometry()
 
   if (!open) {
     return (
@@ -51,7 +53,8 @@ export function ChatPanel() {
   return (
     <aside
       aria-label="Conversation"
-      className="panel-float absolute inset-x-2 bottom-2 z-10 flex h-[56%] flex-col overflow-hidden rounded-xl md:inset-x-auto md:top-[64px] md:bottom-3 md:left-3 md:h-auto md:w-[400px]"
+      className="panel-float absolute inset-x-2 bottom-2 z-10 flex h-[56%] flex-col overflow-hidden rounded-xl md:inset-x-auto md:top-[64px] md:bottom-3 md:left-3 md:h-auto"
+      style={desktop ? { width: chatW } : undefined}
     >
       <div className="flex h-12 shrink-0 items-center justify-between gap-2 border-b border-line pr-2 pl-4">
         <h2 className="text-[14px] font-semibold">Conversation</h2>
@@ -81,24 +84,27 @@ export function ChatPanel() {
         </Alert>
       )}
 
-      <MessageScrollerProvider autoScroll>
-        <MessageScroller className="min-h-0 flex-1">
-          <MessageScrollerViewport>
-            <MessageScrollerContent className="gap-8 px-4 py-4">
-              {turns.length === 0 ? (
-                <MessageScrollerItem messageId="welcome">
-                  <Welcome />
-                </MessageScrollerItem>
-              ) : turns.map((t) => (
-                <MessageScrollerItem key={t.id} messageId={t.id} scrollAnchor>
-                  <TurnView turn={t} />
-                </MessageScrollerItem>
-              ))}
-            </MessageScrollerContent>
-          </MessageScrollerViewport>
-          <MessageScrollerButton />
-        </MessageScroller>
-      </MessageScrollerProvider>
+      {turns.length === 0 ? (
+        // Read from the top: the scroller below follows the end, which suits a conversation only.
+        <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
+          <Welcome />
+        </div>
+      ) : (
+        <MessageScrollerProvider autoScroll>
+          <MessageScroller className="min-h-0 flex-1">
+            <MessageScrollerViewport>
+              <MessageScrollerContent className="gap-8 px-4 py-4">
+                {turns.map((t) => (
+                  <MessageScrollerItem key={t.id} messageId={t.id} scrollAnchor>
+                    <TurnView turn={t} />
+                  </MessageScrollerItem>
+                ))}
+              </MessageScrollerContent>
+            </MessageScrollerViewport>
+            <MessageScrollerButton />
+          </MessageScroller>
+        </MessageScrollerProvider>
+      )}
 
       <div className="flex shrink-0 flex-col gap-2 border-t border-line p-3">
         <Composer />

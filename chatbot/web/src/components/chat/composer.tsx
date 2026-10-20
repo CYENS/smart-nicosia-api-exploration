@@ -58,7 +58,7 @@ export function Composer() {
           >
             <ListIcon />
             Questions
-            <Kbd>{MOD_KEY} K</Kbd>
+            <Kbd className="max-md:hidden">{MOD_KEY} K</Kbd>
           </InputGroupButton>
           <InputGroupButton
             type="submit"

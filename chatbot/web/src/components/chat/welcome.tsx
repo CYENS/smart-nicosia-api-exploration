@@ -35,7 +35,7 @@ export function Welcome() {
       </ul>
       <Button variant="ghost" size="sm" className="self-start text-muted-foreground" onClick={() => useLayout.setState({ questionsOpen: true })}>
         All questions
-        <Kbd>{MOD_KEY} K</Kbd>
+        <Kbd className="max-md:hidden">{MOD_KEY} K</Kbd>
       </Button>
     </div>
   )
