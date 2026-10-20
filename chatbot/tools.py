@@ -376,13 +376,16 @@ TOOL_DEFS: list[dict] = [
          "Remove one layer (layer_ref) or, without arguments, every layer and callout.",
          obj({"layer_ref": {"type": "string"}})),
     tool("show_chart",
-         "Render a chart in the chat from a Vega-Lite v6 spec. Pass data_ref from a data tool "
+         "Render a chart on the stage (a wide, dark panel along the bottom of the map) from a "
+         "Vega-Lite v6 spec. Pass data_ref from a data tool "
          "and leave `data` out of the spec: the server fills it from the dataset, so every "
          "number comes from the tools. Use any Vega-Lite feature (layer, facet, concat, "
          "transform, timeUnit, selections). Keep axis titles readable and put units in titles. "
+         "The stage themes the chart (dark, amber for a single series): set colours only "
+         "where they carry meaning. "
          "Single-view and layered charts are linked to the map automatically: rows that carry a "
          "device id or camera highlight on the map when hovered (and the other way round). Any "
-         "chart whose x is temporal (type temporal, e.g. a `time` or `hour` field) gets a red "
+         "chart whose x is temporal (type temporal, e.g. a `time` or `hour` field) gets a "
          "line at the time-lapse's moment while one plays, and at the current time otherwise; "
          "hovering it moves the time-lapse. Keep the id or camera field unaggregated in the "
          "linked view for this to work.",
@@ -392,19 +395,21 @@ TOOL_DEFS: list[dict] = [
              "data_ref": {"type": "string"},
          }, ["title", "spec"])),
     tool("show_visual",
-         "Draw a custom visual in the chat by writing JavaScript, for what Vega-Lite can't "
+         "Draw a custom visual on the stage by writing JavaScript, for what Vega-Lite can't "
          "express well: radial clocks, sankeys, chord or network graphs, calendars, ridgelines, "
          "3D scenes, animations, bespoke SVG. Prefer show_chart for ordinary charts. The code "
          "runs in a locked sandbox (no network, no access to the page) as the body of an async "
          "function, with these globals: root (an empty div to draw in), WIDTH and HEIGHT (px), "
          "DATA[data_ref] (the rows of each data_refs entry; DATA_LIST holds them in order), "
          "LAYERS[layer_ref] (GeoJSON of each layer_refs entry; a get_history layer also has "
-         "`frames`), COLORS (state colours, e.g. COLORS.on, COLORS.full), THEME {text, muted, "
-         "grid, accent, categorical[], ramp[]}, highlight(value) (highlights the device or "
+         "`frames`), COLORS (state colours, e.g. COLORS.on, COLORS.full), THEME {background, "
+         "text, muted, grid, accent, categorical[], ramp[]}, highlight(value) (highlights the device or "
          "camera with that id on the map and in linked charts, or jumps the time-lapse to that "
          "frame number; null clears) and onHighlight(fn) (fn(value) runs when the user hovers "
          "something on the map or in a chart). Libraries load as globals: d3 (v7), Plot "
-         "(Observable Plot 0.6), echarts (5.6), THREE (r159). The card is white. Read every "
+         "(Observable Plot 0.6), echarts (5.6), THREE (r159). The stage is dark (THEME.background, "
+         "deep blue): draw text in THEME.text and the main series in THEME.accent (amber). WIDTH "
+         "and HEIGHT are the space it gives the visual, about 900 by 320 px. Read every "
          "number from DATA or LAYERS, never type data into the code. Runtime errors come back in "
          "the next turn's <context> as visual_errors.",
          obj({
@@ -415,8 +420,8 @@ TOOL_DEFS: list[dict] = [
              "libraries": {"type": "array", "uniqueItems": True,
                            "items": {"type": "string", "enum": VISUAL_LIBRARIES}},
              "height": {"type": "integer", "minimum": 120, "maximum": 900,
-                        "description": "Initial height in px (default 380); the card grows to "
-                                       "fit what you draw."},
+                        "description": "Height in px if the stage can't size it (default 380); "
+                                       "on the stage, HEIGHT is the space it actually has."},
          }, ["title", "code"])),
 ]
 
@@ -1260,7 +1265,7 @@ COMPOSITE = ("mark", "layer", "concat", "hconcat", "vconcat", "facet", "repeat",
 # Keys that belong to a single view when a unit spec is turned into a layer.
 UNIT_KEYS = ("mark", "encoding", "params", "transform", "projection")
 FRAME_FIELDS = {"frame", "label"}  # non-temporal x fields of get_history rows
-NOW_RULE = {"type": "rule", "color": "#dc2626", "strokeWidth": 2}
+NOW_RULE = {"type": "rule", "color": "#e4ebf4", "strokeWidth": 1.5, "strokeDash": [4, 3]}
 
 
 def spec_error(validator, spec: dict, has_data_ref: bool) -> str | None:

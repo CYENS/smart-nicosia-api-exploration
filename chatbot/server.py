@@ -22,6 +22,7 @@ from chatbot.city import CityData
 from chatbot.dls import DLS, TILE_ZOOM
 from chatbot.eoa import Registry, layer_features
 from chatbot.geo import Places
+from chatbot.overview import live_strip
 from chatbot.routing import Router
 from chatbot.settings import ROOT, STATIC_DIR, load_settings
 from chatbot.store import STATE_COLORS, legend_for
@@ -74,7 +75,8 @@ class ChatRequest(BaseModel):
 
 @app.get("/")
 def index() -> FileResponse:
-    return FileResponse(STATIC_DIR / "index.html")
+    # Always revalidated: it names the hashed bundles of the current build.
+    return FileResponse(STATIC_DIR / "index.html", headers={"Cache-Control": "no-cache"})
 
 
 @app.get("/api/health")
@@ -89,6 +91,12 @@ def health() -> dict:
         "registers_ready": agent.registers.ready,
         "registers_3d_linked": agent.registers.linked_3d,
     }
+
+
+@app.get("/api/overview")
+def overview() -> dict:
+    """The live strip: lamps lit, free parking, full bins, air, weather and the registers."""
+    return live_strip(app.state.agent)
 
 
 @app.get("/api/buildings3d/{z}/{x}/{y}")
