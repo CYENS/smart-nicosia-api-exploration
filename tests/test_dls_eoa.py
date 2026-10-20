@@ -494,3 +494,66 @@ def test_namesakes_prefer_the_mapped_landmark_then_the_nearest():
     places._places = gate
     assert places.geocode("famagusta gate")[0]["kind"] in ("park", "historic_site")
     assert places.named("Famagusta Gate", east)[0]["lon"] < 33.38
+
+
+# -- follow-ups: "which one is closest to me?" right after "where am I" ----------------------
+
+
+def located_ctx(tmp_path, monkeypatch):
+    """You stand 18 m west of NIC-2's plot, whose hand-placed marker sits 28 m north of it."""
+    from chatbot.agent import user_location
+
+    ctx = tool_ctx(tmp_path, monkeypatch, [])
+    nic2 = next(r for r in ctx.registers.records() if r["id"] == "NIC-2")
+    nic2["lat"] = LAT + 0.00025
+    ctx.user_location = user_location({"user_location": {"lat": LAT, "lon": LON + 0.0018,
+                                                         "source": "set on the map"}})
+    return ctx
+
+
+def test_closest_follow_up_answers_in_one_call(tmp_path, monkeypatch):
+    # Regression: the follow-up used to take three lookups (0, 0, then 1 result) because
+    # find_dangerous_buildings measured to the marker while where_am_i measured to the plot,
+    # and nothing could fetch one building, so the model narrowed radii by trial and error.
+    ctx = located_ctx(tmp_path, monkeypatch)
+    here, err = run_tool(ctx, "where_am_i", {"radius_m": 100})
+    assert not err, here
+    nearest = here["nearest_dangerous"][0]
+    assert nearest["id"] == "NIC-2" and nearest["distance_m"] == 18
+
+    # the radius where_am_i implies finds it: both tools measure to the plot
+    res, _ = run_tool(ctx, "find_dangerous_buildings", {"near_place": "my location",
+                                                        "radius_m": 20})
+    assert [i["id"] for i in res["items"]] == ["NIC-2"]
+    assert res["items"][0]["distance_m"] == nearest["distance_m"]
+
+    # "the closest one" from scratch: one call, a layer holding just that building
+    res, err = run_tool(ctx, "find_dangerous_buildings", {"near_place": "my location", "top": 1})
+    assert not err, res
+    assert res["matched"] == 3 and res["kept_top"] == 1
+    assert [i["id"] for i in res["items"]] == ["NIC-2"]
+    assert ctx.store.layers[res["layer_ref"]]["meta"]["count"] == 1
+    assert [r["id"] for r in ctx.store.datasets[res["data_ref"]]["rows"]] == ["NIC-2"]
+
+    # a building an earlier answer named: fetched by id
+    res, _ = run_tool(ctx, "find_dangerous_buildings", {"ids": ["nic-2", "NIC-999"]})
+    assert [i["id"] for i in res["items"]] == ["NIC-2"] and res["unknown_ids"] == ["NIC-999"]
+    assert {f["properties"]["id"] for f in ctx.store.layers[res["layer_ref"]]["features"]} == \
+        {"NIC-2"}
+
+
+def test_an_empty_near_search_says_how_far_the_nearest_are(tmp_path, monkeypatch):
+    ctx = located_ctx(tmp_path, monkeypatch)
+    res, err = run_tool(ctx, "find_dangerous_buildings", {"near_place": "my location",
+                                                          "radius_m": 20, "status":
+                                                          "dangerous", "area": "Strovolos"})
+    assert not err and res["matched"] == 0
+    beyond = res["nearest_beyond_radius"]
+    assert [b["id"] for b in beyond] == ["NIC-1"] and beyond[0]["distance_m"] == 164
+
+
+def test_the_prompt_steers_follow_ups_to_one_call():
+    from chatbot.prompt import SYSTEM_PROMPT
+
+    assert "with their ids" in SYSTEM_PROMPT and "top 1" in SYSTEM_PROMPT
+    assert "trial and error" in SYSTEM_PROMPT and "working notes" in SYSTEM_PROMPT
