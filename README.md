@@ -14,6 +14,17 @@ from OpenStreetMap, plans walks, drives and tours with Valhalla, and checks the 
 Open-Meteo. It draws its answers on the map (markers, pulsing highlights, heatmaps, 3D columns,
 animated routes, reachable areas, callouts) and as Vega-Lite charts in the chat.
 
+It also has:
+
+- **Time-lapses.** It can replay the last 3 days of lamps, parking, bins or air on the map,
+  with a time slider, play/pause and speed controls.
+- **Linked charts.** Hovering a bar or point in a chart highlights that device on the map, and
+  the other way round. A chart over time follows the time-lapse slider, and hovering it moves
+  the slider.
+- **Custom visuals.** For charts Vega-Lite can't draw (radial clocks, sankeys, networks, 3D),
+  Claude writes JavaScript using d3, Observable Plot, ECharts or three.js. The code runs in a
+  sandboxed iframe with no network access.
+
 ### Run it
 
 1. Copy `.env.example` to `.env` and set `ANTHROPIC_API_KEY` (create a key at
@@ -36,13 +47,26 @@ are in `.env.example`: `CHATBOT_MODEL`, `CHATBOT_EFFORT` (default `medium`),
   in parallel and loops until Claude answers. History is append-only. The system prompt and
   tool list are fixed, so prompt caching works. Refused requests retry on a fallback model
   (`fallbacks: "default"`).
-- [chatbot/tools.py](chatbot/tools.py) defines 16 tools plus Claude's web search. Every input is
+- [chatbot/tools.py](chatbot/tools.py) defines 18 tools plus Claude's web search. Every input is
   validated against its JSON schema.
   - **Data tools** return compact JSON. They store big results (map GeoJSON, chart rows) in the
     session and pass Claude a `layer_ref` or `data_ref`.
   - **Map and chart tools** push commands to the browser. The server fills each chart from a
     `data_ref` and validates the spec against the Vega-Lite schema, so every number comes from
     a tool.
+  - **Linking.** Each dataset records the field that ties its rows to the map: a device `id`, a
+    `camera` or a time-lapse `frame`. `show_chart` adds a `_hl` param to linked charts, so the
+    page can fade the other marks or draw a rule at the current frame. It also colours a
+    `state` field with the map's colours. The page reads chart hovers from Vega's pointer
+    events.
+  - **`show_visual`** sends model-written JavaScript and its datasets to the page. The page runs
+    it in an iframe with `sandbox="allow-scripts"` (an opaque origin). Its CSP allows only the
+    pinned library URLs and the page's two inline scripts (by hash), with `connect-src 'none'`.
+    Runtime errors go back to Claude in the next turn's context.
+- [chatbot/history.py](chatbot/history.py) builds time-lapses. It reads past readings with
+  `getTelemetryRange`, one request per device, about 2 s for all 240 lamps. It then interprets
+  them at each frame with `collector/interpret.py`, so past frames follow the same rules as
+  live readings. It doesn't need the collector's database.
 - [chatbot/city.py](chatbot/city.py) reads the Smart Nicosia API on demand, at most every 5
   minutes per device type. It interprets readings with the collector's `collector/interpret.py`,
   so a lamp is "on" only if it reported in the last 70 minutes.

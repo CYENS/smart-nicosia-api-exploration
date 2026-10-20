@@ -38,20 +38,26 @@ class SessionStore:
 
     def add_layer(self, hint: str, features: list[dict], *, geometry: str,
                   title: str, legend: dict[str, str] | None = None,
-                  value_fields: list[str] | None = None) -> str:
+                  value_fields: list[str] | None = None, frames: dict | None = None) -> str:
+        """`frames` makes a time-lapse layer: per-frame states and values for each feature."""
         ref = self._ref("L", hint)
         self.layers[ref] = {
             "type": "FeatureCollection",
             "features": features,
             "meta": {"ref": ref, "title": title, "geometry": geometry,
                      "legend": legend or {}, "value_fields": value_fields or [],
-                     "count": len(features)},
+                     "count": len(features), "frames": len(frames["times"]) if frames else 0},
         }
+        if frames:
+            self.layers[ref]["frames"] = frames
         return ref
 
-    def add_dataset(self, hint: str, rows: list[dict], *, title: str) -> str:
+    def add_dataset(self, hint: str, rows: list[dict], *, title: str,
+                    link: dict | None = None) -> str:
+        """`link` names the field that ties a row to the map: {"key": "id"} matches feature ids,
+        {"key": "frame", "layer": ref} matches a time-lapse frame. Charts use it for highlights."""
         ref = self._ref("D", hint)
-        self.datasets[ref] = {"title": title, "rows": rows}
+        self.datasets[ref] = {"title": title, "rows": rows, "link": link}
         return ref
 
 

@@ -19,16 +19,31 @@ const SUGGESTIONS = [
   "What can I reach on foot in 10 and 20 minutes from Eleftheria Square?",
   "Which bins are full? Show them in 3D",
   "Is it a good afternoon for a walk?",
+  "Replay the street lights over the last 24 hours as a time-lapse, with a chart of lit lamps",
+  "Draw a radial 24-hour clock of how parking occupancy changed since yesterday",
 ];
 const TOOL_LABELS = {
   city_overview: "Reading the city's sensors", find_devices: "Finding devices",
+  get_history: "Replaying history",
   get_device: "Reading a device", get_alarms: "Checking alarms", get_traffic: "Counting traffic",
   get_speed: "Checking traffic speed", get_weather: "Checking the weather",
   geocode: "Looking up a place", find_places: "Searching places", plan_route: "Planning the route",
   reachable_area: "Working out the reachable area", show_on_map: "Drawing on the map",
   map_fly_to: "Moving the map", map_callouts: "Adding callouts", map_clear: "Clearing the map",
-  show_chart: "Drawing a chart", web_search: "Searching the web",
+  show_chart: "Drawing a chart", show_visual: "Drawing a custom visual", web_search: "Searching the web",
 };
+// Libraries a custom visual may load, pinned. The sandbox's CSP allows exactly these URLs.
+const VISUAL_LIBS = {
+  d3: "https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js",
+  plot: "https://cdn.jsdelivr.net/npm/@observablehq/plot@0.6.17/dist/plot.umd.min.js",
+  echarts: "https://cdn.jsdelivr.net/npm/echarts@5.6.0/dist/echarts.min.js",
+  three: "https://cdn.jsdelivr.net/npm/three@0.159.0/build/three.min.js",
+};
+const VISUAL_THEME = {
+  text: "#16181d", muted: "#5f6672", grid: "#e3e5ea", accent: "#2563eb", ramp: RAMP,
+  categorical: ["#2563eb", "#f97316", "#16a34a", "#dc2626", "#7c3aed", "#0ea5e9", "#eab308", "#db2777", "#64748b", "#0f766e"],
+};
+const SPEEDS = [1, 2, 4];
 
 const $ = (id) => document.getElementById(id);
 const state = {
@@ -38,6 +53,10 @@ const state = {
   callouts: [],
   pulses: new Set(), // halo layer ids
   dashLayers: new Set(),
+  timelapse: null, // {ref, frame, playing, speed, timer}
+  charts: [], // {view, link} for charts linked to the map
+  visuals: [], // {iframe, title, card} sandboxed custom visuals
+  visualErrors: [], // runtime errors to report with the next message
 };
 
 // ---------------------------------------------------------------------------------------------
@@ -66,6 +85,7 @@ $("basemap").addEventListener("change", (e) => {
   map.setStyle(BASEMAPS[e.target.value]);
   map.once("style.load", () => {
     for (const entry of state.layers.values()) addToMap(entry);
+    syncHighlight();
   });
 });
 
@@ -105,7 +125,8 @@ function bindPopup(layerId) {
       .setHTML(escapeHtml(text).replace(/\n/g, "<br>")).addTo(map);
   });
   map.on("mouseenter", layerId, () => (map.getCanvas().style.cursor = "pointer"));
-  map.on("mouseleave", layerId, () => (map.getCanvas().style.cursor = ""));
+  map.on("mouseleave", layerId, () => { map.getCanvas().style.cursor = ""; linkHover("id", null, "map"); });
+  map.on("mousemove", layerId, (e) => linkHover("id", e.features?.[0]?.properties?.id ?? null, "map"));
 }
 
 function addLayerSafe(def, ids) {
@@ -121,24 +142,11 @@ function addToMap(entry) {
   if (map.getSource(src)) removeFromMap(ref);
   const points = ["==", ["geometry-type"], "Point"];
   const vf = spec.value_field;
-  entry.stats = vf ? numericStats(data.features, vf) : null;
+  // A time-lapse keeps one scale across all frames, so heights and heat compare over time.
+  entry.stats = vf ? (data.frames ? frameStats(data.frames, vf) : numericStats(data.features, vf)) : null;
 
   if (spec.style === "columns_3d") {
-    const st = entry.stats || { min: 0, max: 1 };
-    const span = st.max - st.min || 1;
-    const pts = data.features.filter((f) => f.geometry?.type === "Point");
-    // Column width follows the layer's extent: 6 m in a street, up to 45 m city-wide.
-    const half = Math.max(6, Math.min(45, extentMeters(pts) / 220));
-    const polys = pts.map((f) => {
-      const v = Number(f.properties[vf]);
-      const t = Number.isFinite(v) ? (v - st.min) / span : 0;
-      return {
-        type: "Feature",
-        geometry: { type: "Polygon", coordinates: squareAround(f.geometry.coordinates, half) },
-        properties: { ...f.properties, _h: half * 2 + t * half * 40, _c: rampColor(t) },
-      };
-    });
-    map.addSource(src, { type: "geojson", data: { type: "FeatureCollection", features: polys } });
+    map.addSource(src, { type: "geojson", data: columnsData(entry) });
     addLayerSafe({
       id: `${ref}::columns`, type: "fill-extrusion", source: src,
       paint: { "fill-extrusion-color": ["get", "_c"], "fill-extrusion-height": ["get", "_h"], "fill-extrusion-base": 0, "fill-extrusion-opacity": 0.9 },
@@ -209,6 +217,33 @@ function addToMap(entry) {
   if (spec.labels) addLabels(entry, src, points, 1.1);
 }
 
+function frameStats(frames, field) {
+  const vals = (frames.values[field] || []).flat().filter(Number.isFinite);
+  return vals.length ? { min: Math.min(...vals), max: Math.max(...vals) } : null;
+}
+
+function columnsData(entry) {
+  const vf = entry.spec.value_field;
+  const st = entry.stats || { min: 0, max: 1 };
+  const span = st.max - st.min || 1;
+  const pts = entry.data.features.filter((f) => f.geometry?.type === "Point");
+  // Column width follows the layer's extent: 6 m in a street, up to 45 m city-wide.
+  entry.half ??= Math.max(6, Math.min(45, extentMeters(pts) / 220));
+  const half = entry.half;
+  return {
+    type: "FeatureCollection",
+    features: pts.map((f) => {
+      const v = Number(f.properties[vf]);
+      const t = Number.isFinite(v) ? (v - st.min) / span : 0;
+      return {
+        type: "Feature",
+        geometry: { type: "Polygon", coordinates: squareAround(f.geometry.coordinates, half) },
+        properties: { ...f.properties, _h: Number.isFinite(v) ? half * 2 + t * half * 40 : 0, _c: rampColor(t) },
+      };
+    }),
+  };
+}
+
 function addLabels(entry, src, filter, offset) {
   addLayerSafe({
     id: `${entry.spec.ref}::labels`, type: "symbol", source: src, filter,
@@ -230,14 +265,18 @@ function removeFromMap(ref) {
 function removeLayer(ref) {
   removeFromMap(ref);
   state.layers.delete(ref);
+  if (state.timelapse?.ref === ref) stopTimelapse();
   renderLegend();
+  syncHighlight();
 }
 
 function clearMap() {
   for (const ref of [...state.layers.keys()]) removeFromMap(ref);
   state.layers.clear();
+  stopTimelapse();
   clearCallouts();
   renderLegend();
+  syncHighlight();
 }
 
 function coordsOf(geom, out) {
@@ -275,9 +314,285 @@ async function showLayer(spec) {
   const entry = { spec, data, ids: [] };
   state.layers.set(spec.ref, entry);
   const pitch = spec.style === "columns_3d" ? Math.max(55, map.getPitch()) : map.getPitch();
-  const draw = () => { addToMap(entry); if (spec.fit !== false) fitTo(data, pitch); renderLegend(); };
+  const draw = () => {
+    addToMap(entry);
+    if (spec.fit !== false) fitTo(data, pitch);
+    renderLegend();
+    syncHighlight();
+    if (data.frames) startTimelapse(spec.ref);
+  };
   map.isStyleLoaded() ? draw() : map.once("idle", draw);
 }
+
+// ---------------------------------------------------------------------------------------------
+// Time-lapse: a layer with `frames` replays per-frame states and values on its features.
+
+function applyFrame(k) {
+  const tl = state.timelapse;
+  const entry = tl && state.layers.get(tl.ref);
+  if (!entry) return;
+  const fr = entry.data.frames;
+  k = Math.max(0, Math.min(fr.times.length - 1, Math.round(k)));
+  tl.frame = k;
+  const legend = entry.spec.legend || {};
+  entry.data.features.forEach((f, j) => {
+    const p = f.properties;
+    const st = fr.state_names[fr.states[k][j]];
+    p.state = st;
+    p.color = legend[st] || "#a3a3a3";
+    const parts = [];
+    for (const [field, rows] of Object.entries(fr.values)) {
+      const v = rows[k][j];
+      if (v === null || v === undefined) delete p[field];
+      else { p[field] = v; parts.push(`${field.replace(/_/g, " ")} ${fmt(v)}`); }
+    }
+    p.popup = `${p.name || p.label}\n${st.replace(/_/g, " ")}${parts.length ? ` · ${parts.join(", ")}` : ""}\n${fr.times[k]}`;
+  });
+  const src = map.getSource(`${tl.ref}::src`);
+  if (src) src.setData(entry.spec.style === "columns_3d" ? columnsData(entry) : entry.data);
+  $("tl-slider").value = k;
+  $("tl-time").textContent = fr.times[k];
+  $("tl-clock").textContent = fr.times[k];
+  for (const c of state.charts) if (c.link.key === "frame" && c.link.layer === tl.ref) setChartHighlight(c, k);
+  for (const v of state.visuals) postToVisual(v, k, "frame");
+}
+
+function startTimelapse(ref) {
+  stopTimelapse();
+  const entry = state.layers.get(ref);
+  state.timelapse = { ref, frame: 0, playing: false, speed: 1, timer: null };
+  $("tl-slider").max = entry.data.frames.times.length - 1;
+  $("tl-title").textContent = entry.spec.title;
+  $("tl-speed").textContent = "1×";
+  $("timeline").hidden = false;
+  $("tl-clock").hidden = false;
+  document.querySelector(".map-wrap").classList.add("has-timeline");
+  applyFrame(0);
+  playTimelapse();
+}
+
+function stopTimelapse() {
+  if (!state.timelapse) return;
+  clearTimeout(state.timelapse.timer);
+  state.timelapse = null;
+  $("timeline").hidden = true;
+  $("tl-clock").hidden = true;
+  document.querySelector(".map-wrap").classList.remove("has-timeline");
+}
+
+function playTimelapse() {
+  const tl = state.timelapse;
+  if (!tl) return;
+  const last = state.layers.get(tl.ref).data.frames.times.length - 1;
+  if (tl.frame >= last) applyFrame(0);
+  tl.playing = true;
+  $("tl-play").textContent = "❚❚";
+  $("tl-play").setAttribute("aria-label", "Pause");
+  const step = () => {
+    if (!tl.playing || state.timelapse !== tl) return;
+    if (tl.frame >= last) { pauseTimelapse(); return; }
+    applyFrame(tl.frame + 1);
+    tl.timer = setTimeout(step, 650 / tl.speed);
+  };
+  clearTimeout(tl.timer);
+  tl.timer = setTimeout(step, 650 / tl.speed);
+}
+
+function pauseTimelapse() {
+  const tl = state.timelapse;
+  if (!tl) return;
+  tl.playing = false;
+  clearTimeout(tl.timer);
+  $("tl-play").textContent = "▶";
+  $("tl-play").setAttribute("aria-label", "Play");
+}
+
+$("tl-play").addEventListener("click", () => (state.timelapse?.playing ? pauseTimelapse() : playTimelapse()));
+$("tl-slider").addEventListener("input", (e) => { pauseTimelapse(); applyFrame(Number(e.target.value)); });
+$("tl-speed").addEventListener("click", () => {
+  const tl = state.timelapse;
+  if (!tl) return;
+  tl.speed = SPEEDS[(SPEEDS.indexOf(tl.speed) + 1) % SPEEDS.length];
+  $("tl-speed").textContent = `${tl.speed}×`;
+});
+$("tl-close").addEventListener("click", stopTimelapse);
+
+// ---------------------------------------------------------------------------------------------
+// Linked highlights: one value (a device/camera id, or a time-lapse frame) shared by the map,
+// linked charts and custom visuals. Hovering any of them highlights it in the others.
+
+const HL_SRC = "hl::src";
+let hlFeatures = [];
+let hlValue = null;
+
+function syncHighlight() {
+  if (!map.isStyleLoaded()) return;
+  const data = { type: "FeatureCollection", features: hlFeatures };
+  if (!map.getSource(HL_SRC)) {
+    map.addSource(HL_SRC, { type: "geojson", data });
+    map.addLayer({ id: "hl::glow", type: "circle", source: HL_SRC, paint: { "circle-radius": 20, "circle-color": "#ff2d55", "circle-opacity": 0.2, "circle-blur": 0.35 } });
+    map.addLayer({ id: "hl::ring", type: "circle", source: HL_SRC, paint: { "circle-radius": 12, "circle-opacity": 0, "circle-stroke-color": "#ff2d55", "circle-stroke-width": 3 } });
+  } else {
+    map.getSource(HL_SRC).setData(data);
+    map.moveLayer("hl::glow");
+    map.moveLayer("hl::ring");
+  }
+}
+
+function highlightOnMap(value) {
+  hlFeatures = [];
+  if (value !== null && value !== undefined) {
+    const want = String(value);
+    for (const e of state.layers.values()) {
+      for (const f of e.data.features) {
+        if (f.geometry?.type === "Point" && String(f.properties?.id) === want) {
+          hlFeatures.push({ type: "Feature", geometry: f.geometry, properties: {} });
+        }
+      }
+    }
+  }
+  syncHighlight();
+}
+
+function setChartHighlight(c, value) {
+  try { c.view.signal("_hl", value ?? null).runAsync(); } catch { /* chart was removed */ }
+}
+
+function postToVisual(v, value, kind) {
+  v.iframe.contentWindow?.postMessage({ __host: true, type: "highlight", value: value ?? null, kind }, "*");
+}
+
+function linkHover(key, value, origin) {
+  if (key === "frame") {
+    if (state.timelapse && value !== null && value !== undefined && Number.isFinite(Number(value))) {
+      pauseTimelapse();
+      applyFrame(Number(value));
+    }
+    return;
+  }
+  value = value ?? null;
+  if (value === hlValue) return;
+  hlValue = value;
+  highlightOnMap(value);
+  // Pan to a single highlighted feature that is off screen, unless the hover came from the map.
+  if (origin !== "map" && hlFeatures.length === 1 && !map.getBounds().contains(hlFeatures[0].geometry.coordinates)) {
+    map.easeTo({ center: hlFeatures[0].geometry.coordinates, duration: 600 });
+  }
+  for (const c of state.charts) if (c.link.key !== "frame") setChartHighlight(c, value);
+  for (const v of state.visuals) if (v !== origin) postToVisual(v, value, "id");
+}
+
+// ---------------------------------------------------------------------------------------------
+// Custom visuals: model-written JavaScript in a sandboxed iframe (opaque origin, no network).
+// The CSP allows only the pinned library URLs and our two inline scripts (by hash).
+
+const VISUAL_BOOT = `(function () {
+  var post = function (m) { m.__visual = true; parent.postMessage(m, "*"); };
+  var where = function (stack) {
+    var m = /about:srcdoc:(\\d+):(\\d+)/.exec(String(stack || ""));
+    return m && window.__codeLine ? " (line " + (Number(m[1]) - window.__codeLine + 1) + ")" : "";
+  };
+  window.__fail = function (err) {
+    post({ type: "error", message: String((err && err.message) || err) + where(err && err.stack) });
+  };
+  window.addEventListener("error", function (e) {
+    var line = e.lineno && window.__codeLine ? " (line " + (e.lineno - window.__codeLine + 1) + ")" : "";
+    post({ type: "error", message: String(e.message || "error") + line });
+  });
+  window.addEventListener("unhandledrejection", function (e) { window.__fail(e.reason); });
+  var handlers = [];
+  window.highlight = function (value) { post({ type: "highlight", value: value === undefined ? null : value }); };
+  window.onHighlight = function (fn) { if (typeof fn === "function") handlers.push(fn); };
+  window.addEventListener("message", function (e) {
+    if (e.source !== parent || !e.data || e.data.__host !== true || e.data.type !== "highlight") return;
+    handlers.forEach(function (fn) { try { fn(e.data.value, e.data.kind); } catch (err) { window.__fail(err); } });
+  });
+  var last = 0;
+  window.__size = function () {
+    var h = Math.ceil(document.documentElement.scrollHeight);
+    if (Math.abs(h - last) > 2) { last = h; post({ type: "size", height: h }); }
+  };
+  document.addEventListener("DOMContentLoaded", function () { new ResizeObserver(window.__size).observe(document.body); });
+  window.__done = function () { window.__size(); post({ type: "ready" }); };
+})();`;
+
+async function sha256(text) {
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+  return btoa(String.fromCharCode(...new Uint8Array(buf)));
+}
+
+async function visualDoc(ev, width) {
+  const libs = [...new Set([...(ev.libraries.includes("plot") ? ["d3"] : []), ...ev.libraries])];
+  const urls = libs.map((l) => VISUAL_LIBS[l]).filter(Boolean);
+  const payload = {
+    data: ev.data, order: ev.data_order, layers: ev.layers, colors: ev.colors, theme: VISUAL_THEME, height: ev.height, width,
+  };
+  // JSON.parse reads it, so only "<" needs escaping (it could close the <script> element).
+  const json = JSON.stringify(payload).replace(/</g, "\\u003c");
+  // Keep the HTML parser inside the script element: `</script` would end it, `<!--` can confuse it.
+  // (The regex avoids a literal "<!" + "--": in a classic script that starts an HTML-style comment.)
+  const code = ev.code.replace(/<\/(script)/gi, "<\\/$1").replace(/<!(?=--)/g, "<\\!");
+  const prelude = `window.__codeLine = LINE;
+const __p = JSON.parse(document.getElementById("payload").textContent);
+const root = document.getElementById("root");
+const WIDTH = root.clientWidth || __p.width, HEIGHT = __p.height;
+const DATA = __p.data, DATA_LIST = __p.order.map((k) => __p.data[k]), LAYERS = __p.layers;
+const COLORS = __p.colors, THEME = __p.theme;
+(async () => {
+`;
+  const run0 = `${prelude}${code}\n})().then(window.__done, window.__fail);`;
+  const head = (csp) => `<!doctype html><html><head><meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="${csp}">
+<style>html,body{margin:0;padding:0;background:#fff;color:#16181d;font:13px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}#root{position:relative;width:100%;min-height:${ev.height}px}svg{display:block;max-width:100%}</style>
+<script>${VISUAL_BOOT}</script>
+${urls.map((u) => `<script src="${u}"></script>`).join("\n")}
+<script type="application/json" id="payload">${json}</script>
+</head><body><div id="root"></div>
+<script>`;
+  // The user's code starts on the line after the prelude's "(async () => {".
+  const codeLine = (head("").split("\n").length - 1) + prelude.split("\n").length;
+  const run = run0.replace("window.__codeLine = LINE;", `window.__codeLine = ${codeLine};`);
+  const csp = [
+    "default-src 'none'",
+    `script-src 'sha256-${await sha256(VISUAL_BOOT)}' 'sha256-${await sha256(run)}' ${urls.join(" ")}`,
+    "style-src 'unsafe-inline'", "img-src data: blob:", "font-src data:", "connect-src 'none'",
+    "form-action 'none'", "base-uri 'none'",
+  ].join("; ");
+  return `${head(csp)}${run}</script></body></html>`;
+}
+
+async function renderVisual(v) {
+  // Expanded, the visual gets the whole card: HEIGHT grows as well as WIDTH.
+  const height = v.card.classList.contains("expanded") ? Math.max(v.ev.height, v.card.clientHeight - 60) : v.ev.height;
+  v.iframe.style.height = `${height}px`;
+  v.iframe.srcdoc = await visualDoc({ ...v.ev, height }, Math.max(200, v.iframe.clientWidth || v.card.clientWidth - 20));
+}
+
+window.addEventListener("message", (e) => {
+  const v = state.visuals.find((x) => x.iframe.contentWindow === e.source);
+  const m = e.data;
+  if (!v || !m || m.__visual !== true) return;
+  if (m.type === "size" && Number.isFinite(m.height)) {
+    v.iframe.style.height = `${Math.max(80, Math.min(v.card.classList.contains("expanded") ? 4000 : 1400, m.height))}px`;
+  } else if (m.type === "error") {
+    const text = String(m.message).slice(0, 400);
+    v.card.querySelector(".err")?.remove();
+    const p = document.createElement("p");
+    p.className = "err";
+    p.textContent = `Visual error: ${text}`;
+    v.card.appendChild(p);
+    if (!state.visualErrors.includes(`${v.title}: ${text}`)) state.visualErrors.push(`${v.title}: ${text}`);
+  } else if (m.type === "ready") {
+    // A visual that just (re)loaded learns what is highlighted right now.
+    if (state.timelapse) postToVisual(v, state.timelapse.frame, "frame");
+    if (hlValue !== null) postToVisual(v, hlValue, "id");
+  } else if (m.type === "highlight") {
+    const val = m.value;
+    if (val === null || typeof val === "string" || typeof val === "number") {
+      linkHover(typeof val === "number" ? "frame" : "id", val, v);
+    }
+  }
+});
 
 function renderLegend() {
   const el = $("legend");
@@ -347,9 +662,77 @@ function applyUi(ev, msg) {
       ev.ref ? removeLayer(ev.ref) : clearMap();
       break;
     case "chart":
-      msg.chart(ev.title, ev.spec);
+      msg.chart(ev.title, ev.spec, ev.link);
+      break;
+    case "visual":
+      msg.visual(ev);
       break;
   }
+}
+
+function xFieldOf(spec) {
+  const unit = spec.encoding ? spec : (spec.layer || []).find((l) => l.encoding?.x);
+  return unit?.encoding?.x?.field;
+}
+
+// The row a pointer x position points at, for charts over time: invert the x scale (or find
+// the band) and take the nearest row. Works for lines and areas, where no single mark is hit.
+function rowAtX(view, event, rows, field) {
+  const svg = view.container()?.querySelector("svg");
+  let scale;
+  try { scale = view.scale("x"); } catch { return null; }
+  if (!svg || !scale) return null;
+  const x = event.clientX - svg.getBoundingClientRect().left - view.origin()[0];
+  if (x < 0 || x > view.width()) return null;
+  if (typeof scale.invert === "function") {
+    const want = +scale.invert(x);
+    const at = (r) => (field === "time" ? Date.parse(r.time) : Number(r[field]));
+    return rows.reduce((best, r) => (Math.abs(at(r) - want) < Math.abs(at(best) - want) ? r : best), rows[0]);
+  }
+  if (typeof scale.step === "function") {
+    const domain = scale.domain();
+    const i = Math.floor((x - Math.min(...scale.range())) / scale.step());
+    const label = domain[Math.max(0, Math.min(domain.length - 1, i))];
+    return rows.find((r) => r[field] === label) || null;
+  }
+  return null;
+}
+
+function wireChart(view, link, spec) {
+  const c = { view, link };
+  state.charts.push(c);
+  const rows = spec.data?.values || [];
+  if (link.key === "frame") {
+    const field = xFieldOf(spec);
+    view.addEventListener("pointermove", (event, item) => {
+      const row = ["time", "frame", "label"].includes(field) ? rowAtX(view, event, rows, field) : item?.datum;
+      if (row && row.frame !== undefined) linkHover("frame", row.frame, c);
+    });
+    if (state.timelapse?.ref === link.layer) setChartHighlight(c, state.timelapse.frame);
+  } else {
+    view.addEventListener("pointermove", (_, item) => linkHover(link.key, item?.datum?.[link.key] ?? null, c));
+    view.addEventListener("pointerout", () => linkHover(link.key, null, c));
+  }
+}
+
+function toggleExpand(v) {
+  const expanded = v.card.classList.toggle("expanded");
+  v.card.querySelector(".expand").textContent = expanded ? "Close" : "Expand";
+  if (expanded) {
+    const back = document.createElement("div");
+    back.className = "backdrop";
+    back.addEventListener("click", () => toggleExpand(v));
+    document.body.appendChild(back);
+    // Move the card out of the scrolling chat so `fixed` covers the window; keep its place.
+    v.placeholder = document.createElement("div");
+    v.card.replaceWith(v.placeholder);
+    document.body.appendChild(v.card);
+  } else {
+    document.querySelector(".backdrop")?.remove();
+    v.placeholder?.replaceWith(v.card);
+  }
+  // Draw again at the new size: the code reads WIDTH once.
+  renderVisual(v);
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -428,7 +811,7 @@ function botMessage() {
       if (summary) chip.querySelector(".sum").textContent = `· ${summary}`;
       chip.title = summary || "";
     },
-    chart(title, spec) {
+    chart(title, spec, link) {
       dropTyping();
       const card = document.createElement("div");
       card.className = "chart-card";
@@ -436,8 +819,28 @@ function botMessage() {
       el.appendChild(card);
       textPart = null;
       vegaEmbed(card.querySelector(".vis"), spec, { actions: { export: true, source: false, compiled: false, editor: false }, renderer: "svg" })
-        .then(scrollDown)
+        .then((res) => {
+          if (link) wireChart(res.view, link, spec);
+          scrollDown();
+        })
         .catch((e) => { card.querySelector(".vis").innerHTML = `<p class="err">Chart error: ${escapeHtml(e.message)}</p>`; });
+    },
+    visual(ev) {
+      dropTyping();
+      const card = document.createElement("div");
+      card.className = "chart-card visual-card";
+      card.innerHTML = `<div class="card-head"><h3>${escapeHtml(ev.title)}</h3><button type="button" class="expand">Expand</button></div>`;
+      const iframe = document.createElement("iframe");
+      iframe.setAttribute("sandbox", "allow-scripts");
+      iframe.setAttribute("title", ev.title);
+      iframe.setAttribute("referrerpolicy", "no-referrer");
+      card.appendChild(iframe);
+      el.appendChild(card);
+      textPart = null;
+      const v = { iframe, card, ev, title: ev.title };
+      state.visuals.push(v);
+      card.querySelector(".expand").addEventListener("click", () => toggleExpand(v));
+      renderVisual(v).then(scrollDown).catch((e) => this.note(`Couldn't draw the visual: ${e.message}`, true));
     },
     note(text, isError) {
       const p = document.createElement("p");
@@ -466,6 +869,7 @@ function mapContext() {
   return {
     map_view: { center: [c.lng, c.lat], zoom: map.getZoom() },
     layers_on_map: [...state.layers.values()].map((l) => `${l.spec.ref} (${l.spec.title})`),
+    visual_errors: state.visualErrors.splice(0),
   };
 }
 
@@ -542,6 +946,13 @@ $("new-chat").addEventListener("click", async () => {
   if (state.conversationId) fetch(`/api/reset/${state.conversationId}`, { method: "POST" });
   state.conversationId = null;
   clearMap();
+  for (const c of state.charts) c.view.finalize();
+  state.charts = [];
+  state.visuals = [];
+  state.visualErrors = [];
+  hlValue = null;
+  document.querySelector(".backdrop")?.remove();
+  document.querySelectorAll("body > .visual-card").forEach((n) => n.remove());
   $("messages").innerHTML = "";
   map.flyTo({ center: [33.3615, 35.1725], zoom: 14.2, pitch: $("basemap").value === "liberty" ? 35 : 0, bearing: 0 });
 });

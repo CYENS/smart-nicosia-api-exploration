@@ -49,6 +49,9 @@ def format_context(context: dict | None, now: datetime) -> str:
     layers = (context or {}).get("layers_on_map")
     if layers:
         lines.append(f"layers_on_map: {', '.join(layers)}")
+    errors = (context or {}).get("visual_errors")
+    if errors:
+        lines.append("visual_errors: " + "; ".join(str(e)[:300] for e in errors[:3]))
     return "<context>\n" + "\n".join(lines) + "\n</context>\n\n"
 
 

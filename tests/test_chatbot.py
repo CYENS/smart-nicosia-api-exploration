@@ -10,6 +10,7 @@ from types import SimpleNamespace
 import pytest
 
 from chatbot import agent as agent_mod
+from chatbot import history
 from chatbot import tools as tools_mod
 from chatbot.agent import Agent
 from chatbot.city import CityData
@@ -134,6 +135,159 @@ def test_show_on_map_checks_style_against_geometry():
                                               "value_field": "level_pct"})
     assert not err
     assert events[-1]["layer"]["url"] == f"/api/layers/c1/{ref}"
+    assert events[-1]["layer"]["timeseries"] is False
+
+
+# -- history (time-lapse) -----------------------------------------------------------------------
+
+
+def test_get_history_replays_parking_through_the_interpreter(city, api):
+    now = city.now()
+    times = history.frame_times(now, 4, 60)
+    assert len(times) == 5 and all(t.minute == 0 for t in times) and times[-1] <= now
+    ms_at = lambda t: str(int(t.timestamp() * 1000))  # noqa: E731
+    records = [  # newest first, as the API returns them
+        {"key": "status", "timestamp": ms_at(times[3]), "value": "0"},
+        {"key": "status", "timestamp": ms_at(times[1]), "value": "1"},
+        {"key": "vbatt", "timestamp": ms_at(times[0]), "value": "3.6"},
+    ]
+    api.on("getTelemetryRange", lambda p: records if p["keys"] == "status,vbatt" else [])
+    events = []
+    ctx = make_ctx(city, events)
+    res, err = run_tool(ctx, "get_history", {"kind": "parking_sensor", "hours": 4,
+                                             "step_minutes": 60, "near_lat": 35.1725,
+                                             "near_lon": 33.3615, "radius_m": 300})
+    assert not err, res
+    assert res["frames"] == 5 and res["devices"] > 0
+    layer = ctx.store.layers[res["layer_ref"]]
+    fr = layer["frames"]
+    names = [[fr["state_names"][i] for i in row] for row in fr["states"]]
+    # Before any status the bay is unknown; then occupied for two frames, then free.
+    assert [row[0] for row in names] == ["unknown", "occupied", "occupied", "free", "free"]
+    assert layer["meta"]["frames"] == 5
+    assert layer["features"][0]["properties"]["state"] == "free"  # the last frame
+    rows = ctx.store.datasets[res["data_ref"]]["rows"]
+    assert [r["occupancy_pct"] for r in rows] == [None, 100.0, 100.0, 0.0, 0.0]
+    assert ctx.store.datasets[res["data_ref"]]["link"] == {"key": "frame", "layer": res["layer_ref"]}
+
+    res, err = run_tool(ctx, "show_on_map", {"layer_ref": res["layer_ref"], "style": "points"})
+    assert not err and "timelapse" in res and events[-1]["layer"]["timeseries"] is True
+
+    res, err = run_tool(ctx, "get_history", {"kind": "parking_sensor", "hours": 72,
+                                             "step_minutes": 5})
+    assert err and "frames" in res["error"]
+
+
+def test_history_lamp_off_by_day_offline_at_night():
+    from chatbot.city import Device, DeviceState
+    from collector.interpret import Interpretation
+    dev = Device("YL1", "Lighting", 35.17, 33.36)
+    st = DeviceState(dev, "Street light 1", "Street",
+                     Interpretation("Lighting", "off", False, None, None, ""))
+    noon, night = utc(2026, 10, 20, 9, 0), utc(2026, 10, 20, 20, 0)  # 12:00 and 23:00 local
+    lit_at = utc(2026, 10, 20, 19, 30)
+    recs = {"YL1": [{"key": "level", "timestamp": str(int(utc(2026, 10, 19, 3, 0).timestamp() * 1000)),
+                     "value": "100"},
+                    {"key": "level", "timestamp": str(int(lit_at.timestamp() * 1000)), "value": "100"}]}
+    states, values = history.replay("Lighting", [st], recs, [noon, night, utc(2026, 10, 20, 22, 0)])
+    assert [s[0] for s in states] == ["off", "on", "offline"]
+    assert values["lit"] == [[0], [1], [0]]
+
+
+# -- chart linking and custom visuals -----------------------------------------------------------
+
+
+def test_link_chart_fades_by_id_and_draws_a_frame_rule():
+    spec = {"mark": "bar", "encoding": {"x": {"field": "id"}, "y": {"field": "level_pct"}}}
+    assert tools_mod.link_chart(spec, "id")
+    assert spec["encoding"]["opacity"]["condition"]["test"].startswith("_hl == null")
+    assert spec["params"] == [{"name": "_hl", "value": None}]
+    assert not tools_mod.link_chart(spec, "id")  # never wired twice
+
+    spec = {"mark": "line", "width": "container",
+            "encoding": {"x": {"field": "time", "type": "temporal"}, "y": {"field": "on"}}}
+    assert tools_mod.link_chart(spec, "frame")
+    assert "mark" not in spec and spec["width"] == "container"
+    view, rule = spec["layer"]
+    assert view["mark"] == "line" and "opacity" not in view["encoding"]
+    assert rule["mark"]["type"] == "rule" and rule["encoding"]["x"]["field"] == "time"
+    assert spec["params"] == [{"name": "_hl", "value": None}]
+
+    facet = {"facet": {"field": "state"}, "spec": {"mark": "point"}}
+    assert not tools_mod.link_chart(facet, "id")
+
+
+def test_linked_specs_pass_the_vega_lite_schema():
+    validator = tools_mod.vega_lite_validator(Settings())
+    if validator is None:
+        pytest.skip("Vega-Lite schema not cached")
+    specs = [
+        ({"mark": "bar", "encoding": {"x": {"field": "id", "type": "nominal"},
+                                      "y": {"field": "level_pct", "type": "quantitative"}}}, "id"),
+        ({"mark": {"type": "line", "point": True},
+          "encoding": {"x": {"field": "time", "type": "temporal"},
+                       "y": {"field": "on", "type": "quantitative"}}}, "frame"),
+        ({"layer": [{"mark": "area", "encoding": {"x": {"field": "time", "type": "temporal"},
+                                                  "y": {"field": "on", "type": "quantitative"}}},
+                    {"mark": "line", "encoding": {"x": {"field": "time", "type": "temporal"},
+                                                  "y": {"field": "off", "type": "quantitative"}}}]},
+         "frame"),
+    ]
+    for spec, key in specs:
+        assert tools_mod.link_chart(spec, key)
+        assert tools_mod.spec_error(validator, spec, True) is None, spec
+
+
+def test_show_chart_sends_the_link_for_linked_datasets(monkeypatch):
+    monkeypatch.setattr(tools_mod, "vega_lite_validator", lambda s: None)
+    events = []
+    ctx = make_ctx(events=events)
+    ref = ctx.store.add_dataset("bins", [{"id": "YW1", "level_pct": 80}], title="b",
+                                link={"key": "id"})
+    spec = {"mark": "bar", "encoding": {"x": {"field": "id"}, "y": {"field": "level_pct"}}}
+    res, err = run_tool(ctx, "show_chart", {"title": "Bins", "spec": spec, "data_ref": ref})
+    assert not err and res["linked_to_map"] is True
+    assert events[-1]["link"] == {"key": "id"} and "opacity" in events[-1]["spec"]["encoding"]
+    assert "opacity" not in spec["encoding"]  # the model's spec object is left alone
+
+
+def test_show_chart_colours_states_like_the_map(monkeypatch):
+    monkeypatch.setattr(tools_mod, "vega_lite_validator", lambda s: None)
+    events = []
+    ctx = make_ctx(events=events)
+    rows = [{"id": "a", "state": "full"}, {"id": "b", "state": "low"}, {"id": "c", "state": "high"}]
+    ref = ctx.store.add_dataset("bins", rows, title="b")
+    spec = {"mark": "bar", "encoding": {"x": {"field": "id"}, "color": {"field": "state"}}}
+    run_tool(ctx, "show_chart", {"title": "Bins", "spec": spec, "data_ref": ref})
+    scale = events[-1]["spec"]["encoding"]["color"]["scale"]
+    assert scale["domain"] == ["low", "high", "full"]  # the bins' own order
+    assert scale["range"][2] == tools_mod.STATE_COLORS["full"]
+    assert "scale" not in spec["encoding"]["color"]
+
+
+def test_show_visual_checks_refs_and_sends_data():
+    events = []
+    ctx = make_ctx(events=events)
+    d = ctx.store.add_dataset("speed", [{"hour": "10:00", "kmh": 41.2}], title="s")
+    lyr = ctx.store.add_layer("bins", [], geometry="point", title="Bins")
+    code = "root.textContent = DATA_LIST[0].length;"
+    res, err = run_tool(ctx, "show_visual", {"title": "T", "code": code, "data_refs": ["D9_x"]})
+    assert err and "unknown data_ref" in res["error"]
+    res, err = run_tool(ctx, "show_visual", {"title": "T", "code": code, "data_refs": [d],
+                                             "layer_refs": [lyr], "libraries": ["plot"]})
+    assert not err and res["rows"] == {d: 1}
+    ev = events[-1]
+    assert ev["action"] == "visual" and ev["data"][d] == [{"hour": "10:00", "kmh": 41.2}]
+    assert ev["data_order"] == [d] and "meta" not in ev["layers"][lyr]
+    assert ev["height"] == 380 and ev["colors"]["full"]
+    res, err = run_tool(ctx, "show_visual", {"title": "T", "code": code, "libraries": ["jquery"]})
+    assert err and "libraries" in res["error"]
+
+
+def test_context_reports_visual_errors():
+    text = agent_mod.format_context({"visual_errors": ["Clock: d3 is not defined (line 3)"]},
+                                    utc(2026, 10, 20, 9, 0))
+    assert "visual_errors: Clock: d3 is not defined (line 3)" in text
 
 
 # -- agent loop ---------------------------------------------------------------------------------

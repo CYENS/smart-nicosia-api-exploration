@@ -7,6 +7,7 @@ Every input is validated against its schema before the handler runs.
 
 from __future__ import annotations
 
+import copy
 import json
 import logging
 import threading
@@ -21,7 +22,7 @@ from jsonschema.exceptions import best_match
 
 from collector.http import ApiError
 
-from chatbot import context
+from chatbot import context, history
 from chatbot.city import KINDS, CityData
 from chatbot.geo import CATEGORIES, Places, haversine_m, norm
 from chatbot.routing import MAX_TOUR_STOPS, MODES, PREFERENCES, Router, best_order
@@ -41,6 +42,9 @@ KIND_STATES = {
     "camera": ["connected", "disconnected", "unknown"],
 }
 POINT_STYLES = ["points", "pulse", "heatmap", "columns_3d"]
+HISTORY_KINDS = ["street_light", "parking_sensor", "waste_bin", "air_station"]
+VISUAL_LIBRARIES = ["d3", "plot", "echarts", "three"]
+MAX_VISUAL_DATA_CHARS = 3_000_000
 
 
 class ToolError(Exception):
@@ -111,6 +115,26 @@ TOOL_DEFS: list[dict] = [
              "limit": {"type": "integer", "minimum": 1, "maximum": 50,
                        "description": "How many matches to list in the reply (default 12). The "
                                       "map layer always holds every match."},
+         }, ["kind"])),
+    tool("get_history",
+         "Replay how devices changed over the last hours as a map time-lapse: street lights "
+         "switching on at dusk, parking filling up, bins filling, air and noise through the day. "
+         "Every frame interprets the past readings with the same rules as find_devices. Returns "
+         "a layer_ref (show it with show_on_map: 'points' coloured by state, or 'heatmap' / "
+         "'columns_3d' with a value_field; a time slider with play appears on the map) and a "
+         "data_ref with one row per frame: frame, time, label, a count per state, plus "
+         "lit_power_kw (lights), occupancy_pct (parking), avg_level_pct (bins) or avg_caqi and "
+         "avg_noise_db (air). A chart of that data_ref with x = time stays in sync with the "
+         "slider. Filter by street or near a place like find_devices.",
+         obj({
+             "kind": {"type": "string", "enum": HISTORY_KINDS},
+             "hours": {"type": "integer", "minimum": 1, "maximum": 72,
+                       "description": "How far back to replay (default 24)."},
+             "step_minutes": {"type": "integer", "enum": [5, 10, 15, 30, 60],
+                              "description": "Minutes between frames (default 15 up to 24 h, "
+                                             "30 up to 48 h, else 60)."},
+             "street": {"type": "string", "description": "Street name to match."},
+             **NEAR,
          }, ["kind"])),
     tool("get_device",
          "Everything about one device by its id (e.g. 'YL1015', 'YW1394'): fresh readings, "
@@ -235,12 +259,43 @@ TOOL_DEFS: list[dict] = [
          "Render a chart in the chat from a Vega-Lite v6 spec. Pass data_ref from a data tool "
          "and leave `data` out of the spec: the server fills it from the dataset, so every "
          "number comes from the tools. Use any Vega-Lite feature (layer, facet, concat, "
-         "transform, timeUnit, selections). Keep axis titles readable and put units in titles.",
+         "transform, timeUnit, selections). Keep axis titles readable and put units in titles. "
+         "Single-view and layered charts are linked to the map automatically: rows that carry a "
+         "device id or camera highlight on the map when hovered (and the other way round), and "
+         "a get_history chart shows a moving rule at the time-lapse frame. Keep the id, camera "
+         "or frame/time field unaggregated in the linked view for this to work.",
          obj({
              "title": {"type": "string"},
              "spec": {"type": "object", "description": "Vega-Lite spec without data."},
              "data_ref": {"type": "string"},
          }, ["title", "spec"])),
+    tool("show_visual",
+         "Draw a custom visual in the chat by writing JavaScript, for what Vega-Lite can't "
+         "express well: radial clocks, sankeys, chord or network graphs, calendars, ridgelines, "
+         "3D scenes, animations, bespoke SVG. Prefer show_chart for ordinary charts. The code "
+         "runs in a locked sandbox (no network, no access to the page) as the body of an async "
+         "function, with these globals: root (an empty div to draw in), WIDTH and HEIGHT (px), "
+         "DATA[data_ref] (the rows of each data_refs entry; DATA_LIST holds them in order), "
+         "LAYERS[layer_ref] (GeoJSON of each layer_refs entry; a get_history layer also has "
+         "`frames`), COLORS (state colours, e.g. COLORS.on, COLORS.full), THEME {text, muted, "
+         "grid, accent, categorical[], ramp[]}, highlight(value) (highlights the device or "
+         "camera with that id on the map and in linked charts, or jumps the time-lapse to that "
+         "frame number; null clears) and onHighlight(fn) (fn(value) runs when the user hovers "
+         "something on the map or in a chart). Libraries load as globals: d3 (v7), Plot "
+         "(Observable Plot 0.6), echarts (5.6), THREE (r159). The card is white. Read every "
+         "number from DATA or LAYERS, never type data into the code. Runtime errors come back in "
+         "the next turn's <context> as visual_errors.",
+         obj({
+             "title": {"type": "string"},
+             "code": {"type": "string", "minLength": 10, "maxLength": 30000},
+             "data_refs": {"type": "array", "maxItems": 6, "items": {"type": "string"}},
+             "layer_refs": {"type": "array", "maxItems": 4, "items": {"type": "string"}},
+             "libraries": {"type": "array", "uniqueItems": True,
+                           "items": {"type": "string", "enum": VISUAL_LIBRARIES}},
+             "height": {"type": "integer", "minimum": 120, "maximum": 900,
+                        "description": "Initial height in px (default 380); the card grows to "
+                                       "fit what you draw."},
+         }, ["title", "code"])),
 ]
 
 WEB_SEARCH = {
@@ -295,6 +350,24 @@ def h_city_overview(ctx: ToolContext, a: dict) -> dict:
             "_summary": "city overview"}
 
 
+def filter_by_place(ctx: ToolContext, states: list, a: dict):
+    """Apply the `street` and near_* filters. Returns (states, center or None, distance by id),
+    nearest first when a center is given."""
+    if a.get("street"):
+        q = norm(a["street"])
+        states = [s for s in states if q in norm(s.street) or q in norm(s.label)]
+    center = resolve_point(ctx, a.get("near_place"), a.get("near_lat"), a.get("near_lon"))
+    dist: dict[str, float] = {}
+    if center:
+        radius = a.get("radius_m") or 500
+        for s in states:
+            if s.device.lat is not None:
+                dist[s.device.name] = haversine_m(center[0], center[1], s.device.lat, s.device.lon)
+        states = [s for s in states if dist.get(s.device.name, 1e12) <= radius]
+        states.sort(key=lambda s: dist[s.device.name])
+    return states, center, dist
+
+
 def h_find_devices(ctx: ToolContext, a: dict) -> dict:
     kind = a["kind"]
     states = ctx.city.states(KINDS[kind])
@@ -309,18 +382,7 @@ def h_find_devices(ctx: ToolContext, a: dict) -> dict:
         if want not in KIND_STATES[kind]:
             raise ToolError(f"state for {kind} must be one of {KIND_STATES[kind]}")
         states = [s for s in states if s.interp.state == want]
-    if a.get("street"):
-        q = norm(a["street"])
-        states = [s for s in states if q in norm(s.street) or q in norm(s.label)]
-    center = resolve_point(ctx, a.get("near_place"), a.get("near_lat"), a.get("near_lon"))
-    dist: dict[str, float] = {}
-    if center:
-        radius = a.get("radius_m") or 500
-        for s in states:
-            if s.device.lat is not None:
-                dist[s.device.name] = haversine_m(center[0], center[1], s.device.lat, s.device.lon)
-        states = [s for s in states if dist.get(s.device.name, 1e12) <= radius]
-        states.sort(key=lambda s: dist[s.device.name])
+    states, center, dist = filter_by_place(ctx, states, a)
 
     features, rows = [], []
     for s in states:
@@ -345,7 +407,7 @@ def h_find_devices(ctx: ToolContext, a: dict) -> dict:
     layer = ctx.store.add_layer(f"{kind}_{a.get('state', 'all')}", features, geometry="point",
                                 title=title, legend=legend_for(list(by_state)),
                                 value_fields=sorted({k for s in states for k in s.values()}))
-    data = ctx.store.add_dataset(kind, rows, title=title)
+    data = ctx.store.add_dataset(kind, rows, title=title, link={"key": "id"})
     limit = a.get("limit") or 12
     age = ctx.city.snapshot_age_s(KINDS[kind])
     result = {
@@ -361,6 +423,59 @@ def h_find_devices(ctx: ToolContext, a: dict) -> dict:
                           "radius_m": a.get("radius_m") or 500}
     result["_summary"] = f"{len(states)} of {total} {kind.replace('_', ' ')}s"
     return result
+
+
+def h_get_history(ctx: ToolContext, a: dict) -> dict:
+    kind = a["kind"]
+    device_type = KINDS[kind]
+    hours = a.get("hours") or 24
+    step = a.get("step_minutes") or (15 if hours <= 24 else 30 if hours <= 48 else 60)
+    if hours * 60 // step > history.MAX_FRAMES:
+        raise ToolError(f"{hours} h every {step} min is more than {history.MAX_FRAMES} frames; "
+                        "use a larger step_minutes")
+    states, center, _ = filter_by_place(ctx, ctx.city.states(device_type), a)
+    states = [s for s in states if s.device.lat is not None]
+    if not states:
+        raise ToolError(f"no {kind.replace('_', ' ')}s match those filters")
+    now = ctx.city.now()
+    times = history.frame_times(now, hours, step)
+    start_ms = int((times[0] - history.LOOKBACK[device_type]).timestamp() * 1000)
+    records = ctx.city.history(device_type, [s.device.name for s in states],
+                               history.HISTORY_KEYS[device_type], start_ms,
+                               int(now.timestamp() * 1000))
+    states = [s for s in states if s.device.name in records]
+    frame_states, frame_values = history.replay(device_type, states, records, times)
+    fields = [f for f, rows in frame_values.items()
+              if any(v is not None for row in rows for v in row)]
+    names = sorted({st for row in frame_states for st in row})
+    index = {n: i for i, n in enumerate(names)}
+    frames = {
+        "times": [t.astimezone(TZ).strftime("%a %d %b %H:%M") for t in times],
+        "state_names": names,
+        "states": [[index[st] for st in row] for row in frame_states],
+        "values": {f: frame_values[f] for f in fields},
+    }
+    last = frame_states[-1]
+    features = [point(s.device.lon, s.device.lat, {
+        "id": s.device.name, "label": s.street or s.label, "name": s.label, "state": last[j],
+        "color": STATE_COLORS.get(last[j], STATE_COLORS["unknown"]),
+        **{f: frame_values[f][-1][j] for f in fields if frame_values[f][-1][j] is not None},
+    }) for j, s in enumerate(states)]
+    title = f"{kind.replace('_', ' ')}s, last {hours} h" + (f" near {center[2]}" if center else "")
+    layer = ctx.store.add_layer(f"{kind}_history", features, geometry="point", title=title,
+                                legend=legend_for(names), value_fields=fields, frames=frames)
+    rows = history.frame_rows(device_type, times, frame_states, frame_values)
+    data = ctx.store.add_dataset(f"{kind}_history", rows, title=title,
+                                 link={"key": "frame", "layer": layer})
+    every = max(1, len(rows) // 24)
+    sampled = rows[::every] + ([rows[-1]] if (len(rows) - 1) % every else [])
+    return {
+        "kind": kind, "devices": len(states), "hours": hours, "step_minutes": step,
+        "frames": len(times), "from": rows[0]["label"], "to": rows[-1]["label"],
+        "value_fields": fields, "layer_ref": layer, "data_ref": data,
+        "rows_sampled": sampled,
+        "_summary": f"{len(states)} {kind.replace('_', ' ')}s × {len(times)} frames",
+    }
 
 
 def h_get_device(ctx: ToolContext, a: dict) -> dict:
@@ -391,8 +506,9 @@ def h_get_traffic(ctx: ToolContext, a: dict) -> dict:
     res = context.traffic(ctx.city, a["period"], a["group_by"], a.get("camera"))
     if "error" in res:
         raise ToolError(f"{res['error']}; cameras: {', '.join(res['cameras'][:40])}")
-    res["data_ref"] = ctx.store.add_dataset(f"traffic_{a['group_by']}", res["rows"],
-                                            title=f"Traffic {a['period']} by {a['group_by']}")
+    res["data_ref"] = ctx.store.add_dataset(
+        f"traffic_{a['group_by']}", res["rows"], title=f"Traffic {a['period']} by {a['group_by']}",
+        link={"key": "camera"} if a["group_by"] == "camera" else None)
     if a["group_by"] == "camera":
         feats = [point(r["lon"], r["lat"], {
             "id": r["camera"], "label": r["camera"], "state": "camera",
@@ -579,9 +695,12 @@ def h_show_on_map(ctx: ToolContext, a: dict) -> dict:
         "ref": ref, "url": f"/api/layers/{ctx.conversation_id}/{ref}", "style": style,
         "value_field": vf, "title": a.get("title") or meta["title"],
         "fit": a.get("fit", True), "labels": a.get("labels", meta["count"] <= 20),
-        "legend": meta["legend"], "count": meta["count"],
+        "legend": meta["legend"], "count": meta["count"], "timeseries": bool(meta["frames"]),
     }})
-    return {"ok": True, "shown": ref, "features": meta["count"], "_summary": f"map: {ref}"}
+    res = {"ok": True, "shown": ref, "features": meta["count"], "_summary": f"map: {ref}"}
+    if meta["frames"]:
+        res["timelapse"] = f"{meta['frames']} frames, playing with a time slider on the map"
+    return res
 
 
 def h_map_fly_to(ctx: ToolContext, a: dict) -> dict:
@@ -636,45 +755,134 @@ def vega_lite_validator(settings: Settings):
 
 
 COMPOSITE = ("mark", "layer", "concat", "hconcat", "vconcat", "facet", "repeat", "spec")
+# Keys that belong to a single view when a unit spec is turned into a layer.
+UNIT_KEYS = ("mark", "encoding", "params", "transform", "projection")
+TIME_FIELDS = {"frame", "time", "label"}
+
+
+def spec_error(validator, spec: dict, has_data_ref: bool) -> str | None:
+    """The most specific Vega-Lite schema error, or None if the spec is valid."""
+    # Validate with a named placeholder instead of the rows, so errors quote the spec only.
+    probe = {**spec, "data": {"name": "rows"}} if has_data_ref or "data" not in spec else spec
+    err = best_match(validator.iter_errors(probe))
+    if err is None:
+        return None
+    while err.context:
+        deeper = best_match(err.context)
+        if deeper is None:
+            break
+        err = deeper
+    where = "/".join(map(str, err.absolute_path)) or "(root)"
+    return f"invalid Vega-Lite spec at {where}: {err.message[:240]}"
+
+
+def link_chart(spec: dict, key: str) -> bool:
+    """Wire a chart to the map, in place: the page sets the `_hl` param to the value hovered on
+    the map (or the time-lapse frame), and the other marks fade, or, for a time-lapse chart over
+    time, a rule marks the frame. (The page reads chart hovers itself, from Vega's pointer
+    events.) Only single-view and layered specs are wired; returns whether this one was."""
+    if "layer" in spec:
+        layers = spec["layer"] if isinstance(spec["layer"], list) else []
+        unit = next((u for u in layers if isinstance(u, dict) and "mark" in u
+                     and isinstance(u.get("encoding"), dict)), None)
+    else:
+        unit = spec if "mark" in spec and isinstance(spec.get("encoding"), dict) else None
+    if unit is None:
+        return False
+    names = {p.get("name") for p in spec.get("params", []) + unit.get("params", [])
+             if isinstance(p, dict)}
+    if "_hl" in names:
+        return False
+    x = unit["encoding"].get("x")
+    if key == "frame" and isinstance(x, dict) and x.get("field") in TIME_FIELDS:
+        rule = {"mark": {"type": "rule", "color": "#dc2626", "strokeWidth": 2},
+                "transform": [{"filter": "_hl != null && datum.frame === _hl"}],
+                "encoding": {"x": {k: x[k] for k in ("field", "type", "timeUnit", "sort")
+                                   if k in x}}}
+        if unit is spec:  # a unit spec becomes [the view, the rule]
+            spec["layer"] = [{k: spec.pop(k) for k in UNIT_KEYS if k in spec}]
+        spec["layer"].append(rule)
+    elif "opacity" not in unit["encoding"]:
+        k = json.dumps(key)
+        unit["encoding"]["opacity"] = {
+            "condition": {"test": f"_hl == null || datum[{k}] == null || datum[{k}] === _hl",
+                          "value": 1},
+            "value": 0.2}
+    spec.setdefault("params", []).append({"name": "_hl", "value": None})
+    return True
+
+
+def color_states(spec: dict, rows: list[dict]) -> None:
+    """Colour a `state` field with the map's colours (in place), so a full bin is the same red
+    in the chart as on the map. Leaves any scale the model chose alone."""
+    present = [s for s in dict.fromkeys(r.get("state") for r in rows) if s in STATE_COLORS]
+    if not present:
+        return
+    order = next((v for v in KIND_STATES.values() if set(present) <= set(v)), present)
+    states = [s for s in order if s in present]
+    for unit in [spec, *[u for u in spec.get("layer", []) if isinstance(u, dict)]]:
+        color = (unit.get("encoding") or {}).get("color")
+        if isinstance(color, dict) and color.get("field") == "state" and "scale" not in color:
+            color["scale"] = {"domain": states, "range": [STATE_COLORS[s] for s in states]}
 
 
 def h_show_chart(ctx: ToolContext, a: dict) -> dict:
-    spec = dict(a["spec"])
+    spec = copy.deepcopy(a["spec"])  # never touch the tool input: it stays in the history
     if not any(k in spec for k in COMPOSITE):
         raise ToolError(f"spec needs one of {COMPOSITE}")
     spec.setdefault("$schema", "https://vega.github.io/schema/vega-lite/v6.json")
     if "mark" in spec or "layer" in spec:  # facet/concat/repeat specs don't take a width
         spec.setdefault("width", "container")
     validator = vega_lite_validator(ctx.settings)
-    if validator is not None:
-        # Validate with a named placeholder instead of the rows, so errors quote the spec only.
-        probe = {**spec, "data": {"name": "rows"}} if a.get("data_ref") or "data" not in spec else spec
-        err = best_match(validator.iter_errors(probe))
-        if err is not None:
-            while err.context:
-                deeper = best_match(err.context)
-                if deeper is None:
-                    break
-                err = deeper
-            where = "/".join(map(str, err.absolute_path)) or "(root)"
-            raise ToolError(f"invalid Vega-Lite spec at {where}: {err.message[:240]}")
-    rows = None
-    if a.get("data_ref"):
+    has_ref = bool(a.get("data_ref"))
+    if validator is not None and (err := spec_error(validator, spec, has_ref)):
+        raise ToolError(err)
+    rows = link = None
+    if has_ref:
         ds = ctx.store.datasets.get(a["data_ref"])
         if ds is None:
             raise ToolError(f"unknown data_ref {a['data_ref']!r}; known: {list(ctx.store.datasets)[-10:]}")
         rows = ds["rows"]
+        color_states(spec, rows)
+        if ds.get("link") and rows and ds["link"]["key"] in rows[0]:
+            linked = copy.deepcopy(spec)
+            if link_chart(linked, ds["link"]["key"]) and (
+                    validator is None or not spec_error(validator, linked, True)):
+                spec, link = linked, ds["link"]
         spec["data"] = {"values": rows}
     elif "data" not in spec and "datasets" not in spec:
         raise ToolError("pass a data_ref (preferred) or include data in the spec")
-    ctx.emit({"type": "ui", "action": "chart", "title": a["title"], "spec": spec})
+    ctx.emit({"type": "ui", "action": "chart", "title": a["title"], "spec": spec, "link": link})
     return {"ok": True, "rows_plotted": len(rows) if rows is not None else None,
-            "_summary": f"chart: {a['title']}"}
+            "linked_to_map": bool(link), "_summary": f"chart: {a['title']}"}
+
+
+def h_show_visual(ctx: ToolContext, a: dict) -> dict:
+    data, layers = {}, {}
+    for ref in a.get("data_refs") or []:
+        if ref not in ctx.store.datasets:
+            raise ToolError(f"unknown data_ref {ref!r}; known: {list(ctx.store.datasets)[-10:]}")
+        data[ref] = ctx.store.datasets[ref]["rows"]
+    for ref in a.get("layer_refs") or []:
+        if ref not in ctx.store.layers:
+            raise ToolError(f"unknown layer_ref {ref!r}; known: {list(ctx.store.layers)[-10:]}")
+        layers[ref] = {k: v for k, v in ctx.store.layers[ref].items() if k != "meta"}
+    size = len(json.dumps(data, default=str)) + len(json.dumps(layers, default=str))
+    if size > MAX_VISUAL_DATA_CHARS:
+        raise ToolError(f"the data is too big for a visual ({size:,} characters); pass fewer refs")
+    libraries = a.get("libraries") or []
+    ctx.emit({"type": "ui", "action": "visual", "title": a["title"], "code": a["code"],
+              "libraries": libraries, "height": a.get("height") or 380, "data": data,
+              "data_order": list(data), "layers": layers, "colors": STATE_COLORS})
+    return {"ok": True, "libraries": libraries, "rows": {k: len(v) for k, v in data.items()},
+            "note": "rendered in the sandbox; any runtime error shows in the next <context>",
+            "_summary": f"visual: {a['title']}"}
 
 
 HANDLERS: dict[str, Callable[[ToolContext, dict], dict]] = {
     "city_overview": h_city_overview,
     "find_devices": h_find_devices,
+    "get_history": h_get_history,
     "get_device": h_get_device,
     "get_alarms": h_get_alarms,
     "get_traffic": h_get_traffic,
@@ -689,6 +897,7 @@ HANDLERS: dict[str, Callable[[ToolContext, dict], dict]] = {
     "map_callouts": h_map_callouts,
     "map_clear": h_map_clear,
     "show_chart": h_show_chart,
+    "show_visual": h_show_visual,
 }
 _LOWER = {name.lower(): name for name in HANDLERS}
 

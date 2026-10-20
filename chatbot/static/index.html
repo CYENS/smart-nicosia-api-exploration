@@ -28,6 +28,16 @@
         </label>
       </div>
       <section id="legend" class="legend" aria-label="Map layers" hidden></section>
+      <div id="tl-clock" class="tl-clock" aria-hidden="true" hidden></div>
+      <div id="timeline" class="timeline" role="group" aria-label="Time-lapse" hidden>
+        <button id="tl-play" type="button" aria-label="Play">▶</button>
+        <div class="tl-main">
+          <div class="tl-row"><span id="tl-title" class="tl-title"></span><span id="tl-time" class="tl-time"></span></div>
+          <input id="tl-slider" type="range" min="0" max="0" value="0" aria-label="Time">
+        </div>
+        <button id="tl-speed" type="button" class="tl-speed" title="Playback speed">1×</button>
+        <button id="tl-close" type="button" class="tl-close" aria-label="Close time-lapse">×</button>
+      </div>
     </main>
 
     <aside class="chat" aria-label="Chat">

@@ -170,6 +170,7 @@ class CityData:
         self._attrs_at: dict[str, float] = {}
         self._cameras: list[dict] = []
         self._cameras_at = 0.0
+        self._history: dict[tuple, tuple[float, dict[str, list[dict]]]] = {}
         self._load_attr_cache()
 
     # -- inventory -------------------------------------------------------------------------
@@ -274,6 +275,37 @@ class CityData:
             label, street = label_and_street(d, a)
             out.append(DeviceState(d, label, street, interpret.interpret(d.type, latest[d.name], now)))
         return out
+
+    def history(self, device_type: str, names: list[str], keys: tuple[str, ...],
+                start_ms: int, end_ms: int) -> dict[str, list[dict]]:
+        """Raw readings per device between two times (getTelemetryRange, paged), reused for
+        `snapshot_ttl_s` so replaying the same time-lapse in another style costs nothing."""
+        cache_key = (device_type, tuple(sorted(names)), keys, start_ms // 60_000, end_ms // 60_000)
+        with self._lock:
+            cached = self._history.get(cache_key)
+            if cached and time.time() - cached[0] < self.settings.snapshot_ttl_s:
+                return cached[1]
+
+        def one(name: str):
+            try:
+                records: list[dict] = []
+                for page in self.client.range_pages("DEVICE", name, keys, start_ms, end_ms,
+                                                    max_pages=6):
+                    records.extend(page)
+                return name, records
+            except ApiError as e:
+                log.warning("history for %s failed: %s", name, e)
+                return name, None
+
+        results = dict(self._pool.map(one, names))
+        found = {k: v for k, v in results.items() if v is not None}
+        if names and not found:
+            raise ApiError("getTelemetryRange", {}, f"every {device_type} history request failed")
+        with self._lock:
+            if len(self._history) >= 8:
+                self._history.pop(min(self._history, key=lambda k: self._history[k][0]))
+            self._history[cache_key] = (time.time(), found)
+        return found
 
     def snapshot_age_s(self, device_type: str) -> float | None:
         cached = self._latest.get(device_type)
