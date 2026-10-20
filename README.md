@@ -27,9 +27,10 @@ It also has:
   Claude writes JavaScript using d3, Observable Plot, ECharts or three.js. The code runs in a
   sandboxed iframe with no network access.
 - **Dangerous buildings.** The public registers of the Nicosia, Limassol, Larnaca and Famagusta
-  district organisations (ΕΟΑ), 925 buildings, each tied to its land parcel and to the 3D
-  buildings on it. Claude can filter them by district, status, area, street or distance, chart
-  them, and extrude them on the map at their real heights (red dangerous, amber needing repair).
+  district organisations (ΕΟΑ), about 1,000 buildings, each tied to its land parcel and to the 3D
+  buildings on it. Claude can filter them by district, status, area, urban or rural zone,
+  street, file number, plot or distance, chart them, and extrude them on the map at their real
+  heights (red dangerous, amber needing repair).
 - **The 3D city.** The Department of Lands and Surveys (DLS) 3D model of every building in
   Cyprus, with roof heights, floors, use and volume. It streams in as the map moves, coloured by
   height, and Claude can describe the buildings around any place ("how tall is it around
