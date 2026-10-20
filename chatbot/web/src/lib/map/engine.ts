@@ -64,6 +64,7 @@ type MapUi = {
   registers: { on: boolean; status: string }
   timelapse: TimelapseUi | null
   me: { loc: MyLocation | null; error: string }
+  flying: string | null // the route the camera is flying along
 }
 export type MyLocation = { lat: number; lon: number; accuracy_m: number | null; source: string }
 export const useMapUi = create<MapUi>(() => ({
@@ -77,6 +78,7 @@ export const useMapUi = create<MapUi>(() => ({
   registers: { on: false, status: "" },
   timelapse: null,
   me: { loc: null, error: "" },
+  flying: null,
 }))
 const setUi = useMapUi.setState
 
@@ -600,6 +602,7 @@ function addLabels(entry: Entry, src: string, filter: any, offset: number) {
 }
 
 function removeFromMap(ref: string) {
+  if (flight?.ref === ref) stopFlight()
   const entry = state.layers.get(ref)
   for (const id of entry?.ids || []) {
     if (map.getLayer(id)) map.removeLayer(id)
@@ -1168,6 +1171,124 @@ function animate(ts: number) {
     for (const id of state.dashLayers) if (map.getLayer(id)) map.setPaintProperty(id, "line-dasharray", DASHES[step])
   }
   requestAnimationFrame(animate)
+}
+
+// ---------------------------------------------------------------------------------------------
+// Fly the route: the camera walks a route at street level, tilted, looking where the walker
+// goes, with the 3D city on so the register buildings along the way stand up. Any drag, wheel,
+// click or touch on the map stops it; with reduced motion it jumps straight to the end.
+
+const FLY = { zoom: 17, pitch: 60, msPerKm: 10500, lookAheadM: 70, turnS: 0.9, maxTurnDegS: 80 }
+let flight: { ref: string; raf: number; stop: () => void } | null = null
+
+function metres([lon1, lat1]: number[], [lon2, lat2]: number[]) {
+  const k = Math.cos(((lat1 + lat2) / 2) * (Math.PI / 180))
+  return Math.hypot((lon2 - lon1) * k, lat2 - lat1) * 111320
+}
+
+function heading([lon1, lat1]: number[], [lon2, lat2]: number[]) {
+  const r = Math.PI / 180
+  const y = Math.sin((lon2 - lon1) * r) * Math.cos(lat2 * r)
+  const x = Math.cos(lat1 * r) * Math.sin(lat2 * r) - Math.sin(lat1 * r) * Math.cos(lat2 * r) * Math.cos((lon2 - lon1) * r)
+  return (Math.atan2(y, x) / r + 360) % 360
+}
+
+// The route to fly: the walker's own line (the safer one when the usual route is drawn too),
+// all its legs joined in order.
+function routePath(entry: Entry): number[][] {
+  const path: number[][] = []
+  for (const f of entry.data.features) {
+    if (f.properties?.state === "usual route") continue
+    const g = f.geometry
+    const lines = g?.type === "LineString" ? [g.coordinates] : g?.type === "MultiLineString" ? g.coordinates : []
+    for (const line of lines) for (const p of line) {
+      if (!path.length || metres(path[path.length - 1], p) > 0.5) path.push(p)
+    }
+  }
+  return path
+}
+
+export function stopFlight() {
+  flight?.stop()
+}
+
+export function flyRoute(ref: string) {
+  stopFlight()
+  const entry = state.layers.get(ref)
+  const path = entry ? routePath(entry) : []
+  if (path.length < 2) return
+  const along = [0]
+  for (let i = 1; i < path.length; i++) along.push(along[i - 1] + metres(path[i - 1], path[i]))
+  const total = along[along.length - 1]
+  const pointAt = (d: number) => {
+    d = Math.max(0, Math.min(total, d))
+    let i = 1
+    while (i < along.length - 1 && along[i] < d) i++
+    const seg = along[i] - along[i - 1] || 1
+    const f = (d - along[i - 1]) / seg
+    return [path[i - 1][0] + (path[i][0] - path[i - 1][0]) * f, path[i - 1][1] + (path[i][1] - path[i - 1][1]) * f]
+  }
+  const end = path[path.length - 1]
+  const finalBearing = heading(pointAt(total - FLY.lookAheadM), end)
+  const arrive = (duration: number) => {
+    // Ease out to frame the destination.
+    if (duration) map.easeTo({ center: end as [number, number], zoom: 16.4, pitch: 52, bearing: finalBearing, duration, essential: true })
+    else map.jumpTo({ center: end as [number, number], zoom: 16.4, pitch: 52, bearing: finalBearing })
+  }
+
+  if (!CITY.on) setCity3d(true)
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    arrive(0)
+    return
+  }
+
+  const interrupt = () => stopFlight()
+  const events = ["mousedown", "touchstart", "wheel", "dragstart"] as const
+  const me = {
+    ref,
+    raf: 0,
+    stop: () => {
+      cancelAnimationFrame(me.raf)
+      for (const e of events) map.off(e, interrupt)
+      if (flight === me) flight = null
+      setUi({ flying: null })
+    },
+  }
+  flight = me
+  setUi({ flying: ref })
+  for (const e of events) map.on(e, interrupt)
+
+  // A steady walking pace on screen: about 13 s for a 1.3 km walk, never under 6 s.
+  const duration = Math.max(6000, Math.min(45000, (total / 1000) * FLY.msPerKm))
+  let bearing = heading(path[0], pointAt(FLY.lookAheadM))
+  map.flyTo({ center: path[0] as [number, number], zoom: FLY.zoom, pitch: FLY.pitch, bearing, duration: 1600, essential: true })
+  map.once("moveend", () => {
+    if (flight !== me) return
+    let t0 = 0
+    let last = 0
+    const step = (ts: number) => {
+      if (flight !== me) return
+      if (!state.layers.has(ref)) { me.stop(); return }
+      if (!t0) { t0 = ts; last = ts }
+      const t = Math.min(1, (ts - t0) / duration)
+      // Mostly steady, with a gentle start and finish.
+      const s = 0.85 * t + 0.15 * t * t * (3 - 2 * t)
+      const d = s * total
+      const here = pointAt(d)
+      // Look a little ahead, and turn smoothly (and no faster than 80°/s, even at a U-turn)
+      // so corners don't jerk the camera.
+      const want = heading(here, pointAt(d + FLY.lookAheadM))
+      const diff = ((want - bearing + 540) % 360) - 180
+      const dt = (ts - last) / 1000
+      const turn = Math.max(-FLY.maxTurnDegS * dt, Math.min(FLY.maxTurnDegS * dt, diff * Math.min(1, dt / FLY.turnS)))
+      bearing = (bearing + turn + 360) % 360
+      last = ts
+      map.jumpTo({ center: here as [number, number], bearing, zoom: FLY.zoom, pitch: FLY.pitch })
+      if (t < 1) me.raf = requestAnimationFrame(step)
+      else { me.stop(); arrive(1800) }
+    }
+    me.raf = requestAnimationFrame(step)
+  })
 }
 
 // ---------------------------------------------------------------------------------------------
