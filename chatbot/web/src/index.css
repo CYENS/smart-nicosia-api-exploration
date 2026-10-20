@@ -1,0 +1,301 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "@fontsource-variable/sofia-sans";
+@import "@fontsource-variable/sofia-sans-condensed";
+@import "maplibre-gl/dist/maplibre-gl.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --font-sans: "Sofia Sans Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-heading: var(--font-sans);
+  /* Readouts, the tool trace and labels: same family, narrower, always tabular. */
+  --font-condensed: "Sofia Sans Condensed Variable", var(--font-sans);
+
+  --color-night: var(--night);
+  --color-console: var(--console);
+  --color-raised: var(--raised);
+  --color-line: var(--line);
+  --color-sodium: var(--sodium);
+  --color-signal: var(--signal);
+
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-foreground: var(--foreground);
+  --color-background: var(--background);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+/*
+  The night shift: Nicosia's control room after dark. Deep blue night (never tinted black) for
+  the map and the base, console blue for panels, cool ink for text. Two signal colours only:
+  sodium, the street lamps' own amber, for anything live, current or in focus; signal red for
+  alarms and danger. Everything else stays ink, so data layers keep their colours to themselves.
+  Dark only: .dark mirrors :root.
+*/
+:root,
+.dark {
+  --night: #0e1828;
+  --console: #15233a;
+  --raised: #1c2d48;
+  --line: rgb(138 160 190 / 0.16);
+  --sodium: #ffae45;
+  --signal: #ff5a4e;
+
+  --background: var(--night);
+  --foreground: #e4ebf4;
+  --card: var(--console);
+  --card-foreground: #e4ebf4;
+  --popover: #1a2a43;
+  --popover-foreground: #e4ebf4;
+  --primary: #e4ebf4;
+  --primary-foreground: #0e1828;
+  --secondary: var(--raised);
+  --secondary-foreground: #e4ebf4;
+  --muted: #192840;
+  --muted-foreground: #8798b0;
+  --accent: #22344f;
+  --accent-foreground: #e4ebf4;
+  --destructive: var(--signal);
+  --border: var(--line);
+  --input: rgb(138 160 190 / 0.24);
+  --ring: var(--sodium);
+  --chart-1: #ffae45;
+  --chart-2: #6cb4ff;
+  --chart-3: #6fdcbf;
+  --chart-4: #c49bff;
+  --chart-5: #ff8a7a;
+  --radius: 0.5rem;
+  --sidebar: var(--console);
+  --sidebar-foreground: #e4ebf4;
+  --sidebar-primary: #e4ebf4;
+  --sidebar-primary-foreground: #0e1828;
+  --sidebar-accent: #22344f;
+  --sidebar-accent-foreground: #e4ebf4;
+  --sidebar-border: var(--line);
+  --sidebar-ring: var(--sodium);
+
+  /* Floating panels sit over a moving map: one deep shadow, no glow. */
+  --float-shadow: 0 1px 0 rgb(255 255 255 / 0.03) inset, 0 18px 40px -12px rgb(3 8 18 / 0.7);
+  color-scheme: dark;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+  body {
+    @apply overflow-hidden bg-background text-foreground antialiased;
+    font-feature-settings: "tnum" 0;
+  }
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+  html {
+    @apply font-sans;
+  }
+}
+
+@utility font-readout {
+  font-family: var(--font-condensed);
+  font-variant-numeric: tabular-nums;
+}
+
+@utility panel-float {
+  background: var(--console);
+  border: 1px solid var(--line);
+  box-shadow: var(--float-shadow);
+}
+
+/* The assistant's prose. */
+.prose-answer {
+  font-size: 15px;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+.prose-answer > :first-child { margin-top: 0; }
+.prose-answer > :last-child { margin-bottom: 0; }
+.prose-answer p { margin: 0.5em 0; }
+.prose-answer ul,
+.prose-answer ol { margin: 0.45em 0; padding-left: 1.25em; }
+.prose-answer ul { list-style: disc; }
+.prose-answer ol { list-style: decimal; }
+.prose-answer li { margin: 0.15em 0; }
+.prose-answer li::marker { color: var(--muted-foreground); }
+.prose-answer strong { font-weight: 650; color: #f3f6fa; }
+.prose-answer h1,
+.prose-answer h2,
+.prose-answer h3 { font-size: 15px; font-weight: 650; margin: 0.9em 0 0.3em; }
+.prose-answer a { color: inherit; text-decoration: underline; text-decoration-color: var(--sodium); text-underline-offset: 3px; }
+.prose-answer a:hover { color: var(--sodium); }
+.prose-answer code { font-size: 0.9em; background: var(--muted); padding: 1px 5px; border-radius: 4px; }
+.prose-answer table {
+  display: block; overflow-x: auto; border-collapse: collapse; margin: 0.7em 0;
+  font-family: var(--font-condensed); font-variant-numeric: tabular-nums; font-size: 14px;
+}
+.prose-answer th,
+.prose-answer td { border-bottom: 1px solid var(--line); padding: 4px 12px 4px 0; text-align: left; }
+.prose-answer th { color: var(--muted-foreground); font-weight: 500; }
+.prose-answer blockquote { margin: 0.6em 0; padding-left: 10px; border-left: 2px solid var(--line); color: var(--muted-foreground); }
+
+/* The walls mark traces itself while the assistant works. */
+@keyframes walls-trace {
+  from { stroke-dashoffset: 0; }
+  to { stroke-dashoffset: -200; }
+}
+.walls-working path {
+  stroke-dasharray: 46 54;
+  animation: walls-trace 1.6s linear infinite;
+}
+@keyframes live-ping {
+  0% { box-shadow: 0 0 0 0 rgb(255 174 69 / 0.55); }
+  70% { box-shadow: 0 0 0 7px rgb(255 174 69 / 0); }
+  100% { box-shadow: 0 0 0 0 rgb(255 174 69 / 0); }
+}
+.live-dot { animation: live-ping 2.4s ease-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .walls-working path,
+  .live-dot { animation: none; }
+}
+
+/* MapLibre chrome, restyled to sit with the panels, and kept just inside them. */
+.maplibregl-map { font: inherit; }
+.map-root .maplibregl-ctrl-bottom-left,
+.map-root .maplibregl-ctrl-bottom-right,
+.map-root .maplibregl-ctrl-top-right { transition: left 0.2s, right 0.2s, bottom 0.2s; }
+.map-root .maplibregl-ctrl-bottom-left { left: var(--inset-left); bottom: var(--inset-bottom); }
+.map-root .maplibregl-ctrl-bottom-right { right: var(--inset-right); bottom: var(--inset-bottom); }
+.map-root .maplibregl-ctrl-top-right { right: var(--inset-right); }
+.maplibregl-ctrl-group {
+  background: var(--console) !important;
+  border: 1px solid var(--line);
+  box-shadow: var(--float-shadow) !important;
+  border-radius: 8px !important;
+}
+.maplibregl-ctrl-group button + button { border-top-color: var(--line) !important; }
+.maplibregl-ctrl-group .maplibregl-ctrl-icon { filter: invert(0.88) sepia(0.15) hue-rotate(180deg); }
+.maplibregl-ctrl-attrib {
+  background: rgb(14 24 40 / 0.78) !important;
+  color: var(--muted-foreground);
+  font-size: 11px;
+}
+.maplibregl-ctrl-attrib a { color: var(--muted-foreground); }
+.maplibregl-ctrl-attrib-button { filter: invert(0.85); }
+.maplibregl-ctrl-scale {
+  background: rgb(14 24 40 / 0.7);
+  color: var(--muted-foreground);
+  border-color: rgb(138 160 190 / 0.45);
+  font-family: var(--font-condensed);
+  font-variant-numeric: tabular-nums;
+}
+.maplibregl-popup-content {
+  background: var(--popover);
+  color: var(--popover-foreground);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 9px 12px;
+  font-size: 13px;
+  line-height: 1.45;
+  box-shadow: var(--float-shadow);
+}
+.maplibregl-popup-close-button { color: var(--muted-foreground); font-size: 16px; padding: 0 6px; }
+.maplibregl-popup-anchor-top .maplibregl-popup-tip,
+.maplibregl-popup-anchor-top-left .maplibregl-popup-tip,
+.maplibregl-popup-anchor-top-right .maplibregl-popup-tip { border-bottom-color: var(--popover); }
+.maplibregl-popup-anchor-bottom .maplibregl-popup-tip,
+.maplibregl-popup-anchor-bottom-left .maplibregl-popup-tip,
+.maplibregl-popup-anchor-bottom-right .maplibregl-popup-tip { border-top-color: var(--popover); }
+.maplibregl-popup-anchor-left .maplibregl-popup-tip { border-right-color: var(--popover); }
+.maplibregl-popup-anchor-right .maplibregl-popup-tip { border-left-color: var(--popover); }
+
+/* Map callouts the assistant places. */
+.callout {
+  position: relative;
+  max-width: 230px;
+  padding: 7px 10px 8px;
+  border-radius: 8px;
+  background: var(--popover);
+  color: var(--foreground);
+  border: 1px solid rgb(255 174 69 / 0.45);
+  box-shadow: var(--float-shadow);
+  font-size: 12.5px;
+  line-height: 1.4;
+  animation: callout-in 0.35s cubic-bezier(0.23, 1, 0.32, 1);
+}
+.callout b { display: block; font-size: 13px; font-weight: 650; margin-bottom: 1px; }
+.callout::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -6px;
+  width: 10px;
+  height: 10px;
+  transform: translateX(-50%) rotate(45deg);
+  background: var(--popover);
+  border-right: 1px solid rgb(255 174 69 / 0.45);
+  border-bottom: 1px solid rgb(255 174 69 / 0.45);
+}
+@keyframes callout-in {
+  from { transform: translateY(6px) scale(0.94); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+
+/* Vega's export menu, in the console palette. */
+.vega-embed .vega-actions {
+  background: var(--popover) !important;
+  border: 1px solid var(--line) !important;
+  box-shadow: var(--float-shadow) !important;
+}
+.vega-embed .vega-actions a { color: var(--foreground) !important; font-family: var(--font-sans) !important; }
+.vega-embed .vega-actions a:hover { background: var(--accent) !important; }
+.vega-embed summary { background: var(--raised) !important; border-color: var(--line) !important; color: var(--foreground) !important; box-shadow: none !important; }
+.vega-embed summary svg { fill: currentColor; }
+#vg-tooltip-element.vg-tooltip {
+  background: var(--popover);
+  color: var(--foreground);
+  border: 1px solid var(--line);
+  font-family: var(--font-condensed);
+  font-variant-numeric: tabular-nums;
+  font-size: 12.5px;
+}
+#vg-tooltip-element.vg-tooltip td.key { color: var(--muted-foreground); }
