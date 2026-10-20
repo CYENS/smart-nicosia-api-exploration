@@ -420,6 +420,36 @@ def test_plan_route_avoids_dangerous_buildings(tmp_path, monkeypatch):
     assert any(f["properties"].get("n") == "!" and f["properties"]["id"] == "NIC-1" for f in feats)
 
 
+class DetourRouter(FakeRouter):
+    """Avoiding NIC-1 swings the route east past NIC-2 and LAR-120 as well: worse."""
+
+    def route(self, stops, mode, prefer, avoid=None):
+        res = super().route(stops, mode, prefer, avoid)
+        if avoid:
+            east = [[LON + 0.002, LAT + 0.0001], [LON + 0.004, LAT + 0.0001]]
+            res["coordinates"] = [res["coordinates"][0], [LON, LAT + 0.0001], *east,
+                                  res["coordinates"][-1]]
+        return res
+
+
+def test_plan_route_keeps_the_usual_route_when_detours_pass_more(tmp_path, monkeypatch):
+    from types import SimpleNamespace
+    from conftest import utc
+
+    ctx = tool_ctx(tmp_path, monkeypatch, [])
+    ctx.router = DetourRouter()
+    ctx.city = SimpleNamespace(now=lambda: utc(2026, 10, 20, 9))
+    stops = [{"lat": LAT, "lon": LON - 0.004}, {"lat": LAT, "lon": LON + 0.0012}]
+    res, err = run_tool(ctx, "plan_route", {"stops": stops, "mode": "walk",
+                                            "prefer": ["avoid_dangerous_buildings"]})
+    assert not err, res
+    assert ctx.router.avoid_calls  # it tried, and the detours passed 3
+    assert res["dangerous_passed"] == 1 and res["travel_km"] == 0.9
+    assert "usual route" in res["avoidance"]["note"]
+    feats = ctx.store.layers[res["layer_ref"]]["features"]
+    assert [f["properties"]["state"] for f in feats[:1]] == ["route"]
+
+
 def test_namesakes_prefer_the_mapped_landmark_then_the_nearest():
     from chatbot.geo import Places, rank_namesakes
 
