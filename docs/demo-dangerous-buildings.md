@@ -160,5 +160,8 @@ plot.
   Museum, Faneromeni Church and the Cyprus Museum can't do better than the usual route there
   (every detour runs past other register buildings), so it says so and keeps the usual route,
   which passes 10. That answer is honest, but it is not a showpiece.
-- **"Which one is closest to me?" right after question 9.** It gets there, but makes two empty
-  lookups first and prints a stray working note. Question 9 already names the nearest one.
+- **"Which one is closest to me?" right after question 9.** Once, on 20 Oct, it made two empty
+  lookups and printed a stray working note before answering. Two replays on 21 Oct (from
+  Apollonos Street and from Eleftheria Square) answered straight from question 9's result,
+  with the right building and distance. It may still happen now and then, and question 9
+  already names the nearest one, so it is safest to skip it.
