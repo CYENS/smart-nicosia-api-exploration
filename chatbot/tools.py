@@ -25,7 +25,7 @@ from collector.http import ApiError
 
 from chatbot import context, eoa, history
 from chatbot.city import KINDS, CityData
-from chatbot.dls import DLS, area_m2
+from chatbot.dls import DLS, area_m2, distance_to_path_m
 from chatbot.geo import CATEGORIES, Places, haversine_m, loose_match, norm
 from chatbot.routing import MAX_TOUR_STOPS, MODES, PREFERENCES, Router, best_order
 from chatbot.settings import CACHE_DIR, TIMEZONE, Settings
@@ -50,6 +50,9 @@ HISTORY_KINDS = ["street_light", "parking_sensor", "waste_bin", "air_station"]
 VISUAL_LIBRARIES = ["d3", "plot", "echarts", "three"]
 MAX_VISUAL_DATA_CHARS = 3_000_000
 STATUSES = ["dangerous", "needs_repair"]
+SORTS = ["height", "floors", "volume", "distance", "declared"]
+PASS_BY_M = 25  # a register building this close to a route's line is "passed"
+MAX_AVOID_ZONES = 40  # Valhalla caps the total perimeter of polygons to avoid
 # DLS 3D buildings coloured by height (upper bound in m, label, colour); dangerous ones stay red.
 HEIGHT_BANDS = [(6, "under 6 m", "#cbd5e1"), (12, "6-12 m", "#93c5fd"), (20, "12-20 m", "#3b82f6"),
                 (35, "20-35 m", "#1d4ed8"), (float("inf"), "35 m and up", "#312e81")]
@@ -73,13 +76,17 @@ class ToolContext:
     conversation_id: str
     dls: DLS | None = None
     registers: eoa.Registry | None = None
+    # The user's position from the page (device GPS or set on the map), if they shared it:
+    # {"lat", "lon", "accuracy_m", "source"}.
+    user_location: dict | None = None
 
 
 # -- schema helpers -----------------------------------------------------------------------------
 
 NEAR = {
     "near_place": {"type": "string",
-                   "description": "Place name to search around, e.g. 'Eleftheria Square'."},
+                   "description": "Place name to search around, e.g. 'Eleftheria Square', or "
+                                  "'my location' for the user's shared position."},
     "near_lat": {"type": "number"},
     "near_lon": {"type": "number"},
     "radius_m": {"type": "number", "minimum": 20, "maximum": 10000,
@@ -197,10 +204,15 @@ TOOL_DEFS: list[dict] = [
          "layer_ref. With optimize_order the stops after the first are reordered for the "
          "shortest total travel time (exact for up to 12 stops), which is how to plan a tour of "
          "museums or sights. Preferences tune the walking route: lit_streets (after dark), "
-         "quiet (footpaths and living streets), less_hills, accessible. Give each stop a place "
-         "name or coordinates, and optionally minutes_here for a visit. Driving routes use "
-         "typical speeds, not live per-street traffic; the reply adds the current city-wide "
-         "speed against last week.",
+         "quiet (footpaths and living streets), less_hills, accessible, and "
+         "avoid_dangerous_buildings (keeps off the streets in front of buildings on the "
+         "dangerous registers; the reply compares it with the usual route, the one picked "
+         "without avoiding them: minutes added, buildings passed by each and how many it "
+         "avoids, and the layer shows both routes and the buildings). Every "
+         "route reports the register buildings it passes within 25 m. Give each stop a place "
+         "name, 'my location', or coordinates, and optionally minutes_here for a visit. Driving "
+         "routes use typical speeds, not live per-street traffic; the reply adds the current "
+         "city-wide speed against last week.",
          obj({
              "stops": {"type": "array", "minItems": 2, "maxItems": MAX_TOUR_STOPS + 1,
                        "items": obj({
@@ -252,9 +264,26 @@ TOOL_DEFS: list[dict] = [
              **NEAR,
              "min_floors": {"type": "integer", "minimum": 1, "maximum": 60},
              "min_height_m": {"type": "number", "minimum": 0, "maximum": 300},
+             "sort": {"type": "string", "enum": SORTS,
+                      "description": "Order of the listed items: 'height' (tallest first, the "
+                                     "default without a place), 'floors', 'volume' (the most "
+                                     "building that could fail), 'distance' (nearest first, the "
+                                     "default with a place) or 'declared' (newest first; only "
+                                     "Larnaca dates its declarations)."},
              "limit": {"type": "integer", "minimum": 1, "maximum": 50,
                        "description": "How many buildings to list in the reply (default 12). "
                                       "The layer and data_ref always hold every match."},
+         })),
+    tool("where_am_i",
+         "Where the user is, from the position they shared (the locate button, or 'I'm here' "
+         "on the map): the address, the nearest places, and the dangerous-register buildings "
+         "around them with distances. Returns a layer_ref (the user and those buildings; show "
+         "it with 'buildings_3d') and a data_ref. Give lat/lon to describe another point.",
+         obj({
+             "lat": {"type": "number"},
+             "lon": {"type": "number"},
+             "radius_m": {"type": "number", "minimum": 50, "maximum": 2000,
+                          "description": "How far to look for dangerous buildings (default 300)."},
          })),
     tool("get_buildings_3d",
          "The Department of Lands and Surveys (DLS) 3D buildings model around a place: every "
@@ -383,8 +412,24 @@ SCHEMAS = {t["name"]: t["input_schema"] for t in TOOL_DEFS}
 # -- shared helpers -----------------------------------------------------------------------------
 
 
+ME = {norm(w) for w in ("me", "my location", "my position", "here", "where i am",
+                         "current location", "my current location", "you are here", "εδώ",
+                         "εγώ", "η θέση μου")}
+
+
+def my_location(ctx: ToolContext) -> dict:
+    loc = ctx.user_location
+    if not loc:
+        raise ToolError("the user hasn't shared a location: ask them to press the locate button "
+                        "(top left of the map) or right-click the map and choose 'I'm here'")
+    return {"name": "your location", "lat": loc["lat"], "lon": loc["lon"]}
+
+
 def resolve_place(ctx: ToolContext, text: str) -> dict:
-    """A place name -> {name, lat, lon, ...}, preferring the places index (it has opening hours)."""
+    """A place name -> {name, lat, lon, ...}, preferring the places index (it has opening hours).
+    'me', 'my location' or 'here' is the user's shared location."""
+    if norm(text) in ME:
+        return my_location(ctx)
     if ctx.places.ready:
         key = norm(text)
         exact, _ = ctx.places.find(query=text, limit=50)
@@ -676,6 +721,16 @@ def h_plan_route(ctx: ToolContext, a: dict) -> dict:
         order = best_order(seconds, return_to_start, bool(a.get("keep_last_stop_last")))
     path = [coords[i] for i in order] + ([coords[0]] if return_to_start else [])
     route = ctx.router.route(path, mode, prefer)
+    records = ctx.registers.records() if ctx.registers is not None and ctx.registers.ready else []
+    # `usual` is the route picked without avoiding them (not always the shortest: other
+    # preferences, like lit streets, weigh in too).
+    usual, zones = None, []
+    if "avoid_dangerous_buildings" in prefer and records:
+        safer, zones = route_avoiding(ctx, path, mode, prefer, route, records)
+        if safer is not route:
+            usual, route = route, safer
+    passed = passed_by(route["coordinates"], records)
+    usual_passed = passed_by(usual["coordinates"], records) if usual else []
 
     start = _hhmm(a.get("start_time"), local_now(ctx))
     t = start
@@ -692,16 +747,37 @@ def h_plan_route(ctx: ToolContext, a: dict) -> dict:
     if return_to_start:
         t += timedelta(minutes=route["legs"][-1]["duration_min"])
 
-    feats = [{"type": "Feature", "geometry": {"type": "LineString",
-                                              "coordinates": route["coordinates"]},
-              "properties": {"id": "route", "state": "route", "color": STATE_COLORS["route"],
-                             "label": f"{route['distance_km']} km · {route['duration_min']:.0f} min"}}]
+    feats = []
+    if usual:  # drawn first, so the route to take sits on top of it
+        feats.append({"type": "Feature", "geometry": {"type": "LineString",
+                                                      "coordinates": usual["coordinates"]},
+                      "properties": {"id": "route_usual", "state": "usual route",
+                                     "color": STATE_COLORS["usual route"],
+                                     "label": f"usual: {usual['distance_km']} km · "
+                                              f"{usual['duration_min']:.0f} min"}})
+    feats.append({"type": "Feature", "geometry": {"type": "LineString",
+                                                  "coordinates": route["coordinates"]},
+                  "properties": {"id": "route", "state": "route", "color": STATE_COLORS["route"],
+                                 "label": f"{route['distance_km']} km · {route['duration_min']:.0f} min"}})
     feats += [point(p["lon"], p["lat"], {"id": f"stop{p['n']}", "label": f"{p['n']}. {p['label']}",
                                          "n": p["n"], "state": "stop", "color": STATE_COLORS["stop"],
                                          "popup": f"{p['n']}. {p['label']}\narrive {p['arrive']}"})
               for p in plan]
+    # register buildings along either route, as red "!" markers
+    flagged = {r["id"]: r for r, _ in passed + usual_passed}
+    for r in flagged.values():
+        spot = eoa.anchor(r)
+        feats.append(point(spot[0], spot[1], {
+            "id": r["id"], "label": "", "n": "!", "state": r["status"],
+            "color": STATE_COLORS[r["status"]], "popup": eoa.popup(r)}))
+    legend = {}
+    if flagged or usual:
+        legend = {"route": STATE_COLORS["route"],
+                  **({"usual route": STATE_COLORS["usual route"]} if usual else {}),
+                  **{s: STATE_COLORS[s] for s in STATUSES
+                     if any(r["status"] == s for r in flagged.values())}}
     layer = ctx.store.add_layer(f"route_{mode}", feats, geometry="route",
-                                title=f"{mode.capitalize()} route", legend={})
+                                title=f"{mode.capitalize()} route", legend=legend)
     visit_min = sum(s["minutes_here"] for s in stops[1:])
     res = {
         "mode": mode, "prefer": prefer, "optimized": bool(seconds),
@@ -713,6 +789,34 @@ def h_plan_route(ctx: ToolContext, a: dict) -> dict:
                   **leg} for k, leg in enumerate(route["legs"])],
         "layer_ref": layer,
     }
+    if records:
+        res["dangerous_passed"] = len(passed)
+        res["dangerous_along_route"] = [
+            {"id": r["id"], "status": r["status"], "address": r.get("address") or eoa.place_of(r),
+             "height_m": r.get("height_m"), "metres_from_route": round(d)}
+            for r, d in sorted(passed, key=lambda t: t[1])][:12]
+    if "avoid_dangerous_buildings" in prefer:
+        if usual:
+            ids = {r["id"] for r, _ in passed}
+            res["avoidance"] = {
+                "usual_route": {"km": usual["distance_km"], "min": usual["duration_min"],
+                                "dangerous_passed": len(usual_passed)},
+                "this_route": {"km": route["distance_km"], "min": route["duration_min"],
+                               "dangerous_passed": len(passed)},
+                "avoided": len({r["id"] for r, _ in usual_passed} - ids),
+                "minutes_added": round(route["duration_min"] - usual["duration_min"], 1),
+                "km_added": round(route["distance_km"] - usual["distance_km"], 2),
+                "what_usual_means": "the route picked without avoiding them, with the same "
+                                    "other preferences; not always the shortest",
+                "still_passed_note": "buildings within 40 m of a stop can't be avoided"
+                if passed else None}
+        elif not records:
+            res["avoidance"] = {"note": "the dangerous-building registers are still loading"}
+        elif not zones:
+            res["avoidance"] = {"note": "the usual route already passes no register buildings "
+                                        "(or only ones within 40 m of a stop)"}
+        else:
+            res["avoidance"] = {"note": "no way round them was found; this is the usual route"}
     if mode == "drive":
         try:
             sp = context.speed(ctx.city, 2)["rows"]
@@ -777,10 +881,17 @@ def h_find_dangerous_buildings(ctx: ToolContext, a: dict) -> dict:
         radius = a.get("radius_m") or 1000
         dist = {r["id"]: haversine_m(center[0], center[1], r["lat"], r["lon"])
                 for r in sel if r.get("lat") is not None}
-        sel = sorted((r for r in sel if dist.get(r["id"], 1e12) <= radius),
-                     key=lambda r: dist[r["id"]])
+        sel = [r for r in sel if dist.get(r["id"], 1e12) <= radius]
+    order = a.get("sort") or ("distance" if center else "height")
+    if order == "distance" and not center:
+        raise ToolError("sort 'distance' needs near_place (or 'my location') or near_lat/near_lon")
+    if order == "declared":  # newest first; undated ("") last
+        sel = sorted(sel, key=lambda r: r.get("declared") or "", reverse=True)
     else:
-        sel = sorted(sel, key=lambda r: -(r.get("height_m") or 0))
+        sel = sorted(sel, key={"distance": lambda r: dist[r["id"]],
+                               "height": lambda r: -(r.get("height_m") or 0),
+                               "floors": lambda r: -(r.get("floors") or 0),
+                               "volume": lambda r: -(r.get("volume_m3") or 0)}[order])
 
     parts = [eoa.EOAS[a["eoa"]]["name_en"] if a.get("eoa") else "EOA registers"]
     parts += [a[k] for k in ("status", "area", "street") if a.get(k)]
@@ -792,7 +903,8 @@ def h_find_dangerous_buildings(ctx: ToolContext, a: dict) -> dict:
     layer = ctx.store.add_layer("dangerous", features, geometry="buildings", title=title,
                                 legend=legend_for([s for s in STATUSES
                                                    if any(r["status"] == s for r in sel)]),
-                                value_fields=["height_m", "floors", "volume_m3"])
+                                value_fields=["height_m", "floors", "volume_m3"],
+                                count=len(sel))
     data = ctx.store.add_dataset("dangerous", rows, title=title, link={"key": "id"})
     heights = [r["height_m"] for r in sel if r.get("height_m") and not r.get("height_estimated")]
     floors = [r["floors"] for r in sel if r.get("floors")]
@@ -811,7 +923,7 @@ def h_find_dangerous_buildings(ctx: ToolContext, a: dict) -> dict:
         "height_m": eoa.summary(heights), "floors": eoa.summary(floors),
         "five_floors_or_more": sum(1 for f in floors if f >= 5),
         "layer_ref": layer, "data_ref": data,
-        "items": rows[:limit],
+        "sorted_by": order, "items": rows[:limit],
     }
     if not ctx.registers.linked_3d:
         res["note"] = "3D heights are still being linked; ask again in a few minutes for them"
@@ -820,6 +932,98 @@ def h_find_dangerous_buildings(ctx: ToolContext, a: dict) -> dict:
                        "radius_m": a.get("radius_m") or 1000}
     res["_summary"] = f"{len(sel)} of {len(records)} register buildings"
     return res
+
+
+def h_where_am_i(ctx: ToolContext, a: dict) -> dict:
+    if a.get("lat") is not None and a.get("lon") is not None:
+        lat, lon, source, accuracy = a["lat"], a["lon"], "given point", None
+    else:
+        my_location(ctx)  # says how to share a location if there is none
+        loc = ctx.user_location
+        lat, lon = loc["lat"], loc["lon"]
+        source, accuracy = loc.get("source"), loc.get("accuracy_m")
+    radius = a.get("radius_m") or 300
+    address = ctx.places.reverse(lat, lon) if ctx.places is not None else None
+    places = []
+    if ctx.places is not None and ctx.places.ready:
+        found, _ = ctx.places.find(near=(lat, lon), radius_m=250, limit=5)
+        places = [{"name": p.get("name"), "category": p["category"].replace("_", " "),
+                   "distance_m": p["distance_m"]} for p in found]
+    near = []
+    if ctx.registers is not None and ctx.registers.ready:
+        for r in ctx.registers.records():
+            spot = eoa.anchor(r)
+            if spot and (d := haversine_m(lat, lon, spot[1], spot[0])) <= radius:
+                near.append((r, d))
+    near.sort(key=lambda t: t[1])
+    you = point(lon, lat, {"id": "you", "label": "You are here", "state": "you",
+                           "color": STATE_COLORS["you"],
+                           "popup": "You are here" + (f" (±{accuracy:.0f} m)" if accuracy else "")})
+    records = [r for r, _ in near]
+    layer = ctx.store.add_layer("where_am_i", [you, *eoa.layer_features(records, STATE_COLORS)],
+                                geometry="buildings", title="Around you",
+                                legend=legend_for(["you", *[s for s in STATUSES
+                                                            if any(r["status"] == s for r in records)]]),
+                                value_fields=["height_m", "floors"], count=len(records))
+    rows = [eoa.row(r, d) for r, d in near]
+    data = ctx.store.add_dataset("around_you", rows, title="Dangerous buildings around you",
+                                 link={"key": "id"})
+    in_walls = haversine_m(lat, lon, WALLED_CITY[0], WALLED_CITY[1]) < WALLED_CITY[2]
+    return {
+        "you_are_at": {"lat": lat, "lon": lon, "accuracy_m": accuracy, "source": source},
+        "address": address, "inside_the_walled_city": in_walls, "nearest_places": places,
+        "dangerous_within_m": radius, "dangerous_count": len(near),
+        "by_status": dict(Counter(r["status"] for r in records).most_common()),
+        "nearest_dangerous": rows[:8], "layer_ref": layer, "data_ref": data,
+        "_summary": f"{len(near)} register buildings within {radius:g} m",
+    }
+
+
+def passed_by(path: list[list[float]], records: list[dict],
+              within: float = PASS_BY_M) -> list[tuple[dict, float]]:
+    """Register buildings whose plot is within `within` m of a route, with the distance."""
+    if not path:
+        return []
+    pad = 0.0005
+    w, e = min(p[0] for p in path) - pad, max(p[0] for p in path) + pad
+    s, n = min(p[1] for p in path) - pad, max(p[1] for p in path) + pad
+    out = []
+    for r in records:
+        spot = eoa.anchor(r)
+        if spot and w <= spot[0] <= e and s <= spot[1] <= n:
+            d = distance_to_path_m(path, *spot)
+            if d <= within:
+                out.append((r, d))
+    return out
+
+
+def route_avoiding(ctx: ToolContext, path: list[tuple[float, float]], mode: str,
+                   prefer: list[str], first: dict, records: list[dict]):
+    """Re-route around the streets in front of the register buildings a route passes: exclude
+    them, re-route, and repeat for any the new route passes (3 rounds at most). Buildings
+    within 40 m of a stop can't be avoided and stay. Returns (route, avoided ids)."""
+    stops = [(lon, lat) for lat, lon in path]
+    zones: dict[str, list] = {}
+    current = first
+    for _ in range(3):
+        new = []
+        for r, _d in passed_by(current["coordinates"], records):
+            spot = eoa.anchor(r)
+            if r["id"] in zones or any(haversine_m(spot[1], spot[0], y, x) < 40 for x, y in stops):
+                continue
+            new.append(r)
+        if not new or len(zones) >= MAX_AVOID_ZONES:
+            break
+        for r in new[:MAX_AVOID_ZONES - len(zones)]:
+            zone = eoa.avoid_zone(r)
+            if zone and zone not in zones.values():
+                zones[r["id"]] = zone
+        try:
+            current = ctx.router.route(path, mode, prefer, avoid=list(zones.values()))
+        except WebError as e:  # the zones cut off every way through
+            log.info("no way round the dangerous buildings: %s", e)
+            break
+    return current, list(zones)
 
 
 def height_band(h: float) -> tuple[str, str]:
@@ -1202,6 +1406,7 @@ HANDLERS: dict[str, Callable[[ToolContext, dict], dict]] = {
     "plan_route": h_plan_route,
     "reachable_area": h_reachable_area,
     "find_dangerous_buildings": h_find_dangerous_buildings,
+    "where_am_i": h_where_am_i,
     "get_buildings_3d": h_get_buildings_3d,
     "show_on_map": h_show_on_map,
     "map_fly_to": h_map_fly_to,

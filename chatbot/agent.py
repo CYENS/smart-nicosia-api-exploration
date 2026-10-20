@@ -42,6 +42,22 @@ class Conversation:
         self.last_used = time.time()
 
 
+def user_location(context: dict | None) -> dict | None:
+    """The position the page shared (device GPS or set on the map), checked, or None."""
+    loc = (context or {}).get("user_location")
+    if not isinstance(loc, dict):
+        return None
+    try:
+        lat, lon = float(loc["lat"]), float(loc["lon"])
+    except (KeyError, TypeError, ValueError):
+        return None
+    if not (-90 <= lat <= 90 and -180 <= lon <= 180):
+        return None
+    acc = loc.get("accuracy_m")
+    return {"lat": lat, "lon": lon, "source": str(loc.get("source") or "shared")[:30],
+            "accuracy_m": float(acc) if isinstance(acc, (int, float)) else None}
+
+
 def format_context(context: dict | None, now: datetime) -> str:
     lines = [f"local_time: {now.astimezone(TZ):%a %Y-%m-%d %H:%M} ({TIMEZONE})"]
     view = (context or {}).get("map_view") or {}
@@ -53,6 +69,13 @@ def format_context(context: dict | None, now: datetime) -> str:
         lines.append(f"layers_on_map: {', '.join(layers)}")
     if (context or {}).get("city_3d"):
         lines.append("city_3d: on")
+    loc = user_location(context)
+    if loc:
+        how = f", ±{loc['accuracy_m']:.0f} m" if loc.get("accuracy_m") else ""
+        lines.append(f"user_location: {loc['lat']:.5f}, {loc['lon']:.5f} "
+                     f"({loc.get('source') or 'shared'}{how})")
+    else:
+        lines.append("user_location: not shared")
     errors = (context or {}).get("visual_errors")
     if errors:
         lines.append("visual_errors: " + "; ".join(str(e)[:300] for e in errors[:3]))
@@ -96,7 +119,8 @@ class Agent:
             loop.call_soon_threadsafe(emit, event)
 
         tool_ctx = ToolContext(self.settings, self.city, self.places, self.router, conv.store,
-                               emit_threadsafe, conv.id, self.dls, self.registers)
+                               emit_threadsafe, conv.id, self.dls, self.registers,
+                               user_location(context))
         conv.messages.append({"role": "user", "content": [
             {"type": "text", "text": format_context(context, self.city.now()) + text}]})
 

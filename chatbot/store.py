@@ -21,7 +21,8 @@ STATE_COLORS: dict[str, str] = {
     "ok": "#16a34a", "no_heartbeat": "#f97316", "not_reported": "#dc2626",
     "place": "#7c3aed", "stop": "#0f766e", "route": "#2563eb", "alarm": "#dc2626",
     "camera": "#0ea5e9",
-    "dangerous": "#dc2626", "needs_repair": "#f59e0b",
+    "dangerous": "#dc2626", "needs_repair": "#f59e0b", "you": "#2563eb",
+    "usual route": "#94a3b8",
 }
 
 
@@ -39,15 +40,19 @@ class SessionStore:
 
     def add_layer(self, hint: str, features: list[dict], *, geometry: str,
                   title: str, legend: dict[str, str] | None = None,
-                  value_fields: list[str] | None = None, frames: dict | None = None) -> str:
-        """`frames` makes a time-lapse layer: per-frame states and values for each feature."""
+                  value_fields: list[str] | None = None, frames: dict | None = None,
+                  count: int | None = None) -> str:
+        """`frames` makes a time-lapse layer: per-frame states and values for each feature.
+        `count` is what the legend counts, when that isn't one per feature (a building layer
+        has a marker, a plot and footprints for each building)."""
         ref = self._ref("L", hint)
         self.layers[ref] = {
             "type": "FeatureCollection",
             "features": features,
             "meta": {"ref": ref, "title": title, "geometry": geometry,
                      "legend": legend or {}, "value_fields": value_fields or [],
-                     "count": len(features), "frames": len(frames["times"]) if frames else 0},
+                     "count": len(features) if count is None else count,
+                     "frames": len(frames["times"]) if frames else 0},
         }
         if frames:
             self.layers[ref]["frames"] = frames

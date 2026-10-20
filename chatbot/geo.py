@@ -269,6 +269,29 @@ class Places:
         self._geocode_cache[key] = results
         return results
 
+    def reverse(self, lat: float, lon: float) -> dict | None:
+        """The address at a point (Nominatim reverse), or None if it can't be looked up."""
+        key = f"rev:{lat:.5f},{lon:.5f}"
+        if key in self._geocode_cache:
+            return self._geocode_cache[key][0] if self._geocode_cache[key] else None
+        self._nominatim.wait()
+        try:
+            d = get_json(f"{self.s.nominatim_url}/reverse", user_agent=self.s.user_agent,
+                         params={"lat": lat, "lon": lon, "format": "jsonv2", "zoom": 18,
+                                 "accept-language": "en"}, timeout=20)
+        except WebError as e:
+            log.warning("nominatim reverse failed: %s", e)
+            return None
+        a = d.get("address") or {}
+        out = {"address": d.get("display_name"), "name": d.get("name") or None,
+               "street": a.get("road") or a.get("pedestrian") or a.get("footway"),
+               "house_number": a.get("house_number"),
+               "neighbourhood": a.get("neighbourhood") or a.get("quarter") or a.get("suburb"),
+               "municipality": a.get("city") or a.get("town") or a.get("village"),
+               "postcode": a.get("postcode")} if d.get("display_name") else None
+        self._geocode_cache[key] = [out] if out else []
+        return out
+
     def _nominatim_search(self, text: str, limit: int) -> list[dict]:
         cleaned = re.sub(r"\s+", " ", STREET_WORDS.sub(" ", text)).strip(" ,") or text
         lon_min, lat_min, lon_max, lat_max = NICOSIA_BBOX

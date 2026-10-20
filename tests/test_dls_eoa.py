@@ -319,3 +319,102 @@ def test_charts_colour_status_and_height_bands_like_the_map():
     spec = {"mark": "bar", "encoding": {"color": {"field": "height_band"}}}
     color_states(spec, [{"height_band": "35 m and up"}, {"height_band": "under 6 m"}])
     assert spec["encoding"]["color"]["scale"]["domain"] == ["under 6 m", "35 m and up"]
+
+
+# -- where am I, "most dangerous", and safer routes ------------------------------------------
+
+
+def test_my_location_is_a_place_once_shared(tmp_path, monkeypatch):
+    from chatbot.agent import format_context, user_location
+    from chatbot.tools import resolve_place
+    from conftest import utc
+
+    ctx = tool_ctx(tmp_path, monkeypatch, [])
+    res, err = run_tool(ctx, "where_am_i", {})
+    assert err and "locate button" in res["error"]
+    ctx.user_location = user_location({"user_location": {"lat": LAT, "lon": LON,
+                                                         "source": "set on the map"}})
+    assert resolve_place(ctx, "My location")["lat"] == LAT
+    assert resolve_place(ctx, "εδώ")["lon"] == LON
+    res, err = run_tool(ctx, "where_am_i", {"radius_m": 200})
+    assert not err, res
+    assert [r["id"] for r in res["nearest_dangerous"]] == ["NIC-1", "NIC-2"]
+    assert res["nearest_dangerous"][0]["distance_m"] == 0
+    layer = ctx.store.layers[res["layer_ref"]]
+    assert layer["features"][0]["properties"]["id"] == "you"
+    text = format_context({"user_location": {"lat": LAT, "lon": LON, "accuracy_m": 12,
+                                             "source": "device location"}}, utc(2026, 10, 20, 9))
+    assert "user_location: 35.17000, 33.36000 (device location, ±12 m)" in text
+    assert "user_location: not shared" in format_context({}, utc(2026, 10, 20, 9))
+    assert user_location({"user_location": {"lat": "x", "lon": 1}}) is None
+
+
+def test_most_dangerous_sorts(tmp_path, monkeypatch):
+    ctx = tool_ctx(tmp_path, monkeypatch, [])
+    res, _ = run_tool(ctx, "find_dangerous_buildings", {"sort": "height"})
+    # NIC-2's 28 m is its old-town block's eave (estimated), NIC-1 21 m, LAR-120 9 m
+    assert [i["id"] for i in res["items"]] == ["NIC-2", "NIC-1", "LAR-120"]
+    assert res["sorted_by"] == "height"
+    res, err = run_tool(ctx, "find_dangerous_buildings", {"sort": "distance"})
+    assert err and "needs near_place" in res["error"]
+    res, _ = run_tool(ctx, "find_dangerous_buildings", {"sort": "volume"})
+    assert res["items"][0]["id"] == "NIC-1"  # the only plot with a measured volume ranks first
+
+
+def test_avoid_zone_and_distance_to_a_path():
+    from chatbot.dls import distance_to_path_m
+
+    rec = {"parcel_geometry": PARCELS[101], "lat": LAT, "lon": LON}
+    zone = eoa.avoid_zone(rec, margin_m=10)
+    assert zone[0] == zone[-1] and len(zone) == 5
+    assert area_m2({"type": "Polygon", "coordinates": [zone]}) == pytest.approx(40 * 40, rel=0.02)
+    assert eoa.anchor(rec) == pytest.approx((LON, LAT), abs=1e-7)
+    path = [[LON - 0.001, LAT + 0.0002], [LON + 0.001, LAT + 0.0002]]  # 22 m north of the plot
+    assert distance_to_path_m(path, LON, LAT) == pytest.approx(22.1, abs=0.3)
+
+
+class FakeRouter:
+    """Shortest path runs right past NIC-1; with zones to avoid, it swings 100 m north."""
+
+    def __init__(self):
+        self.avoid_calls = []
+
+    def route(self, stops, mode, prefer, avoid=None):
+        (lat1, lon1), (lat2, lon2) = stops[0], stops[-1]
+        if avoid:
+            self.avoid_calls.append(avoid)
+            mid = [[LON, LAT + 0.0009]]
+            km, minutes = 1.1, 13.0
+        else:
+            mid = [[LON, LAT + 0.0001]]
+            km, minutes = 0.9, 11.0
+        coords = [[lon1, lat1], *mid, [lon2, lat2]]
+        return {"distance_km": km, "duration_min": minutes, "coordinates": coords,
+                "legs": [{"distance_km": km, "duration_min": minutes, "directions": []}]}
+
+
+def test_plan_route_avoids_dangerous_buildings(tmp_path, monkeypatch):
+    from types import SimpleNamespace
+    from conftest import utc
+
+    ctx = tool_ctx(tmp_path, monkeypatch, [])
+    ctx.router = FakeRouter()
+    ctx.city = SimpleNamespace(now=lambda: utc(2026, 10, 20, 9))
+    stops = [{"lat": LAT, "lon": LON - 0.004}, {"lat": LAT, "lon": LON + 0.0012}]
+    res, err = run_tool(ctx, "plan_route", {"stops": stops, "mode": "walk"})
+    assert not err, res
+    assert res["dangerous_passed"] == 1 and res["dangerous_along_route"][0]["id"] == "NIC-1"
+    assert "avoidance" not in res
+
+    res, err = run_tool(ctx, "plan_route", {"stops": stops, "mode": "walk",
+                                            "prefer": ["avoid_dangerous_buildings"]})
+    assert not err, res
+    assert res["avoidance"]["avoided"] == 1 and res["avoidance"]["minutes_added"] == 2.0
+    assert res["avoidance"]["usual_route"]["dangerous_passed"] == 1
+    assert res["avoidance"]["this_route"]["dangerous_passed"] == 0
+    assert res["dangerous_passed"] == 0 and res["travel_km"] == 1.1
+    zone = ctx.router.avoid_calls[0][0]
+    assert contains({"type": "Polygon", "coordinates": [zone]}, LON, LAT)
+    feats = ctx.store.layers[res["layer_ref"]]["features"]
+    assert [f["properties"]["state"] for f in feats[:2]] == ["usual route", "route"]
+    assert any(f["properties"].get("n") == "!" and f["properties"]["id"] == "NIC-1" for f in feats)
