@@ -19,8 +19,10 @@ It also has:
 - **Time-lapses.** It can replay the last 3 days of lamps, parking, bins or air on the map,
   with a time slider, play/pause and speed controls.
 - **Linked charts.** Hovering a bar or point in a chart highlights that device on the map, and
-  the other way round. A chart over time follows the time-lapse slider, and hovering it moves
-  the slider.
+  the other way round.
+- **A moving time line.** Every chart with a time axis (lamps, parking, speed, traffic,
+  weather) shows a red line at the time-lapse's moment, so they all move together. Hovering
+  any of them moves the slider. With no time-lapse playing, the line marks the current time.
 - **Custom visuals.** For charts Vega-Lite can't draw (radial clocks, sankeys, networks, 3D),
   Claude writes JavaScript using d3, Observable Plot, ECharts or three.js. The code runs in a
   sandboxed iframe with no network access.
@@ -56,9 +58,11 @@ are in `.env.example`: `CHATBOT_MODEL`, `CHATBOT_EFFORT` (default `medium`),
     a tool.
   - **Linking.** Each dataset records the field that ties its rows to the map: a device `id`, a
     `camera` or a time-lapse `frame`. `show_chart` adds a `_hl` param to linked charts, so the
-    page can fade the other marks or draw a rule at the current frame. It also colours a
-    `state` field with the map's colours. The page reads chart hovers from Vega's pointer
-    events.
+    page can fade the other marks. Charts with a temporal x axis get a rule layer at a `_t`
+    param (epoch ms). The page sets `_t` to the current frame's time, or to Nicosia's current
+    time when no time-lapse is playing, and to null when that moment is outside the chart.
+    `show_chart` also colours a `state` field with the map's colours. The page reads chart
+    hovers from Vega's pointer events.
   - **`show_visual`** sends model-written JavaScript and its datasets to the page. The page runs
     it in an iframe with `sandbox="allow-scripts"` (an opaque origin). Its CSP allows only the
     pinned library URLs and the page's two inline scripts (by hash), with `connect-src 'none'`.

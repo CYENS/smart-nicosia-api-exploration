@@ -55,6 +55,7 @@ const state = {
   dashLayers: new Set(),
   timelapse: null, // {ref, frame, playing, speed, timer}
   charts: [], // {view, link} for charts linked to the map
+  timeCharts: [], // {view, min, max, last} charts over time, with a rule at `_t`
   visuals: [], // {iframe, title, card} sandboxed custom visuals
   visualErrors: [], // runtime errors to report with the next message
 };
@@ -81,7 +82,16 @@ map.addControl(new maplibregl.ScaleControl({ unit: "metric" }), "bottom-right");
 new ResizeObserver(() => map.resize()).observe($("map"));
 map.on("load", () => map.resize());
 
+// Layers can be added once the style itself has loaded. isStyleLoaded() also waits for every
+// tile, which on a slow tile server held back layers (and time-lapses) for a long time.
+let styleReady = false;
+map.on("style.load", () => { styleReady = true; });
+function whenStyleReady(fn) {
+  styleReady ? fn() : map.once("style.load", fn);
+}
+
 $("basemap").addEventListener("change", (e) => {
+  styleReady = false;
   map.setStyle(BASEMAPS[e.target.value]);
   map.once("style.load", () => {
     for (const entry of state.layers.values()) addToMap(entry);
@@ -321,7 +331,7 @@ async function showLayer(spec) {
     syncHighlight();
     if (data.frames) startTimelapse(spec.ref);
   };
-  map.isStyleLoaded() ? draw() : map.once("idle", draw);
+  whenStyleReady(draw);
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -354,6 +364,7 @@ function applyFrame(k) {
   $("tl-time").textContent = fr.times[k];
   $("tl-clock").textContent = fr.times[k];
   for (const c of state.charts) if (c.link.key === "frame" && c.link.layer === tl.ref) setChartHighlight(c, k);
+  setTimeAll(frameMs(entry, k));
   for (const v of state.visuals) postToVisual(v, k, "frame");
 }
 
@@ -378,6 +389,7 @@ function stopTimelapse() {
   $("timeline").hidden = true;
   $("tl-clock").hidden = true;
   document.querySelector(".map-wrap").classList.remove("has-timeline");
+  setTimeAll(nicosiaNowMs()); // back to the "now" line
 }
 
 function playTimelapse() {
@@ -426,7 +438,7 @@ let hlFeatures = [];
 let hlValue = null;
 
 function syncHighlight() {
-  if (!map.isStyleLoaded()) return;
+  if (!styleReady) return;
   const data = { type: "FeatureCollection", features: hlFeatures };
   if (!map.getSource(HL_SRC)) {
     map.addSource(HL_SRC, { type: "geojson", data });
@@ -662,7 +674,7 @@ function applyUi(ev, msg) {
       ev.ref ? removeLayer(ev.ref) : clearMap();
       break;
     case "chart":
-      msg.chart(ev.title, ev.spec, ev.link);
+      msg.chart(ev.title, ev.spec, ev.link, ev.time_field);
       break;
     case "visual":
       msg.visual(ev);
@@ -670,24 +682,31 @@ function applyUi(ev, msg) {
   }
 }
 
-function xFieldOf(spec) {
+function xEncodingOf(spec) {
   const unit = spec.encoding ? spec : (spec.layer || []).find((l) => l.encoding?.x);
-  return unit?.encoding?.x?.field;
+  return unit?.encoding?.x || {};
 }
 
-// The row a pointer x position points at, for charts over time: invert the x scale (or find
-// the band) and take the nearest row. Works for lines and areas, where no single mark is hit.
-function rowAtX(view, event, rows, field) {
+function xScale(view) {
+  try { return view.scale("x"); } catch { return null; }
+}
+
+// The pointer's x inside the plot area, or null outside it. Lines and areas have no single
+// mark under the pointer, so charts over time work from this position instead.
+function pointerX(view, event) {
   const svg = view.container()?.querySelector("svg");
-  let scale;
-  try { scale = view.scale("x"); } catch { return null; }
-  if (!svg || !scale) return null;
+  if (!svg) return null;
   const x = event.clientX - svg.getBoundingClientRect().left - view.origin()[0];
-  if (x < 0 || x > view.width()) return null;
+  return x >= 0 && x <= view.width() ? x : null;
+}
+
+// The row under the pointer in a time-lapse chart over frame numbers or frame labels.
+function rowAtX(view, event, rows, field) {
+  const x = pointerX(view, event), scale = xScale(view);
+  if (x === null || !scale || !rows.length) return null;
   if (typeof scale.invert === "function") {
     const want = +scale.invert(x);
-    const at = (r) => (field === "time" ? Date.parse(r.time) : Number(r[field]));
-    return rows.reduce((best, r) => (Math.abs(at(r) - want) < Math.abs(at(best) - want) ? r : best), rows[0]);
+    return rows.reduce((best, r) => (Math.abs(r[field] - want) < Math.abs(best[field] - want) ? r : best), rows[0]);
   }
   if (typeof scale.step === "function") {
     const domain = scale.domain();
@@ -703,9 +722,9 @@ function wireChart(view, link, spec) {
   state.charts.push(c);
   const rows = spec.data?.values || [];
   if (link.key === "frame") {
-    const field = xFieldOf(spec);
+    const field = xEncodingOf(spec).field;
     view.addEventListener("pointermove", (event, item) => {
-      const row = ["time", "frame", "label"].includes(field) ? rowAtX(view, event, rows, field) : item?.datum;
+      const row = ["frame", "label"].includes(field) ? rowAtX(view, event, rows, field) : item?.datum;
       if (row && row.frame !== undefined) linkHover("frame", row.frame, c);
     });
     if (state.timelapse?.ref === link.layer) setChartHighlight(c, state.timelapse.frame);
@@ -714,6 +733,71 @@ function wireChart(view, link, spec) {
     view.addEventListener("pointerout", () => linkHover(link.key, null, c));
   }
 }
+
+// ---------------------------------------------------------------------------------------------
+// Time sync: every chart over real time has a red rule at its `_t` param. While a time-lapse
+// plays, `_t` is the frame's moment; otherwise it is now, moved on every 30 seconds. Times are
+// Nicosia wall-clock strings read as browser-local, the same way Vega reads the data.
+
+function nicosiaNowMs() {
+  const s = new Date().toLocaleString("sv-SE", { timeZone: "Asia/Nicosia", hour12: false });
+  return Date.parse(s.replace(" ", "T")); // "2026-10-20 14:05:33" -> local
+}
+
+function frameMs(entry, k) {
+  return Date.parse(entry.data.frames.iso[k]);
+}
+
+function currentTimeMs() {
+  const tl = state.timelapse;
+  const entry = tl && state.layers.get(tl.ref);
+  return entry ? frameMs(entry, tl.frame) : nicosiaNowMs();
+}
+
+function setChartTime(tc, ms) {
+  const v = Number.isFinite(ms) && ms >= tc.min && ms <= tc.max ? ms : null; // hide outside the chart
+  if (v === tc.last) return;
+  tc.last = v;
+  try { tc.view.signal("_t", v).runAsync(); } catch { /* chart was removed */ }
+}
+
+function setTimeAll(ms) {
+  for (const tc of state.timeCharts) setChartTime(tc, ms);
+}
+
+// Jump the time-lapse to the frame nearest a moment, if the moment is within it.
+function seekTimelapse(ms) {
+  const tl = state.timelapse;
+  const entry = tl && state.layers.get(tl.ref);
+  if (!entry) return;
+  const n = entry.data.frames.iso.length;
+  let best = 0;
+  for (let k = 1; k < n; k++) if (Math.abs(frameMs(entry, k) - ms) < Math.abs(frameMs(entry, best) - ms)) best = k;
+  const step = n > 1 ? frameMs(entry, 1) - frameMs(entry, 0) : Infinity;
+  if (Math.abs(frameMs(entry, best) - ms) > step) return;
+  if (best !== tl.frame) { pauseTimelapse(); applyFrame(best); }
+}
+
+function wireTimeChart(view, spec, field) {
+  const toMs = (v) => (typeof v === "number" ? v : Date.parse(v));
+  const times = (spec.data?.values || []).map((r) => toMs(r[field])).filter(Number.isFinite).sort((a, b) => a - b);
+  if (!times.length) return;
+  let step = Infinity;
+  for (let i = 1; i < times.length; i++) if (times[i] > times[i - 1]) step = Math.min(step, times[i] - times[i - 1]);
+  if (!Number.isFinite(step)) step = 3600e3;
+  // The last row covers one step (an hourly bucket, a day), so the rule may sit inside it.
+  const tc = { view, min: times[0], max: times[times.length - 1] + step, last: undefined };
+  state.timeCharts.push(tc);
+  setChartTime(tc, currentTimeMs());
+  if (!xEncodingOf(spec).timeUnit) { // a timeUnit axis (e.g. hour of day) has no single moment
+    view.addEventListener("pointermove", (event) => {
+      const x = pointerX(view, event), scale = xScale(view);
+      if (x !== null && typeof scale?.invert === "function") seekTimelapse(+scale.invert(x));
+    });
+  }
+}
+
+setInterval(() => { if (!state.timelapse) setTimeAll(nicosiaNowMs()); }, 30e3);
 
 function toggleExpand(v) {
   const expanded = v.card.classList.toggle("expanded");
@@ -811,7 +895,7 @@ function botMessage() {
       if (summary) chip.querySelector(".sum").textContent = `· ${summary}`;
       chip.title = summary || "";
     },
-    chart(title, spec, link) {
+    chart(title, spec, link, timeField) {
       dropTyping();
       const card = document.createElement("div");
       card.className = "chart-card";
@@ -821,6 +905,7 @@ function botMessage() {
       vegaEmbed(card.querySelector(".vis"), spec, { actions: { export: true, source: false, compiled: false, editor: false }, renderer: "svg" })
         .then((res) => {
           if (link) wireChart(res.view, link, spec);
+          if (timeField) wireTimeChart(res.view, spec, timeField);
           scrollDown();
         })
         .catch((e) => { card.querySelector(".vis").innerHTML = `<p class="err">Chart error: ${escapeHtml(e.message)}</p>`; });
@@ -946,8 +1031,9 @@ $("new-chat").addEventListener("click", async () => {
   if (state.conversationId) fetch(`/api/reset/${state.conversationId}`, { method: "POST" });
   state.conversationId = null;
   clearMap();
-  for (const c of state.charts) c.view.finalize();
+  for (const view of new Set([...state.charts, ...state.timeCharts].map((c) => c.view))) view.finalize();
   state.charts = [];
+  state.timeCharts = [];
   state.visuals = [];
   state.visualErrors = [];
   hlValue = null;

@@ -261,9 +261,11 @@ TOOL_DEFS: list[dict] = [
          "number comes from the tools. Use any Vega-Lite feature (layer, facet, concat, "
          "transform, timeUnit, selections). Keep axis titles readable and put units in titles. "
          "Single-view and layered charts are linked to the map automatically: rows that carry a "
-         "device id or camera highlight on the map when hovered (and the other way round), and "
-         "a get_history chart shows a moving rule at the time-lapse frame. Keep the id, camera "
-         "or frame/time field unaggregated in the linked view for this to work.",
+         "device id or camera highlight on the map when hovered (and the other way round). Any "
+         "chart whose x is temporal (type temporal, e.g. a `time` or `hour` field) gets a red "
+         "line at the time-lapse's moment while one plays, and at the current time otherwise; "
+         "hovering it moves the time-lapse. Keep the id or camera field unaggregated in the "
+         "linked view for this to work.",
          obj({
              "title": {"type": "string"},
              "spec": {"type": "object", "description": "Vega-Lite spec without data."},
@@ -451,6 +453,7 @@ def h_get_history(ctx: ToolContext, a: dict) -> dict:
     index = {n: i for i, n in enumerate(names)}
     frames = {
         "times": [t.astimezone(TZ).strftime("%a %d %b %H:%M") for t in times],
+        "iso": [t.astimezone(TZ).strftime("%Y-%m-%dT%H:%M") for t in times],
         "state_names": names,
         "states": [[index[st] for st in row] for row in frame_states],
         "values": {f: frame_values[f] for f in fields},
@@ -757,7 +760,8 @@ def vega_lite_validator(settings: Settings):
 COMPOSITE = ("mark", "layer", "concat", "hconcat", "vconcat", "facet", "repeat", "spec")
 # Keys that belong to a single view when a unit spec is turned into a layer.
 UNIT_KEYS = ("mark", "encoding", "params", "transform", "projection")
-TIME_FIELDS = {"frame", "time", "label"}
+FRAME_FIELDS = {"frame", "label"}  # non-temporal x fields of get_history rows
+NOW_RULE = {"type": "rule", "color": "#dc2626", "strokeWidth": 2}
 
 
 def spec_error(validator, spec: dict, has_data_ref: bool) -> str | None:
@@ -776,32 +780,57 @@ def spec_error(validator, spec: dict, has_data_ref: bool) -> str | None:
     return f"invalid Vega-Lite spec at {where}: {err.message[:240]}"
 
 
-def link_chart(spec: dict, key: str) -> bool:
-    """Wire a chart to the map, in place: the page sets the `_hl` param to the value hovered on
-    the map (or the time-lapse frame), and the other marks fade, or, for a time-lapse chart over
-    time, a rule marks the frame. (The page reads chart hovers itself, from Vega's pointer
-    events.) Only single-view and layered specs are wired; returns whether this one was."""
+def first_unit(spec: dict) -> dict | None:
+    """The view to wire: the spec itself if it is a single view, else its first layer with an
+    encoding. Facet and concat specs aren't wired."""
     if "layer" in spec:
         layers = spec["layer"] if isinstance(spec["layer"], list) else []
-        unit = next((u for u in layers if isinstance(u, dict) and "mark" in u
+        return next((u for u in layers if isinstance(u, dict) and "mark" in u
                      and isinstance(u.get("encoding"), dict)), None)
-    else:
-        unit = spec if "mark" in spec and isinstance(spec.get("encoding"), dict) else None
-    if unit is None:
-        return False
-    names = {p.get("name") for p in spec.get("params", []) + unit.get("params", [])
-             if isinstance(p, dict)}
-    if "_hl" in names:
+    return spec if "mark" in spec and isinstance(spec.get("encoding"), dict) else None
+
+
+def param_names(spec: dict, unit: dict) -> set:
+    return {p.get("name") for p in spec.get("params", []) + unit.get("params", [])
+            if isinstance(p, dict)}
+
+
+def add_layer(spec: dict, unit: dict, layer: dict) -> None:
+    """Append a layer, turning a single-view spec into [the view, layer] first. Selection
+    params go with the view; variable params (like `_hl`) must stay at the top of a layer spec."""
+    if unit is spec:
+        view = {k: spec.pop(k) for k in UNIT_KEYS if k in spec}
+        params = view.pop("params", [])
+        selections = [p for p in params if isinstance(p, dict) and "select" in p]
+        if selections:
+            view["params"] = selections
+        if rest := [p for p in params if p not in selections]:
+            spec["params"] = rest
+        spec["layer"] = [view]
+    spec["layer"].append(layer)
+
+
+def is_temporal(x: object) -> bool:
+    return isinstance(x, dict) and bool(x.get("field")) and (
+        x.get("type") == "temporal" or "timeUnit" in x)
+
+
+def link_chart(spec: dict, key: str) -> bool:
+    """Wire a chart to the map, in place: the page sets the `_hl` param to the value hovered on
+    the map (or the time-lapse frame), and the other marks fade, or, for a time-lapse chart
+    over frames or frame labels, a rule marks the frame. (Charts over real time follow the
+    time-lapse through add_time_rule instead; the page reads hovers from Vega's pointer events.)
+    Only single-view and layered specs are wired; returns whether this one was."""
+    unit = first_unit(spec)
+    if unit is None or "_hl" in param_names(spec, unit):
         return False
     x = unit["encoding"].get("x")
-    if key == "frame" and isinstance(x, dict) and x.get("field") in TIME_FIELDS:
-        rule = {"mark": {"type": "rule", "color": "#dc2626", "strokeWidth": 2},
-                "transform": [{"filter": "_hl != null && datum.frame === _hl"}],
-                "encoding": {"x": {k: x[k] for k in ("field", "type", "timeUnit", "sort")
-                                   if k in x}}}
-        if unit is spec:  # a unit spec becomes [the view, the rule]
-            spec["layer"] = [{k: spec.pop(k) for k in UNIT_KEYS if k in spec}]
-        spec["layer"].append(rule)
+    if key == "frame" and is_temporal(x):
+        return False
+    if key == "frame" and isinstance(x, dict) and x.get("field") in FRAME_FIELDS:
+        add_layer(spec, unit, {
+            "mark": NOW_RULE, "transform": [{"filter": "_hl != null && datum.frame === _hl"}],
+            "encoding": {"x": {k: x[k] for k in ("field", "type", "sort") if k in x}}})
     elif "opacity" not in unit["encoding"]:
         k = json.dumps(key)
         unit["encoding"]["opacity"] = {
@@ -810,6 +839,27 @@ def link_chart(spec: dict, key: str) -> bool:
             "value": 0.2}
     spec.setdefault("params", []).append({"name": "_hl", "value": None})
     return True
+
+
+def add_time_rule(spec: dict) -> str | None:
+    """Give a chart over time a vertical rule at the `_t` param (epoch ms), in place. The page
+    sets `_t` to the time-lapse's moment while one plays and to the current time otherwise, or
+    to null when that moment is outside the chart. The rule reuses the x field's name, type,
+    timeUnit and title, so the axis and its title stay as they were. Returns the x field."""
+    unit = first_unit(spec)
+    if unit is None or "_t" in param_names(spec, unit):
+        return None
+    x = unit["encoding"].get("x")
+    if not is_temporal(x):
+        return None
+    field = x["field"]
+    add_layer(spec, unit, {
+        "data": {"values": [{}]},
+        "transform": [{"filter": "_t != null"}, {"calculate": "_t", "as": field}],
+        "mark": NOW_RULE,
+        "encoding": {"x": {k: x[k] for k in ("field", "type", "timeUnit", "title") if k in x}}})
+    spec.setdefault("params", []).append({"name": "_t", "value": None})
+    return field
 
 
 def color_states(spec: dict, rows: list[dict]) -> None:
@@ -837,7 +887,15 @@ def h_show_chart(ctx: ToolContext, a: dict) -> dict:
     has_ref = bool(a.get("data_ref"))
     if validator is not None and (err := spec_error(validator, spec, has_ref)):
         raise ToolError(err)
-    rows = link = None
+    def wired(spec: dict, wire: Callable[[dict], object]) -> tuple[dict, object]:
+        """Apply `wire` to a copy; keep it only if it did something and the spec stays valid."""
+        trial = copy.deepcopy(spec)
+        result = wire(trial)
+        if result and (validator is None or not spec_error(validator, trial, True)):
+            return trial, result
+        return spec, None
+
+    rows = link = time_field = None
     if has_ref:
         ds = ctx.store.datasets.get(a["data_ref"])
         if ds is None:
@@ -845,16 +903,16 @@ def h_show_chart(ctx: ToolContext, a: dict) -> dict:
         rows = ds["rows"]
         color_states(spec, rows)
         if ds.get("link") and rows and ds["link"]["key"] in rows[0]:
-            linked = copy.deepcopy(spec)
-            if link_chart(linked, ds["link"]["key"]) and (
-                    validator is None or not spec_error(validator, linked, True)):
-                spec, link = linked, ds["link"]
+            spec, ok = wired(spec, lambda s: link_chart(s, ds["link"]["key"]))
+            link = ds["link"] if ok else None
+        spec, time_field = wired(spec, add_time_rule)
         spec["data"] = {"values": rows}
     elif "data" not in spec and "datasets" not in spec:
         raise ToolError("pass a data_ref (preferred) or include data in the spec")
-    ctx.emit({"type": "ui", "action": "chart", "title": a["title"], "spec": spec, "link": link})
+    ctx.emit({"type": "ui", "action": "chart", "title": a["title"], "spec": spec, "link": link,
+              "time_field": time_field})
     return {"ok": True, "rows_plotted": len(rows) if rows is not None else None,
-            "linked_to_map": bool(link), "_summary": f"chart: {a['title']}"}
+            "linked_to_map": bool(link or time_field), "_summary": f"chart: {a['title']}"}
 
 
 def h_show_visual(ctx: ToolContext, a: dict) -> dict:

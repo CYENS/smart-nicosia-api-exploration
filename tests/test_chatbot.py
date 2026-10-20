@@ -204,38 +204,70 @@ def test_link_chart_fades_by_id_and_draws_a_frame_rule():
     assert spec["params"] == [{"name": "_hl", "value": None}]
     assert not tools_mod.link_chart(spec, "id")  # never wired twice
 
-    spec = {"mark": "line", "width": "container",
-            "encoding": {"x": {"field": "time", "type": "temporal"}, "y": {"field": "on"}}}
+    spec = {"mark": "bar", "width": "container",
+            "encoding": {"x": {"field": "label", "type": "ordinal"}, "y": {"field": "on"}}}
     assert tools_mod.link_chart(spec, "frame")
     assert "mark" not in spec and spec["width"] == "container"
     view, rule = spec["layer"]
-    assert view["mark"] == "line" and "opacity" not in view["encoding"]
-    assert rule["mark"]["type"] == "rule" and rule["encoding"]["x"]["field"] == "time"
+    assert view["mark"] == "bar" and "opacity" not in view["encoding"]
+    assert rule["mark"]["type"] == "rule" and rule["encoding"]["x"]["field"] == "label"
     assert spec["params"] == [{"name": "_hl", "value": None}]
+
+    # Over real time the frame link steps aside: add_time_rule draws the moving line.
+    timed = {"mark": "line", "encoding": {"x": {"field": "time", "type": "temporal"}}}
+    assert not tools_mod.link_chart(timed, "frame")
 
     facet = {"facet": {"field": "state"}, "spec": {"mark": "point"}}
     assert not tools_mod.link_chart(facet, "id")
+
+
+def test_add_time_rule_draws_a_line_at_t_on_temporal_charts():
+    spec = {"mark": "line", "encoding": {
+        "x": {"field": "hour", "type": "temporal", "title": "Hour"}, "y": {"field": "kmh"}}}
+    assert tools_mod.add_time_rule(spec) == "hour"
+    view, rule = spec["layer"]
+    assert view["mark"] == "line"
+    assert rule["data"] == {"values": [{}]}
+    assert rule["transform"] == [{"filter": "_t != null"}, {"calculate": "_t", "as": "hour"}]
+    assert rule["encoding"]["x"] == {"field": "hour", "type": "temporal", "title": "Hour"}
+    assert {"name": "_t", "value": None} in spec["params"]
+    assert tools_mod.add_time_rule(spec) is None  # never twice
+    ordinal = {"mark": "bar", "encoding": {"x": {"field": "camera", "type": "nominal"}}}
+    assert tools_mod.add_time_rule(ordinal) is None
 
 
 def test_linked_specs_pass_the_vega_lite_schema():
     validator = tools_mod.vega_lite_validator(Settings())
     if validator is None:
         pytest.skip("Vega-Lite schema not cached")
-    specs = [
+    linked = [
         ({"mark": "bar", "encoding": {"x": {"field": "id", "type": "nominal"},
                                       "y": {"field": "level_pct", "type": "quantitative"}}}, "id"),
-        ({"mark": {"type": "line", "point": True},
-          "encoding": {"x": {"field": "time", "type": "temporal"},
-                       "y": {"field": "on", "type": "quantitative"}}}, "frame"),
-        ({"layer": [{"mark": "area", "encoding": {"x": {"field": "time", "type": "temporal"},
-                                                  "y": {"field": "on", "type": "quantitative"}}},
-                    {"mark": "line", "encoding": {"x": {"field": "time", "type": "temporal"},
-                                                  "y": {"field": "off", "type": "quantitative"}}}]},
-         "frame"),
+        ({"mark": "bar", "encoding": {"x": {"field": "label", "type": "ordinal"},
+                                      "y": {"field": "on", "type": "quantitative"}}}, "frame"),
     ]
-    for spec, key in specs:
+    for spec, key in linked:
         assert tools_mod.link_chart(spec, key)
         assert tools_mod.spec_error(validator, spec, True) is None, spec
+    timed = [
+        {"mark": {"type": "line", "point": True},
+         "encoding": {"x": {"field": "time", "type": "temporal"},
+                      "y": {"field": "on", "type": "quantitative"}}},
+        {"mark": "bar", "encoding": {"x": {"field": "hour", "timeUnit": "hours"},
+                                     "y": {"field": "people", "aggregate": "sum"}}},
+        {"layer": [{"mark": "area", "encoding": {"x": {"field": "time", "type": "temporal"},
+                                                 "y": {"field": "on", "type": "quantitative"}}},
+                   {"mark": "line", "encoding": {"x": {"field": "time", "type": "temporal"},
+                                                 "y": {"field": "off", "type": "quantitative"}}}]},
+    ]
+    for spec in timed:
+        assert tools_mod.add_time_rule(spec)
+        assert tools_mod.spec_error(validator, spec, True) is None, spec
+    # Both on one chart: bins over time, linked by id and with the moving line.
+    both = {"mark": "point", "encoding": {"x": {"field": "as_of", "type": "temporal"},
+                                          "y": {"field": "level_pct", "type": "quantitative"}}}
+    assert tools_mod.link_chart(both, "id") and tools_mod.add_time_rule(both)
+    assert tools_mod.spec_error(validator, both, True) is None, both
 
 
 def test_show_chart_sends_the_link_for_linked_datasets(monkeypatch):
@@ -248,7 +280,16 @@ def test_show_chart_sends_the_link_for_linked_datasets(monkeypatch):
     res, err = run_tool(ctx, "show_chart", {"title": "Bins", "spec": spec, "data_ref": ref})
     assert not err and res["linked_to_map"] is True
     assert events[-1]["link"] == {"key": "id"} and "opacity" in events[-1]["spec"]["encoding"]
+    assert events[-1]["time_field"] is None
     assert "opacity" not in spec["encoding"]  # the model's spec object is left alone
+
+    speed = ctx.store.add_dataset("speed", [{"hour": "2026-10-20T10:00", "speed_kmh": 41.2}],
+                                  title="s")
+    spec = {"mark": "line", "encoding": {"x": {"field": "hour", "type": "temporal"},
+                                         "y": {"field": "speed_kmh"}}}
+    res, err = run_tool(ctx, "show_chart", {"title": "Speed", "spec": spec, "data_ref": speed})
+    assert not err and events[-1]["time_field"] == "hour" and events[-1]["link"] is None
+    assert events[-1]["spec"]["layer"][1]["mark"]["type"] == "rule"
 
 
 def test_show_chart_colours_states_like_the_map(monkeypatch):

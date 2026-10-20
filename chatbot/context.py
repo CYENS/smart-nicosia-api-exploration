@@ -52,7 +52,7 @@ def weather(s: Settings) -> dict:
         ts = datetime.fromisoformat(t).replace(tzinfo=TZ)
         if now_local <= ts < now_local + timedelta(hours=12):
             hours.append({
-                "time": t[11:16], "temp_c": h["temperature_2m"][i],
+                "time": t[:16], "temp_c": h["temperature_2m"][i],
                 "feels_like_c": h["apparent_temperature"][i],
                 "rain_chance_pct": h["precipitation_probability"][i], "uv": h["uv_index"][i],
                 "sky": WEATHER_CODES.get(h["weather_code"][i], str(h["weather_code"][i])),
@@ -132,12 +132,14 @@ def traffic(city: CityData, period: str, group_by: str, camera: str | None) -> d
             rows = parse.parse_traffic_buckets(payload, TZ, day=days[0])
             label = "hour"
             note = None
+            # A real local timestamp, so charts get a time axis that can sync with a time-lapse.
+            key = lambda r: r.bucket_start.strftime("%Y-%m-%dT%H:%M")  # noqa: E731
         else:
             payload = city.client.get_json("getTrafficReports", group_by="hour", **params)
             rows = parse.parse_traffic_buckets(payload, TZ, day=days[-1])
             label = "hour_of_day"
             note = f"each hour is the sum over {len(days)} days (an hour-of-day profile)"
-        key = lambda r: r.bucket_start.strftime("%H:%M")  # noqa: E731
+            key = lambda r: r.bucket_start.strftime("%H:%M")  # noqa: E731
     else:
         payload = city.client.get_json("getTrafficReports", group_by="day", **params)
         rows = parse.parse_traffic_buckets(payload, TZ)
@@ -170,7 +172,7 @@ def speed(city: CityData, hours: int) -> dict:
     current = fetch(start, now)
     week_ago = {r.bucket_start + timedelta(days=7): r.value
                 for r in fetch(start - timedelta(days=7), now - timedelta(days=7))}
-    rows = [{"hour": r.bucket_start.strftime("%Y-%m-%d %H:%M"), "speed_kmh": r.value,
+    rows = [{"hour": r.bucket_start.strftime("%Y-%m-%dT%H:%M"), "speed_kmh": r.value,
              "same_hour_last_week_kmh": week_ago.get(r.bucket_start)} for r in current]
     return {"source": "Smart Nicosia speed cameras (one city-wide average, no per-street speed)",
             "rows": rows}
