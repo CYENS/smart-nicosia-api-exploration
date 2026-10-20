@@ -19,9 +19,9 @@ STATE_COLORS: dict[str, str] = {
     "very_low": "#16a34a",  "very_high": "#7e22ce",
     "connected": "#2563eb", "disconnected": "#dc2626",
     "ok": "#16a34a", "no_heartbeat": "#f97316", "not_reported": "#dc2626",
-    "place": "#7c3aed", "stop": "#0f766e", "route": "#2563eb", "alarm": "#dc2626",
+    "place": "#7c3aed", "stop": "#0f766e", "route": "#3d8bff", "alarm": "#dc2626",
     "camera": "#0ea5e9",
-    "dangerous": "#dc2626", "needs_repair": "#f59e0b", "you": "#2563eb",
+    "dangerous": "#dc2626", "needs_repair": "#f59e0b", "you": "#3d8bff",
     "usual route": "#94a3b8",
 }
 

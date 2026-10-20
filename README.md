@@ -21,7 +21,7 @@ It also has:
 - **Linked charts.** Hovering a bar or point in a chart highlights that device on the map, and
   the other way round.
 - **A moving time line.** Every chart with a time axis (lamps, parking, speed, traffic,
-  weather) shows a red line at the time-lapse's moment, so they all move together. Hovering
+  weather) shows a dashed line at the time-lapse's moment, so they all move together. Hovering
   any of them moves the slider. With no time-lapse playing, the line marks the current time.
 - **Custom visuals.** For charts Vega-Lite can't draw (radial clocks, sankeys, networks, 3D),
   Claude writes JavaScript using d3, Observable Plot, ECharts or three.js. The code runs in a
