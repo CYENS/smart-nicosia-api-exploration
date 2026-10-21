@@ -94,9 +94,10 @@ const STREET_GLOW: LayerSpecification = {
   layout: { "line-join": "round", "line-cap": "round", visibility: "none" },
   paint: {
     "line-color": "#ffb45a",
-    "line-opacity": ["interpolate", ["linear"], ["zoom"], 12, 0.1, 14, 0.17, 16, 0.2, 18, 0.18],
-    "line-width": ["interpolate", ["exponential", 2], ["zoom"], 12, 3, 14, 7, 16, 22, 18, 70],
-    "line-blur": ["interpolate", ["exponential", 2], ["zoom"], 12, 3, 14, 6, 16, 18, 18, 52],
+    // Strongest at city zoom; fainter and narrower close up, where it would hide the street.
+    "line-opacity": ["interpolate", ["linear"], ["zoom"], 12, 0.1, 14, 0.16, 15, 0.14, 16, 0.1, 17, 0.07, 18, 0.05],
+    "line-width": ["interpolate", ["linear"], ["zoom"], 12, 3, 14, 7, 16, 14, 18, 28],
+    "line-blur": ["interpolate", ["linear"], ["zoom"], 12, 3, 14, 6, 16, 12, 18, 24],
   },
 }
 
