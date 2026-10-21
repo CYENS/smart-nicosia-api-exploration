@@ -1,5 +1,5 @@
 import { SunIcon } from "lucide-react"
-import { useEffect, useState, type ReactNode } from "react"
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react"
 
 import { MoonGlyph } from "@/components/moon-glyph"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -54,8 +54,44 @@ function useNicosiaClock() {
   return clock
 }
 
-function Readout({ label, question, loading, children }: {
-  label: string; question: string; loading: boolean; children: ReactNode
+// Which readouts go first when the strip runs out of room: weather first (the sky readout covers
+// part of it), lamps lit last.
+const PRIORITY = ["lights", "registers", "bins", "parking", "air", "weather"]
+
+// The readouts that don't fit whole, dropped lowest priority first, so none is ever cut off.
+// Widths are measured while a readout is shown and remembered while it is hidden.
+function useFitting(ref: React.RefObject<HTMLDivElement | null>, deps: unknown[]) {
+  const [hidden, setHidden] = useState<string[]>([])
+  const widths = useRef<Record<string, number>>({})
+  useLayoutEffect(() => {
+    const box = ref.current
+    if (!box) return
+    const fit = () => {
+      const present: string[] = []
+      for (const el of box.querySelectorAll<HTMLElement>("[data-readout]")) {
+        const id = el.dataset.readout!
+        present.push(id)
+        if (!el.hidden) widths.current[id] = el.offsetWidth
+      }
+      let total = present.reduce((s, id) => s + (widths.current[id] ?? 0), 0)
+      const drop: string[] = []
+      for (const id of [...present].sort((a, b) => PRIORITY.indexOf(b) - PRIORITY.indexOf(a))) {
+        if (total <= box.clientWidth) break
+        drop.push(id)
+        total -= widths.current[id] ?? 0
+      }
+      setHidden((prev) => (prev.length === drop.length && prev.every((id) => drop.includes(id)) ? prev : drop))
+    }
+    fit()
+    const ro = new ResizeObserver(fit)
+    ro.observe(box)
+    return () => ro.disconnect()
+  }, deps) // eslint-disable-line react-hooks/exhaustive-deps
+  return hidden
+}
+
+function Readout({ id, hidden, label, question, loading, children }: {
+  id: string; hidden: string[]; label: string; question: string; loading: boolean; children: ReactNode
 }) {
   const busy = useChat((s) => s.busy)
   return (
@@ -64,6 +100,8 @@ function Readout({ label, question, loading, children }: {
         render={
           <button
             type="button"
+            data-readout={id}
+            hidden={hidden.includes(id)}
             disabled={busy}
             onClick={() => send(question)}
             className="flex h-full shrink-0 flex-col justify-center gap-0.5 border-r border-line px-4 text-left transition-colors outline-none hover:bg-accent/60 focus-visible:bg-accent/60 disabled:cursor-default disabled:hover:bg-transparent"
@@ -113,6 +151,8 @@ export function StatusStrip() {
   const clock = useNicosiaClock()
   const loading = data === null
   const d = data ?? {}
+  const readouts = useRef<HTMLDivElement>(null)
+  const hidden = useFitting(readouts, [data])
 
   return (
     <header className="absolute inset-x-0 top-0 z-20 flex h-[52px] items-stretch border-b border-line bg-night">
@@ -124,34 +164,34 @@ export function StatusStrip() {
         </div>
       </div>
 
-      <div className="flex min-w-0 flex-1 items-stretch overflow-x-auto [scrollbar-width:none]">
+      <div ref={readouts} className="flex min-w-0 flex-1 items-stretch overflow-hidden">
         {(loading || d.lights) && (
-          <Readout label="Lamps lit" question="Which street lights are on right now?" loading={loading}>
+          <Readout id="lights" hidden={hidden} label="Lamps lit" question="Which street lights are on right now?" loading={loading}>
             <span className="text-sodium">{d.lights?.on.toLocaleString()}</span> <Of>of {d.lights?.total.toLocaleString()}</Of>
           </Readout>
         )}
         {(loading || d.parking) && (
-          <Readout label="Free parking" question="Where can I park right now? Show the free spaces on the map" loading={loading}>
+          <Readout id="parking" hidden={hidden} label="Free parking" question="Where can I park right now? Show the free spaces on the map" loading={loading}>
             {d.parking?.free.toLocaleString()} <Of>of {d.parking?.total.toLocaleString()}</Of>
           </Readout>
         )}
         {(loading || d.bins) && (
-          <Readout label="Full bins" question="Which bins are full? Show them in 3D" loading={loading}>
+          <Readout id="bins" hidden={hidden} label="Full bins" question="Which bins are full? Show them in 3D" loading={loading}>
             <span className={cn(d.bins?.full ? "text-signal" : "")}>{d.bins?.full.toLocaleString()}</span> <Of>of {d.bins?.total.toLocaleString()}</Of>
           </Readout>
         )}
         {(loading || d.air) && (
-          <Readout label="Air" question="How are air quality and noise across the city?" loading={loading}>
+          <Readout id="air" hidden={hidden} label="Air" question="How are air quality and noise across the city?" loading={loading}>
             {AIR_WORDS[d.air?.band ?? ""] ?? "Unknown"} <Of>CAQI {d.air?.caqi}</Of>
           </Readout>
         )}
         {(loading || d.weather) && (
-          <Readout label={d.weather ? d.weather.sky.replace(/^./, (c) => c.toUpperCase()) : "Weather"} question="Is it a good time for a walk around the old town?" loading={loading}>
+          <Readout id="weather" hidden={hidden} label={d.weather ? d.weather.sky.replace(/^./, (c) => c.toUpperCase()) : "Weather"} question="Is it a good time for a walk around the old town?" loading={loading}>
             {d.weather ? Math.round(d.weather.temp_c) : ""}<Of>°C</Of>
           </Readout>
         )}
         {d.registers && (
-          <Readout label="Dangerous buildings" question="Show the dangerous buildings in the old town in 3D" loading={false}>
+          <Readout id="registers" hidden={hidden} label="Dangerous buildings" question="Show the dangerous buildings in the old town in 3D" loading={false}>
             <span className="text-signal">{d.registers.buildings.toLocaleString()}</span> <Of>on the registers</Of>
           </Readout>
         )}
