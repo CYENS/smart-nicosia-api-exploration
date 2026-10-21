@@ -1,0 +1,5 @@
+# HTTPS in front of the chatbot. Caddy gets and renews the certificate for $DOMAIN itself.
+{$DOMAIN} {
+	# Server-Sent Events (the chat stream) are passed through as they arrive.
+	reverse_proxy chatbot:8000
+}

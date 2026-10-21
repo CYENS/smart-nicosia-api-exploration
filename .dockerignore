@@ -1,10 +1,14 @@
 .venv
 .git
 .idea
-__pycache__
+**/__pycache__
 .pytest_cache
-data
+data/*
+!data/camera_locations.csv
+!data/eoa_registers_seed.json
 tests
 sample_payloads
 *.ipynb
 collector.toml
+.env
+chatbot/web

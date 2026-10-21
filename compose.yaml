@@ -1,0 +1,35 @@
+# The hosted chatbot: the app behind Caddy (automatic HTTPS). See deploy/README.md.
+#   docker compose up -d --build
+# Reads .env: ANTHROPIC_API_KEY, CHATBOT_PASSWORD and DOMAIN.
+name: nicosia
+
+services:
+  chatbot:
+    build:
+      context: .
+      dockerfile: deploy/chatbot.Dockerfile
+    env_file: .env
+    volumes:
+      - chatbot_cache:/app/data/chatbot_cache
+    restart: unless-stopped
+
+  caddy:
+    image: caddy:2
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      DOMAIN: ${DOMAIN:?set DOMAIN in .env}
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - chatbot
+    restart: unless-stopped
+
+volumes:
+  chatbot_cache:
+  caddy_data:
+  caddy_config:

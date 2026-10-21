@@ -71,6 +71,9 @@ The map and the "no key" notice work without a key; questions need one. Optional
 are in `.env.example`: `CHATBOT_MODEL`, `CHATBOT_EFFORT` (default `medium`),
 `CHATBOT_WEB_SEARCH`.
 
+To host it (Docker and Caddy on a free Oracle Cloud VM, with HTTPS and a shared password set by
+`CHATBOT_PASSWORD`), see [deploy/README.md](deploy/README.md).
+
 ### How it works
 
 - [chatbot/agent.py](chatbot/agent.py) streams each turn from Claude. It runs the requested tools
