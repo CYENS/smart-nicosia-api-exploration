@@ -1,9 +1,11 @@
 # Demo script: dangerous buildings
 
 A 15-question walk through the dangerous-building registers, the DLS 3D city and safer
-routing, in six acts. Every question below was run against the chatbot on 20 Oct 2026 (21:45
-to 23:10, after dark). The expected numbers are what came back then. The Limassol, Larnaca
-and Famagusta registers and the camera counts are live, so a later run can differ slightly.
+routing, in six acts. Every question below was run against the chatbot on 20 Oct 2026 after
+dark, and replayed on 21 Oct (10:40 to 11:00, by day) against the control-room client. The
+expected numbers are from the daytime replay unless marked. The Limassol, Larnaca and
+Famagusta registers and the camera counts are live, so a later run can differ slightly, and
+where the model picks a search radius itself (questions 7 and 8) the counts move with it.
 
 **Nicosia's numbers will change.** The chatbot now reads Nicosia's live register
 (ndlgo.org.cy/en/hazardousbldsmap/), which lists 806 buildings (743 dangerous, 63 needing
@@ -17,8 +19,8 @@ which copy it has with question 1: it says whether Nicosia's register is live or
 
 ## Before you start
 
-- Open <http://localhost:8010>. That server runs the current code. The one on 8000 was started
-  before the registers, `where_am_i` and safer routing were added, so it can't answer half of this.
+- Open <http://localhost:8000> (`uv run chatbot`). Restart it after pulling `main`: it doesn't
+  reload code on its own.
 - Press **New chat** between acts if the map gets crowded.
 - Each answer takes 10 to 20 seconds. Narrate while the tool chips tick by: they show what it is
   reading.
@@ -47,7 +49,7 @@ which copy it has with question 1: it says whether Nicosia's register is live or
 **3. What's the most dangerous building in Nicosia? Take me there in 3D.**
 
 - The hero shot. The map turns on the DLS 3D city, tilts, and flies to a red tower among
-  blue buildings, with a callout.
+  the buildings around it, coloured by height.
 - Expect: it first says no register grades risk, then uses the tallest dangerous building as a
   stated stand-in: **Stasinou 44, Strovolos (Agios Dimitrios), 44.7 m, 16 floors.**
 - Talking point: the answer is honest about what "most dangerous" can mean with this data.
@@ -57,8 +59,10 @@ which copy it has with question 1: it says whether Nicosia's register is live or
 - Map: flies to Limassol in 3D.
 - Expect: ranked by volume, the **Kanika Enaerios complex** on Archbishop Makarios III Avenue
   at 28th October, Limassol: 264,830 m³, 41.7 m, 15 floors.
-- Talking point: it spots the data quirk by itself. The complex is on the register as many
-  separate entries on one plot, so it says "one complex rather than eight separate giants".
+- Talking point: it spots the data quirk by itself: the complex is on the register as separate
+  entries on one plot, and the volume is the whole plot's, so it is one site, not several
+  giants. The register has 11 entries there (LIM-316 to LIM-326), but the answer counts only
+  the ones it listed (5 on 21 Oct), so don't repeat its number.
 
 **5. Plot floors against height for every dangerous building. Does the data hang together?**
 
@@ -77,10 +81,12 @@ which copy it has with question 1: it says whether Nicosia's register is live or
 
 **7. Around Laiki Geitonia, how do the dangerous buildings compare with everything else standing there? Show it in 3D.**
 
-- Map: every DLS building within about 250 m extruded by height, register buildings in red,
-  plus a height-against-floors chart.
-- Expect: 104 buildings, median 13.4 m, tallest 66.9 m. 32 register entries nearby; the tallest
-  is NIC-297 on Konstantinou Palaiologou at 33.6 m and 12 floors.
+- Map: every DLS building within 250 or 300 m extruded by height, register buildings in red
+  and amber. It may add a chart.
+- Expect: within 300 m, 174 buildings, median 12.7 m, tallest 66.9 m (24 floors), and 40
+  register entries (33 dangerous, 7 needing repair); within 250 m, 104 buildings and 32
+  entries. Either way the tallest register building is NIC-297 on Konstantinou Palaiologou,
+  33.6 m and 12 floors, and none of the five buildings over 35 m is on the register.
 - Talking point: inside the walls DLS models whole blocks, and the answer says which heights
   are estimates.
 
@@ -88,16 +94,18 @@ which copy it has with question 1: it says whether Nicosia's register is live or
 
 - The cross-source question: live pedestrian counts from the city's cameras against the
   registers. Map: 3D columns of people per camera, register buildings as red points.
-- Expect: the **Ledras Square** camera, about 113,700 people in 7 days, with 8 dangerous
-  buildings within 100 m. The nearest, 6 m from the camera, is NIC-73 at Ledras and Onasagorou
-  (8 floors, 21 m). Rigainis Street comes second.
+- Expect: the **Ledras Square** camera, about 100,000 people in 7 days (104,251 on 21 Oct),
+  with the most register buildings nearby: 5 within 60 m or 8 within 100 m, depending on the
+  radius it picks. They include NIC-73 at Ledras and Onasagorou (8 floors, 21 m) and NIC-296
+  on Konstantinou Palaiologou (12 floors, 33.6 m).
 - Talking point: two public data sets nobody has joined before, answering "where is the
   exposure".
 
 ## Act 4: you are here
 
 Set your position first: **right-click the map on Eleftheria Square and press "I'm here".**
-The status line under the map then says your position is shared with the assistant.
+The numbers below are for a point on Kostaki Pantelidi Avenue at Solomou Square, just north
+of Eleftheria Square; a spot a few metres off changes the nearest building, not the story.
 
 **9. Where am I, and are there any dangerous buildings near me?**
 
@@ -105,16 +113,19 @@ The status line under the map then says your position is shared with the assista
 - Expect: on Kostaki Pantelidi, by Laiki Geitonia. 35 register buildings within 300 m
   (30 dangerous, 5 needing repair). The nearest is NIC-409, about 20 m away.
 
-**10. I want to walk from here to Chrysaliniotissa Church. Will I pass any dangerous buildings?**
+**10. I want to walk from here to Famagusta Gate. Will I pass any dangerous buildings?**
 
-- It plans the safer route on its own and compares it with the usual one. Map: two routes, the usual one in grey and the safer one in blue, with a red "!" on every
-  register building either passes.
-- Expect (after dark): the usual route passes 7 register buildings in 2.16 km and 26 min; the
-  safer one passes 2 in 2.55 km and 31.5 min, about 5 minutes more. The 2 it can't avoid are
-  within 40 m of the start or the church.
-- After dark it also prefers lit streets, so by day the minutes will differ a little.
-- Alternative destination: **Famagusta Gate**. The usual route passes 6 register buildings in
-  1.46 km; the safer one passes 1 in 1.85 km, 5.3 minutes more.
+- It plans the safer route on its own and compares it with the usual one. Map: two routes,
+  the usual one in grey and the safer one in blue, with a red "!" on every register building
+  either passes, ending at the gate in the walls.
+- Expect by day: the usual route passes 8 register buildings in 1.48 km and 17 min; the safer
+  one passes 1 in 1.65 km and 20 min, 2.6 minutes more. The one left is NIC-409, next to
+  where you stand, and buildings within 40 m of the start can't be avoided.
+- After dark it also prefers lit streets: the usual route passes 6 in 1.46 km, the safer one
+  1 in 1.85 km, 5.3 minutes more.
+- Alternative destination: **Chrysaliniotissa Church**, a weaker example by day. The usual
+  route passes 13 in 1.44 km and the safer one 7 in 1.39 km, at no extra time, but three of
+  the 7 stand right by the start. After dark: 7 down to 2, about 5 minutes more.
 
 ## Act 5: beyond Nicosia
 
