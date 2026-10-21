@@ -475,19 +475,27 @@ function addToMap(entry: Entry) {
     const weight: any = st && st.max > st.min
       ? ["interpolate", ["linear"], ["to-number", ["get", vf], st.min], st.min, 0.05, st.max, 1]
       : 1
+    // A heatmap reads the city from above; at street level (where a later answer may fly the
+    // camera) it would smear over the 3D buildings, so it hands over to crisp status dots
+    // between zoom 14.5 and 16.
     addLayerSafe({
-      id: `${ref}::heat`, type: "heatmap", source: src, filter: points,
+      id: `${ref}::heat`, type: "heatmap", source: src, filter: points, maxzoom: 16,
       paint: {
         "heatmap-weight": weight,
         "heatmap-intensity": ["interpolate", ["linear"], ["zoom"], 11, 0.9, 16, 1.8],
         "heatmap-radius": ["interpolate", ["linear"], ["zoom"], 11, 18, 15, 38, 18, 70],
-        "heatmap-opacity": 0.85,
+        "heatmap-opacity": ["interpolate", ["linear"], ["zoom"], 14.5, 0.85, 16, 0],
         "heatmap-color": ["interpolate", ["linear"], ["heatmap-density"], 0, "rgba(37,99,235,0)", 0.15, "#3b82f6", 0.35, "#22c55e", 0.55, "#eab308", 0.75, "#f97316", 1, "#dc2626"],
       },
     }, entry.ids)
+    const dotsIn: any = ["interpolate", ["linear"], ["zoom"], 14.5, 0, 16, 0.95]
     addLayerSafe({
-      id: `${ref}::dots`, type: "circle", source: src, filter: points, minzoom: 15.5,
-      paint: { "circle-radius": 4, "circle-color": ["get", "color"], "circle-stroke-color": stroke, "circle-stroke-width": 1 },
+      id: `${ref}::dots`, type: "circle", source: src, filter: points, minzoom: 14.5,
+      paint: {
+        "circle-radius": ["interpolate", ["linear"], ["zoom"], 14.5, 2.5, 16, 3.5, 18, 5],
+        "circle-color": ["get", "color"], "circle-opacity": dotsIn,
+        "circle-stroke-color": stroke, "circle-stroke-width": 1, "circle-stroke-opacity": dotsIn,
+      },
     }, entry.ids)
     bindPopup(`${ref}::dots`)
     return
@@ -1150,9 +1158,13 @@ function clearCallouts() {
 function addCallouts(items: { title: string; text?: string; lon: number; lat: number }[], clearPrevious?: boolean) {
   if (clearPrevious !== false) clearCallouts()
   for (const it of items) {
+    // The marker element is MapLibre's (absolutely placed, moved by `transform`); the callout
+    // inside it can then have its own layout and pop-in animation without fighting either.
     const el = document.createElement("div")
-    el.className = "callout"
-    el.innerHTML = `<b>${escapeHtml(it.title)}</b>${it.text ? escapeHtml(it.text) : ""}`
+    const box = document.createElement("div")
+    box.className = "callout"
+    box.innerHTML = `<b>${escapeHtml(it.title)}</b>${it.text ? escapeHtml(it.text) : ""}`
+    el.appendChild(box)
     state.callouts.push(new maplibregl.Marker({ element: el, anchor: "bottom", offset: [0, -14] }).setLngLat([it.lon, it.lat]).addTo(map))
   }
 }
