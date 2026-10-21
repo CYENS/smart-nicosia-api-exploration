@@ -173,9 +173,16 @@
   display: block; overflow-x: auto; border-collapse: collapse; margin: 0.7em 0;
   font-family: var(--font-condensed); font-variant-numeric: tabular-nums; font-size: 14px;
 }
+/* Cells wrap between words only (the prose's break-anywhere rule would split "Distance" into
+   "Distan" and "ce"); headers and lone numbers stay on one line, and a table still too wide
+   for the panel scrolls sideways inside the answer instead of squeezing. */
 .prose-answer th,
-.prose-answer td { border-bottom: 1px solid var(--line); padding: 4px 12px 4px 0; text-align: left; }
-.prose-answer th { color: var(--muted-foreground); font-weight: 500; }
+.prose-answer td {
+  border-bottom: 1px solid var(--line); padding: 4px 12px 4px 0; text-align: left; vertical-align: top;
+  overflow-wrap: normal; word-break: normal;
+}
+.prose-answer th { color: var(--muted-foreground); font-weight: 500; white-space: nowrap; }
+.prose-answer td.num { white-space: nowrap; }
 .prose-answer blockquote { margin: 0.6em 0; padding-left: 10px; border-left: 2px solid var(--line); color: var(--muted-foreground); }
 
 /* The walls mark traces itself while the assistant works. */

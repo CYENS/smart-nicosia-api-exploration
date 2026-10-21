@@ -14,8 +14,22 @@ import { cn } from "@/lib/utils"
 
 marked.setOptions({ gfm: true, breaks: false })
 
+// A table cell that holds only a number, with or without its unit ("45 m", "~20 m", "8 floors",
+// "12.7 min", "61%"), which reads badly when it wraps.
+const NUMBER_CELL = /^[~≈<>±+−-]?\s*\d[\d.,]*\s*(%|°C|m²|m³|m|km|min|s|h|kW|W|dB|floors?)?$/
+
+function markNumberCells(html: string) {
+  if (!html.includes("<td")) return html
+  const t = document.createElement("template")
+  t.innerHTML = html
+  for (const td of t.content.querySelectorAll("td")) {
+    if (NUMBER_CELL.test(td.textContent?.trim() ?? "")) td.classList.add("num")
+  }
+  return t.innerHTML
+}
+
 const Answer = memo(function Answer({ text }: { text: string }) {
-  const html = useMemo(() => DOMPurify.sanitize(marked.parse(text, { async: false })), [text])
+  const html = useMemo(() => markNumberCells(DOMPurify.sanitize(marked.parse(text, { async: false }))), [text])
   return (
     <Bubble variant="ghost">
       <BubbleContent className="prose-answer text-foreground" dangerouslySetInnerHTML={{ __html: html }} />
