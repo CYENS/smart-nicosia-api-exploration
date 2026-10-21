@@ -106,7 +106,8 @@ def traffic(city: CityData, period: str, group_by: str, camera: str | None) -> d
         if not chosen:
             return {"error": f"no camera matches {camera!r}",
                     "cameras": sorted({c["name"] for c in cams})}
-    va_ids = json.dumps([c["analytics_id"] for c in chosen])
+    # Compact separators: the API fails with HTTP 500 on "[111, 102]" but takes "[111,102]".
+    va_ids = json.dumps([c["analytics_id"] for c in chosen], separators=(",", ":"))
     params = {"va_ids": va_ids, "start_date": _ms(start), "end_date": _ms(end)}
 
     if group_by == "camera":

@@ -10,7 +10,7 @@ from types import SimpleNamespace
 import pytest
 
 from chatbot import agent as agent_mod
-from chatbot import history
+from chatbot import context, history
 from chatbot import tools as tools_mod
 from chatbot.agent import Agent
 from chatbot.city import CityData
@@ -139,6 +139,22 @@ def test_show_on_map_checks_style_against_geometry():
 
 
 # -- history (time-lapse) -----------------------------------------------------------------------
+
+
+def test_traffic_sends_camera_ids_without_spaces(city, api, monkeypatch):
+    # Regression: json.dumps wrote "[111, 102]", which the API answers with HTTP 500, so any
+    # camera filter matching more than one camera (e.g. "Ledras", six cameras) failed.
+    cams = [{"name": "Ledras Square", "analytics_id": 102},
+            {"name": "Ledras St. (from Lykourgou)", "analytics_id": 111},
+            {"name": "Makarios Avenue cam03", "analytics_id": 90}]
+    monkeypatch.setattr(city, "traffic_cameras", lambda: cams)
+    api.on("getTrafficReports", {"data": {"group_by": []}})
+
+    res = context.traffic(city, "yesterday", "hour_of_day", "Ledras")
+    assert res["cameras"] == ["Ledras Square", "Ledras St. (from Lykourgou)"]
+    context.traffic(city, "yesterday", "day", None)
+    sent = [p["va_ids"] for e, p in api.calls if e == "getTrafficReports"]
+    assert sent == ["[102,111]", "[]"]
 
 
 def test_get_history_replays_parking_through_the_interpreter(city, api):
