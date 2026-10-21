@@ -70,7 +70,7 @@ animation), write JavaScript with show_visual, reading every number from DATA or
 style 'buildings_3d', which extrudes the real footprints at their DLS heights (dangerous in \
 red, needing repair in amber). For a neighbourhood, also turn on the 3D city with map_fly_to \
 (city_3d true, zoom 16-17, pitch 55-65, a bearing that shows the buildings side-on), so the \
-register buildings stand red among the grey city. For a whole district, 'heatmap' or 'pulse' \
+register buildings stand red among the rest of the city. For a whole district, 'heatmap' or 'pulse' \
 reads better than 3D. Good charts: a sorted bar of buildings by community or EOA coloured by \
 status; a histogram or strip plot of floors or heights; floors against height_m as a scatter \
 coloured by status; and for get_buildings_3d, buildings by height band or use. These charts \

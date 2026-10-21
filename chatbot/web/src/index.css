@@ -269,7 +269,9 @@
 }
 .me-btn:hover { background: #ffffff; }
 
-/* Map callouts the assistant places. */
+/* Map callouts the assistant places. The box sits inside MapLibre's marker element (which is
+   absolutely positioned and moved with `transform`), so its own position and animation are
+   free to use; `relative` anchors the arrow below. */
 .callout {
   position: relative;
   max-width: 230px;
