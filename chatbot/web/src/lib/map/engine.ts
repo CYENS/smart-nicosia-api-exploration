@@ -296,21 +296,23 @@ function addLampGlow(prefix: string, src: string, lit: any, ids: string[], befor
     id: `${prefix}-pool`, type: "heatmap", source: src, filter: points, layout: { visibility },
     paint: {
       "heatmap-weight": 1,
-      "heatmap-intensity": ["interpolate", ["linear"], ["zoom"], 12, 1.4, 15, 1.1, 18, 0.9],
-      // About 30 m of light round each lamp close up, a little more when zoomed out to stay seen.
-      "heatmap-radius": ["interpolate", ["exponential", 2], ["zoom"], 12, 9, 14, 22, 15, 36, 17, 120, 19, 460],
+      // Zoomed out, the lamps of a street merge into one warm line; zoomed in, each lamp keeps
+      // its own soft pool (radius in px grows far slower than the map, intensity and opacity
+      // fall), so the street, the routes and the labels stay readable underneath.
+      "heatmap-intensity": ["interpolate", ["linear"], ["zoom"], 12, 1.4, 15, 1.1, 16, 1, 17, 0.9, 18, 0.8],
+      "heatmap-radius": ["interpolate", ["linear"], ["zoom"], 12, 9, 14, 20, 15, 28, 16, 36, 17, 44, 18, 54, 19, 64],
       "heatmap-color": ["interpolate", ["linear"], ["heatmap-density"],
-        0, "rgba(255,160,60,0)", 0.1, "rgba(255,150,55,0.12)", 0.3, "rgba(255,165,70,0.3)",
-        0.55, "rgba(255,190,105,0.46)", 0.8, "rgba(255,214,150,0.6)", 1, "rgba(255,236,200,0.72)"],
-      "heatmap-opacity": 0.95,
+        0, "rgba(255,160,60,0)", 0.12, "rgba(255,150,55,0.12)", 0.3, "rgba(255,165,70,0.26)",
+        0.55, "rgba(255,185,100,0.38)", 0.8, "rgba(255,205,140,0.48)", 1, "rgba(255,222,175,0.56)"],
+      "heatmap-opacity": ["interpolate", ["linear"], ["zoom"], 12, 0.95, 15, 0.9, 17, 0.85, 18, 0.8],
     },
   }, before)
   map.addLayer({
     id: `${prefix}-bulb`, type: "circle", source: src, filter: points, minzoom: 13, layout: { visibility },
     paint: {
-      "circle-radius": ["interpolate", ["linear"], ["zoom"], 13, 1, 16, 2.4, 19, 5],
+      "circle-radius": ["interpolate", ["linear"], ["zoom"], 13, 1, 16, 2.2, 18, 3.2, 19, 4],
       "circle-color": "#fff3d6",
-      "circle-blur": 0.35,
+      "circle-blur": ["interpolate", ["linear"], ["zoom"], 13, 0.4, 17, 0.15],
     },
   }, before)
   for (const id of [`${prefix}-pool`, `${prefix}-bulb`]) { ids.push(id); nightLayers.add(id) }
