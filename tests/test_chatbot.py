@@ -439,3 +439,53 @@ def test_agent_stops_on_refusal():
 def test_system_prompt_has_no_per_turn_values():
     # Anything that changes per turn would break the prompt cache.
     assert "{" not in agent_mod.SYSTEM_PROMPT and "2026" not in agent_mod.SYSTEM_PROMPT
+
+
+# -- shared password ----------------------------------------------------------------------------
+
+
+def _basic(user: str, password: str) -> str:
+    import base64
+    return "Basic " + base64.b64encode(f"{user}:{password}".encode()).decode()
+
+
+def test_password_ok_takes_any_username():
+    from chatbot.server import password_ok
+    assert password_ok(_basic("", "s3cret"), "s3cret")
+    assert password_ok(_basic("anyone", "s3cret"), "s3cret")
+    assert password_ok(_basic("x", "pa:ss"), "pa:ss")  # only the first colon splits
+    for bad in (None, "", _basic("x", "wrong"), "Bearer s3cret", "Basic %%%", "Basic czNjcmV0"):
+        assert not password_ok(bad, "s3cret")
+
+
+def _call(app, headers=()):
+    sent = []
+
+    async def receive():
+        return {"type": "http.request", "body": b""}
+
+    async def send(message):
+        sent.append(message)
+
+    scope = {"type": "http", "method": "GET", "path": "/", "headers": list(headers)}
+    asyncio.run(app(scope, receive, send))
+    return sent
+
+
+def test_shared_password_guards_the_site_only_when_set(monkeypatch):
+    from chatbot.server import SharedPassword
+
+    async def inner(scope, receive, send):
+        await send({"type": "http.response.start", "status": 200, "headers": []})
+        await send({"type": "http.response.body", "body": b"ok"})
+
+    guarded = SharedPassword(inner)
+    monkeypatch.delenv("CHATBOT_PASSWORD", raising=False)
+    assert _call(guarded)[0]["status"] == 200
+
+    monkeypatch.setenv("CHATBOT_PASSWORD", "s3cret")
+    denied = _call(guarded)[0]
+    assert denied["status"] == 401
+    assert any(k == b"www-authenticate" and v.startswith(b"Basic") for k, v in denied["headers"])
+    assert _call(guarded, [(b"authorization", _basic("x", "nope").encode())])[0]["status"] == 401
+    assert _call(guarded, [(b"authorization", _basic("x", "s3cret").encode())])[0]["status"] == 200

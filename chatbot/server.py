@@ -3,9 +3,12 @@
 from __future__ import annotations
 
 import asyncio
+import base64
+import binascii
 import json
 import logging
 import os
+import secrets
 import threading
 import time
 from contextlib import asynccontextmanager
@@ -13,7 +16,7 @@ from contextlib import asynccontextmanager
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.gzip import GZipMiddleware
-from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
+from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
@@ -62,8 +65,42 @@ async def lifespan(app: FastAPI):
     yield
 
 
+def password_ok(authorization: str | None, password: str) -> bool:
+    """Whether an `Authorization: Basic ...` header carries the password (any username)."""
+    scheme, _, token = (authorization or "").partition(" ")
+    if scheme.lower() != "basic":
+        return False
+    try:
+        _, _, given = base64.b64decode(token, validate=True).decode("utf-8").partition(":")
+    except (binascii.Error, UnicodeDecodeError):
+        return False
+    return secrets.compare_digest(given.encode(), password.encode())
+
+
+class SharedPassword:
+    """Puts the whole site behind one shared password (HTTP Basic) when CHATBOT_PASSWORD is set,
+    so a hosted copy doesn't let anyone spend the API key. The browser asks once and then sends
+    it with every request, the chat stream included."""
+
+    def __init__(self, app) -> None:
+        self.app = app
+
+    async def __call__(self, scope, receive, send) -> None:
+        password = os.environ.get("CHATBOT_PASSWORD")
+        if scope["type"] == "http" and password:
+            headers = dict(scope["headers"])
+            auth = headers.get(b"authorization", b"").decode("latin-1")
+            if not password_ok(auth, password):
+                deny = PlainTextResponse("Password required.", status_code=401, headers={
+                    "WWW-Authenticate": 'Basic realm="Nicosia digital twin", charset="UTF-8"'})
+                await deny(scope, receive, send)
+                return
+        await self.app(scope, receive, send)
+
+
 app = FastAPI(title="Nicosia digital twin", lifespan=lifespan)
 app.add_middleware(GZipMiddleware, minimum_size=4096)  # the register layer and 3D tiles are big
+app.add_middleware(SharedPassword)  # added last, so it runs first
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 
