@@ -5,7 +5,7 @@ import maplibregl, {
 } from "maplibre-gl"
 import { create } from "zustand"
 
-import { BASE_SOURCE, BASE_SOURCE_URL, BASEMAP_URLS, baseLayers, type Basemap } from "@/lib/map/basemap"
+import { BASE_SOURCE, BASE_SOURCE_URLS, BASEMAP_URLS, baseLayers, type Basemap } from "@/lib/map/basemap"
 import { lightFor, nicosiaWallToDate, skyAt, skyFor, type Sky } from "@/lib/map/sky"
 import { WALLS_RING } from "@/lib/walls"
 
@@ -65,6 +65,7 @@ type MapUi = {
   ready: boolean
   basemap: Basemap // the base map shown
   basemapMode: "auto" | Basemap // auto follows the sun
+  baseProblem: boolean // the base map's tiles don't come, from either address
   skyNow: Sky // the real sky right now, for the strip and the map panel
   nightLights: boolean // street lights glow after dark
   layers: LayerSummary[]
@@ -79,6 +80,7 @@ export const useMapUi = create<MapUi>(() => ({
   ready: false,
   basemap: "night",
   basemapMode: "auto",
+  baseProblem: false,
   skyNow: skyAt(new Date()),
   nightLights: true,
   layers: [],
@@ -192,6 +194,7 @@ export function initMap(container: HTMLElement) {
     if (baseWanted !== baseShown) swapBasemap() // the sky moved on while the style loaded
   })
   map.on("error", retryBase)
+  map.on("sourcedata", baseTileCame)
   map.on("load", () => setUi({ ready: true }))
   map.on("movestart", (e) => { if ((e as any).originalEvent) framed = null }) // the user took over
   map.on("moveend", refreshCity)
@@ -236,7 +239,8 @@ function firstBasemap(b: Basemap) {
       const layers = baseLayers(b, next)
       baseStyles[b] = Promise.resolve(layers)
       basePrefix = newPrefix(b)
-      return { ...next, layers: named(layers, basePrefix) }
+      const tiles = { type: "vector" as const, url: BASE_SOURCE_URLS[baseUrl] }
+      return { ...next, sources: { ...next.sources, [BASE_SOURCE]: tiles }, layers: named(layers, basePrefix) }
     },
   })
   // Have the other one at hand before it is needed.
@@ -343,21 +347,40 @@ function applyTheme() {
 }
 
 // MapLibre doesn't try again when the style or the list of tiles fails to load, which would
-// leave the map blank until the page is reloaded.
+// leave the map blank until the page is reloaded. Here the tiles' other address is tried at once,
+// then both in turn; and when neither has brought a tile, the map says so (`baseProblem`).
+let baseUrl = 0 // which of BASE_SOURCE_URLS is in use
+let baseTries = 0 // failures since a tile last came
+let tileFailures = 0 // of single tiles, at the address in use
 let baseRetry: number | undefined
+
 function retryBase(e: any) {
   console.error(e.error ?? e)
   const styleFailed = !styleReady
-  const tilesFailed = e.sourceId === BASE_SOURCE && !e.tile
-  if (!(styleFailed || tilesFailed) || baseRetry) return
+  const listFailed = e.sourceId === BASE_SOURCE && !e.tile
+  // Tiles that never reach the server, one after the other, are an address that is blocked.
+  const tileFailed = e.sourceId === BASE_SOURCE && e.tile && !e.error?.status
+  if (tileFailed) tileFailures++
+  if (!(styleFailed || listFailed || tileFailures >= 4) || baseRetry) return
+  baseTries++
+  if (baseTries >= BASE_SOURCE_URLS.length) setUi({ baseProblem: true })
   baseRetry = window.setTimeout(() => {
     baseRetry = undefined
-    if (tilesFailed) (map.getSource(BASE_SOURCE) as VectorTileSource | undefined)?.setUrl(BASE_SOURCE_URL)
-    else if (!styleReady && baseShown) {
+    if (!styleReady && baseShown) {
       map.setStyle(null as any) // a style that failed would hold up the next one
       firstBasemap(baseShown)
+    } else if (styleReady) {
+      baseUrl = (baseUrl + 1) % BASE_SOURCE_URLS.length
+      tileFailures = 0
+      ;(map.getSource(BASE_SOURCE) as VectorTileSource | undefined)?.setUrl(BASE_SOURCE_URLS[baseUrl])
     }
-  }, 4000)
+  }, styleReady && baseTries === 1 ? 0 : 4000)
+}
+
+function baseTileCame(e: any) {
+  if (e.sourceId !== BASE_SOURCE || e.tile?.state !== "loaded") return
+  baseTries = tileFailures = 0
+  if (useMapUi.getState().baseProblem) setUi({ baseProblem: false })
 }
 
 // Auto shows Night from civil dusk to civil dawn and Day otherwise; Night and Day stay put.

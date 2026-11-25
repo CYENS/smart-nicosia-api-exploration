@@ -1,5 +1,6 @@
 import { useEffect, useRef, type CSSProperties } from "react"
 
+import { BaseMapNotice } from "@/components/base-map-notice"
 import { ChatPanel } from "@/components/chat/chat-panel"
 import { LayersPanel } from "@/components/layers-panel"
 import { QuestionMenu } from "@/components/question-menu"
@@ -41,6 +42,7 @@ export function App() {
         <StatusStrip />
         <ChatPanel />
         <LayersPanel />
+        <BaseMapNotice />
         <TimelapsePlayer />
         <Stage />
         <QuestionMenu />
