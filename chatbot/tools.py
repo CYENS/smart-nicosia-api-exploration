@@ -170,7 +170,11 @@ TOOL_DEFS: list[dict] = [
          "analytics cameras. group_by 'day' (one row per day), 'hour_of_day' (per hour; over "
          "several days it is a summed hour-of-day profile) or 'camera' (totals per camera with "
          "coordinates and a layer_ref, good for a heatmap of where people walk). Optionally "
-         "filter to cameras whose name contains `camera` (e.g. 'Ledras', 'Makariou').",
+         "filter to cameras whose name contains `camera` (e.g. 'Ledras', 'Makariou'). "
+         "'hour_of_day' for today or yesterday also returns a layer_ref that replays every "
+         "camera hour by hour on the map (show it with 'columns_3d' and a value_field such as "
+         "people) and a by_camera_data_ref (one row per camera and hour). With a camera "
+         "filter along one street, the layers also draw that street on the map.",
          obj({
              "period": {"type": "string", "enum": list(context.PERIODS)},
              "group_by": {"type": "string", "enum": ["day", "hour_of_day", "camera"]},
@@ -387,8 +391,10 @@ TOOL_DEFS: list[dict] = [
          "device id or camera highlight on the map when hovered (and the other way round). Any "
          "chart whose x is temporal (type temporal, e.g. a `time` or `hour` field) gets a "
          "line at the time-lapse's moment while one plays, and at the current time otherwise; "
-         "hovering it moves the time-lapse. Keep the id or camera field unaggregated in the "
-         "linked view for this to work.",
+         "hovering it moves the line and the time-lapse to that moment. One plain series "
+         "over time (a row per moment, y a plain quantitative field, no transforms or colour "
+         "split) also gets a dot on the line and a flag with the time and value there. Keep "
+         "the id or camera field unaggregated in the linked view for this to work.",
          obj({
              "title": {"type": "string"},
              "spec": {"type": "object", "description": "Vega-Lite spec without data."},
@@ -645,6 +651,104 @@ def h_get_alarms(ctx: ToolContext, a: dict) -> dict:
     return res
 
 
+TRAFFIC_FIELDS = [*context.OBJECT_TYPES.values(), "total"]
+
+
+def camera_street(ctx: ToolContext, camera: str | None,
+                  points: list[tuple[float, float]]) -> dict | None:
+    """The street a camera filter names, as the walking line through its cameras, for the map
+    to highlight. None without a filter, when the cameras don't line up on one street, or
+    when the router can't be reached (the answer does without the highlight)."""
+    if not camera or ctx.router is None:
+        return None
+    try:
+        line = ctx.router.street_through(points)
+    except WebError as e:
+        log.info("no street line for %r: %s", camera, e)
+        return None
+    name = camera.strip()
+    return {"name": name[:1].upper() + name[1:], "coordinates": line} if line else None
+
+
+def add_traffic_replay(ctx: ToolContext, a: dict, res: dict) -> None:
+    """Give a one-day, hour-by-hour traffic result its map side: a time-lapse of the cameras
+    (a frame per hour, a value per object type), the street they sit along, and the rows per
+    camera and hour behind it. The frames' totals are the result's own rows, so the map and a
+    chart of them always agree."""
+    rows = res["rows"]
+    try:
+        cams = context.traffic_camera_hours(ctx.city, a["period"], a.get("camera"))
+    except ApiError as e:  # the answer still has its rows; it only loses the replay
+        log.warning("no per-camera traffic for the replay: %s", e)
+        return
+    if not rows or not cams:
+        return
+    first, last = (datetime.strptime(rows[i]["hour"], context.HOUR_FMT) for i in (0, -1))
+    times = [first + timedelta(hours=k) for k in range(int((last - first) / timedelta(hours=1)) + 1)]
+    keys = [t.strftime(context.HOUR_FMT) for t in times]
+
+    def counts(cam: dict, field: str) -> bool:
+        return any(field in h for h in cam["hours"].values())
+
+    name = (a.get("camera") or "").strip()
+    name = name[:1].upper() + name[1:]
+    title = f"{name + ' cameras' if name else 'Traffic cameras'}, hour by hour {a['period']}"
+    headline = "people" if any(r.get("people") for r in rows) else "total"
+
+    def day(cam: dict) -> dict:
+        by = headline if counts(cam, headline) else "total"
+        busiest = max(cam["hours"], key=lambda k: cam["hours"][k].get(by, 0))
+        return {"camera": cam["camera"],
+                **{f: sum(h.get(f, 0) for h in cam["hours"].values())
+                   for f in TRAFFIC_FIELDS if counts(cam, f)},
+                "busiest_hour": busiest[11:], "on_map": cam["lat"] is not None}
+
+    # The day per camera, busiest first, so the answer can name them without another call.
+    res["by_camera"] = sorted(map(day, cams), key=lambda r: -r.get(headline, 0))[:20]
+    res["by_camera_data_ref"] = ctx.store.add_dataset(
+        "traffic_camera_hours",
+        [{"camera": c["camera"], "hour": k,
+          **{f: c["hours"].get(k, {}).get(f, 0) for f in TRAFFIC_FIELDS if counts(c, f)}}
+         for c in cams for k in keys],
+        title=title, link={"key": "camera"})
+    placed = [c for c in cams if c["lat"] is not None]
+    if not placed:
+        return
+    fields = [f for f in TRAFFIC_FIELDS if any(counts(c, f) for c in placed)]
+    by_hour = {r["hour"]: r for r in rows}
+    # A camera that counts a type has 0 in a quiet hour; one that never counts it has no value.
+    values = {f: [[c["hours"].get(k, {}).get(f, 0) if counts(c, f) else None for c in placed]
+                  for k in keys] for f in fields}
+    frames = {
+        "times": [t.strftime("%a %d %b %H:%M") for t in times],
+        "iso": keys,
+        "state_names": ["camera"],
+        "states": [[0] * len(placed) for _ in keys],
+        "values": values,
+        "totals": {f: [by_hour.get(k, {}).get(f, 0) for k in keys]
+                   for f in TRAFFIC_FIELDS if any(f in r for r in rows)},
+        "total_field": headline,
+    }
+    feats = [point(c["lon"], c["lat"], {
+        "id": c["camera"], "label": c["camera"], "name": c["camera"], "state": "camera",
+        "color": STATE_COLORS["camera"],
+        **{f: values[f][-1][j] for f in fields if values[f][-1][j] is not None},
+    }) for j, c in enumerate(placed)]
+    street = camera_street(ctx, a.get("camera"), [(c["lat"], c["lon"]) for c in placed])
+    res["layer_ref"] = ctx.store.add_layer(
+        "traffic_hours", feats, geometry="point", title=title,
+        legend={"camera": STATE_COLORS["camera"]}, value_fields=fields, frames=frames,
+        street=street)
+    res["map_replay"] = (
+        f"layer_ref replays these {len(placed)} cameras hour by hour (value fields: "
+        f"{', '.join(fields)}). Show it with show_on_map style 'columns_3d' and the value_field "
+        "asked about, next to a chart of data_ref over `hour` (temporal): hovering the chart "
+        "takes the map to that hour"
+        + (f", and {street['name']} is drawn on the map, glowing with the hour's total"
+           if street else "")
+        + ". by_camera_data_ref has a row per camera and hour, linked to the cameras on the map.")
+
+
 def h_get_traffic(ctx: ToolContext, a: dict) -> dict:
     res = context.traffic(ctx.city, a["period"], a["group_by"], a.get("camera"))
     if "error" in res:
@@ -659,11 +763,14 @@ def h_get_traffic(ctx: ToolContext, a: dict) -> dict:
             "popup": f"{r['camera']}\npeople {r.get('people', 0):,} · cars {r.get('car', 0):,}",
             **{k: v for k, v in r.items() if isinstance(v, int)},
         }) for r in res["rows"] if r.get("lat") is not None]
+        street = camera_street(ctx, a.get("camera"), [
+            (f["geometry"]["coordinates"][1], f["geometry"]["coordinates"][0]) for f in feats])
         res["layer_ref"] = ctx.store.add_layer(
             "traffic_cameras", feats, geometry="point", title=f"Traffic counts, {a['period']}",
-            legend={"camera": STATE_COLORS["camera"]},
-            value_fields=["people", "bike", "car", "motorcycle", "bus", "truck", "total"])
+            legend={"camera": STATE_COLORS["camera"]}, value_fields=TRAFFIC_FIELDS, street=street)
         res["rows"] = res["rows"][:15]
+    elif res["group_by"] == "hour":  # one real day (today or yesterday), hour by hour
+        add_traffic_replay(ctx, a, res)
     res["_summary"] = f"traffic {a['period']} by {a['group_by']}"
     return res
 
@@ -1345,11 +1452,108 @@ def link_chart(spec: dict, key: str) -> bool:
     return True
 
 
-def add_time_rule(spec: dict) -> str | None:
+HOUR_UNITS = {"hours", "hoursminutes", "yearmonthdatehours", "yearmonthdatehoursminutes"}
+
+
+def keep_real_hours(spec: dict, rows: list[dict]) -> None:
+    """Undo a time unit that only hides the date of a chart over real hours, in place. An axis
+    of `timeUnit: "hours"` over one day's rows looks the same as the hours themselves, but its
+    moments belong to no day, so the chart can't follow a time-lapse or lead it. Lines, areas
+    and points get the plain field; bars keep a unit, for their width, but one with the date.
+    Left alone where the unit does group something (several days, or minutes into hours)."""
+    for unit in [spec, *[u for u in spec.get("layer", []) if isinstance(u, dict)]]:
+        x = (unit.get("encoding") or {}).get("x")
+        if not isinstance(x, dict) or x.get("timeUnit") not in HOUR_UNITS:
+            continue
+        moments = [r.get(x.get("field")) for r in rows]
+        if not moments or not all(isinstance(m, str) and len(m) >= 16 for m in moments):
+            continue
+        one_day = len({m[:10] for m in moments}) == 1
+        if (not one_day and not x["timeUnit"].startswith("year")) or (
+                not x["timeUnit"].endswith("minutes") and any(m[14:16] != "00" for m in moments)):
+            continue
+        mark = unit.get("mark")
+        if (mark.get("type") if isinstance(mark, dict) else mark) in ("bar", "rect"):
+            x["timeUnit"] = "yearmonthdate" + x["timeUnit"].removeprefix("yearmonthdate")
+        else:
+            del x["timeUnit"]
+        x["type"] = "temporal"
+        if one_day and isinstance(x.get("axis", {}), dict):  # the hours alone, as was asked for
+            x["axis"] = {"format": "%H:%M", **x.get("axis", {})}
+
+
+SCRUB_MARKS = {"line", "area", "point", "circle", "square", "bar", "trail"}
+SERIES_CHANNELS = ("color", "detail", "strokeDash", "shape", "size", "row", "column", "facet")
+FLAG_FIELD = "_flag"
+
+
+def scrub_layers(spec: dict, unit: dict, rows: list[dict] | None) -> list[dict]:
+    """A dot on the series and a flag above it reading the time and the value, where a row sits
+    at the `_t` moment. With the rule they make a scrubber: it rides along the line as a
+    time-lapse plays and jumps to the hour the pointer is over. Only for one plain series over
+    real moments (a row per moment, no transforms, nothing split by colour); other charts keep
+    the rule alone and get []. The flag stands above the plot, clear of the data, and turns to
+    the left near the right edge."""
+    enc = unit["encoding"]
+    x, y = enc["x"], enc.get("y")
+    mark = unit.get("mark")
+    if (not rows or "timeUnit" in x or "transform" in spec or "transform" in unit
+            or (unit is not spec and "encoding" in spec)
+            or (mark.get("type") if isinstance(mark, dict) else mark) not in SCRUB_MARKS
+            or not isinstance(y, dict) or not y.get("field") or y.get("type") != "quantitative"
+            or any(k in y for k in ("aggregate", "bin", "timeUnit"))
+            or any(isinstance(enc.get(c), dict) and "field" in enc[c] for c in SERIES_CHANNELS)):
+        return []
+    others = [u["encoding"].get("y") for u in spec.get("layer", [])
+              if isinstance(u, dict) and u is not unit and isinstance(u.get("encoding"), dict)]
+    if any(not isinstance(o, dict) or o.get("field") != y["field"] for o in others):
+        return []
+    moments = [r.get(x["field"]) for r in rows]
+    if (not all(isinstance(m, str) and len(m) >= 10 for m in moments)
+            or len(set(moments)) != len(moments)
+            or not all(isinstance(r.get(y["field"]), (int, float)) for r in rows)):
+        return []
+    moments.sort()
+    timed = len(moments[0]) > 10
+    one_day = len({m[:10] for m in moments}) == 1
+    time_format = "%d %b" if not timed else "%H:%M" if one_day else "%a %H:%M"
+    f, yf = json.dumps(x["field"]), json.dumps(y["field"])
+    here = [{"filter": f"_t != null && +toDate(datum[{f}]) === _t"}]
+    at_x = {k: x[k] for k in ("field", "type", "title") if k in x}
+    near_end = f"_t > +toDate({json.dumps(moments[int(len(moments) * 0.88)])})"
+    dot = {
+        "transform": here,
+        "mark": {"type": "point", "filled": True, "size": 110, "opacity": 1, "color": "#ffae45",
+                 "stroke": "#15233a", "strokeWidth": 2},
+        "encoding": {"x": at_x,
+                     "y": {k: y[k] for k in ("field", "type", "title", "scale", "axis") if k in y}}}
+    flag = {
+        "transform": [*here, {"calculate": f"timeFormat(toDate(datum[{f}]), "
+                                           f"{json.dumps(time_format)}) + ' · ' + "
+                                           f"format(datum[{yf}], ',')", "as": FLAG_FIELD}],
+        "mark": {"type": "text", "baseline": "bottom", "fontSize": 13, "fontWeight": 600,
+                 "color": "#e4ebf4", "align": {"expr": f"{near_end} ? 'right' : 'center'"},
+                 "dx": {"expr": f"{near_end} ? 6 : 0"}},
+        "encoding": {"x": at_x, "y": {"value": -5},
+                     "text": {"field": FLAG_FIELD, "type": "nominal"}}}
+    return [dot, flag]
+
+
+def has_scrubber(spec: dict) -> bool:
+    """Whether add_time_rule gave the chart a flag (the page leaves room for it above the plot)."""
+    return any(isinstance(u, dict) and isinstance(u.get("encoding"), dict)
+               and isinstance(u["encoding"].get("text"), dict)
+               and u["encoding"]["text"].get("field") == FLAG_FIELD
+               for u in spec.get("layer", []))
+
+
+def add_time_rule(spec: dict, rows: list[dict] | None = None) -> str | None:
     """Give a chart over time a vertical rule at the `_t` param (epoch ms), in place. The page
-    sets `_t` to the time-lapse's moment while one plays and to the current time otherwise, or
-    to null when that moment is outside the chart. The rule reuses the x field's name, type,
-    timeUnit and title, so the axis and its title stay as they were. Returns the x field."""
+    sets `_t` to the time-lapse's moment while one plays, to the moment under the pointer
+    while the chart is hovered, and to the current time otherwise (null when that is outside
+    the chart). The rule reuses the x field's name, type, timeUnit and title, so the axis and
+    its title stay as they were. With the chart's `rows`, one plain series also gets a dot and
+    a value flag at that moment (see scrub_layers). Returns the x field."""
     unit = first_unit(spec)
     if unit is None or "_t" in param_names(spec, unit):
         return None
@@ -1357,11 +1561,13 @@ def add_time_rule(spec: dict) -> str | None:
     if not is_temporal(x):
         return None
     field = x["field"]
+    scrubber = scrub_layers(spec, unit, rows)  # read before add_layer moves the view
     add_layer(spec, unit, {
         "data": {"values": [{}]},
         "transform": [{"filter": "_t != null"}, {"calculate": "_t", "as": field}],
         "mark": NOW_RULE,
         "encoding": {"x": {k: x[k] for k in ("field", "type", "timeUnit", "title") if k in x}}})
+    spec["layer"].extend(scrubber)
     spec.setdefault("params", []).append({"name": "_t", "value": None})
     return field
 
@@ -1416,15 +1622,18 @@ def h_show_chart(ctx: ToolContext, a: dict) -> dict:
             raise ToolError(f"unknown data_ref {a['data_ref']!r}; known: {list(ctx.store.datasets)[-10:]}")
         rows = ds["rows"]
         color_states(spec, rows)
+        keep_real_hours(spec, rows)
         if ds.get("link") and rows and ds["link"]["key"] in rows[0]:
             spec, ok = wired(spec, lambda s: link_chart(s, ds["link"]["key"]))
             link = ds["link"] if ok else None
-        spec, time_field = wired(spec, add_time_rule)
+        spec, time_field = wired(spec, lambda s: add_time_rule(s, rows))
+        if not time_field:  # the dot and flag didn't pass: the rule alone still may
+            spec, time_field = wired(spec, add_time_rule)
         spec["data"] = {"values": rows}
     elif "data" not in spec and "datasets" not in spec:
         raise ToolError("pass a data_ref (preferred) or include data in the spec")
     ctx.emit({"type": "ui", "action": "chart", "title": a["title"], "spec": spec, "link": link,
-              "time_field": time_field})
+              "time_field": time_field, "scrub": has_scrubber(spec)})
     return {"ok": True, "rows_plotted": len(rows) if rows is not None else None,
             "linked_to_map": bool(link or time_field), "_summary": f"chart: {a['title']}"}
 

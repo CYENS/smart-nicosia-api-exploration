@@ -357,6 +357,10 @@ class CityData:
 
     # -- traffic cameras -------------------------------------------------------------------
 
+    def each(self, fn, items) -> list:
+        """`fn` over `items` on the shared request pool, results in order (one request each)."""
+        return list(self._pool.map(fn, items))
+
     def traffic_cameras(self) -> list[dict]:
         with self._lock:
             if self._cameras and time.time() - self._cameras_at < DEVICES_TTL_S:

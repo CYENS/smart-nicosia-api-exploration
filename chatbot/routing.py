@@ -8,7 +8,9 @@ from __future__ import annotations
 
 import itertools
 import json
+import math
 
+from chatbot.geo import haversine_m
 from chatbot.settings import Settings
 from chatbot.web import WebError, get_json
 
@@ -16,6 +18,44 @@ MODES = {"walk": "pedestrian", "drive": "auto", "bike": "bicycle", "wheelchair":
 PREFERENCES = ("fastest", "lit_streets", "quiet", "less_hills", "accessible",
                "avoid_dangerous_buildings")
 MAX_TOUR_STOPS = 12
+MAX_ROUTE_LOCATIONS = 10  # what the public Valhalla instance takes in one route request
+# Points sit on one street when the walk between the two ends is about the straight line.
+STREET_MAX_M = 3000
+STREET_DETOUR = 1.5
+
+
+def order_along(points: list[tuple[float, float]]) -> list[tuple[float, float]]:
+    """Distinct (lat, lon) points in the order they sit along the line they roughly form (their
+    principal axis), as cameras do along a street."""
+    pts = list(dict.fromkeys(points))
+    if len(pts) < 3:
+        return sorted(pts)
+    lat0 = sum(p[0] for p in pts) / len(pts)
+    lon0 = sum(p[1] for p in pts) / len(pts)
+    k = math.cos(math.radians(lat0))
+    xy = [((lon - lon0) * k, lat - lat0) for lat, lon in pts]
+    sxx = sum(x * x for x, _ in xy)
+    syy = sum(y * y for _, y in xy)
+    sxy = sum(x * y for x, y in xy)
+    theta = 0.5 * math.atan2(2 * sxy, sxx - syy)
+    ux, uy = math.cos(theta), math.sin(theta)
+    return [p for _, p in sorted(zip((x * ux + y * uy for x, y in xy), pts))]
+
+
+def drop_spurs(coords: list[list[float]]) -> list[list[float]]:
+    """A line without its out-and-back side trips (A, B, A becomes A): a route through a point
+    just off a street steps out to it and straight back."""
+    out: list[list[float]] = []
+    for p in coords:
+        if len(out) >= 2 and out[-2] == p:
+            out.pop()
+        elif not out or out[-1] != p:
+            out.append(p)
+    return out
+
+
+def length_m(coords: list[list[float]]) -> float:
+    return sum(haversine_m(a[1], a[0], b[1], b[0]) for a, b in zip(coords, coords[1:]))
 
 
 def costing_options(mode: str, prefer: list[str]) -> dict:
@@ -65,6 +105,7 @@ def decode_polyline6(encoded: str) -> list[list[float]]:
 class Router:
     def __init__(self, settings: Settings):
         self.s = settings
+        self._streets: dict[tuple, list[list[float]] | None] = {}
 
     def _call(self, action: str, body: dict, timeout: float = 30.0) -> dict:
         text = json.dumps(body, separators=(",", ":"))
@@ -104,6 +145,30 @@ class Router:
             "legs": legs,
             "coordinates": coords,
         }
+
+    def street_through(self, points: list[tuple[float, float]]) -> list[list[float]] | None:
+        """The stretch of street that (lat, lon) points sit along, as [[lon, lat], ...]: the walk
+        through them from one end to the other. None when they aren't on one street (fewer than
+        two places, too far apart, or the walk wanders well off the straight line). Remembered,
+        since the same cameras are asked about again and again."""
+        pts = order_along(points)
+        key = tuple(pts)
+        if key in self._streets:
+            return self._streets[key]
+        line = None
+        straight = haversine_m(*pts[0], *pts[-1]) if len(pts) >= 2 else 0
+        if 15 <= straight <= STREET_MAX_M:
+            if len(pts) > MAX_ROUTE_LOCATIONS:  # keep both ends and an even spread between
+                last = len(pts) - 1
+                pts = [pts[round(i * last / (MAX_ROUTE_LOCATIONS - 1))]
+                       for i in range(MAX_ROUTE_LOCATIONS)]
+            coords = drop_spurs(self.route(pts, "walk", [])["coordinates"])
+            if len(coords) >= 2 and length_m(coords) <= STREET_DETOUR * straight + 60:
+                line = coords
+        if len(self._streets) >= 64:
+            self._streets.pop(next(iter(self._streets)))
+        self._streets[key] = line
+        return line
 
     def matrix(self, stops: list[tuple[float, float]], mode: str, prefer: list[str]) -> list[list[float]]:
         """Seconds between every pair of stops (inf where no route exists)."""
@@ -183,4 +248,5 @@ def best_order(seconds: list[list[float]], return_to_start: bool,
     return order
 
 
-__all__ = ["Router", "best_order", "decode_polyline6", "MODES", "PREFERENCES", "WebError"]
+__all__ = ["Router", "best_order", "decode_polyline6", "drop_spurs", "order_along", "MODES",
+           "PREFERENCES", "WebError"]

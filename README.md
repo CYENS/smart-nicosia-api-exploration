@@ -27,15 +27,22 @@ It also has:
   from civil dusk to civil dawn, so the switch moves through the year; 3D buildings lit from where
   the sun (or, at night, the moon, as bright as its phase) really is; and after dark the city's
   street lamps glow, live from the sensors. During a time-lapse the sky follows the replay's
-  clock, so lamps come on at dusk in the replay too. Night or Day can also be pinned.
+  clock, so lamps come on at dusk in the replay too. Night or Day can also be pinned. The two
+  base maps share their tiles and fonts, so changing from one to the other only swaps layers,
+  once the new ones are ready to draw: nothing is downloaded and the map never goes blank.
 
 - **Time-lapses.** It can replay the last 3 days of lamps, parking, bins or air on the map,
-  with a time slider, play/pause and speed controls.
+  with a time slider, play/pause and speed controls. A day of traffic replays too: every
+  camera's count hour by hour, as 3D columns with the number at their foot.
+- **The street in question.** Ask about one street's traffic (Ledras, Kyriakou Matsi) and the
+  street itself is drawn on the map as a line of light, brighter and wider in its busier hours.
 - **Linked charts.** Hovering a bar or point in a chart highlights that device on the map, and
   the other way round.
 - **A moving time line.** Every chart with a time axis (lamps, parking, speed, traffic,
   weather) shows a dashed line at the time-lapse's moment, so they all move together. Hovering
-  any of them moves the slider. With no time-lapse playing, the line marks the current time.
+  a chart moves the line to the moment under the pointer and takes the map's time-lapse there.
+  A chart of one series also gets a dot on its line and a flag with the time and the value.
+  With no time-lapse playing, the line marks the current time.
 - **Custom visuals.** For charts Vega-Lite can't draw (radial clocks, sankeys, networks, 3D),
   Claude writes JavaScript using d3, Observable Plot, ECharts or three.js. The code runs in a
   sandboxed iframe with no network access.
@@ -90,10 +97,20 @@ To host it (Docker and Caddy on a free Oracle Cloud VM, with HTTPS and a shared 
   - **Linking.** Each dataset records the field that ties its rows to the map: a device `id`, a
     `camera` or a time-lapse `frame`. `show_chart` adds a `_hl` param to linked charts, so the
     page can fade the other marks. Charts with a temporal x axis get a rule layer at a `_t`
-    param (epoch ms). The page sets `_t` to the current frame's time, or to Nicosia's current
-    time when no time-lapse is playing, and to null when that moment is outside the chart.
+    param (epoch ms). The page sets `_t` to the current frame's time, to the moment under the
+    pointer while a chart is hovered, or to Nicosia's current time when no time-lapse is
+    playing, and to null when that moment is outside the chart. One plain series over time
+    also gets a dot and a flag layer on the row at `_t`. A `timeUnit` that only hides the date
+    of one day's hours is undone first, since such an axis has no real moments to follow.
     `show_chart` also colours a `state` field with the map's colours. The page reads chart
     hovers from Vega's pointer events.
+  - **Traffic replays.** `get_traffic` by hour for one day asks each camera for its own hours
+    (one small request per camera, in parallel) and returns a time-lapse layer: a frame per
+    hour, a value per object type, and the answer's own rows as the frames' `totals`. With a
+    camera filter, the layer also carries a `street`: the walk through the cameras from one
+    end to the other (Valhalla), kept only when it stays close to the straight line, so
+    cameras on different streets get no line. The map draws it under the layer and scales
+    its glow by each frame's share of the busiest hour.
   - **`show_visual`** sends model-written JavaScript and its datasets to the page. The page runs
     it in an iframe with `sandbox="allow-scripts"` (an opaque origin). Its CSP allows only the
     pinned library URLs and the page's two inline scripts (by hash), with `connect-src 'none'`.

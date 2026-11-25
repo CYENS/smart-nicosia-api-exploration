@@ -14,7 +14,7 @@ from chatbot import context, history
 from chatbot import tools as tools_mod
 from chatbot.agent import Agent
 from chatbot.city import CityData
-from chatbot.routing import best_order, decode_polyline6
+from chatbot.routing import Router, best_order, decode_polyline6, drop_spurs, order_along
 from chatbot.settings import Settings
 from chatbot.store import SessionStore
 from chatbot.tools import ToolContext, run_tool
@@ -63,6 +63,49 @@ def _encode6(coords):
 def test_decode_polyline6_round_trip():
     coords = [[33.3615, 35.1725], [33.355753, 35.171733], [33.36217, 35.170614]]
     assert decode_polyline6(_encode6(coords)) == coords
+
+
+# Three spots up Ledras Street, south to north, as (lat, lon).
+SOUTH, MID, NORTH = (35.1703, 33.3610), (35.1717, 33.3611), (35.1745, 33.3614)
+
+
+def test_order_along_and_drop_spurs():
+    assert order_along([NORTH, SOUTH, MID, SOUTH]) in ([SOUTH, MID, NORTH], [NORTH, MID, SOUTH])
+    assert order_along([NORTH]) == [NORTH] and order_along([]) == []
+    a, b, c, d = [0, 0], [0, 1], [1, 1], [0, 2]
+    assert drop_spurs([a, b, c, b, d]) == [a, b, d]  # out to c and straight back
+    assert drop_spurs([a, b, c, d, c, b, a]) == [a]  # a whole trip there and back
+    assert drop_spurs([a, a, b]) == [a, b]
+
+
+def street_router(coords):
+    router, calls = Router(Settings()), []
+    router.route = lambda stops, mode, prefer, avoid=None: (
+        calls.append(stops) or {"coordinates": coords})
+    return router, calls
+
+
+def test_street_through_is_the_walk_through_points_on_one_street():
+    # The route steps out to a camera just off the street and back: that side trip goes.
+    router, calls = street_router([[33.3610, 35.1703], [33.3611, 35.1717], [33.3613, 35.1716],
+                                   [33.3611, 35.1717], [33.3614, 35.1745]])
+    line = router.street_through([NORTH, SOUTH, MID, SOUTH])
+    assert line == [[33.3610, 35.1703], [33.3611, 35.1717], [33.3614, 35.1745]]
+    assert calls in ([[SOUTH, MID, NORTH]], [[NORTH, MID, SOUTH]])
+    assert router.street_through([SOUTH, MID, NORTH]) == line and len(calls) == 1  # remembered
+
+    # A walk that wanders far off the straight line isn't one street.
+    router, calls = street_router([[33.3610, 35.1703], [33.3700, 35.1703], [33.3700, 35.1745],
+                                   [33.3614, 35.1745]])
+    assert router.street_through([SOUTH, NORTH]) is None and len(calls) == 1
+    # One place (two cameras on one pole) has no street to draw, and asks for no route.
+    assert router.street_through([SOUTH, SOUTH]) is None and len(calls) == 1
+
+    # The public router takes ten places at most: both ends stay, the rest are thinned evenly.
+    many = [(35.1703 + i * 0.0003, 33.3610 + i * 0.00002) for i in range(14)]
+    router, calls = street_router([[lon, lat] for lat, lon in many])
+    assert router.street_through(many) is not None
+    assert len(calls[0]) == 10 and {calls[0][0], calls[0][-1]} == {many[0], many[-1]}
 
 
 # -- tools --------------------------------------------------------------------------------------
@@ -155,6 +198,81 @@ def test_traffic_sends_camera_ids_without_spaces(city, api, monkeypatch):
     context.traffic(city, "yesterday", "day", None)
     sent = [p["va_ids"] for e, p in api.calls if e == "getTrafficReports"]
     assert sent == ["[102,111]", "[]"]
+
+
+def hourly(counts: dict) -> dict:
+    """A getTrafficReports group_by=hour payload from {"13:00": {object type: crossings}}."""
+    return {"data": {"group_by": [
+        {"key": hour, "data": {str(t): {"1": n, "2": 0, "total": n} for t, n in types.items()}}
+        for hour, types in counts.items()]}}
+
+
+class StreetRouter:
+    def __init__(self, line):
+        self.line, self.asked = line, []
+
+    def street_through(self, points):
+        self.asked.append(points)
+        return self.line
+
+
+def test_get_traffic_by_hour_replays_the_cameras_and_draws_their_street(city, api, monkeypatch):
+    cams = [{"name": "Ledras Square", "analytics_id": 102, "lat": 35.1703, "lon": 33.36105},
+            {"name": "Ledras End Vehicles", "analytics_id": 98, "lat": 35.1742, "lon": 33.36142},
+            {"name": "Ledras (not placed)", "analytics_id": 97, "lat": None, "lon": None},
+            {"name": "Makariou cam03", "analytics_id": 49, "lat": 35.1686, "lon": 33.3592}]
+    monkeypatch.setattr(city, "traffic_cameras", lambda: cams)
+    per_camera = {"[102]": {"12:00": {0: 800}, "13:00": {0: 1000, 2: 5}},  # 0 people, 2 cars
+                  "[98]": {"13:00": {2: 40}},
+                  "[97]": {"12:00": {0: 30}}}
+    together = {"12:00": {0: 830}, "13:00": {0: 1000, 2: 45}}
+    api.on("getTrafficReports", lambda p: hourly(per_camera.get(p["va_ids"], together)))
+    day = context._period_bounds("yesterday", city.now())[2][0].isoformat()
+    line = [[33.36105, 35.1703], [33.36142, 35.1742]]
+    events = []
+    ctx = make_ctx(city, events)
+    ctx.router = StreetRouter(line)
+
+    res, err = run_tool(ctx, "get_traffic", {"period": "yesterday", "group_by": "hour_of_day",
+                                             "camera": "ledras"})
+    assert not err, res
+    assert [r["people"] for r in res["rows"]] == [830, 1000]
+    layer = ctx.store.layers[res["layer_ref"]]
+    assert [f["properties"]["id"] for f in layer["features"]] == ["Ledras Square",
+                                                                 "Ledras End Vehicles"]
+    frames = layer["frames"]
+    assert frames["iso"] == [f"{day}T12:00", f"{day}T13:00"]
+    # A camera that never counts people has no people value; one that does reads 0 when quiet.
+    assert frames["values"]["people"] == [[800, None], [1000, None]]
+    assert frames["values"]["car"] == [[0, 0], [5, 40]]
+    # The totals are the rows of the answer (all three cameras), so map and chart agree.
+    assert frames["totals"]["people"] == [830, 1000] and frames["total_field"] == "people"
+    assert layer["street"] == {"name": "Ledras", "coordinates": line}
+    assert ctx.router.asked == [[(35.1703, 33.36105), (35.1742, 33.36142)]]
+    assert layer["meta"]["title"] == "Ledras cameras, hour by hour yesterday"
+
+    per_cam = ctx.store.datasets[res["by_camera_data_ref"]]
+    assert per_cam["link"] == {"key": "camera"} and len(per_cam["rows"]) == 6
+    assert {"camera": "Ledras (not placed)", "hour": f"{day}T13:00", "people": 0,
+            "total": 0} in per_cam["rows"]
+    assert res["by_camera"][0] == {"camera": "Ledras Square", "people": 1800, "car": 5,
+                                   "total": 1805, "busiest_hour": "13:00", "on_map": True}
+    assert res["by_camera"][-1]["camera"] == "Ledras End Vehicles"  # no people at all
+
+    shown, err = run_tool(ctx, "show_on_map", {"layer_ref": res["layer_ref"],
+                                               "style": "columns_3d", "value_field": "people"})
+    assert not err and "2 frames" in shown["timelapse"]
+    assert events[-1]["layer"]["timeseries"] is True
+
+    # Without a router (or when the cameras aren't on one street) the replay has no street.
+    ctx.router = None
+    res, err = run_tool(ctx, "get_traffic", {"period": "yesterday", "group_by": "hour_of_day",
+                                             "camera": "ledras"})
+    assert not err and "street" not in ctx.store.layers[res["layer_ref"]]
+    # Several days are an hour-of-day profile, not real hours: no replay for those.
+    res, err = run_tool(ctx, "get_traffic", {"period": "last_7_days",
+                                             "group_by": "hour_of_day"})
+    assert not err and "layer_ref" not in res
 
 
 def test_get_history_replays_parking_through_the_interpreter(city, api):
@@ -252,6 +370,86 @@ def test_add_time_rule_draws_a_line_at_t_on_temporal_charts():
     assert tools_mod.add_time_rule(ordinal) is None
 
 
+HOURS = [{"hour": f"2026-10-19T{h:02d}:00", "people": 100 * h} for h in range(24)]
+
+
+def people_by_hour(**encoding):
+    return {"mark": {"type": "area", "line": True}, "encoding": {
+        "x": {"field": "hour", "type": "temporal"},
+        "y": {"field": "people", "type": "quantitative", "title": "People per hour"},
+        **encoding}}
+
+
+def test_add_time_rule_gives_one_plain_series_a_dot_and_a_flag():
+    spec = people_by_hour()
+    assert tools_mod.add_time_rule(spec, HOURS) == "hour"
+    view, rule, dot, flag = spec["layer"]
+    assert view["mark"]["type"] == "area" and rule["mark"]["type"] == "rule"
+    # Both sit on the row at the `_t` moment, and nowhere when `_t` is between rows.
+    here = {"filter": '_t != null && +toDate(datum["hour"]) === _t'}
+    assert dot["transform"] == [here] and flag["transform"][0] == here
+    assert dot["mark"]["type"] == "point"
+    assert dot["encoding"]["y"] == {"field": "people", "type": "quantitative",
+                                    "title": "People per hour"}  # the axis keeps its title
+    # One day of hours: the flag reads "13:00 · 1,300", above the plot.
+    assert '"%H:%M"' in flag["transform"][1]["calculate"]
+    assert flag["encoding"]["y"] == {"value": -5} and flag["mark"]["baseline"] == "bottom"
+    # Near the right edge it turns to the left, so it stays inside the chart.
+    assert flag["mark"]["align"]["expr"] == \
+        "_t > +toDate(\"2026-10-19T21:00\") ? 'right' : 'center'"
+    assert tools_mod.has_scrubber(spec)
+
+    several_days = people_by_hour()
+    rows = HOURS + [{"hour": "2026-10-20T00:00", "people": 5}]
+    tools_mod.add_time_rule(several_days, rows)
+    assert '"%a %H:%M"' in several_days["layer"][3]["transform"][1]["calculate"]
+
+    # Anything but one plain series over real moments keeps the rule alone.
+    by_camera = [{**r, "camera": c} for r in HOURS for c in ("a", "b")]
+    plain_only = [
+        (people_by_hour(color={"field": "camera", "type": "nominal"}), by_camera),
+        (people_by_hour(), by_camera),  # two rows per moment
+        (people_by_hour(), None),  # no rows to read (data typed into the spec)
+        ({**people_by_hour(), "transform": [{"filter": "datum.people > 0"}]}, HOURS),
+        ({"mark": "bar", "encoding": {"x": {"field": "hour", "timeUnit": "hours"},
+                                      "y": {"field": "people", "aggregate": "sum"}}}, HOURS),
+    ]
+    for spec, rows in plain_only:
+        assert tools_mod.add_time_rule(spec, rows) == "hour"
+        assert len(spec["layer"]) == 2 and not tools_mod.has_scrubber(spec), spec
+
+
+def test_keep_real_hours_undoes_a_unit_that_only_hides_the_date():
+    # Regression: the model sometimes writes timeUnit "hours" for one day's hourly rows; such an
+    # axis has no real moments, so hovering the chart couldn't take the map to the hour.
+    hours = {"field": "hour", "type": "temporal", "timeUnit": "hours", "title": "Hour of day"}
+    spec = people_by_hour(x=dict(hours))
+    tools_mod.keep_real_hours(spec, HOURS)
+    assert spec["encoding"]["x"] == {"field": "hour", "type": "temporal", "title": "Hour of day",
+                                     "axis": {"format": "%H:%M"}}
+    assert tools_mod.add_time_rule(spec, HOURS) == "hour" and tools_mod.has_scrubber(spec)
+
+    # Bars keep a unit, for their width, but one with the date; the model's own axis stays.
+    bars = {"mark": "bar", "encoding": {"x": {**hours, "axis": {"format": "%H", "grid": False}},
+                                        "y": {"field": "people", "type": "quantitative"}}}
+    tools_mod.keep_real_hours(bars, HOURS)
+    assert bars["encoding"]["x"]["timeUnit"] == "yearmonthdatehours"
+    assert bars["encoding"]["x"]["axis"] == {"format": "%H", "grid": False}
+
+    layered = {"layer": [people_by_hour(x=dict(hours)), {"mark": {"type": "point"}, "encoding": {
+        "x": {**hours, "timeUnit": "yearmonthdatehours"}, "y": {"field": "people"}}}]}
+    tools_mod.keep_real_hours(layered, HOURS)
+    assert all("timeUnit" not in u["encoding"]["x"] for u in layered["layer"])
+
+    # Where the unit does group something, it stays.
+    two_days = HOURS + [{"hour": "2026-10-20T13:00", "people": 5}]
+    half_hours = HOURS + [{"hour": "2026-10-19T13:30", "people": 5}]
+    for rows in (two_days, half_hours, [], [{"hour": "13:00", "people": 5}]):
+        spec = people_by_hour(x=dict(hours))
+        tools_mod.keep_real_hours(spec, rows)
+        assert spec["encoding"]["x"] == hours
+
+
 def test_linked_specs_pass_the_vega_lite_schema():
     validator = tools_mod.vega_lite_validator(Settings())
     if validator is None:
@@ -279,6 +477,15 @@ def test_linked_specs_pass_the_vega_lite_schema():
     for spec in timed:
         assert tools_mod.add_time_rule(spec)
         assert tools_mod.spec_error(validator, spec, True) is None, spec
+    scrubbed = people_by_hour()
+    assert tools_mod.add_time_rule(scrubbed, HOURS) and tools_mod.has_scrubber(scrubbed)
+    assert tools_mod.spec_error(validator, scrubbed, True) is None, scrubbed
+    for mark in ("line", "bar"):
+        hourly_chart = {**people_by_hour(x={"field": "hour", "type": "temporal",
+                                            "timeUnit": "hours"}), "mark": mark}
+        tools_mod.keep_real_hours(hourly_chart, HOURS)
+        assert tools_mod.add_time_rule(hourly_chart, HOURS)
+        assert tools_mod.spec_error(validator, hourly_chart, True) is None, hourly_chart
     # Both on one chart: bins over time, linked by id and with the moving line.
     both = {"mark": "point", "encoding": {"x": {"field": "as_of", "type": "temporal"},
                                           "y": {"field": "level_pct", "type": "quantitative"}}}
@@ -306,6 +513,13 @@ def test_show_chart_sends_the_link_for_linked_datasets(monkeypatch):
     res, err = run_tool(ctx, "show_chart", {"title": "Speed", "spec": spec, "data_ref": speed})
     assert not err and events[-1]["time_field"] == "hour" and events[-1]["link"] is None
     assert events[-1]["spec"]["layer"][1]["mark"]["type"] == "rule"
+    assert events[-1]["scrub"] is False  # y has no type here, so the line keeps the rule alone
+
+    spec["encoding"]["y"]["type"] = "quantitative"
+    res, err = run_tool(ctx, "show_chart", {"title": "Speed", "spec": spec, "data_ref": speed})
+    assert not err and events[-1]["scrub"] is True  # the page leaves room for the flag
+    assert [u["mark"]["type"] for u in events[-1]["spec"]["layer"][1:]] == ["rule", "point",
+                                                                            "text"]
 
 
 def test_show_chart_colours_states_like_the_map(monkeypatch):

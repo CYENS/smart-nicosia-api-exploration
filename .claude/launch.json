@@ -24,6 +24,12 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["--prefix", "chatbot/web", "run", "dev"],
       "port": 5180
+    },
+    {
+      "name": "web-dev-8010",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["-e", "process.env.CHATBOT_URL = 'http://127.0.0.1:8010'; process.argv.push('vite', '--port', process.env.PORT || '5190', '--strictPort'); process.chdir('chatbot/web'); import('./chatbot/web/node_modules/vite/bin/vite.js')"],
+      "port": 5190
     }
   ]
 }
