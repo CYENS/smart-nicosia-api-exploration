@@ -185,9 +185,12 @@ def test_recorder_never_raises_and_keeps_rows_while_the_store_is_busy(tmp_path):
     assert rec.flush(timeout=0.2) is False
     assert time.monotonic() - started < 2
     assert rec.pending() > 0 and rec.busy_retries == 1
-    with pytest.raises(Unavailable):  # nor do readers wait
+    mem.path.touch()  # a store file exists, so only the gate can turn the reader away
+    with pytest.raises(Unavailable) as e:  # nor do readers wait
         with mem.reading(timeout=0.2):
             pass
+    assert e.value.reason == "busy"
+    mem.path.unlink()
     release.set()
     assert rec.flush(timeout=5)
     assert rec.pending() == 0
@@ -527,3 +530,15 @@ def test_a_street_is_traced_by_the_devices_named_for_it(fake_city, memory, api, 
                                                "street": "makariou", "bucket": "total"})
     assert not err, res
     assert res["entities"] == 2 and "named for makariou" in res["matched_by"]  # not YPC
+
+
+def test_reader_always_fills_the_present(fake_city, memory, api):
+    """A short gap is left alone in the middle of a long range, but never at its live end."""
+    later = NOW + timedelta(minutes=45)  # under 2% of three days, past the 20 min parking gap
+    fake_city._now = lambda: later
+    rd = history.readings(fake_city, memory, "Parking", ["YPA"], ("status",),
+                          ms(later - timedelta(hours=72)), ms(later), lookback_ms=3_600_000)
+    assert len(range_calls(api)) == 1 and rd.coverage_pct() == 100.0
+    rd = history.readings(fake_city, memory, "Parking", ["YPA"], ("status",),
+                          ms(NOW - timedelta(hours=72)), ms(NOW - timedelta(hours=1)))
+    assert len(range_calls(api)) == 1  # nothing missing in a closed past window

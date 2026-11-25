@@ -604,7 +604,10 @@ def h_get_history(ctx: ToolContext, a: dict) -> dict:
     now = ctx.city.now()
     end = now
     if a.get("until"):
-        end = min(memory_tools.time_range({"from": a["until"]}, now)[0], now)
+        until = memory_tools.parse_local(a["until"], end=True)
+        if until > now + timedelta(minutes=1):
+            raise ToolError("until is in the future; leave it out to replay up to now")
+        end = min(until, now)
     states, center, _ = filter_by_place(ctx, ctx.city.states(device_type), a)
     states = [s for s in states if s.device.lat is not None]
     if not states:

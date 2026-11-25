@@ -27,7 +27,8 @@ _lock = threading.Lock()
 _cache: dict[str, tuple[float, Any]] = {}
 
 
-def cached(key: str, ttl_s: float, fn: Callable[[], Any]) -> Any:
+def cached(key: str, ttl_s: float, fn: Callable[[], Any],
+           keep: Callable[[Any], bool] | None = None) -> Any:
     """fn()'s value, reused for ttl_s. A failure is logged and kept as None for ttl_s too, so
     a broken source isn't asked again on every request."""
     with _lock:
@@ -40,7 +41,8 @@ def cached(key: str, ttl_s: float, fn: Callable[[], Any]) -> Any:
         log.warning("%s failed: %s", key, e)
         value = None
     with _lock:
-        _cache[key] = (time.time(), value)
+        if keep is None or keep(value):
+            _cache[key] = (time.time(), value)
     return value
 
 

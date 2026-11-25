@@ -200,7 +200,8 @@ def history_series(entity_id: str, hours: int = Query(24, ge=1, le=168),
         except WebError as e:
             return {"status": 502, "detail": str(e)}
 
-    out = cached(f"history:{entity_id.lower()}:{hours}:{metric}", 120, build)
+    out = cached(f"history:{entity_id.lower()}:{hours}:{metric}", 120, build,
+                 keep=lambda v: bool(v) and ("ok" in v or v.get("status") in (400, 404)))
     if out is None:
         raise HTTPException(502, "the history could not be read; try again in a minute")
     if "ok" not in out:

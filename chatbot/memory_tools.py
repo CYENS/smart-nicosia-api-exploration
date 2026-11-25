@@ -211,7 +211,7 @@ TOOL_DEFS = [QUERY_HISTORY, RUN_SQL]
 # -- time ranges -------------------------------------------------------------------------------
 
 
-def _parse_local(text: str, *, end: bool) -> datetime:
+def parse_local(text: str, *, end: bool) -> datetime:
     text = text.strip()
     try:
         t = datetime.fromisoformat(text)
@@ -245,9 +245,9 @@ def time_range(a: dict, now: datetime) -> tuple[datetime, datetime]:
                        midnight.replace(day=1)),
     }[period]
     if a.get("from"):
-        start = _parse_local(a["from"], end=False)
+        start = parse_local(a["from"], end=False)
     if a.get("to"):
-        end = _parse_local(a["to"], end=True)
+        end = parse_local(a["to"], end=True)
     end = min(end, local)
     if start >= end:
         raise _tools().ToolError("the range is empty: `from` must be before `to` and before now")
@@ -435,11 +435,12 @@ def traffic_series(ctx, metric: Metric, types: tuple[int, ...], cams: dict[str, 
     times = _hour_grid(start, end) if hourly else _day_grid(start, end)
     if city_wide:
         rows = ctx.memory.traffic(grain, start, end, None)
-        if grain == "day":  # the cameras' own days add up to the city's
+        if grain == "day":  # the cameras' own days add up to the city's, where they exist
             per_cam = ctx.memory.traffic("day", start, end, [i for ids in cams.values()
                                                              for i in ids])
-            if per_cam:
-                rows = [(t, 0, o, n) for t, _, o, n in per_cam]
+            cam_days = {t for t, *_ in per_cam}
+            rows = [r for r in rows if r[0] not in cam_days] + [
+                (t, 0, o, n) for t, _, o, n in per_cam]
         owner = {0: "city"}
         entities = ["city"]
     else:
@@ -913,15 +914,21 @@ class EntityNotFound(KeyError):
 def entity_history(ctx, entity_id: str, hours: int = 24, metric_name: str | None = None) -> dict:
     """One device's metric over the last `hours`, with its typical-day band, for a sparkline:
     {id, kind, metric, unit, points: [{time, value, usual, usual_low, usual_high}], ...}."""
-    found = None
-    for kind in DEVICE_KINDS:
-        try:
-            states = device_entities(ctx, KINDS[kind])
-        except (ApiError, Unavailable):
-            continue
-        found = next((s for s in states if s.device.name.lower() == entity_id.lower()), None)
-        if found:
-            break
+    want = entity_id.strip().lower()
+    try:
+        device_type = next((d.type for d in ctx.city.devices() if d.name.lower() == want), None)
+    except ApiError:
+        device_type = None
+        for t in (KINDS[k] for k in DEVICE_KINDS):
+            if ctx.memory is not None and any(n.lower() == want
+                                               for n, *_ in ctx.memory.inventory(t)):
+                device_type = t
+                break
+    kind = next((k for k in DEVICE_KINDS if KINDS[k] == device_type), None)
+    if kind is None:
+        raise EntityNotFound(entity_id)
+    found = next((s for s in device_entities(ctx, device_type)
+                  if s.device.name.lower() == want), None)
     if found is None:
         raise EntityNotFound(entity_id)
     metric = METRICS[kind].get(metric_name or DEFAULT_ENTITY_METRIC[kind])

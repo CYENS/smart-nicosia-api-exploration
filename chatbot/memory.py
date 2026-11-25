@@ -345,8 +345,8 @@ class Memory:
             timer = threading.Timer(time_limit_s, con.interrupt)
             timer.start()
             try:
-                cur = con.execute(f"SELECT * FROM (\n{query}\n) AS q LIMIT {int(max_rows) + 1}")
-                rows = cur.fetchall()
+                cur = con.execute(query)  # results stream: nothing past max_rows is read
+                rows = cur.fetchmany(int(max_rows) + 1)
                 columns = [d[0] for d in cur.description]
                 types = [str(d[1]) for d in cur.description]
             except duckdb.InterruptException:

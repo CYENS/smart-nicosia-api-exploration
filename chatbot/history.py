@@ -141,8 +141,12 @@ def readings(city, memory: Memory | None, device_type: str, names: list[str],
         fetch_from = max(min(h[0] for h in holes), floor, start_ms)
         missing = max(sum(max(0, b - max(a, fetch_from)) for a, b in hs)
                       for hs in holes_by.values())
-        # Worth a request per device only when the gap is a real part of the range.
-        if end_ms - fetch_from > gap and missing >= max(gap, MIN_FILL_SHARE * (end_ms - start_ms)):
+        live_end = any(b >= end_ms - gap for b in (h[1] for h in holes)) and (
+            end_ms >= city.now_ms() - gap)
+        # Worth a request per device when the gap is a real part of the range, or when it is
+        # the present: the newest moments of a replay must not show as unknown.
+        if end_ms - fetch_from > gap and (
+                live_end or missing >= max(gap, MIN_FILL_SHARE * (end_ms - start_ms))):
             # The store already knows each device's state where the gap starts: no lookback.
             known = all(any(s <= fetch_from <= e for s, e in out.covered[n]) for n in names)
             try:
