@@ -349,6 +349,38 @@ class CityData:
         cached = self._latest.get(device_type)
         return time.time() - cached[0] if cached else None
 
+    # -- what is already known, without a request (search and the inspector's relations) --------
+
+    def cached_devices(self) -> list[Device]:
+        """The inventory as last fetched (empty before the first fetch)."""
+        return self._devices
+
+    def cached_label(self, device: Device) -> tuple[str, str | None]:
+        """A device's label and street from the attribute cache (no request)."""
+        return label_and_street(device, self._attrs.get(device.name, {}))
+
+    def cached_states(self, device_type: str, max_age_s: float = 900) -> dict[str, DeviceState]:
+        """The type's states from its last snapshot, if it is younger than `max_age_s` (the live
+        strip refreshes every type every few minutes while a page is open); else {}."""
+        cached = self._latest.get(device_type)
+        if not cached or time.time() - cached[0] > max_age_s:
+            return {}
+        now = self.now()
+        out = {}
+        for d in self.devices_of_cached(device_type):
+            if d.name in cached[1]:
+                label, street = self.cached_label(d)
+                out[d.name] = DeviceState(d, label, street,
+                                          interpret.interpret(d.type, cached[1][d.name], now))
+        return out
+
+    def devices_of_cached(self, device_type: str) -> list[Device]:
+        return [d for d in self._devices if d.type == device_type]
+
+    def cached_traffic_cameras(self) -> list[dict]:
+        """The traffic analytics cameras as last fetched (empty before the first fetch)."""
+        return self._cameras
+
     def device_state(self, name: str) -> tuple[DeviceState, dict]:
         """Fresh readings and every attribute for one device (names are case-sensitive)."""
         device = next((d for d in self.devices() if d.name == name), None)

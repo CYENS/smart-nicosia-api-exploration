@@ -9,6 +9,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import re
 import time
 import uuid
 from collections.abc import Callable
@@ -19,6 +20,7 @@ import anthropic
 
 from chatbot.city import CityData
 from chatbot.dls import DLS
+from chatbot.entities import Entities
 from chatbot.eoa import Registry
 from chatbot.geo import Places
 from chatbot.memory import Memory
@@ -59,6 +61,21 @@ def user_location(context: dict | None) -> dict | None:
             "accuracy_m": float(acc) if isinstance(acc, (int, float)) else None}
 
 
+def _entity_ref(value: object) -> str | None:
+    """A thing the page names ({"id", "kind", "name"}) as one short, plain line, or None."""
+    if not isinstance(value, dict) or not isinstance(value.get("id"), str):
+        return None
+
+    def clean(v: object, n: int) -> str:
+        return re.sub(r"[\x00-\x1f<>]+", " ", str(v or "")).strip()[:n]
+
+    eid, kind, name = clean(value["id"], 64), clean(value.get("kind"), 32), clean(value.get("name"), 80)
+    if not eid:
+        return None
+    what = ", ".join(x for x in (kind.replace("_", " "), f'"{name}"' if name else "") if x)
+    return f"{eid} ({what})" if what else eid
+
+
 def format_context(context: dict | None, now: datetime) -> str:
     lines = [f"local_time: {now.astimezone(TZ):%a %Y-%m-%d %H:%M} ({TIMEZONE})"]
     view = (context or {}).get("map_view") or {}
@@ -77,6 +94,10 @@ def format_context(context: dict | None, now: datetime) -> str:
                      f"({loc.get('source') or 'shared'}{how})")
     else:
         lines.append("user_location: not shared")
+    if inspecting := _entity_ref((context or {}).get("inspecting")):
+        lines.append(f"inspector_open: {inspecting}")
+    if subject := _entity_ref((context or {}).get("subject")):
+        lines.append(f"asking_about: {subject}")
     errors = (context or {}).get("visual_errors")
     if errors:
         lines.append("visual_errors: " + "; ".join(str(e)[:300] for e in errors[:3]))
@@ -95,6 +116,7 @@ class Agent:
         self.dls = dls
         self.registers = registers
         self._client = client
+        self.entities = Entities(city, places, dls, registers, memory)  # shared with the inspector
         self.tools = TOOL_DEFS + ([WEB_SEARCH] if settings.web_search else [])
         self.conversations: dict[str, Conversation] = {}
 
@@ -122,7 +144,8 @@ class Agent:
 
         tool_ctx = ToolContext(self.settings, self.city, self.places, self.router, conv.store,
                                emit_threadsafe, conv.id, self.dls, self.registers,
-                               user_location(context), self.memory)
+                               user_location(context), memory=self.memory,
+                               entities=self.entities)
         conv.messages.append({"role": "user", "content": [
             {"type": "text", "text": format_context(context, self.city.now()) + text}]})
 

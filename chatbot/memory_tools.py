@@ -56,7 +56,7 @@ CACHE_TTL_S = 120.0
 
 
 def _tools():
-    from chatbot import tools  # imported late: tools.py imports this module
+    from chatbot import tools  # imported late: the tools package imports this module
 
     return tools
 

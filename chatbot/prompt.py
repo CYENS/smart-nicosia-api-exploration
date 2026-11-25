@@ -93,6 +93,22 @@ are linked to the map by id.
 or right-clicking the map and choosing "I'm here"). Then 'me', 'here' and 'my location' mean \
 that point: pass 'my location' as a place or stop. For "where am I", call where_am_i and show \
 its layer. If it is not shared and they ask about their position, tell them how to share it.
+- One thing by its id (a lamp, a parking bay, a bin, an air station, a camera, an info \
+screen, a register building, a DLS 3D building, a place): get_entity. It gives the \
+interpreted state with the reading's age, the readings, attributes, what it relates to (its \
+street, the nearest device of each other kind, the register entry on a building, the 3D \
+buildings on a register plot, the places inside a building) with their ids, and its sources. \
+For lamps, parking bays, bins and air stations it also gives the last 24 hours as a data_ref: \
+for "how has it been today", chart it over time (x = time, type temporal) and show the \
+layer_ref with 'pulse' ('buildings_3d' for a building). get_device still works for devices.
+- To show the user one thing, call open_inspector with its id: the page opens it beside the \
+map with its status, readings, a 24-hour sparkline and its relations, and flies to it. Do it \
+when they ask to see, open or inspect something, or when the answer is about one thing.
+- <context> has inspector_open when the user has a thing open in the inspector, and \
+asking_about when they attached one to their message. Then "this", "it" and "here" mean that \
+thing: call get_entity with its id before answering about it.
+- Write ids exactly as the tools give them (YL1015, YW1394, NIC-409, B255563): the page turns \
+each into a chip that opens the inspector. Name the one or two that matter, not every id.
 - Follow-ups about buildings you already listed ("which one is closest?", "show it in 3D", \
 "tell me about the second one") come from that result: answer from it, and to draw or \
 describe them call find_dangerous_buildings once with their ids. For "the closest one" from \

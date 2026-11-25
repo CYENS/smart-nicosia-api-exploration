@@ -12,6 +12,7 @@ import pytest
 from chatbot import agent as agent_mod
 from chatbot import context, history
 from chatbot import tools as tools_mod
+from chatbot.tools import charts as charts_mod
 from chatbot.agent import Agent
 from chatbot.city import CityData
 from chatbot.routing import Router, best_order, decode_polyline6, drop_spurs, order_along
@@ -149,7 +150,7 @@ def test_run_tool_validates_input_and_names(city):
 
 
 def test_show_chart_fills_data_from_dataset(monkeypatch):
-    monkeypatch.setattr(tools_mod, "vega_lite_validator", lambda s: None)
+    monkeypatch.setattr(charts_mod, "vega_lite_validator", lambda s: None)
     events = []
     ctx = make_ctx(events=events)
     ref = ctx.store.add_dataset("speed", [{"hour": "10:00", "kmh": 41.2}], title="speed")
@@ -494,7 +495,7 @@ def test_linked_specs_pass_the_vega_lite_schema():
 
 
 def test_show_chart_sends_the_link_for_linked_datasets(monkeypatch):
-    monkeypatch.setattr(tools_mod, "vega_lite_validator", lambda s: None)
+    monkeypatch.setattr(charts_mod, "vega_lite_validator", lambda s: None)
     events = []
     ctx = make_ctx(events=events)
     ref = ctx.store.add_dataset("bins", [{"id": "YW1", "level_pct": 80}], title="b",
@@ -523,7 +524,7 @@ def test_show_chart_sends_the_link_for_linked_datasets(monkeypatch):
 
 
 def test_show_chart_colours_states_like_the_map(monkeypatch):
-    monkeypatch.setattr(tools_mod, "vega_lite_validator", lambda s: None)
+    monkeypatch.setattr(charts_mod, "vega_lite_validator", lambda s: None)
     events = []
     ctx = make_ctx(events=events)
     rows = [{"id": "a", "state": "full"}, {"id": "b", "state": "low"}, {"id": "c", "state": "high"}]

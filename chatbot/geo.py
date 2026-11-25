@@ -150,6 +150,22 @@ class Places:
     def ready(self) -> bool:
         return bool(self._places)
 
+    @property
+    def fetched_at(self) -> float:
+        return self._fetched_at
+
+    def all(self) -> list[dict]:
+        """Every place in the index (empty until it is built)."""
+        return self._places
+
+    def by_id(self, pid: str) -> dict | None:
+        """A place in the index by its OSM id ('n219329628'), or None."""
+        places = self._places
+        if getattr(self, "_by_id_of", None) is not places:
+            self._by_id = {p["id"]: p for p in places}
+            self._by_id_of = places
+        return self._by_id.get(pid)
+
     def refresh_if_needed(self) -> None:
         """Fetch the index from Overpass if missing or a week old (blocking; ~45 s)."""
         if self._places and time.time() - self._fetched_at < PLACES_TTL_S:

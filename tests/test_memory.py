@@ -15,7 +15,10 @@ from zoneinfo import ZoneInfo
 import duckdb
 import pytest
 
+from fastapi import HTTPException
+
 from chatbot import history, memory_tools, overview, server
+from chatbot.routes import memory as memory_routes
 from chatbot.city import CityData
 from chatbot.history import Metric, Series
 from chatbot.memory import Memory, SqlRejected, Unavailable
@@ -488,23 +491,26 @@ def app_agent(fake_city, memory, monkeypatch):
     return agent
 
 
+REQUEST = SimpleNamespace(app=server.app)  # what the routes read the agent from
+
+
 def test_history_endpoint_gives_a_sparkline_with_its_usual_band(app_agent, api):
-    body = json.loads(server.history_series("YPA", hours=24, metric=None).body)
+    body = json.loads(memory_routes.history_series("YPA", REQUEST, hours=24, metric=None).body)
     assert body["metric"] == "occupancy_pct" and body["source"] == "memory"
     assert len(body["points"]) == 97  # every 15 minutes
     sunday = [p for p in body["points"] if p["time"].endswith("18:00")]
     assert sunday and sunday[0]["value"] == 0.0 and sunday[0]["usual"] == 0.0
     assert body["baseline"]["weeks"] >= 3
     calls = len(api.calls)
-    server.history_series("YPA", hours=24, metric=None)
+    memory_routes.history_series("YPA", REQUEST, hours=24, metric=None)
     assert len(api.calls) == calls  # cached
-    with pytest.raises(server.HTTPException) as e:
-        server.history_series("NOPE", hours=24, metric=None)
+    with pytest.raises(HTTPException) as e:
+        memory_routes.history_series("NOPE", REQUEST, hours=24, metric=None)
     assert e.value.status_code == 404
 
 
 def test_health_data_reports_each_source(app_agent):
-    body = json.loads(server.health_data().body)
+    body = json.loads(memory_routes.health_data(REQUEST).body)
     assert body["store"]["status"] == "ok"
     parking = next(s for s in body["sources"] if s["source"] == "parking_sensor")
     assert parking["devices"] == 3 and parking["rows_by_source"] == {"chatbot": parking["rows"]}
