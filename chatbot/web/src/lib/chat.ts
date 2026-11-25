@@ -11,6 +11,7 @@ import type { VisualPayload } from "@/lib/visual"
 export const TOOL_LABELS: Record<string, string> = {
   city_overview: "Reading the city's sensors", find_devices: "Finding devices",
   get_history: "Replaying history",
+  query_history: "Reading the twin's memory", run_sql: "Querying the twin's memory",
   get_device: "Reading a device", get_alarms: "Checking alarms", get_traffic: "Counting traffic",
   get_speed: "Checking traffic speed", get_weather: "Checking the weather",
   geocode: "Looking up a place", find_places: "Searching places", plan_route: "Planning the route",

@@ -1,7 +1,12 @@
-"""Weather (Open-Meteo), traffic counts, city speed and alarms (Smart Nicosia)."""
+"""Weather (Open-Meteo), traffic counts, city speed and alarms (Smart Nicosia).
+
+Traffic, speed and alarm answers are handed to the twin's memory as they are fetched
+(`city.record`), finished buckets only, so a day still counting never lands in the store.
+"""
 
 from __future__ import annotations
 
+import dataclasses
 import json
 import logging
 from collections import defaultdict
@@ -98,6 +103,12 @@ def _period_bounds(period: str, now: datetime) -> tuple[datetime, datetime, list
     return midnight - timedelta(days=days - 1), local, [first + timedelta(i) for i in range(days)]
 
 
+def finished(rows: list[parse.TrafficRow], now: datetime) -> list[parse.TrafficRow]:
+    """Only the buckets that have ended: a day or hour still counting isn't a figure to keep."""
+    length = {"day": timedelta(days=1), "hour": timedelta(hours=1)}
+    return [r for r in rows if r.bucket_start + length[r.granularity] <= now]
+
+
 def cameras_matching(city: CityData, camera: str | None) -> list[dict]:
     """The traffic cameras whose name contains `camera`; every camera without one."""
     cams = city.traffic_cameras()
@@ -124,10 +135,13 @@ def traffic_camera_hours(city: CityData, period: str, camera: str | None) -> lis
         except ApiError as e:
             log.warning("hourly traffic for %s failed: %s", cam.get("name"), e)
             return cam, []
-        return cam, parse.parse_traffic_buckets(payload, TZ, day=days[0])
+        return cam, parse.parse_traffic_buckets(payload, TZ, day=days[0],
+                                                analytics_id=cam["analytics_id"])
 
     merged: dict[str, dict] = {}
-    for cam, rows in city.each(one, cameras_matching(city, camera)):
+    results = city.each(one, cameras_matching(city, camera))
+    city.record("traffic", finished([r for _, rows in results for r in rows], city.now()))
+    for cam, rows in results:
         if not rows:
             continue
         m = merged.setdefault(cam["name"] or str(cam["analytics_id"]), {
@@ -160,6 +174,7 @@ def traffic(city: CityData, period: str, group_by: str, camera: str | None) -> d
     if group_by == "camera":
         payload = city.client.get_json("getTrafficReports", group_by="stream", **params)
         rows = parse.parse_traffic_stream(payload, TZ)
+        city.record("traffic", finished(rows, city.now()))  # per camera, line and day
         per: dict[int, dict] = defaultdict(lambda: defaultdict(int))
         for r in rows:
             per[r.analytics_id][OBJECT_TYPES.get(r.object_type, str(r.object_type))] += r.total or 0
@@ -178,6 +193,10 @@ def traffic(city: CityData, period: str, group_by: str, camera: str | None) -> d
         if period in ("today", "yesterday"):
             payload = city.client.get_json("getTrafficReports", group_by="hour", **params)
             rows = parse.parse_traffic_buckets(payload, TZ, day=days[0])
+            if len(chosen) <= 1:  # the city as a whole, or one camera: both worth keeping
+                own = chosen[0]["analytics_id"] if chosen else parse.ALL_CAMERAS
+                city.record("traffic", finished(
+                    [dataclasses.replace(r, analytics_id=own) for r in rows], city.now()))
             label = "hour"
             note = None
             # A real local timestamp, so charts get a time axis that can sync with a time-lapse.
@@ -191,6 +210,8 @@ def traffic(city: CityData, period: str, group_by: str, camera: str | None) -> d
     else:
         payload = city.client.get_json("getTrafficReports", group_by="day", **params)
         rows = parse.parse_traffic_buckets(payload, TZ)
+        if not chosen:  # per-camera days are stored per counting line, from group_by=stream
+            city.record("traffic", finished(rows, city.now()))
         label, note = "day", None
         key = lambda r: r.bucket_start.strftime("%Y-%m-%d")  # noqa: E731
 
@@ -215,7 +236,10 @@ def speed(city: CityData, hours: int) -> dict:
             "generalReports", group_by="ONE_HOUR", line_type="AVERAGE_SPEED",
             start_date=_ms(a), end_date=_ms(b),
         )
-        return parse.parse_speed(payload, TZ)
+        rows = parse.parse_speed(payload, TZ)
+        city.record("speeds", [r for r in rows if r.bucket_start + timedelta(hours=1) <= now],
+                    "ONE_HOUR", "AVERAGE_SPEED")
+        return rows
 
     current = fetch(start, now)
     week_ago = {r.bucket_start + timedelta(days=7): r.value
@@ -229,6 +253,7 @@ def speed(city: CityData, hours: int) -> dict:
 def alarms(city: CityData, limit: int) -> dict:
     data = city.client.get_json("getAlarms", entityType="TENANT", entityName="CYTA",
                                 state="ACTIVE_UNACK", limit=min(limit, 20))
+    city.record("alarms", {"ACTIVE_UNACK": data or []})
     by_name = {d.name: d for d in city.devices()}
     out = []
     for a in data or []:

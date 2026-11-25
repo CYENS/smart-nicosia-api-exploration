@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -40,6 +40,26 @@ class Settings:
     snapshot_ttl_s: float = 300.0  # how long a device type's latest readings are reused
     fetch_concurrency: int = 8  # parallel Smart Nicosia requests when refreshing a device type
 
+    # The twin's memory: the collector's DuckDB file (docs/twin-memory.md).
+    memory_path: Path = field(default_factory=lambda: ROOT / "data" / "smart_nicosia.duckdb")
+    record: bool = True  # keep what the chatbot fetches in the memory (CHATBOT_RECORD)
+    collect: bool = False  # also run the full collector in this process (CHATBOT_COLLECT)
+
+
+def _flag(value: str | None, default: bool) -> bool:
+    if value is None or value.strip() == "":
+        return default
+    return value.strip().lower() not in ("0", "false", "no", "off")
+
+
+def memory_path() -> Path:
+    """The collector's database: COLLECTOR_DB, else collector.toml's db_path, else the default,
+    relative to the project root."""
+    from collector.config import load_config
+
+    path = load_config().db_path
+    return path if path.is_absolute() else ROOT / path
+
 
 def load_settings() -> Settings:
     env = os.environ
@@ -48,5 +68,8 @@ def load_settings() -> Settings:
         effort=env.get("CHATBOT_EFFORT", Settings.effort),
         host=env.get("CHATBOT_HOST", Settings.host),
         port=int(env.get("CHATBOT_PORT") or env.get("PORT") or Settings.port),
-        web_search=env.get("CHATBOT_WEB_SEARCH", "1") not in ("0", "false", "no"),
+        web_search=_flag(env.get("CHATBOT_WEB_SEARCH"), True),
+        memory_path=memory_path(),
+        record=_flag(env.get("CHATBOT_RECORD"), True),
+        collect=_flag(env.get("CHATBOT_COLLECT"), False),
     )

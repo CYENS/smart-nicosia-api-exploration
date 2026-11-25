@@ -11,6 +11,7 @@ services:
     env_file: .env
     volumes:
       - chatbot_cache:/app/data/chatbot_cache
+      - twin_memory:/app/data/memory  # the twin's memory (COLLECTOR_DB in the image)
     restart: unless-stopped
 
   caddy:
@@ -31,5 +32,6 @@ services:
 
 volumes:
   chatbot_cache:
+  twin_memory:
   caddy_data:
   caddy_config:

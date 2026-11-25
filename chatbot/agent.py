@@ -21,6 +21,7 @@ from chatbot.city import CityData
 from chatbot.dls import DLS
 from chatbot.eoa import Registry
 from chatbot.geo import Places
+from chatbot.memory import Memory
 from chatbot.prompt import SYSTEM_PROMPT
 from chatbot.routing import Router
 from chatbot.settings import TIMEZONE, Settings
@@ -85,8 +86,9 @@ def format_context(context: dict | None, now: datetime) -> str:
 class Agent:
     def __init__(self, settings: Settings, city: CityData, places: Places, router: Router,
                  client: anthropic.AsyncAnthropic | None = None, dls: DLS | None = None,
-                 registers: Registry | None = None):
+                 registers: Registry | None = None, memory: Memory | None = None):
         self.settings = settings
+        self.memory = memory
         self.city = city
         self.places = places
         self.router = router
@@ -120,7 +122,7 @@ class Agent:
 
         tool_ctx = ToolContext(self.settings, self.city, self.places, self.router, conv.store,
                                emit_threadsafe, conv.id, self.dls, self.registers,
-                               user_location(context))
+                               user_location(context), self.memory)
         conv.messages.append({"role": "user", "content": [
             {"type": "text", "text": format_context(context, self.city.now()) + text}]})
 
