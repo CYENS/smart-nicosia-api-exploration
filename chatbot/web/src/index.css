@@ -185,6 +185,42 @@
 .prose-answer td.num { white-space: nowrap; }
 .prose-answer blockquote { margin: 0.6em 0; padding-left: 10px; border-left: 2px solid var(--line); color: var(--muted-foreground); }
 
+/* An id the assistant names, as a chip that opens the thing in the inspector. The mark in front
+   says what kind of thing it is: a device (sodium), a register building (signal), a DLS building
+   or a place. */
+.prose-answer .entity-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin: 0 1px;
+  padding: 0 6px 0 5px;
+  border: 1px solid rgb(255 174 69 / 0.32);
+  border-radius: 5px;
+  background: rgb(255 174 69 / 0.07);
+  color: var(--foreground);
+  font-family: var(--font-condensed);
+  font-variant-numeric: tabular-nums;
+  font-size: 0.93em;
+  line-height: 1.45;
+  vertical-align: 0.04em;
+  white-space: nowrap;
+  cursor: pointer;
+  outline: none;
+  transition: background-color 0.12s, border-color 0.12s;
+}
+.prose-answer .entity-chip::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--sodium);
+}
+.prose-answer .entity-chip[data-chip="danger"]::before { background: var(--signal); border-radius: 1px; transform: rotate(45deg); }
+.prose-answer .entity-chip[data-chip="building"]::before { background: var(--chart-2); border-radius: 1px; }
+.prose-answer .entity-chip[data-chip="place"]::before { background: var(--chart-4); }
+.prose-answer .entity-chip:hover { background: rgb(255 174 69 / 0.16); border-color: rgb(255 174 69 / 0.55); }
+.prose-answer .entity-chip:focus-visible { box-shadow: 0 0 0 3px rgb(255 174 69 / 0.45); }
+
 /* The walls mark traces itself while the assistant works. */
 @keyframes walls-trace {
   from { stroke-dashoffset: 0; }

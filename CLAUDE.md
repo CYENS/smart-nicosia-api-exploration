@@ -23,14 +23,26 @@ npm run build                     # writes chatbot/static (committed, see below)
 - `chatbot/prompt.py` is the system prompt. It must stay byte-for-byte stable within a
   deployment (prompt cache); anything per turn goes in the user turn's `<context>` block
   (`format_context` in `agent.py`).
-- `chatbot/tools.py` holds every tool: schema, handler and the `HANDLERS` table. Data tools
-  return compact JSON and park big results in the session store (`layer_ref` for map layers,
-  `data_ref` for chart rows). UI tools push a command to the page through `ctx.emit`.
+- `chatbot/tools/` holds every tool, one module per domain (`city`, `places`, `routes`,
+  `buildings`, `maps`, `charts`, `entities`): `@tool(name, description, schema)` on a handler
+  registers it. `registry.py` puts the domains in order (the prompt cache keys on it: add a
+  domain at the end of `DOMAINS`) and runs them. Data tools return compact JSON and park big
+  results in the session store (`layer_ref` for map layers, `data_ref` for chart rows). UI tools
+  push a command to the page through `ctx.emit`.
+- `chatbot/routes/` holds the API, one router per area; add a module and list it in
+  `routers()`. `chatbot/server.py` keeps the app, the password guard and the page.
+- `chatbot/entities.py` is the twin's entity model: every kind in one shape (state, readings,
+  attributes, relations, sources) plus a 24-hour series and search, for the inspector and
+  `get_entity`. A new kind registers a `Kind` resolver.
 - `collector/interpret.py` is the one place that turns raw readings into meaning (a lamp is on
   only if it reported in the last 70 minutes, and so on). Reuse it; never reinterpret elsewhere.
 - `chatbot/web/src/lib/map/engine.ts` draws everything on the map; `lib/chat.ts` handles the
-  stream and the stage; `components/` holds the strip, chat, stage, map panel and player.
+  stream and the stage; `lib/inspector.ts` the open thing; `lib/deeplink.ts` the URL;
+  `components/` holds the strip, rail, chat, stage, inspector, map panel and player.
   `TOOL_LABELS` in `lib/chat.ts` names each tool in the trace: add new tools there.
+- `chatbot/web/src/lib/registries/` is where page features plug in instead of editing shared
+  files: workspaces (the rail), inspector sections per kind, search providers (Ctrl K) and
+  map click handlers.
 
 ## House rules for features
 

@@ -34,9 +34,6 @@ jobs:
           cache-dependency-path: chatbot/web/package-lock.json
       - run: npm ci
       - run: npm run typecheck
-      # Two errors predate CI (react-hooks rules); feature 1 of the roadmap fixes them and makes
-      # this step blocking.
       - run: npm run lint
-        continue-on-error: true
       # Build to a scratch folder: the committed chatbot/static is left alone.
       - run: npx vite build --outDir "$RUNNER_TEMP/page" --emptyOutDir

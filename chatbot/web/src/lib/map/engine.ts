@@ -7,6 +7,7 @@ import { create } from "zustand"
 
 import { BASE_SOURCE, BASE_SOURCE_URLS, BASEMAP_URLS, baseLayers, type Basemap } from "@/lib/map/basemap"
 import { lightFor, nicosiaWallToDate, skyAt, skyFor, type Sky } from "@/lib/map/sky"
+import { clickableLayer, resolveClick, type InspectTarget } from "@/lib/registries/map-clicks"
 import { WALLS_RING } from "@/lib/walls"
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -152,15 +153,28 @@ export function fmt(v: number) {
 // ---------------------------------------------------------------------------------------------
 // Map setup
 
-export function initMap(container: HTMLElement) {
+export type Camera = { center: [number, number]; zoom: number; pitch: number; bearing: number }
+
+export function initMap(container: HTMLElement, camera?: Camera | null) {
   if (map) return map // React's development mode runs effects twice
   // No style yet: setBasemap loads the first one, recoloured. (Starting from a placeholder style
   // made that first setStyle try to diff against a style still loading, and stall.)
   map = new maplibregl.Map({
     container,
-    ...HOME,
+    ...(camera ?? HOME),
     maxPitch: 75,
     attributionControl: { compact: true },
+  })
+  // A click opens what is under it in the inspector. The box around the pointer catches the
+  // small dots (a lamp is a few pixels across); what lies right under the pointer wins.
+  map.on("click", (e) => {
+    const layers = map.getLayersOrder().filter(clickableLayer)
+    if (!layers.length) return
+    const { x, y } = e.point
+    const exact = map.queryRenderedFeatures(e.point, { layers })
+    const near = exact.length ? exact : map.queryRenderedFeatures([[x - 6, y - 6], [x + 6, y + 6]], { layers })
+    const target = resolveClick(near, [e.lngLat.lng, e.lngLat.lat])
+    if (target) for (const fn of inspectSinks) fn(target)
   })
   ;(window as any).__map = map // a hook for scripted demos and browser tests (e.g. map.project)
   map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), "bottom-right")
@@ -190,6 +204,7 @@ export function initMap(container: HTMLElement) {
     if (CITY.on) addCityLayer()
     for (const entry of state.layers.values()) addToMap(entry)
     syncHighlight()
+    syncSelection()
     applySky()
     if (baseWanted !== baseShown) swapBasemap() // the sky moved on while the style loaded
   })
@@ -457,6 +472,7 @@ function addAmbientLamps() {
   map.addSource("lamps", { type: "geojson", data: lamps as any })
   const ids: string[] = []
   addLampGlow("lamps", "lamps", ["==", ["get", "state"], "on"], ids, glowBelow())
+  bindPopup("lamps-bulb") // a lamp's bulb opens it in the inspector
   syncNightLights()
 }
 
@@ -594,16 +610,12 @@ function squareAround([lon, lat]: number[], meters: number) {
   return [[[lon - dLon, lat - dLat], [lon + dLon, lat - dLat], [lon + dLon, lat + dLat], [lon - dLon, lat + dLat], [lon - dLon, lat - dLat]]]
 }
 
+// A click on any of these opens the inspector (see the click handler in initMap); here they
+// get a pointer and link their hover to the charts.
 const boundPopups = new Set<string>() // map.on handlers outlive style changes, so bind once per id
 function bindPopup(layerId: string) {
   if (boundPopups.has(layerId)) return
   boundPopups.add(layerId)
-  map.on("click", layerId, (e) => {
-    const f = e.features?.[0]
-    if (!f) return
-    const text = f.properties.popup || f.properties.label || f.properties.id
-    new maplibregl.Popup({ offset: 10 }).setLngLat(e.lngLat).setHTML(escapeHtml(text).replace(/\n/g, "<br>")).addTo(map)
-  })
   map.on("mouseenter", layerId, () => { map.getCanvas().style.cursor = "pointer" })
   map.on("mouseleave", layerId, () => { map.getCanvas().style.cursor = ""; linkHover("id", null, "map") })
   map.on("mousemove", layerId, (e) => linkHover("id", e.features?.[0]?.properties?.id ?? null, "map"))
@@ -851,7 +863,8 @@ function addStreet(entry: Entry) {
   if (!st || !(st.coordinates?.length >= 2)) return
   const ref = entry.spec.ref
   const src = `${ref}::street`
-  map.addSource(src, { type: "geojson", data: { type: "Feature", properties: {}, geometry: { type: "LineString", coordinates: st.coordinates } } })
+  const props = { id: "street", label: st.name, popup: `${st.name}\nThe street the layer's cameras stand along` }
+  map.addSource(src, { type: "geojson", data: { type: "Feature", properties: props, geometry: { type: "LineString", coordinates: st.coordinates } } })
   const glow = streetGlow(streetLevel(entry, timelapseFrameOf(ref)))
   const layout = { "line-join": "round", "line-cap": "round" } as const
   map.addLayer({
@@ -1121,21 +1134,11 @@ export function setCity3d(on: boolean) {
   })
 }
 
+// Every building of the 3D city opens in the inspector (an answer's layer above it comes first).
 let cityPopupBound = false
 function bindCityPopup() {
   if (cityPopupBound) return
   cityPopupBound = true
-  map.on("click", "city3d::fill", (e) => {
-    // An assistant layer under the pointer has its own popup.
-    if (map.queryRenderedFeatures(e.point).some((f) => f.layer.id.includes("::") && !f.layer.id.startsWith("city3d::"))) return
-    const f = e.features?.[0]
-    if (!f) return
-    const p = f.properties
-    const lines = [`${p.t || "Building"}, DLS 3D #${f.id}`,
-      `${p.h} m to the roof, eave ${p.e} m${p.f ? `, ${p.f} floors` : ""}`,
-      [p.r, p.v ? `${Math.round(p.v).toLocaleString()} m³` : "", p.a ? `${Math.round(p.a).toLocaleString()} m² footprint` : ""].filter(Boolean).join(", ")]
-    new maplibregl.Popup({ offset: 10 }).setLngLat(e.lngLat).setHTML(lines.filter(Boolean).map(escapeHtml).join("<br>")).addTo(map)
-  })
   map.on("mouseenter", "city3d::fill", () => { map.getCanvas().style.cursor = "pointer" })
   map.on("mouseleave", "city3d::fill", () => { map.getCanvas().style.cursor = "" })
 }
@@ -1613,6 +1616,120 @@ export function flyRoute(ref: string) {
     }
     me.raf = requestAnimationFrame(step)
   })
+}
+
+// ---------------------------------------------------------------------------------------------
+// The open thing: a steady sodium ring where it is, its outline on the ground, and its building
+// raised in sodium. The inspector sets it; a map click reaches the inspector through onInspect.
+
+export type Selection = {
+  center: [number, number]
+  geometry?: GeoJSON.Geometry | null
+  footprints?: { geometry: GeoJSON.Geometry; height_m: number }[]
+}
+
+const SEL_SRC = "sel::src"
+let selection: Selection | null = null
+const inspectSinks = new Set<(t: InspectTarget) => void>()
+
+export function onInspect(fn: (t: InspectTarget) => void) {
+  inspectSinks.add(fn)
+  return () => { inspectSinks.delete(fn) }
+}
+
+export function setSelection(s: Selection | null) {
+  selection = s
+  if (map) syncSelection()
+}
+
+function syncSelection() {
+  if (!styleReady) return
+  const features: Feature[] = []
+  if (selection) {
+    features.push({ type: "Feature", geometry: { type: "Point", coordinates: selection.center }, properties: { _k: "ring" } })
+    const g = selection.geometry
+    if (g && (g.type === "Polygon" || g.type === "MultiPolygon" || g.type === "LineString")) {
+      features.push({ type: "Feature", geometry: g, properties: { _k: "shape" } })
+    }
+    for (const fp of selection.footprints ?? []) {
+      features.push({ type: "Feature", geometry: fp.geometry, properties: { _k: "raise", h: fp.height_m } })
+    }
+  }
+  const data = { type: "FeatureCollection", features } as any
+  const src = map.getSource(SEL_SRC) as GeoJSONSource | undefined
+  if (src) {
+    src.setData(data)
+    for (const id of ["sel::fill", "sel::line", "sel::raise", "sel::halo", "sel::ring"]) if (map.getLayer(id)) map.moveLayer(id)
+    return
+  }
+  map.addSource(SEL_SRC, { type: "geojson", data })
+  const shape: any = ["==", ["get", "_k"], "shape"]
+  const polys: any = ["all", shape, ["match", ["geometry-type"], ["Polygon", "MultiPolygon"], true, false]]
+  map.addLayer({ id: "sel::fill", type: "fill", source: SEL_SRC, filter: polys, paint: { "fill-color": SODIUM, "fill-opacity": 0.12 } })
+  map.addLayer({ id: "sel::line", type: "line", source: SEL_SRC, filter: shape, layout: { "line-join": "round" }, paint: { "line-color": SODIUM, "line-width": 2.5 } })
+  map.addLayer({
+    id: "sel::raise", type: "fill-extrusion", source: SEL_SRC, filter: ["==", ["get", "_k"], "raise"],
+    paint: { "fill-extrusion-color": SODIUM, "fill-extrusion-height": ["+", ["get", "h"], 0.6], "fill-extrusion-opacity": 0.6 },
+  })
+  const ring: any = ["==", ["get", "_k"], "ring"]
+  map.addLayer({ id: "sel::halo", type: "circle", source: SEL_SRC, filter: ring, paint: { "circle-radius": 20, "circle-color": SODIUM, "circle-opacity": 0.16, "circle-blur": 0.5 } })
+  map.addLayer({
+    id: "sel::ring", type: "circle", source: SEL_SRC, filter: ring,
+    paint: { "circle-radius": 11, "circle-opacity": 0, "circle-stroke-color": SODIUM, "circle-stroke-width": 2.5 },
+  })
+}
+
+// Fly to one thing, close enough to see it among its neighbours; a building at an angle, with
+// the 3D city on. With reduced motion the camera jumps.
+// Opening the inspector (or the stage) changes the camera padding a moment later, which stops a
+// flight under way; as with a layer's fit, the flight is kept as the framing and flown again.
+export function flyToThing(center: [number, number], kind?: string) {
+  if (!map) return
+  state.flownAt = performance.now()
+  const building = kind === "building_3d" || kind === "register_building"
+  if (kind === "building_3d" && !CITY.on) setCity3d(true)
+  const opts = {
+    center, zoom: Math.max(map.getZoom(), building ? 17 : 16.8),
+    pitch: building ? Math.max(map.getPitch(), 55) : map.getPitch(), essential: true,
+  }
+  const go = () => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) map.jumpTo(opts)
+    else map.flyTo({ ...opts, duration: 1600 })
+  }
+  framed = { ref: "", fit: go }
+  go()
+}
+
+// Fly to fit an area, given as [west, south, east, north] (a street from search).
+export function flyToBounds(bbox: [number, number, number, number]) {
+  if (!map) return
+  state.flownAt = performance.now()
+  const b = new maplibregl.LngLatBounds([bbox[0], bbox[1]], [bbox[2], bbox[3]])
+  const go = () => {
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    map.fitBounds(b, { padding: 60, maxZoom: 17, duration: reduce ? 0 : 1400 })
+  }
+  framed = { ref: "", fit: go }
+  go()
+}
+
+// The camera, for links that bring a view back.
+export function getCamera(): Camera | null {
+  if (!map) return null
+  const c = map.getCenter()
+  return { center: [c.lng, c.lat], zoom: map.getZoom(), pitch: map.getPitch(), bearing: map.getBearing() }
+}
+
+export function jumpToCamera(c: Camera) {
+  if (!map) return
+  framed = null
+  map.jumpTo(c)
+}
+
+export function onCameraMoved(fn: () => void) {
+  if (!map) return () => {}
+  map.on("moveend", fn)
+  return () => { map.off("moveend", fn) }
 }
 
 // ---------------------------------------------------------------------------------------------

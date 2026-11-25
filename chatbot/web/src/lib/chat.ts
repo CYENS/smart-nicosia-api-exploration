@@ -3,6 +3,9 @@
 import { create } from "zustand"
 
 import type { ChartPayload } from "@/lib/charts"
+import type { EntityRef } from "@/lib/entities"
+import { closeInspector, inspectId, inspectingRef } from "@/lib/inspector"
+import { useLayout } from "@/lib/layout"
 import { applyMapUi, mapContext, resetForNewChat } from "@/lib/map/engine"
 import type { VisualPayload } from "@/lib/visual"
 
@@ -19,6 +22,7 @@ export const TOOL_LABELS: Record<string, string> = {
   find_dangerous_buildings: "Reading the dangerous-building registers",
   where_am_i: "Working out where you are",
   get_buildings_3d: "Reading the DLS 3D buildings",
+  get_entity: "Looking it up in the twin", open_inspector: "Opening it in the inspector",
   map_fly_to: "Moving the map", map_callouts: "Adding callouts", map_clear: "Clearing the map",
   show_chart: "Drawing a chart", show_visual: "Drawing a custom visual", web_search: "Searching the web",
 }
@@ -40,6 +44,7 @@ export type Part =
 export type Turn = {
   id: string
   question: string
+  subject?: EntityRef // the thing the question was asked about (a chip in the composer)
   parts: Part[]
   status: "running" | "done"
   startedAt: number
@@ -149,6 +154,8 @@ function handleEvent(turnId: string, ev: any) {
         }
         useStage.setState((s) => ({ items: [...s.items, item], focusId: item.id, open: true }))
         updateTurn(turnId, (t) => ({ ...t, parts: [...t.parts, { kind: "stage", stageId: item.id, title: item.title, visual: item.kind }] }))
+      } else if (ev.action === "inspect") {
+        inspectId(String(ev.id), { at: ev.at ?? undefined, fly: ev.fly !== false })
       } else {
         applyMapUi(ev, (text) => note(turnId, text, true))
       }
@@ -172,19 +179,21 @@ function handleEvent(turnId: string, ev: any) {
   }
 }
 
-export async function send(text: string) {
+export async function send(text: string, opts: { subject?: EntityRef | null } = {}) {
   const { busy, conversationId } = useChat.getState()
   if (busy || !text.trim()) return
+  const subject = opts.subject ?? undefined
   const turn: Turn = {
-    id: nextId("t"), question: text.trim(), parts: [], status: "running",
+    id: nextId("t"), question: text.trim(), subject, parts: [], status: "running",
     startedAt: performance.now(), usage: { input: 0, output: 0, cacheRead: 0 },
   }
   useChat.setState((s) => ({ busy: true, turns: [...s.turns, turn] }))
   try {
+    const context = { ...mapContext(), inspecting: inspectingRef(), subject: subject ?? null }
     const res = await fetch("/api/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message: turn.question, conversation_id: conversationId, context: mapContext() }),
+      body: JSON.stringify({ message: turn.question, conversation_id: conversationId, context }),
     })
     if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`)
     const reader = res.body.getReader()
@@ -217,5 +226,18 @@ export function newChat() {
   if (conversationId) fetch(`/api/reset/${conversationId}`, { method: "POST" })
   useChat.setState({ conversationId: null, turns: [] })
   useStage.setState({ items: [], focusId: null, open: false, expanded: false })
+  useComposer.setState({ subject: null })
+  closeInspector()
   resetForNewChat()
+}
+
+// The composer's chip: the thing the next question is about ("Ask about this" in the inspector).
+type ComposerState = { subject: EntityRef | null; focusAt: number }
+export const useComposer = create<ComposerState>(() => ({ subject: null, focusAt: 0 }))
+
+export function askAbout(ref: EntityRef) {
+  useComposer.setState({ subject: ref, focusAt: Date.now() })
+  useLayout.setState({ chatOpen: true })
+  // A phone has room for one sheet: the conversation takes over from the inspector.
+  if (!window.matchMedia("(min-width: 768px)").matches) closeInspector()
 }

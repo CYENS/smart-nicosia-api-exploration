@@ -1,0 +1,130 @@
+/* The inspector: which thing is open, its record, its last 24 hours, and what opening one does to
+   the map (a selection ring, a flight). Map clicks, search, chips, the URL and the assistant all
+   open things through `inspect`. */
+import { create } from "zustand"
+
+import {
+  EntityError, cachedEntity, fetchEntity, fetchSeries, type Entity, type EntityRef, type LocalThing,
+  type Series,
+} from "@/lib/entities"
+import { flyToThing, onInspect, setSelection } from "@/lib/map/engine"
+import type { InspectTarget } from "@/lib/registries/map-clicks"
+
+type Status = "idle" | "loading" | "ready" | "missing" | "error"
+
+type InspectorState = {
+  open: boolean
+  target: { id: string; at?: [number, number] } | null
+  local: LocalThing | null
+  entity: Entity | null
+  status: Status
+  error: string | null
+  series: Series | null
+  seriesStatus: "idle" | "loading" | "ready" | "error"
+  recent: EntityRef[]
+  focusAt: number // set when an opener wants the keyboard in the inspector
+}
+
+const RECENT_KEY = "twin.recent"
+
+function readRecent(): EntityRef[] {
+  try {
+    const v = JSON.parse(localStorage.getItem(RECENT_KEY) || "[]")
+    return Array.isArray(v) ? v.filter((r) => typeof r?.id === "string").slice(0, 6) : []
+  } catch {
+    return []
+  }
+}
+
+export const useInspector = create<InspectorState>(() => ({
+  open: false, target: null, local: null, entity: null, status: "idle", error: null,
+  series: null, seriesStatus: "idle", recent: readRecent(), focusAt: 0,
+}))
+const set = useInspector.setState
+
+function remember(e: Entity) {
+  const recent = [{ id: e.id, kind: e.kind, name: e.name }, ...useInspector.getState().recent.filter((r) => r.id !== e.id)].slice(0, 6)
+  set({ recent })
+  try { localStorage.setItem(RECENT_KEY, JSON.stringify(recent)) } catch { /* private mode: recent stays for this visit */ }
+}
+
+function selectEntity(e: Entity) {
+  if (!e.center) { setSelection(null); return }
+  setSelection({ center: e.center, geometry: e.geometry, footprints: e.footprints })
+}
+
+let ctrl: AbortController | null = null
+
+// fly: move the map to it; focus: put the keyboard in the inspector (search, chips, links).
+export type InspectOptions = { fly?: boolean; focus?: boolean }
+
+export function inspect(target: InspectTarget, opts: InspectOptions = {}) {
+  ctrl?.abort()
+  const mine = (ctrl = new AbortController())
+  if (opts.focus) set({ focusAt: Date.now() })
+  if ("local" in target) {
+    showLocal(target.local, opts)
+    return
+  }
+  const { id, at, fallback } = target
+  const cached = cachedEntity(id)
+  set({
+    open: true, target: { id, at }, local: null, entity: cached, status: cached ? "ready" : "loading",
+    error: null, series: null, seriesStatus: "idle",
+  })
+  if (cached) selectEntity(cached)
+  else if (at) setSelection({ center: at })
+  if (opts.fly && (cached?.center ?? at)) flyToThing((cached?.center ?? at)!, cached?.kind)
+  fetchEntity(id, at, mine.signal)
+    .then((entity) => {
+      if (mine.signal.aborted) return
+      set({ entity, status: "ready", target: { id: entity.id, at } })
+      selectEntity(entity)
+      remember(entity)
+      if (opts.fly && !cached && !at && entity.center) flyToThing(entity.center, entity.kind)
+      if (entity.has_series) loadSeries(entity, at, mine)
+    })
+    .catch((e: Error) => {
+      if (mine.signal.aborted || e.name === "AbortError") return
+      if (e instanceof EntityError && e.status === 404 && fallback) { showLocal(fallback, {}); return }
+      set({ status: e instanceof EntityError && e.status === 404 ? "missing" : "error", error: e.message })
+    })
+}
+
+function loadSeries(entity: Entity, at: [number, number] | undefined, mine: AbortController) {
+  set({ seriesStatus: "loading" })
+  fetchSeries(entity.id, at, mine.signal)
+    .then((series) => { if (!mine.signal.aborted) set({ series, seriesStatus: series?.error ? "error" : "ready" }) })
+    .catch((e: Error) => { if (!mine.signal.aborted && e.name !== "AbortError") set({ seriesStatus: "error" }) })
+}
+
+function showLocal(thing: LocalThing, opts: InspectOptions) {
+  set({ open: true, target: null, local: thing, entity: null, status: "ready", error: null, series: null, seriesStatus: "idle" })
+  setSelection({ center: thing.center, geometry: thing.geometry })
+  if (opts.fly) flyToThing(thing.center)
+}
+
+export function inspectId(id: string, opts: InspectOptions & { at?: [number, number] } = {}) {
+  inspect({ id, at: opts.at }, opts)
+}
+
+export function retryInspector() {
+  const { target } = useInspector.getState()
+  if (target) inspect(target, {})
+}
+
+export function closeInspector() {
+  ctrl?.abort()
+  ctrl = null
+  set({ open: false, target: null, local: null, entity: null, status: "idle", error: null, series: null, seriesStatus: "idle" })
+  setSelection(null)
+}
+
+// What the assistant hears about the open thing with each message.
+export function inspectingRef(): EntityRef | null {
+  const { open, entity } = useInspector.getState()
+  return open && entity ? { id: entity.id, kind: entity.kind, name: entity.name } : null
+}
+
+// A click on the map opens what is under it.
+onInspect((t) => inspect(t))

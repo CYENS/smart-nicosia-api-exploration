@@ -4,7 +4,9 @@ the endpoints and the chat tools, against captured payloads and a fake DLS (no n
 import asyncio
 import json
 import urllib.parse
+from datetime import datetime
 from types import SimpleNamespace
+from zoneinfo import ZoneInfo
 
 import pytest
 from fastapi import FastAPI
@@ -26,6 +28,7 @@ from conftest import load, utc
 from test_dls_eoa import BUILDINGS, LAT, LON, FakeDLS, make_registry
 
 NOW = utc(2026, 10, 19, 10, 0)  # 13:00 in Nicosia, minutes after the fixtures were captured
+TZ = ZoneInfo("Asia/Nicosia")
 
 LATEST = {"YL1015": "latest_lamp_YL1015.json", "YW1394": "latest_bin_YW1394.json",
           "f60f85f2babb": "latest_air_f60f85f2babb.json", "YP974": "latest_parking_YP974.json",
@@ -128,6 +131,32 @@ def test_parking_bays_screens_cameras_and_air_stations(city):
     assert {r["unit"] for r in air["readings"] if r["label"].startswith("PM")} == {"µg/m³"}
     with pytest.raises(EntityNotFound, match="YL1015"):
         ents.get("YX0000")
+
+
+def test_a_counting_camera_has_its_last_24_hours_of_people(city, api, monkeypatch):
+    # A counting line placed by hand (no camera device): yesterday's and today's hours, one
+    # request each, in a 24-hour window ending this hour; a quiet hour reads 0.
+    monkeypatch.setattr(city, "traffic_cameras", lambda: [
+        {"name": "Ledras Square", "analytics_id": 102, "lat": 35.1703, "lon": 33.36105,
+         "device_name": None, "status": "started", "location_source": "manual"}])
+    days = {"2026-10-18": {"20:00": 300, "08:00": 999}, "2026-10-19": {"12:00": 450}}
+
+    def reports(p):
+        day = datetime.fromtimestamp(int(p["start_date"]) / 1000, tz=TZ).strftime("%Y-%m-%d")
+        return {"data": {"group_by": [{"key": h, "data": {"0": {"1": n, "2": 0, "total": n}}}
+                                      for h, n in days.get(day, {}).items()]}}
+
+    api.on("getTrafficReports", reports)
+    ents = Entities(city)
+    e = ents.get("Ledras Square")
+    assert e["kind"] == "camera" and e["state"]["label"] == "Counting" and e["has_series"]
+    s = ents.series("Ledras Square")
+    assert s["draw"] == "bars" and s["metric"] == "people" and len(s["points"]) == 24
+    assert s["from"] == "2026-10-18T14:00" and s["to"] == "2026-10-19T13:00"
+    values = {p["t"]: p["v"] for p in s["points"]}
+    assert values["2026-10-18T20:00"] == 300 and values["2026-10-19T12:00"] == 450
+    assert values["2026-10-19T03:00"] == 0 and "2026-10-18T08:00" not in values  # outside
+    assert s["totals_24h"]["people"] == 750 and api.count("getTrafficReports") == 2
 
 
 # -- buildings and places -------------------------------------------------------------------------

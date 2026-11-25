@@ -3,6 +3,7 @@ import { ChartSplineIcon, InfoIcon, ShapesIcon, TriangleAlertIcon } from "lucide
 import { marked } from "marked"
 import { memo, useMemo } from "react"
 
+import { SubjectChip } from "@/components/chat/composer"
 import { Trace, seconds } from "@/components/chat/trace"
 import { WallsMark } from "@/components/walls-mark"
 import { Bubble, BubbleContent } from "@/components/ui/bubble"
@@ -10,6 +11,8 @@ import { Marker, MarkerContent, MarkerIcon } from "@/components/ui/marker"
 import { Message, MessageContent, MessageFooter } from "@/components/ui/message"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { focusStage, useStage, type Part, type Turn } from "@/lib/chat"
+import { ID_IN_TEXT, kindMeta, kindOfId } from "@/lib/entities"
+import { inspect } from "@/lib/inspector"
 import { cn } from "@/lib/utils"
 
 marked.setOptions({ gfm: true, breaks: false })
@@ -28,11 +31,55 @@ function markNumberCells(html: string) {
   return t.innerHTML
 }
 
+// Ids the assistant names (YL1015, NIC-409, B255563) become chips that open the inspector. Only
+// text outside code and links is touched, and the chips are built from the matched id alone.
+function chipIds(html: string) {
+  ID_IN_TEXT.lastIndex = 0
+  if (!ID_IN_TEXT.test(html)) return html
+  const t = document.createElement("template")
+  t.innerHTML = html
+  const walker = document.createTreeWalker(t.content, NodeFilter.SHOW_TEXT)
+  const texts: Text[] = []
+  for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+    if (!(n.parentElement?.closest("code, pre, a, button"))) texts.push(n as Text)
+  }
+  for (const node of texts) {
+    const s = node.data
+    ID_IN_TEXT.lastIndex = 0
+    if (!ID_IN_TEXT.test(s)) continue
+    ID_IN_TEXT.lastIndex = 0 // matchAll starts where test() stopped otherwise
+    const frag = document.createDocumentFragment()
+    let last = 0
+    for (const m of s.matchAll(ID_IN_TEXT)) {
+      const kind = kindOfId(m[0])
+      if (!kind) continue
+      frag.append(s.slice(last, m.index))
+      const b = document.createElement("button")
+      b.type = "button"
+      b.className = "entity-chip"
+      b.dataset.entity = m[0]
+      b.dataset.chip = kindMeta(kind).chip
+      b.title = `Open ${m[0]} (${kindMeta(kind).label.toLowerCase()}) in the inspector`
+      b.textContent = m[0]
+      frag.append(b)
+      last = (m.index ?? 0) + m[0].length
+    }
+    frag.append(s.slice(last))
+    node.replaceWith(frag)
+  }
+  return t.innerHTML
+}
+
+function openChip(e: React.MouseEvent) {
+  const chip = (e.target as HTMLElement).closest<HTMLElement>("[data-entity]")
+  if (chip?.dataset.entity) inspect({ id: chip.dataset.entity }, { fly: true, focus: e.detail === 0 })
+}
+
 const Answer = memo(function Answer({ text }: { text: string }) {
-  const html = useMemo(() => markNumberCells(DOMPurify.sanitize(marked.parse(text, { async: false }))), [text])
+  const html = useMemo(() => chipIds(markNumberCells(DOMPurify.sanitize(marked.parse(text, { async: false })))), [text])
   return (
     <Bubble variant="ghost">
-      <BubbleContent className="prose-answer text-foreground" dangerouslySetInnerHTML={{ __html: html }} />
+      <BubbleContent className="prose-answer text-foreground" onClick={openChip} dangerouslySetInnerHTML={{ __html: html }} />
     </Bubble>
   )
 })
@@ -88,7 +135,8 @@ function Working() {
 function TurnFooter({ turn }: { turn: Turn }) {
   const steps = turn.parts.reduce((n, p) => n + (p.kind === "trace" ? p.items.filter((i) => i.type === "step").length : 0), 0)
   const { input, output, cacheRead } = turn.usage
-  const took = seconds((turn.endedAt ?? performance.now()) - turn.startedAt)
+  // The footer shows once the turn is done, and a done turn always has its end time.
+  const took = seconds((turn.endedAt ?? turn.startedAt) - turn.startedAt)
   const label = steps ? `${steps} ${steps === 1 ? "step" : "steps"}, ${took}` : took
   if (!input) return <MessageFooter className="px-0 font-condensed">{label}</MessageFooter>
   const cached = Math.round((100 * cacheRead) / input)
@@ -114,6 +162,7 @@ export function TurnView({ turn }: { turn: Turn }) {
     <div className="flex flex-col gap-4">
       <Message align="end">
         <MessageContent>
+          {turn.subject && <div className="flex justify-end"><SubjectChip subject={turn.subject} /></div>}
           <Bubble variant="secondary" align="end">
             <BubbleContent className="text-[14.5px] whitespace-pre-wrap">{turn.question}</BubbleContent>
           </Bubble>

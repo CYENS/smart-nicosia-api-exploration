@@ -38,7 +38,7 @@ def lookup(ctx: ToolContext, eid: str) -> dict:
       "places inside a building) with their ids, and its sources. For a lamp, parking bay, bin "
       "or air station it also returns the last 24 hours (series_24h: min, max, last, and a "
       "data_ref with one row per 15 minutes: time, the metric, state) and for a counting "
-      "camera today's people per hour. The layer_ref holds the thing and its related things "
+      "camera people per hour. The layer_ref holds the thing and its related things "
       "('pulse' for one thing, 'buildings_3d' for a building). Covers everything get_device "
       "returns.",
       obj({"id": ID,
@@ -64,7 +64,7 @@ def h_get_entity(ctx: ToolContext, a: dict) -> dict:
             out["series_24h"] = {"what": s["label"], "metric": s["metric"], "unit": s["unit"],
                                  "from": s["from"], "to": s["to"], "points": len(s["points"]),
                                  "step_min": s["step_min"], "summary": s.get("summary")}
-            for k in ("threshold", "totals_today"):
+            for k in ("threshold", "totals_24h"):
                 if s.get(k):
                     out["series_24h"][k] = s[k]
             out["data_ref"] = ctx.store.add_dataset(

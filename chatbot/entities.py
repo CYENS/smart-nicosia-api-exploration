@@ -36,7 +36,7 @@ import time
 from collections import Counter, OrderedDict
 from collections.abc import Callable
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
 from collector import parse
@@ -66,6 +66,7 @@ STATE_LABELS = {
     "very_low": "Very good", "connected": "Connected", "disconnected": "Disconnected",
     "ok": "Working", "no_heartbeat": "No heartbeat", "not_reported": "Not reporting",
     "dangerous": "Dangerous", "needs_repair": "Needs repair",
+    "started": "Counting", "stopped": "Not counting",
 }
 # Air bands read as air quality, not as "low pollution".
 AIR_LABELS = {"very_low": "Very good", "low": "Good", "medium": "Moderate", "high": "Poor",
@@ -78,6 +79,7 @@ TONES = {
     "connected": "ok", "disconnected": "alarm",
     "ok": "ok", "no_heartbeat": "warn", "not_reported": "alarm",
     "dangerous": "alarm", "needs_repair": "warn",
+    "started": "ok", "stopped": "warn",
 }
 AIR_TONES = {"very_low": "ok", "low": "ok", "medium": "muted", "high": "warn", "very_high": "alarm"}
 
@@ -567,31 +569,38 @@ class Entities:
         return out
 
     def _traffic_series(self, entity: dict) -> dict | None:
-        """People (or, at a camera that counts none, everything) per hour today."""
+        """People (or, at a camera that counts none, everything) per hour over the last 24
+        hours: yesterday's hours and today's, one small request each (an hourly report can't
+        cross midnight)."""
         feeds = entity["_feeds"]
-        start, end, days = context._period_bounds("today", self.now())
-        payload = self.city.client.get_json(
-            "getTrafficReports", group_by="hour", start_date=int(start.timestamp() * 1000),
-            end_date=int(end.timestamp() * 1000),
-            va_ids=json.dumps([f["analytics_id"] for f in feeds], separators=(",", ":")))
-        rows = parse.parse_traffic_buckets(payload, TZ, day=days[0])
+        va_ids = json.dumps([f["analytics_id"] for f in feeds], separators=(",", ":"))
+        now = self.now()
         by_hour: dict[str, Counter] = {}
-        for r in rows:
-            c = by_hour.setdefault(r.bucket_start.strftime("%Y-%m-%dT%H:%M"), Counter())
-            c[context.OBJECT_TYPES.get(r.object_type, str(r.object_type))] += r.total or 0
-            c["total"] += r.total or 0
-        if not by_hour:
+        for period in ("yesterday", "today"):
+            start, end, days = context._period_bounds(period, now)
+            payload = self.city.client.get_json(
+                "getTrafficReports", group_by="hour", start_date=int(start.timestamp() * 1000),
+                end_date=int(end.timestamp() * 1000), va_ids=va_ids)
+            for r in parse.parse_traffic_buckets(payload, TZ, day=days[0]):
+                c = by_hour.setdefault(r.bucket_start.strftime("%Y-%m-%dT%H:%M"), Counter())
+                c[context.OBJECT_TYPES.get(r.object_type, str(r.object_type))] += r.total or 0
+                c["total"] += r.total or 0
+        last = now.astimezone(TZ).replace(minute=0, second=0, microsecond=0)
+        hours = [(last - timedelta(hours=23 - k)).strftime("%Y-%m-%dT%H:%M") for k in range(24)]
+        window = {h: by_hour[h] for h in hours if h in by_hour}
+        if not window:
             return None
-        field = "people" if any(c.get("people") for c in by_hour.values()) else "total"
-        points = [{"t": h, "v": c.get(field, 0)} for h, c in sorted(by_hour.items())]
+        field = "people" if any(c.get("people") for c in window.values()) else "total"
+        # A camera that counts reads 0 in a quiet hour.
+        points = [{"t": h, "v": window.get(h, Counter()).get(field, 0)} for h in hours]
         vals = [p["v"] for p in points]
-        totals = Counter()
-        for c in by_hour.values():
+        totals: Counter = Counter()
+        for c in window.values():
             totals.update(c)
         return {"metric": field, "label": "People per hour" if field == "people" else
                 "Counted per hour", "unit": "", "draw": "bars", "step_min": 60, "points": points,
                 "from": points[0]["t"], "to": points[-1]["t"], "summary": summary(vals),
-                "totals_today": dict(totals.most_common())}
+                "totals_24h": dict(totals.most_common())}
 
 
 def summary(vals: list[float]) -> dict | None:
