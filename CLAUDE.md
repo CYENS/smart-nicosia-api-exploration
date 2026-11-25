@@ -24,9 +24,9 @@ npm run build                     # writes chatbot/static (committed, see below)
   deployment (prompt cache); anything per turn goes in the user turn's `<context>` block
   (`format_context` in `agent.py`).
 - `chatbot/tools/` holds every tool, one module per domain (`city`, `places`, `routes`,
-  `buildings`, `maps`, `charts`, `entities`): `@tool(name, description, schema)` on a handler
-  registers it. `registry.py` puts the domains in order (the prompt cache keys on it: add a
-  domain at the end of `DOMAINS`) and runs them. Data tools return compact JSON and park big
+  `buildings`, `maps`, `charts`, `memory`, `entities`): `@tool(name, description, schema)` on
+  a handler registers it. `registry.py` puts the domains in order (the prompt cache keys on it:
+  add a domain at the end of `DOMAINS`) and runs them. Data tools return compact JSON and park big
   results in the session store (`layer_ref` for map layers, `data_ref` for chart rows). UI tools
   push a command to the page through `ctx.emit`.
 - `chatbot/routes/` holds the API, one router per area; add a module and list it in
