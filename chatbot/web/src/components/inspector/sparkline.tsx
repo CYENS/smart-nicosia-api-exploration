@@ -163,7 +163,7 @@ export function Sparkline({ series, title }: { series: Series; title: string }) 
           ))}
           {at !== null && (
             <>
-              <line x1={xAt(at)} x2={xAt(at)} y1={PAD.top - 4} y2={height - PAD.bottom} stroke="#e4ebf4" strokeOpacity={cursor !== null ? 0.7 : 0.45} strokeDasharray={cursor !== null ? undefined : "3 2"} strokeWidth={1} />
+              <line x1={xAt(at)} x2={xAt(at)} y1={PAD.top - 4} y2={height - PAD.bottom} style={{ stroke: "var(--foreground)" }} strokeOpacity={cursor !== null ? 0.7 : 0.45} strokeDasharray={cursor !== null ? undefined : "3 2"} strokeWidth={1} />
               {!statesOnly && typeof pts[at].v === "number" && series.draw !== "bars" && (
                 <circle cx={xAt(at)} cy={yAt(pts[at].v!)} r={4} style={{ fill: SODIUM, stroke: "var(--console)" }} strokeWidth={2} />
               )}

@@ -170,7 +170,7 @@ function LocalBody({ thing }: { thing: LocalThing }) {
 // The inspector: whatever was clicked, searched or named, in one panel. It takes the map panel's
 // place on the right (the map panel comes back when it closes) and is a sheet on a phone.
 export function Inspector() {
-  const { open, entity, local, status, error, target, series, seriesStatus, focusAt } = useInspector()
+  const { open, entity, local, note, status, error, target, series, seriesStatus, focusAt } = useInspector()
   const g = useGeometry()
   const titleRef = useRef<HTMLHeadingElement>(null)
   const panelRef = useRef<HTMLElement>(null)
@@ -247,6 +247,14 @@ export function Inspector() {
       <>
         <Header icon={meta.icon} color={entity.state?.color} title={entity.name} subtitle={[entity.kind_label, entity.subtitle !== entity.kind_label ? entity.subtitle : null].filter(Boolean).join(", ")} titleRef={titleRef} />
         <div className="pt-2.5"><Status entity={entity} /></div>
+        {note && (
+          <section aria-label="On the map" className="mx-4 mt-3 rounded-lg border border-line bg-night/50 px-3 py-2">
+            <h3 className="text-[12px] text-muted-foreground">On the map, as the answer drew it</h3>
+            <ul className="mt-1 flex flex-col gap-0.5 text-[13px] leading-snug">
+              {note.lines.map((l, i) => <li key={i}>{l}</li>)}
+            </ul>
+          </section>
+        )}
         <div className="flex min-h-0 flex-col gap-5 overflow-y-auto px-4 pt-4 pb-4">
           {sectionsFor(entity).map(({ id, Component }) => (
             <Component key={id} entity={entity} series={series} seriesStatus={seriesStatus} />

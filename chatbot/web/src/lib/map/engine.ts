@@ -1639,6 +1639,7 @@ export function onInspect(fn: (t: InspectTarget) => void) {
 
 export function setSelection(s: Selection | null) {
   selection = s
+  if (!s && framed?.ref === "") framed = null // closed: don't fly back to it when panels move
   if (map) syncSelection()
 }
 

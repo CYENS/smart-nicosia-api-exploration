@@ -450,8 +450,8 @@ class Entities:
         records = self.registers.records() if self.registers is not None else []
         places = self.places.all() if self.places is not None else []
         cams = city.cached_traffic_cameras() if city is not None else []
-        attrs_n = len(getattr(city, "_attrs", {}) or {})
-        key = tuple((id(x) if x else 0, len(x)) for x in (devices, records, places, cams)) + (attrs_n,)
+        attrs_at = tuple(sorted((getattr(city, "_attrs_at", {}) or {}).values()))
+        key = tuple((id(x) if x else 0, len(x)) for x in (devices, records, places, cams)) + attrs_at
         with self._lock:
             if self._index and self._index[1] == key and time.time() - self._index[0] < 300:
                 return self._index[2]
@@ -997,11 +997,15 @@ def layer_features(entity: dict) -> list[dict]:
     st = entity.get("state") or {}
     color = st.get("color") or "#ffae45"
     base = {"id": entity["id"], "label": entity["name"], "state": st.get("value") or entity["kind"],
-            "color": color, "kind": entity["kind"]}
+            "color": color, "entity_kind": entity["kind"]}
+    # `entity_kind`, not `kind`: the map treats a layer with kind street_light as the city's
+    # lamps, which would switch the night lamps off for one thing's layer.
+    numbers = {r["key"]: r["value"] for r in entity["readings"] if isinstance(r["value"], (int, float))}
     feats = []
     if entity.get("center"):
         feats.append({"type": "Feature", "geometry": {"type": "Point", "coordinates": entity["center"]},
-                      "properties": {**base, "popup": f"{entity['name']}\n{entity['kind_label']}"}})
+                      "properties": {**base, **numbers,
+                                     "popup": f"{entity['name']}\n{entity['kind_label']}"}})
     for fp in entity.get("footprints") or []:
         feats.append({"type": "Feature", "geometry": fp["geometry"],
                       "properties": {**base, "_kind": "footprint", "height_m": fp["height_m"]}})
@@ -1009,5 +1013,6 @@ def layer_features(entity: dict) -> list[dict]:
         if r.get("id") and r.get("lon") is not None:
             feats.append({"type": "Feature", "geometry": {"type": "Point", "coordinates": [r["lon"], r["lat"]]},
                           "properties": {"id": r["id"], "label": r["name"], "state": r.get("state") or r.get("kind"),
-                                         "color": r.get("color") or "#8798b0", "kind": r.get("kind")}})
+                                         "color": r.get("color") or "#8798b0",
+                                         "entity_kind": r.get("kind")}})
     return feats

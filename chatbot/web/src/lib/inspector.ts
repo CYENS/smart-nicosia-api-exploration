@@ -16,6 +16,7 @@ type InspectorState = {
   open: boolean
   target: { id: string; at?: [number, number] } | null
   local: LocalThing | null
+  note: LocalThing | null // what the clicked answer layer says about it (a replay frame, an alarm)
   entity: Entity | null
   status: Status
   error: string | null
@@ -37,7 +38,7 @@ function readRecent(): EntityRef[] {
 }
 
 export const useInspector = create<InspectorState>(() => ({
-  open: false, target: null, local: null, entity: null, status: "idle", error: null,
+  open: false, target: null, local: null, note: null, entity: null, status: "idle", error: null,
   series: null, seriesStatus: "idle", recent: readRecent(), focusAt: 0,
 }))
 const set = useInspector.setState
@@ -66,10 +67,10 @@ export function inspect(target: InspectTarget, opts: InspectOptions = {}) {
     showLocal(target.local, opts)
     return
   }
-  const { id, at, fallback } = target
+  const { id, at, fallback, note } = target
   const cached = cachedEntity(id)
   set({
-    open: true, target: { id, at }, local: null, entity: cached, status: cached ? "ready" : "loading",
+    open: true, target: { id, at }, local: null, note: note ?? null, entity: cached, status: cached ? "ready" : "loading",
     error: null, series: null, seriesStatus: "idle",
   })
   if (cached) selectEntity(cached)
@@ -99,7 +100,7 @@ function loadSeries(entity: Entity, at: [number, number] | undefined, mine: Abor
 }
 
 function showLocal(thing: LocalThing, opts: InspectOptions) {
-  set({ open: true, target: null, local: thing, entity: null, status: "ready", error: null, series: null, seriesStatus: "idle" })
+  set({ open: true, target: null, local: thing, note: null, entity: null, status: "ready", error: null, series: null, seriesStatus: "idle" })
   setSelection({ center: thing.center, geometry: thing.geometry })
   if (opts.fly) flyToThing(thing.center)
 }
@@ -116,7 +117,7 @@ export function retryInspector() {
 export function closeInspector() {
   ctrl?.abort()
   ctrl = null
-  set({ open: false, target: null, local: null, entity: null, status: "idle", error: null, series: null, seriesStatus: "idle" })
+  set({ open: false, target: null, local: null, note: null, entity: null, status: "idle", error: null, series: null, seriesStatus: "idle" })
   setSelection(null)
 }
 

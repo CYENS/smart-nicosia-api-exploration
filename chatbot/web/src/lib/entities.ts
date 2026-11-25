@@ -84,7 +84,7 @@ const ID_KINDS: [RegExp, EntityKind][] = [
   [/^YW\d{2,6}$/, "waste_bin"],
   [/^(NIC|LIM|LAR)-\d{1,5}(-\d+)?$|^FAM-15[AB]-\d{1,5}$/, "register_building"],
   [/^B\d{3,10}$/, "building_3d"],
-  [/^[0-9a-f]{12}$/, "air_station"],
+  [/^(?=[0-9a-f]*[a-f])(?=[0-9a-f]*\d)[0-9a-f]{12}$/, "air_station"],
 ]
 export const ID_IN_TEXT = /\b(Y[LPW]\d{2,6}|(?:NIC|LIM|LAR)-\d{1,5}(?:-\d+)?|FAM-15[AB]-\d{1,5}|B\d{3,10}|[0-9a-f]{12})\b/g
 

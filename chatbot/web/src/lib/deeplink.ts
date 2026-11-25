@@ -6,7 +6,7 @@
      #/e/YL1015/@35.16680,33.36082,17z,45p a thing and the camera
 
    The hash follows the map with replaceState, so the back button isn't filled with every pan. */
-import { useInspector, inspect } from "@/lib/inspector"
+import { closeInspector, inspect, useInspector } from "@/lib/inspector"
 import { getCamera, jumpToCamera, onCameraMoved, type Camera } from "@/lib/map/engine"
 
 export type Link = { camera: Camera | null; entity: string | null }
@@ -15,7 +15,9 @@ const NUM = "(-?\\d+(?:\\.\\d+)?)"
 const CAMERA = new RegExp(`@${NUM},${NUM},${NUM}z(?:,${NUM}p)?(?:,${NUM}b)?`)
 
 export function parseHash(hash: string): Link {
-  const h = decodeURIComponent(hash.replace(/^#\/?/, ""))
+  const raw = hash.replace(/^#\/?/, "")
+  let h = raw
+  try { h = decodeURIComponent(raw) } catch { /* a malformed escape: read it as it is */ }
   let entity: string | null = null
   const e = /^e\/([^@/][^/]*?)(?:\/|$)/.exec(h)
   if (e) entity = e[1].trim() || null
@@ -97,6 +99,7 @@ export function startDeepLinks(initial: Link) {
     written = location.hash
     if (link.camera) jumpToCamera(link.camera)
     if (link.entity && link.entity !== useInspector.getState().entity?.id) inspect({ id: link.entity }, { fly: !link.camera })
+    else if (!link.entity && useInspector.getState().open) closeInspector()
   })
   if (initial.entity) inspect({ id: initial.entity }, { fly: !initial.camera })
 }

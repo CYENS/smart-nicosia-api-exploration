@@ -392,7 +392,11 @@ class DLS:
             x, y = lonlat_to_tile(*near)
             around = [(x + dx, y + dy) for dx in (-1, 0, 1) for dy in (-1, 0, 1)]
             for k, (tx, ty) in enumerate(sorted(around, key=lambda t: (t != (x, y), t))):
-                feats = self.tile(tx, ty) if k == 0 else self.cached_tile(tx, ty)
+                try:
+                    feats = self.tile(tx, ty) if k == 0 else self.cached_tile(tx, ty)
+                except WebError as e:  # the lookup by id below may still find it
+                    log.info("tile %s,%s for building %s failed: %s", tx, ty, oid, e)
+                    feats = None
                 hit = next((b for b in feats or [] if b["id"] == oid), None)
                 if hit:
                     return hit

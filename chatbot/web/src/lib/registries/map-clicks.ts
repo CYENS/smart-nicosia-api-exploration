@@ -7,7 +7,7 @@ import type { MapGeoJSONFeature } from "maplibre-gl"
 import { isLocalId, type LocalThing } from "@/lib/entities"
 
 export type InspectTarget =
-  | { id: string; at?: [number, number]; fallback?: LocalThing }
+  | { id: string; at?: [number, number]; fallback?: LocalThing; note?: LocalThing }
   | { local: LocalThing }
 
 export type ClickHandler = {
@@ -74,7 +74,10 @@ registerClickHandler({
     if (id === undefined || id === null || id === "") return { local: local(f, at) }
     const s = String(id)
     if (isLocalId(s)) return { local: local(f, at) }
-    return { id: s, at: centerOf(f, at), fallback: local(f, at) }
+    // The layer may show another moment (a replay frame) or more (an alarm, a count):
+    // the inspector shows what it says beside the live record.
+    const thing = local(f, at)
+    return { id: s, at: centerOf(f, at), fallback: thing, note: thing.lines.length ? thing : undefined }
   },
 })
 

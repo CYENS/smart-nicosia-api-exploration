@@ -311,7 +311,11 @@ def test_get_entity_covers_get_device_and_brings_a_chartable_day(city, monkeypat
     assert data["link"] == {"key": "id"} and data["rows"][-1]["time"] == "2026-10-19T13:00"
     assert {"id", "time", "level_pct", "state"} <= set(data["rows"][-1])
     layer = ctx.store.layers[res["layer_ref"]]
-    assert layer["features"][0]["properties"]["id"] == "YW1394"
+    point = layer["features"][0]["properties"]
+    assert point["id"] == "YW1394" and point["level_pct"] == 44  # columns and heat can use it
+    # Not `kind`: a layer holding a street light (a relation) mustn't read as the city's lamps.
+    assert not any("kind" in f["properties"] for f in layer["features"])
+    assert layer["meta"]["value_fields"] and all(v in point for v in layer["meta"]["value_fields"])
     # Its day charts with the moving time line, like any chart over time.
     chart, err = run_tool(ctx, "show_chart", {"title": "Fill", "data_ref": res["data_ref"], "spec": {
         "mark": "line", "encoding": {"x": {"field": "time", "type": "temporal"},
