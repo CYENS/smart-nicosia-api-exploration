@@ -13,6 +13,7 @@ collector.toml
 
 # Chatbot: secrets and caches
 .env
+.env.sw?
 data/chatbot_cache/
 
 # Claude Code desktop worktrees (launch.json is shared)
