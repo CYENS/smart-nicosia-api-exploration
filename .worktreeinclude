@@ -1,0 +1,3 @@
+# Ignored files that new Claude Code worktrees copy from the main checkout.
+.env
+data/chatbot_cache/

@@ -3,7 +3,8 @@
 This repo contains a small Python helper (`smart_nicosia_api.py`) for querying the
 Nokia Smart Nicosia API and saving example payloads for offline analysis. It also has a
 data collector (below) and a digital-twin chatbot.
-See [docs/digital-twin-research.md](docs/digital-twin-research.md) for the research and plan.
+See [docs/digital-twin-research.md](docs/digital-twin-research.md) for the research and plan, and
+[docs/digital-twin-roadmap.md](docs/digital-twin-roadmap.md) for the order the full twin is being built in.
 
 ## Chatbot: Nicosia digital twin
 
