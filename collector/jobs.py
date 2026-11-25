@@ -111,6 +111,10 @@ class Job:
     def store(self, con: duckdb.DuckDBPyConnection, fetched: Fetched, ctx: Context) -> Stored:
         raise NotImplementedError
 
+    def coverage(self, fetched: Fetched, ctx: Context) -> list[db.Span]:
+        """The stretches of complete readings this run stored (see db.add_coverage)."""
+        return []
+
     def requests_per_run(self, counts: dict[str, int], cfg: Config) -> float:
         return 1.0
 
@@ -242,6 +246,10 @@ class LatestJob(Job):
         written = db.store_telemetry(con, rows, "latest", types)
         return Stored(written, f"{len(fetched.data)} devices polled, {written} new readings")
 
+    def coverage(self, fetched, ctx):
+        # A snapshot: every device's latest readings at this moment.
+        return [(self.device_type, "", "collector", ctx.now_ms, ctx.now_ms)] if fetched.data else []
+
     def requests_per_run(self, counts, cfg):
         return float(counts.get(self.device_type, 0))
 
@@ -256,6 +264,8 @@ class StreamJob(Job):
     every parking, lamp and bin change for a few hundred requests a day."""
 
     name = "stream"
+    # Device types whose messages the TENANT series mirrors (status, level, state, connection).
+    covered_types = ("Parking", "Lighting", "Wastebin", "InfoPoints", "Camera")
     overlap = timedelta(minutes=10)
     first_lookback = timedelta(minutes=30)
 
@@ -274,6 +284,7 @@ class StreamJob(Job):
         records: list[dict] = []
         pages = 0
         last_len = 0
+        plan = {**plan, "start": start}
         for page in client.range_pages(
             "TENANT", cfg.tenant, cfg.stream_keys, start, ctx.now_ms,
             max_pages=cfg.stream_max_pages,
@@ -296,6 +307,16 @@ class StreamJob(Job):
         if d["truncated"]:
             msg += "; GAP: hit stream_max_pages before reaching the previous watermark"
         return Stored(written, msg)
+
+    def coverage(self, fetched, ctx):
+        d = fetched.data or {}
+        if fetched.errors or not d.get("pages"):
+            return []
+        # Paging runs backwards from now, so a truncated run holds only its newest records.
+        start = d["start"]
+        if d["truncated"] and d["records"]:
+            start = min(int(r["timestamp"]) for r in d["records"])
+        return [(t, "", "collector", start, ctx.now_ms) for t in self.covered_types]
 
     def requests_per_run(self, counts, cfg):
         return 1.3  # one page usually; two when a poll window spans >1,000 records

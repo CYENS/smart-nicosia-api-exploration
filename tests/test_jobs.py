@@ -245,3 +245,15 @@ def test_is_due_slack():
     every = timedelta(minutes=5)
     assert scheduler.is_due(every, NOW, NOW, NOW + timedelta(minutes=4, seconds=31))
     assert not scheduler.is_due(every, NOW, NOW, NOW + timedelta(minutes=4))
+
+
+def test_a_pass_records_what_the_store_now_covers(cfg, client, city):
+    run(cfg, client)
+    rows = dict(((t, d, s), (a, b)) for t, d, s, a, b in q(
+        cfg, "SELECT device_type, device, source, start_ts, end_ts FROM coverage"))
+    # The stream covers every device message from its window's start; latest jobs are points.
+    first_window = NOW - JOBS["stream"].first_lookback
+    for device_type in ("Parking", "Wastebin", "Camera", "InfoPoints", "Lighting"):
+        start, end = rows[(device_type, "", "collector")]
+        assert start <= first_window + timedelta(seconds=1) and end == NOW
+    assert rows[("smartsense", "", "collector")] == (NOW, NOW)
