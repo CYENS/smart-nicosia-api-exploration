@@ -9,8 +9,9 @@
    while comparing with a photo. */
 import maplibregl, { type Map as MlMap } from "maplibre-gl"
 
-import { comparePhoto, useClock, type Photo } from "@/lib/clock"
-import { getMap, swipeX } from "@/lib/map/engine"
+import { comparePhoto, setCompare, setExpanded, useClock, type Photo } from "@/lib/clock"
+import { flyToThing, getMap, setCity3d, swipeX } from "@/lib/map/engine"
+import { setGround } from "@/lib/map/ground"
 import { EXAGGERATION, TERRAIN_SOURCE, TERRAIN_TILES } from "@/lib/map/terrain"
 import { registerActiveSources } from "@/lib/sources"
 
@@ -134,4 +135,16 @@ export function startPastPhoto() {
     last = now
   })
   sync()
+}
+
+// From the assistant's show_aerial_photo: the 2019 photo on the ground, a past photo in the
+// compare swipe, or the base map back. With `fly`, the map goes there first.
+type PhotoCommand = { ground?: "photo" | "map"; compare?: Photo | "off"; city_3d?: boolean; fly?: { lat: number; lon: number } }
+
+export function applyPhotoCommand(ev: PhotoCommand) {
+  if (ev.fly) flyToThing([ev.fly.lon, ev.fly.lat], ev.city_3d ? "building_3d" : undefined)
+  if (ev.city_3d) setCity3d(true)
+  if (ev.ground) setGround(ev.ground)
+  if (ev.compare === "off") { if (comparePhoto()) setCompare(null) }
+  else if (ev.compare) { setCompare({ photo: ev.compare }); setExpanded(true) }
 }

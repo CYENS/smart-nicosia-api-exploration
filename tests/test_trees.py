@@ -127,3 +127,51 @@ def test_the_route_serves_compact_rows_or_says_it_is_loading(tmp_path):
     lon, lat, h, r, kind, leaf = body["trees"][0]
     assert KINDS[kind] in KINDS and LEAVES[leaf] in LEAVES and h > 0 and r > 0
     assert asgi_get(app, "/api/trees/15/1/1")[0] == 404
+
+
+# -- the chat tools (chatbot/tools/city3d.py) --------------------------------------------------------
+
+def tool_ctx(tmp_path, events):
+    from chatbot.store import SessionStore
+    from chatbot.tools.base import ToolContext
+
+    t = Trees(Settings(), cache_dir=tmp_path, fetch=lambda q: OSM)
+    return ToolContext(Settings(), None, None, None, SessionStore(), events.append, "c1", trees=t), t
+
+
+def test_find_trees_answers_with_a_layer_and_counts_mapped_apart(tmp_path):
+    from chatbot.tools import run_tool
+
+    events = []
+    ctx, t = tool_ctx(tmp_path, events)
+    res, err = run_tool(ctx, "find_trees", {"near_lat": 35.17, "near_lon": 33.36})
+    assert err and "still being read" in res["error"]  # never a made-up answer while loading
+    t.refresh_if_needed()
+    first = next(x for x in t.trees if x["kind"] == "park")
+    res, err = run_tool(ctx, "find_trees", {"near_lat": first["lat"], "near_lon": first["lon"], "radius_m": 200})
+    assert not err and res["trees"] >= 1 and res["estimated"] >= 1
+    assert res["mapped"] + res["estimated"] == res["trees"]
+    layer = ctx.store.layers[res["layer_ref"]]
+    assert layer["meta"]["sources"] == ["openstreetmap"] and layer["meta"]["value_fields"] == ["height_m", "crown_m"]
+    rows = ctx.store.datasets[res["data_ref"]]["rows"]
+    assert {r["id"] for r in rows} == {f["properties"]["id"] for f in layer["features"]}
+    assert all(r["estimated"] == (r["kind"] in ("park", "wood", "orchard")) for r in rows)
+    mapped_only, _ = run_tool(ctx, "find_trees", {"near_lat": first["lat"], "near_lon": first["lon"],
+                                                  "radius_m": 200, "mapped_only": True})
+    assert mapped_only["estimated"] == 0
+
+
+def test_show_aerial_photo_tells_the_page(tmp_path):
+    from chatbot.tools import run_tool
+
+    events = []
+    ctx, _ = tool_ctx(tmp_path, events)
+    res, err = run_tool(ctx, "show_aerial_photo", {"photo": "1963", "near_lat": 35.1745, "near_lon": 33.3635})
+    assert not err and res["photo"] == "1963"
+    assert events[-1] == {"type": "ui", "action": "photo", "compare": "1963", "city_3d": False,
+                          "fly": {"lat": 35.1745, "lon": 33.3635, "zoom": 16}}
+    run_tool(ctx, "show_aerial_photo", {"photo": "2019"})
+    assert events[-1] == {"type": "ui", "action": "photo", "ground": "photo", "city_3d": True}
+    run_tool(ctx, "show_aerial_photo", {"photo": "map"})
+    assert events[-1] == {"type": "ui", "action": "photo", "ground": "map", "compare": "off"}
+    assert run_tool(ctx, "show_aerial_photo", {"photo": "1850"})[1]  # not a photo DLS has

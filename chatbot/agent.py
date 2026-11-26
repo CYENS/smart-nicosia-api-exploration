@@ -240,7 +240,7 @@ class Agent:
                                entities=self.entities, moments=self.moments,
                                mobility=self.mobility, web_places=self.web_places,
                                watcher=self.watcher, environment=self.environment,
-                               terrain=self.terrain)
+                               terrain=self.terrain, trees=self.trees)
         conv.messages.append({"role": "user", "content": [
             {"type": "text", "text": format_context(context, self.city.now()) + text}]})
 

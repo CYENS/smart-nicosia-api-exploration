@@ -87,10 +87,11 @@ SOURCES: tuple[Source, ...] = (
         credit="Radar: RainViewer"),
     Source(
         "openstreetmap", "OpenStreetMap", "OpenStreetMap", "OpenStreetMap contributors",
-        "Streets, places and their opening hours, and the data under the base map",
+        "Streets, places and their opening hours, the trees of the 3D city, and the data under "
+        "the base map",
         "Map, places and routes", url="https://www.openstreetmap.org/copyright",
         licence=ODBL, licence_url="https://opendatacommons.org/licenses/odbl/",
-        refresh="The places index is rebuilt weekly"),
+        refresh="The places index is rebuilt weekly, the trees monthly"),
     Source(
         "overture", "Overture Maps places", "Overture Maps", "Overture Maps Foundation, from Meta, "
         "Microsoft, Foursquare, AllThePlaces and others",
@@ -197,6 +198,8 @@ TOOL_SOURCES: dict[str, tuple[str, ...]] = {
     "environment_surface": ("smart_nicosia", "open_meteo"),
     "find_high_places": ("terrain_tiles", "openstreetmap", "dls", "geocoding"),
     "view_from": ("terrain_tiles", "dls", "openstreetmap", "twin_memory"),
+    "find_trees": ("openstreetmap",),
+    "show_aerial_photo": ("dls_imagery",),
 }
 
 _tool: ContextVar[str | None] = ContextVar("source_tool", default=None)
