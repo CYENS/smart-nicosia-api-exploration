@@ -322,11 +322,13 @@ def h_show_chart(ctx: ToolContext, a: dict) -> dict:
         return spec, None
 
     rows = link = time_field = None
+    data_sources: list[str] = []
     if has_ref:
         ds = ctx.store.datasets.get(a["data_ref"])
         if ds is None:
             raise ToolError(f"unknown data_ref {a['data_ref']!r}; known: {list(ctx.store.datasets)[-10:]}")
         rows = ds["rows"]
+        data_sources = ds.get("sources") or []
         color_states(spec, rows)
         keep_real_hours(spec, rows)
         if ds.get("link") and rows and ds["link"]["key"] in rows[0]:
@@ -339,7 +341,7 @@ def h_show_chart(ctx: ToolContext, a: dict) -> dict:
     elif "data" not in spec and "datasets" not in spec:
         raise ToolError("pass a data_ref (preferred) or include data in the spec")
     ctx.emit({"type": "ui", "action": "chart", "title": a["title"], "spec": spec, "link": link,
-              "time_field": time_field, "scrub": has_scrubber(spec)})
+              "time_field": time_field, "scrub": has_scrubber(spec), "sources": data_sources})
     return {"ok": True, "rows_plotted": len(rows) if rows is not None else None,
             "linked_to_map": bool(link or time_field), "_summary": f"chart: {a['title']}"}
 
@@ -374,22 +376,25 @@ def h_show_chart(ctx: ToolContext, a: dict) -> dict:
                                     "on the stage, HEIGHT is the space it actually has."},
       }, ["title", "code"]))
 def h_show_visual(ctx: ToolContext, a: dict) -> dict:
-    data, layers = {}, {}
+    data, layers, used = {}, {}, []
     for ref in a.get("data_refs") or []:
         if ref not in ctx.store.datasets:
             raise ToolError(f"unknown data_ref {ref!r}; known: {list(ctx.store.datasets)[-10:]}")
         data[ref] = ctx.store.datasets[ref]["rows"]
+        used += ctx.store.datasets[ref].get("sources") or []
     for ref in a.get("layer_refs") or []:
         if ref not in ctx.store.layers:
             raise ToolError(f"unknown layer_ref {ref!r}; known: {list(ctx.store.layers)[-10:]}")
         layers[ref] = {k: v for k, v in ctx.store.layers[ref].items() if k != "meta"}
+        used += ctx.store.layers[ref]["meta"].get("sources") or []
     size = len(json.dumps(data, default=str)) + len(json.dumps(layers, default=str))
     if size > MAX_VISUAL_DATA_CHARS:
         raise ToolError(f"the data is too big for a visual ({size:,} characters); pass fewer refs")
     libraries = a.get("libraries") or []
     ctx.emit({"type": "ui", "action": "visual", "title": a["title"], "code": a["code"],
               "libraries": libraries, "height": a.get("height") or 380, "data": data,
-              "data_order": list(data), "layers": layers, "colors": STATE_COLORS})
+              "data_order": list(data), "layers": layers, "colors": STATE_COLORS,
+              "sources": list(dict.fromkeys(used))})
     return {"ok": True, "libraries": libraries, "rows": {k: len(v) for k, v in data.items()},
             "note": "rendered in the sandbox; any runtime error shows in the next <context>",
             "_summary": f"visual: {a['title']}"}

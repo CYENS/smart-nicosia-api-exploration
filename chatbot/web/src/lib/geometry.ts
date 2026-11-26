@@ -65,7 +65,8 @@ export function useGeometry() {
   const right = wide ? sideColumn : GAP
   const stageH = desktop ? Math.round(Math.min(440, Math.max(280, vh * 0.4))) : Math.round(mapH * 0.4)
   const sheetH = Math.round(mapH * 0.52)
-  const chatBottom = !desktop && (chatOpen || sheet) ? (sheet ? sheetH : Math.round(mapH * 0.56)) + 8 : 0
+  // A phone's conversation is 56% of the whole page (chat-panel.tsx), not of the map under the strip.
+  const chatBottom = !desktop && (chatOpen || sheet) ? (sheet ? sheetH : Math.round(vh * 0.56)) + 8 : 0
   return {
     desktop,
     vw,

@@ -52,6 +52,7 @@ def h_show_on_map(ctx: ToolContext, a: dict) -> dict:
         "value_field": vf, "title": a.get("title") or meta["title"],
         "fit": a.get("fit", True), "labels": a.get("labels", meta["count"] <= 20),
         "legend": meta["legend"], "count": meta["count"], "timeseries": bool(meta["frames"]),
+        "sources": meta.get("sources", []),
     }})
     res = {"ok": True, "shown": ref, "features": meta["count"], "_summary": f"map: {ref}"}
     if meta["frames"]:

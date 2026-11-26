@@ -82,6 +82,11 @@ class Fleet:
         self._along: dict[str, tuple[str, float]] = {}  # vehicle -> (trip id, metres along)
         self.fetches = 0
 
+    @property
+    def last(self) -> Snapshot | None:
+        """The latest snapshot, without fetching (None before the first)."""
+        return self._snap
+
     def snapshot(self) -> Snapshot:
         now = self.now().timestamp()
         snap = self._snap

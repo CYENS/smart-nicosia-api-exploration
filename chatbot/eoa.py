@@ -460,6 +460,11 @@ class Registry:
         return self._linked
 
     @property
+    def fetched_at(self) -> float:
+        """When the registers were last read (epoch seconds; 0 before the first)."""
+        return self._fetched_at
+
+    @property
     def sources(self) -> dict[str, dict]:
         return self._sources
 

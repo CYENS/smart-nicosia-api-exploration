@@ -10,6 +10,7 @@ import { WallsMark } from "@/components/walls-mark"
 import { send, useChat } from "@/lib/chat"
 import { compareAt, compareName, fmtMoment, focusClock, goLive, useClock } from "@/lib/clock"
 import { nicosiaTime } from "@/lib/map/engine"
+import { shortName, useSources } from "@/lib/sources"
 import { moonName, skyAt } from "@/lib/map/sky"
 import { cn } from "@/lib/utils"
 
@@ -69,10 +70,28 @@ function useFitting(ref: React.RefObject<HTMLDivElement | null>, deps: unknown[]
   return hidden
 }
 
-function Readout({ id, hidden, label, question, note, loading, children }: {
-  id: string; hidden: string[]; label: string; question: string; note?: string | null; loading: boolean; children: ReactNode
+// Where each readout comes from (lib/sources.ts); at a past moment, through the twin's memory.
+const READOUT_SOURCES: Record<string, string[]> = {
+  lights: ["smart_nicosia"], parking: ["smart_nicosia"], bins: ["smart_nicosia"], air: ["smart_nicosia"],
+  weather: ["open_meteo"], registers: ["registers"], buses: ["bus_live"], roads: ["road_speeds"],
+}
+const REPLAYED = new Set(["lights", "parking", "bins", "air", "roads"])
+
+function fromLine(ids: string[], list: Parameters<typeof shortName>[1]) {
+  const names = ids.map((id) => shortName(id, list))
+  const text = names.length > 1 ? `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}` : names[0]
+  return `From ${text}`
+}
+
+function Readout({ id, hidden, label, question, note, loading, past, children }: {
+  id: string; hidden: string[]; label: string; question: string; note?: string | null; loading: boolean; past?: boolean; children: ReactNode
 }) {
   const busy = useChat((s) => s.busy)
+  const sources = useSources((s) => s.list)
+  const from = READOUT_SOURCES[id]
+  // At a past moment the sensors and roads replay from the memory; weather is Open-Meteo's
+  // modelled hour, and buses and registers have no past.
+  const fromIds = from && past && REPLAYED.has(id) ? [...from, "twin_memory"] : from
   return (
     <Tooltip>
       <TooltipTrigger
@@ -92,9 +111,10 @@ function Readout({ id, hidden, label, question, note, loading, children }: {
           <span className="font-readout text-[19px] leading-none font-semibold">{children}</span>
         )}
       </TooltipTrigger>
-      <TooltipContent side="bottom">
-        {note && <span className="block">{note.replace(/^./, (c) => c.toUpperCase())}.</span>}
-        {question}
+      <TooltipContent side="bottom" className="flex-col items-start gap-0.5">
+        {note && <span>{note.replace(/^./, (c) => c.toUpperCase())}.</span>}
+        <span>{question}</span>
+        {fromIds && <span className="text-background/70">{fromLine(fromIds, sources)}</span>}
       </TooltipContent>
     </Tooltip>
   )
@@ -204,47 +224,47 @@ export function StatusStrip() {
 
       <div ref={readouts} className="flex min-w-0 flex-1 items-stretch overflow-hidden" aria-busy={loading}>
         {(loading || d.lights) && (
-          <Readout id="lights" hidden={hidden} label="Lamps lit" question={ask("Which street lights are on right now?", "Which street lights were on")} note={reason(d.lights)} loading={loading}>
+          <Readout id="lights" hidden={hidden} past={past} label="Lamps lit" question={ask("Which street lights are on right now?", "Which street lights were on")} note={reason(d.lights)} loading={loading}>
             {d.lights?.unknown ? <NoRecord /> : <><span className="text-sodium">{d.lights?.on?.toLocaleString()}</span> <Of>of {d.lights?.total?.toLocaleString()}</Of></>}
             <Then when={when}>{t.lights?.unknown ? "no record" : t.lights?.on?.toLocaleString()}</Then>
           </Readout>
         )}
         {(loading || d.parking) && (
-          <Readout id="parking" hidden={hidden} label="Free parking" question={ask("Where can I park right now? Show the free spaces on the map", "Where were the free parking spaces")} note={reason(d.parking)} loading={loading}>
+          <Readout id="parking" hidden={hidden} past={past} label="Free parking" question={ask("Where can I park right now? Show the free spaces on the map", "Where were the free parking spaces")} note={reason(d.parking)} loading={loading}>
             {d.parking?.unknown ? <NoRecord /> : <>{d.parking?.free?.toLocaleString()} <Of>of {d.parking?.total?.toLocaleString()}</Of></>}
             <Then when={when}>{t.parking?.unknown ? "no record" : t.parking?.free?.toLocaleString()}</Then>
           </Readout>
         )}
         {(loading || d.bins) && (
-          <Readout id="bins" hidden={hidden} label="Full bins" question={ask("Which bins are full? Show them in 3D", "Which bins were full")} note={reason(d.bins)} loading={loading}>
+          <Readout id="bins" hidden={hidden} past={past} label="Full bins" question={ask("Which bins are full? Show them in 3D", "Which bins were full")} note={reason(d.bins)} loading={loading}>
             {d.bins?.unknown ? <NoRecord /> : <><span className={cn(d.bins?.full ? "text-signal" : "")}>{d.bins?.full?.toLocaleString()}</span> <Of>of {d.bins?.total?.toLocaleString()}</Of></>}
             <Then when={when}>{t.bins?.unknown ? "no record" : t.bins?.full?.toLocaleString()}</Then>
           </Readout>
         )}
         {(loading || d.air) && (
-          <Readout id="air" hidden={hidden} label="Air" question={ask("How are air quality and noise across the city?", "How were air quality and noise across the city")} note={reason(d.air)} loading={loading}>
+          <Readout id="air" hidden={hidden} past={past} label="Air" question={ask("How are air quality and noise across the city?", "How were air quality and noise across the city")} note={reason(d.air)} loading={loading}>
             {d.air?.unknown ? <NoRecord /> : <>{AIR_WORDS[d.air?.band ?? ""] ?? "Unknown"} <Of>CAQI {d.air?.caqi}</Of></>}
             <Then when={when}>{t.air?.unknown ? "no record" : t.air?.caqi !== undefined ? `CAQI ${t.air.caqi}` : null}</Then>
           </Readout>
         )}
         {(loading || d.weather) && (
-          <Readout id="weather" hidden={hidden} label={d.weather ? d.weather.sky.replace(/^./, (c) => c.toUpperCase()) : "Weather"} question={ask("Is it a good time for a walk around the old town?", "What was the weather like")} loading={loading}>
+          <Readout id="weather" hidden={hidden} past={past} label={d.weather ? d.weather.sky.replace(/^./, (c) => c.toUpperCase()) : "Weather"} question={ask("Is it a good time for a walk around the old town?", "What was the weather like")} loading={loading}>
             {d.weather ? Math.round(d.weather.temp_c) : ""}<Of>°C</Of>
             <Then when={when && t.weather ? when : null}>{t.weather ? `${Math.round(t.weather.temp_c)}°C` : null}</Then>
           </Readout>
         )}
         {d.registers && (
-          <Readout id="registers" hidden={hidden} label="Dangerous buildings" question="Show the dangerous buildings in the old town in 3D" loading={false}>
+          <Readout id="registers" hidden={hidden} past={past} label="Dangerous buildings" question="Show the dangerous buildings in the old town in 3D" loading={false}>
             <span className="text-signal">{d.registers.buildings.toLocaleString()}</span> <Of>on the registers</Of>
           </Readout>
         )}
         {d.buses && (
-          <Readout id="buses" hidden={hidden} label="Buses running" question="Where are the buses right now?" loading={false}>
+          <Readout id="buses" hidden={hidden} past={past} label="Buses running" question="Where are the buses right now?" loading={false}>
             <span className="text-sodium">{d.buses.running.toLocaleString()}</span> <Of>on {d.buses.lines ?? 0} lines</Of>
           </Readout>
         )}
         {d.slowest_road && (
-          <Readout id="roads" hidden={hidden} label="Slowest road" question="Which roads are slow right now?" loading={false}>
+          <Readout id="roads" hidden={hidden} past={past} label="Slowest road" question="Which roads are slow right now?" loading={false}>
             <span className="inline-block max-w-[11rem] truncate align-bottom">{d.slowest_road.name}</span>{" "}
             <Of>{Math.round(d.slowest_road.speed_kmh)} km/h</Of>
           </Readout>

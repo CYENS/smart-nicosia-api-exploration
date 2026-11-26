@@ -1,7 +1,7 @@
 /* The search menu's built-in providers: things opened lately, everything in the twin (from the
    server's caches), commands, and the prepared questions. */
 import {
-  Building2Icon, CopyIcon, KeyboardIcon, LayersIcon, LocateFixedIcon, MessageSquareTextIcon, MoonIcon,
+  Building2Icon, CopyIcon, DatabaseIcon, KeyboardIcon, LayersIcon, LocateFixedIcon, MessageSquareTextIcon, MoonIcon,
   RotateCcwIcon, ShieldAlertIcon, SunIcon, SunMoonIcon, XIcon,
 } from "lucide-react"
 
@@ -14,6 +14,7 @@ import {
   flyToBounds, locateMe, resetView, setBasemapMode, setCity3d, showRegisters, useMapUi,
 } from "@/lib/map/engine"
 import { QUESTION_GROUPS } from "@/lib/questions"
+import { openSources } from "@/lib/sources"
 import { matches, registerSearchProvider, type SearchItem } from "@/lib/registries/search"
 
 registerSearchProvider({
@@ -89,6 +90,11 @@ function commands(): SearchItem[] {
       run: () => { void navigator.clipboard?.writeText(linkToView()).catch(() => {}) }, words: "share url",
     },
     { key: "cmd:new", icon: RotateCcwIcon, title: "Start a new chat", detail: "Clears the map and the stage", run: newChat, words: "reset conversation" },
+    {
+      key: "cmd:sources", icon: DatabaseIcon, title: "Where the data comes from",
+      detail: "Every source, its publisher, licence and how fresh it is",
+      run: () => openSources(null, searchOpenerElement()), words: "data sources attribution credits licence license publisher about",
+    },
     { key: "cmd:keys", icon: KeyboardIcon, title: "Keyboard shortcuts", run: () => useLayout.setState({ shortcutsOpen: true }), words: "keys help" },
   ]
   if (inspecting) list.unshift({ key: "cmd:close", icon: XIcon, title: "Close the inspector", run: closeInspector })

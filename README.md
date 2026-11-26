@@ -85,6 +85,12 @@ It also has:
   then "me" and "here" work in any question.
   Walking routes report the register buildings they pass, and can avoid them: the map shows the
   safer route beside the usual one, with the buildings marked.
+- **Where the data comes from.** Every source the twin reads is named quietly where its data
+  appears: a "From ..." line under each layer in the map panel and under each chart, the
+  source in each strip readout's tooltip, the map's credits for what it draws now, and the
+  inspector's "Where this comes from". Each of them, the conversation's "Data sources" link and
+  "Where the data comes from" in Ctrl K open one panel: every source with its publisher,
+  licence, what it gives the twin, how fresh its feed is, and a link to read more.
 
 ### Run it
 
@@ -131,6 +137,13 @@ To record the three minute showcase video of a running copy (captioned, on live 
     asks the city's API for that one device only.
   - **Data tools** return compact JSON. They store big results (map GeoJSON, chart rows) in the
     session and pass Claude a `layer_ref` or `data_ref`.
+  - **Sources.** [chatbot/sources.py](chatbot/sources.py) lists every source the twin reads
+    (publisher, licence, link, what it gives, how often it is read, a short map credit), and
+    `TOOL_SOURCES` says which sources each tool reads. `run_tool` runs each handler inside
+    `sources.during(tool)`, so every layer and dataset it stores carries those sources (a
+    handler can pass `sources=` itself), and `show_on_map`, `show_chart` and `show_visual` send
+    them to the page. `/api/sources` serves the list with how fresh each live feed is, read
+    from what the twin already fetched (it never asks a source).
   - **Map and chart tools** push commands to the browser. The server fills each chart from a
     `data_ref` and validates the spec against the Vega-Lite schema, so every number comes from
     a tool.

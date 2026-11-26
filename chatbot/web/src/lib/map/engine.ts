@@ -32,6 +32,7 @@ export type LayerSpec = {
   ref: string; url?: string; style: string; title: string; count: number
   legend?: Record<string, string>; value_field?: string | null; fit?: boolean; labels?: boolean
   askedAt?: number
+  sources?: string[] // where its data comes from (lib/sources.ts)
 }
 type Entry = {
   spec: LayerSpec; data: FC; ids: string[]; stats: Stats | null; half?: number
@@ -92,6 +93,7 @@ export type LayerSummary = {
   ref: string; title: string; count: number; style: string
   legend: Record<string, string>; stats: Stats | null; valueField: string | null
   street: { name: string; follows: string | null } | null // `follows`: the total its glow tracks
+  sources: string[] // where its data comes from (lib/sources.ts)
 }
 // What a time-lapse layer reads at the clock's moment, e.g. "2,716 people" (null outside it).
 export type ReplayUi = { ref: string; title: string; frame: number | null; frames: number; reading: string | null }
@@ -200,7 +202,7 @@ export function initMap(container: HTMLElement, camera?: Camera | null) {
     container,
     ...(camera ?? HOME),
     maxPitch: 75,
-    attributionControl: { compact: true },
+    attributionControl: false, // lib/map/credits.ts adds it, with the sources of what is drawn
   })
   // A click opens what is under it in the inspector. The box around the pointer catches the
   // small dots (a lamp is a few pixels across); what lies right under the pointer wins.
@@ -1016,6 +1018,7 @@ function publishLayers() {
         ref: spec.ref, title: spec.title, count: spec.count, style: spec.style,
         legend: entry.legendNow ?? spec.legend ?? {}, stats, valueField: spec.value_field ?? null,
         street: data.street ? { name: data.street.name, follows: totalsOf(entry)?.field ?? null } : null,
+        sources: spec.sources ?? [],
       }
     }),
   })
