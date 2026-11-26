@@ -29,8 +29,8 @@ your spot on the map, after which the answer comes by itself; Stop ends an answe
 markdown. Charts and custom visuals land on
 the stage, with a filmstrip of earlier ones. For everything else, the Layers button opens one
 sheet: the base map and the 3D view, the city's systems in three groups (sensors, buildings,
-alerts) with a switch and a live summary each, the workspaces (Live and Mobility, also on Alt and
-a number and in Ctrl K), what the answers drew with their legends, and your position. Search
+alerts, plus the environment) with a switch and a live summary each, the workspaces (Live,
+Mobility and Environment, also on Alt and a number and in Ctrl K), what the answers drew with their legends, and your position. Search
 everything with Ctrl K; press ? for the keyboard shortcuts.
 
 It also has:
@@ -46,6 +46,14 @@ It also has:
 - **Search everything** from Ctrl K (Cmd K): devices by id, name or street, register buildings
   by address or file number, places, streets, commands (the 3D city, the base map, the
   registers, locate me) and the prepared questions.
+- **The environment.** Terrain lit by the sun, the shadows of every DLS 3D building at the
+  clock's moment, the hours of direct sun of a square on any date, air, noise and temperature
+  as surfaces that fade where no station is near, the wind as moving streaks (still arrows with
+  reduced motion) and the rain radar: in the Layers sheet's Environment group, on the Outside
+  card, and in the Environment workspace (Alt 3). "What's it like here?" opens any point in the
+  inspector: sun or shade, its hours of sun that day, the air and noise with how sure they are,
+  the temperature and the wind. Walks can keep to the shade at the time of the walk. See
+  [docs/environment-twin.md](docs/environment-twin.md).
 - **Links to a view.** The address keeps the camera and the open thing
   (`#/e/YL1015/@35.16680,33.36082,17z`), so a view can be shared and survives a reload.
 
