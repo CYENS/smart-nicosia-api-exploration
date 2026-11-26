@@ -1,18 +1,19 @@
-import { CheckIcon, ChevronRightIcon, XIcon } from "lucide-react"
+import { CheckIcon, ChevronRightIcon, MinusIcon, XIcon } from "lucide-react"
 
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
-import { toolLabel, type TraceItem } from "@/lib/chat"
+import { toolLabel, type StepStatus, type TraceItem } from "@/lib/chat"
 import { cn } from "@/lib/utils"
 
 export function seconds(ms: number) {
   return ms < 1000 ? `${Math.max(0.1, Math.round(ms / 100) / 10).toFixed(1)} s` : `${(ms / 1000).toFixed(1)} s`
 }
 
-function StepIcon({ status }: { status: "running" | "ok" | "bad" }) {
+function StepIcon({ status }: { status: StepStatus }) {
   if (status === "running") {
     return <span className="live-dot mx-[3px] size-2 rounded-full bg-sodium" aria-label="Running" />
   }
   if (status === "bad") return <XIcon className="size-3.5 text-signal" aria-label="Failed" />
+  if (status === "stopped") return <MinusIcon className="size-3.5 text-muted-foreground" aria-label="Stopped" />
   return <CheckIcon className="size-3.5 text-muted-foreground" aria-label="Done" />
 }
 
