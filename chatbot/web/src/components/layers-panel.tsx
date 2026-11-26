@@ -5,6 +5,7 @@ import {
 import { useMemo } from "react"
 
 import { MobilitySwitches } from "@/components/mobility/switches"
+import { FromSources } from "@/components/sources/from-sources"
 import { Button } from "@/components/ui/button"
 import { Field, FieldContent, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Separator } from "@/components/ui/separator"
@@ -238,6 +239,7 @@ export function LayersPanel() {
               {layers.map((l) => (
                 <LayerRow key={l.ref} title={l.title} count={l.count} removeLabel="Remove this layer" onRemove={() => removeLayer(l.ref)}>
                   <Keys layer={l} />
+                  <FromSources ids={l.sources} />
                   {l.style === "route" && (
                     <Button
                       variant="outline"
@@ -255,6 +257,7 @@ export function LayersPanel() {
               {city.on && (
                 <LayerRow title="3D city (DLS)" removeLabel="Turn off the 3D city" onRemove={() => setCity3d(false)}>
                   <Ramp colors={stops} from="0 m" to="60 m+" what="height to roof" />
+                  <FromSources ids={["dls"]} />
                 </LayerRow>
               )}
             </ul>

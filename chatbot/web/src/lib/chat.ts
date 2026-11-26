@@ -154,7 +154,7 @@ function handleEvent(turnId: string, ev: any) {
         const item: StageItem = {
           id: nextId("v"), turnId, title: ev.title, kind: ev.action,
           ...(ev.action === "chart"
-            ? { chart: { title: ev.title, spec: ev.spec, link: ev.link, time_field: ev.time_field, scrub: ev.scrub } }
+            ? { chart: { title: ev.title, spec: ev.spec, link: ev.link, time_field: ev.time_field, scrub: ev.scrub, sources: ev.sources } }
             : { visual: ev as VisualPayload }),
         }
         useStage.setState((s) => ({ items: [...s.items, item], focusId: item.id, open: true }))

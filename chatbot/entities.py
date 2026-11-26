@@ -788,7 +788,7 @@ def build_device(ents: Entities, eid: str, near) -> dict | None:
         center=[device.lon, device.lat] if device.lat is not None else None,
         state=state_block(kind, i.state, stale=i.stale, reason=i.reason, as_of=i.as_of, now=now),
         readings=readings, attributes=attributes, relations=relations,
-        sources=[{"name": "Smart Nicosia platform", "detail": "latest telemetry and attributes",
+        sources=[{"source": "smart_nicosia", "name": "Smart Nicosia platform", "detail": "latest telemetry and attributes",
                   "url": SMART_NICOSIA, "as_of": _iso(i.as_of)},
                  {"name": "The twin's reading rules", "detail": i.reason}],
         as_of=_iso(i.as_of), has_series=device.type in SERIES or bool(feeds))
@@ -809,7 +809,7 @@ def feed_entity(ents: Entities, feed: dict) -> dict:
                     attr("Position", {"device": "from the camera device", "manual": "placed by hand"}
                          .get(feed.get("location_source") or "", None))],
         relations=relations,
-        sources=[{"name": "Smart Nicosia video analytics", "url": SMART_NICOSIA}],
+        sources=[{"source": "smart_nicosia", "name": "Smart Nicosia video analytics", "url": SMART_NICOSIA}],
         has_series=True)
     e["_feeds"] = [feed]
     return e
@@ -875,7 +875,7 @@ def build_register(ents: Entities, eid: str, near) -> dict | None:
         relations += ents.nearest_devices(spot[1], spot[0], max_m=400)
     footprints = [{"geometry": fp["geometry"], "height_m": fp["height_m"]}
                   for fp in r.get("footprints") or []]
-    sources = [{"name": eoa.EOAS[r["eoa"]]["name"], "detail": {"live": "live copy", "cached": "saved copy",
+    sources = [{"source": "registers", "name": eoa.EOAS[r["eoa"]]["name"], "detail": {"live": "live copy", "cached": "saved copy",
                                                              "seed": "copy shipped with the app"}
                 .get(src.get("copy") or "", None), "url": eoa.EOAS[r["eoa"]]["page"],
                 "as_of": src.get("as_of")}]
@@ -932,7 +932,7 @@ def build_building(ents: Entities, eid: str, near) -> dict | None:
         readings=readings,
         attributes=[attr("Use", p.get("t")), attr("Roof", p.get("r")), attr("DLS id", oid)],
         relations=relations,
-        sources=[{"name": "DLS 3D buildings (INSPIRE BU3)", "detail": "Department of Lands and Surveys",
+        sources=[{"source": "dls", "name": "DLS 3D buildings (INSPIRE BU3)", "detail": "Department of Lands and Surveys",
                   "url": DLS_3D_URL}])
 
 
@@ -970,7 +970,7 @@ def build_place(ents: Entities, eid: str, near) -> dict | None:
         subtitle=" · ".join(x for x in (category, p.get("street")) if x),
         geometry=point_geom(p["lon"], p["lat"]), center=[p["lon"], p["lat"]],
         attributes=attributes, relations=relations,
-        sources=[{"name": "OpenStreetMap", "detail": "places index, refreshed weekly",
+        sources=[{"source": "openstreetmap", "name": "OpenStreetMap", "detail": "places index, refreshed weekly",
                   "url": f"https://www.openstreetmap.org/{OSM_TYPES.get(p['id'][0], 'node')}/{p['id'][1:]}",
                   "as_of": datetime.fromtimestamp(fetched, tz=timezone.utc).astimezone(TZ)
                   .strftime("%Y-%m-%d") if fetched else None}])
@@ -1084,7 +1084,7 @@ def at_moment(entity: dict, interp: Interpretation | None, known: bool, at: date
     e["attributes"] = [a for a in (
         attr(x["label"], then[x["label"]]) if x["label"] in then else x
         for x in entity["attributes"] if x["label"] not in live_only) if a]
-    e["sources"] = [{"name": "The twin's memory",
+    e["sources"] = [{"source": "twin_memory", "name": "The twin's memory",
                      "detail": f"readings up to {moment_label}" if known else
                      "no record of this moment", "as_of": _iso(interp.as_of)},
                     {"name": "The twin's reading rules", "detail": interp.reason},

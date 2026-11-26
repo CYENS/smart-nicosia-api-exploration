@@ -11,16 +11,11 @@ import {
   MessageScroller, MessageScrollerButton, MessageScrollerContent, MessageScrollerItem,
   MessageScrollerProvider, MessageScrollerViewport,
 } from "@/components/ui/message-scroller"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { newChat, useChat } from "@/lib/chat"
 import { useGeometry } from "@/lib/geometry"
 import { useLayout } from "@/lib/layout"
-
-const SOURCES = [
-  "Smart Nicosia city sensors", "OpenStreetMap", "Open-Meteo", "Valhalla routing",
-  "DLS Cyprus cadastre and 3D buildings", "The ΕΟΑ dangerous-building registers",
-]
+import { openSources } from "@/lib/sources"
 
 function useCredentialsMissing() {
   const [missing, setMissing] = useState(false)
@@ -113,14 +108,13 @@ export function ChatPanel() {
         <Composer />
         <p className="px-1 text-[12px] text-muted-foreground">
           Answers can be wrong, so check what matters.{" "}
-          <Popover>
-            <PopoverTrigger className="underline decoration-line underline-offset-3 hover:text-foreground">Sources</PopoverTrigger>
-            <PopoverContent side="top" align="start" className="w-72">
-              <ul className="flex flex-col gap-1 text-[13px]">
-                {SOURCES.map((s) => <li key={s}>{s}</li>)}
-              </ul>
-            </PopoverContent>
-          </Popover>
+          <button
+            type="button"
+            className="rounded-sm underline decoration-line underline-offset-3 outline-none hover:text-foreground focus-visible:text-foreground focus-visible:ring-2 focus-visible:ring-ring/60"
+            onClick={(e) => openSources(null, e.currentTarget)}
+          >
+            Data sources
+          </button>
         </p>
       </div>
     </aside>

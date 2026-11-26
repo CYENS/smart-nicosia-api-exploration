@@ -7,6 +7,7 @@ import { LayersPanel } from "@/components/layers-panel"
 import { Rail } from "@/components/rail"
 import { SearchMenu } from "@/components/search-menu"
 import { Shortcuts } from "@/components/shortcuts"
+import { SourcesPanel } from "@/components/sources/sources-panel"
 import { Stage } from "@/components/stage"
 import { StatusStrip } from "@/components/status-strip"
 import { CityClock } from "@/components/clock/city-clock"
@@ -15,6 +16,7 @@ import { TooltipProvider } from "@/components/ui/tooltip"
 import { startClock } from "@/lib/clock"
 import { parseHash, startDeepLinks } from "@/lib/deeplink"
 import { useGeometry } from "@/lib/geometry"
+import { startCredits } from "@/lib/map/credits"
 import { initMap, setInsets } from "@/lib/map/engine"
 import "@/lib/mobility" // buses, stops and road speeds: their workspace, kinds, layers and commands
 import { useWorkspace, useWorkspaceSide } from "@/lib/registries/workspaces"
@@ -41,6 +43,7 @@ export function App() {
     // A link brings back its camera and the thing it had open.
     const link = parseHash(location.hash)
     initMap(mapEl.current!, link.camera)
+    startCredits()
     startDeepLinks(link)
     startClock()
   }, [])
@@ -55,6 +58,7 @@ export function App() {
     "--inset-left": `${left}px`,
     "--inset-right": `${right}px`,
     "--inset-bottom": `${bottom}px`,
+    "--rail": `${g.rail}px`,
   } as CSSProperties
 
   return (
@@ -76,6 +80,7 @@ export function App() {
         <WorkspacePanels />
         <SearchMenu />
         <Shortcuts />
+        <SourcesPanel />
       </div>
     </TooltipProvider>
   )

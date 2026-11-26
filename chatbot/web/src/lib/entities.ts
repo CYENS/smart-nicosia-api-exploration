@@ -23,7 +23,10 @@ export type Relation = {
   relation: string; label: string; name?: string; id?: string; kind?: EntityKind
   distance_m?: number; state?: string; color?: string; detail?: string; lon?: number; lat?: number
 }
-export type Source = { name: string; detail?: string | null; url?: string | null; as_of?: string | null }
+export type Source = {
+  name: string; detail?: string | null; url?: string | null; as_of?: string | null
+  source?: string | null // its id in the data sources panel (lib/sources.ts)
+}
 export type Footprint = { geometry: GeoJSON.Geometry; height_m: number }
 
 export type SeriesPoint = { t: string; v: number | null; s?: string }

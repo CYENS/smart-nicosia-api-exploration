@@ -1,6 +1,7 @@
 import { ChartSplineIcon, ChevronDownIcon, Maximize2Icon, Minimize2Icon, ShapesIcon } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 
+import { FromSources } from "@/components/sources/from-sources"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
@@ -164,6 +165,10 @@ export function Stage() {
             ? <ChartView key={focused.id} chart={focused.chart!} size={size} />
             : <VisualView key={focused.id} visual={focused.visual!} size={size} />}
         </div>
+        <FromSources
+          ids={focused.kind === "chart" ? focused.chart?.sources : focused.visual?.sources}
+          className="shrink-0 truncate px-4 pb-2"
+        />
       </div>
       {items.length > 1 && <Filmstrip items={items} focusId={focused.id} />}
     </section>

@@ -268,6 +268,11 @@ class Roads:
 
     # -- live readings ---------------------------------------------------------------------
 
+    def last_live(self) -> tuple[float, str | None] | None:
+        """(fetched at, error) of the latest live reading, without fetching; None before it."""
+        hit = self._live
+        return (hit[0], hit[2]) if hit else None
+
     def live(self) -> tuple[float, dict[str, parse.TravelTimeRow], str | None]:
         """(fetched at, the latest reading per path id, error). One fetch every LIVE_TTL_S."""
         now = time.time()
