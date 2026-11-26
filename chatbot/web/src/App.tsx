@@ -18,6 +18,7 @@ import { Stage } from "@/components/stage"
 import { CityClock } from "@/components/clock/city-clock"
 import { CompareSwipe } from "@/components/clock/compare-swipe"
 import "@/components/topics/builtin" // Buses, Parking, Traffic and Outside
+import { Toaster } from "@/components/ui/sonner"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { startClock } from "@/lib/clock"
 import { parseHash, startDeepLinks } from "@/lib/deeplink"
@@ -26,6 +27,7 @@ import { useLayout } from "@/lib/layout"
 import { startCredits } from "@/lib/map/credits"
 import { initMap, setInsets } from "@/lib/map/engine"
 import "@/lib/mobility" // buses, stops and road speeds: their workspace, kinds, layers and commands
+import "@/lib/watch" // the incident inbox, its Layers row, marks on the clock, toasts from the live stream
 import { useWorkspace, useWorkspaceSide } from "@/lib/registries/workspaces"
 
 // The open workspace's own panels, over the map (Live has none of its own), and its side panel
@@ -95,6 +97,14 @@ export function App() {
         <Shortcuts />
         <SourcesPanel />
         <GlobalKeys />
+        {/* Toasts from the twin's watch: announced politely, Alt T puts the keyboard on them. */}
+        <Toaster
+          position="top-center"
+          offset={{ top: g.desktop ? 64 : g.belowClock + 4 }}
+          mobileOffset={{ top: g.belowClock + 4, left: 8, right: 8 }}
+          containerAriaLabel="Notifications"
+          visibleToasts={4}
+        />
       </div>
     </TooltipProvider>
   )
