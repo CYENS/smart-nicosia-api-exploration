@@ -2,22 +2,29 @@
 guessing, kept under a stable id, drawn as a layer, opened in the inspector and usable as a place
 in routes. The geocoders answer from answers captured on 26 Nov 2026 (no network)."""
 
+import json
+
 import pytest
 from conftest import load
 
 from chatbot import geo as geo_mod
 from chatbot.entities import Entities
-from chatbot.geo import Places
+from chatbot.geo import Places, haversine_m
 from chatbot.settings import Settings
 from chatbot.store import SessionStore
 from chatbot.tools import ToolContext, resolve_place, run_tool
 from chatbot.web import Throttle
 from chatbot.webplaces import (
+    PLACER,
     WebPlaces,
+    address_areas,
+    address_postcode,
     address_streets,
+    by_postcode,
     clean_url,
     respell,
     street_only,
+    streets_apart,
     web_id,
 )
 
@@ -178,3 +185,79 @@ def test_nothing_placed_means_no_layer(tmp_path, monkeypatch, geocoders):
     res, err = run_tool(ctx, "locate_web_places", {"places": [TOWN_ONLY]})
     assert not err and res["placed"] == 0 and "layer_ref" not in res
     assert res["not_placed"][0]["reason"] == "its address isn't on the map of Nicosia"
+
+
+# Greater Nicosia has three streets called Nikiforou Foka: the avenue by Famagusta Gate (1016 and
+# 1017), one in Pallouriotissa (1036) and one in Latsia (2236). OpenStreetMap names the avenue
+# only in Greek, so Nominatim's Latin search finds the other two; Photon finds all three.
+FAMAGUSTA_GATE = (35.1719, 33.3714)
+ITHAKI = {"name": "Ithaki", "address": "Nikiforou Foka 33, 1016 Nicosia",
+          "source_url": "https://www.travelgay.com/cyprus-gay-bars-clubs"}
+ITHAKI_NO_POSTCODE = {**ITHAKI, "address": "Nikiforou Foka 33, Nicosia"}
+
+
+def test_address_helpers_for_postcodes_areas_and_namesakes():
+    assert address_postcode("Nikiforou Foka 33, 1016 Nicosia") == "1016"
+    assert address_postcode("Emanuel Roidi 2, Strovolos, Nicosia 1095") == "1095"
+    assert address_postcode("Nikiforou Foka 33, Nicosia") is None
+    assert address_areas("Emanuel Roidi 2, Strovolos, Nicosia 1095") == ["Strovolos"]
+    assert address_areas("Nikiforou Foka 33, 1016 Nicosia") == []
+    hits = [{"lat": 35.1790, "lon": 33.3816, "postcode": "1036"},
+            {"lat": 35.1728, "lon": 33.3704, "address": "Λεωφόρος Νικηφόρου Φωκά, Nicosia, 1017"},
+            {"lat": 35.1710, "lon": 33.3690, "postcode": "1016"},
+            {"lat": 35.1122, "lon": 33.3683}]
+    assert by_postcode(hits, "1016") == [hits[2], hits[1]]  # the same postcode, then the next block
+    assert by_postcode(hits, "9999") == [hits[3]]  # only one that doesn't say its postcode
+    assert by_postcode(hits, None) == hits
+    assert [len(g) for g in streets_apart(hits)] == [1, 2, 1]
+
+
+def test_a_postcode_tells_streets_of_the_same_name_apart(tmp_path, monkeypatch, geocoders):
+    web = WebPlaces(make_places(tmp_path, monkeypatch), tmp_path / "web.json")
+    place, why = web.locate(ITHAKI, "Bars")
+    assert why is None
+    assert place["precision"] == "street" and "Φωκά" in place["matched"]
+    assert haversine_m(place["lat"], place["lon"], *FAMAGUSTA_GATE) < 400  # not Pallouriotissa
+
+
+def test_streets_of_the_same_name_with_nothing_to_tell_them_apart_are_not_guessed(
+        tmp_path, monkeypatch, geocoders):
+    web = WebPlaces(make_places(tmp_path, monkeypatch), tmp_path / "web.json")
+    place, why = web.locate(ITHAKI_NO_POSTCODE, "Bars")
+    assert place is None
+    assert "3 streets called Nikiforou Foka" in why and "postcode" in why
+    # A building called "Ithaki" in Strovolos is near none of them, so the name doesn't place it.
+
+
+def test_a_place_kept_by_the_old_placer_is_placed_again(tmp_path, monkeypatch, geocoders):
+    path = tmp_path / "web.json"
+    wrong = {"lat": 35.178977, "lon": 33.38162, "precision": "street", "matched": "Nikiforou Foka",
+             "located_by": "its street (Nominatim)", "sources": ["https://example.com/a"],
+             "topics": ["Bars"], "phone": "+357 22 250500", "found_at": 1}
+    stale = [{"id": web_id("Ithaki", a), "name": "Ithaki", "address": a, **wrong}
+             for a in (ITHAKI["address"], ITHAKI_NO_POSTCODE["address"])]
+    path.write_text(json.dumps({"places": stale}), encoding="utf-8")
+    web = WebPlaces(make_places(tmp_path, monkeypatch), path)
+
+    place, why = web.locate(ITHAKI, "Bars")  # moved to the avenue, keeping what was known
+    assert why is None and haversine_m(place["lat"], place["lon"], *FAMAGUSTA_GATE) < 400
+    assert place["phone"] == "+357 22 250500" and "https://example.com/a" in place["sources"]
+    assert place["placer"] == PLACER
+
+    place, why = web.locate(ITHAKI_NO_POSTCODE, "Bars")  # can't be told apart: the pin goes
+    assert place is None and web.get(stale[1]["id"]) is None
+    assert web.get(stale[0]["id"]) is not None
+
+
+def test_places_that_were_right_stay_right(tmp_path, monkeypatch, geocoders):
+    web = WebPlaces(make_places(tmp_path, monkeypatch), tmp_path / "web.json")
+    # Downtown Live: its address's spelling isn't on the map, but the venue is, by name, on the
+    # corner of Emmanouil Roidi.
+    live, why = web.locate({"name": "DownTown Live",
+                            "address": "Emanuel Roidi 2, Strovolos, Nicosia 1095"})
+    assert why is None and live["precision"] == "exact"
+    assert haversine_m(live["lat"], live["lon"], 35.16486, 33.35019) < 100
+    # S//IP: Theofanous Theodotou, at its street (plus code 5995+6MP is 35.1680, 33.3586).
+    slip, why = web.locate({"name": "S//IP Club", "address": "Theofanous Theodotou 18, 1065 Nicosia"})
+    assert why is None and slip["precision"] == "street"
+    assert haversine_m(slip["lat"], slip["lon"], 35.1680, 33.3586) < 150
