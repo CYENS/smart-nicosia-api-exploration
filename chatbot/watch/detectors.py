@@ -504,7 +504,7 @@ def parking_stuck(obs: Observed) -> list[Detection]:
         if obs.covered_share(p.name, max(since, obs.now - PARKING_LOOKBACK), obs.now) < MIN_COVERED:
             continue
         days = (obs.now - since).days
-        ev = [Evidence(since, ("occupied in every report since" if at_least else "turned occupied"),
+        ev = [Evidence(since, ("occupied in every report from here on" if at_least else "turned occupied"),
                        p.name),
               Evidence(_dt(run[-1]), f"still occupied ({len(run)} reports in a row)", p.name),
               Evidence(alive, "last sign of life: the sensor keeps reporting", p.name)]

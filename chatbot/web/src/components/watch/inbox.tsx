@@ -179,7 +179,7 @@ function Watches() {
   const busy = useChat((s) => s.busy)
   const g = useGeometry()
   return (
-    <section aria-labelledby="watches-title" className="flex flex-col gap-2.5">
+    <section id="watches-section" tabIndex={-1} aria-labelledby="watches-title" className="flex flex-col gap-2.5 rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/60">
       <Heading aside={<span className="text-[12px] text-muted-foreground">raised as toasts</span>}>
         <span id="watches-title" className="flex items-center gap-1.5"><BellRingIcon className="size-4 text-muted-foreground" aria-hidden="true" />Your watches</span>
       </Heading>
@@ -327,7 +327,7 @@ function Devices({ d }: { d: IncidentDetail }) {
         {d.members.map((m) => {
           const Icon = kindMeta(m.kind).icon
           return (
-            <div role="listitem" key={m.id}>
+            <div role="listitem" key={m.id} className="min-w-0 max-w-full">
               <Button
                 variant="outline"
                 size="sm"
@@ -342,7 +342,7 @@ function Devices({ d }: { d: IncidentDetail }) {
               >
                 <Icon data-icon="inline-start" className={m.active ? "text-sodium" : "text-muted-foreground"} />
                 <span className="font-readout font-semibold tabular-nums">{m.id}</span>
-                <span className="truncate font-normal text-muted-foreground">{m.what}</span>
+                <span className="min-w-0 truncate font-normal text-muted-foreground">{m.what}</span>
               </Button>
             </div>
           )

@@ -100,7 +100,7 @@ export function App() {
         {/* Toasts from the twin's watch: announced politely, Alt T puts the keyboard on them. */}
         <Toaster
           position="top-center"
-          offset={{ top: g.desktop ? 64 : g.belowClock + 4 }}
+          offset={{ top: g.insets.top + 4 }} // the top of the open map, under the clock's console when it shows
           mobileOffset={{ top: g.belowClock + 4, left: 8, right: 8 }}
           containerAriaLabel="Notifications"
           visibleToasts={4}

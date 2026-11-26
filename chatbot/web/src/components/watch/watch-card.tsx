@@ -8,8 +8,9 @@ import { create } from "zustand"
 
 import { Button } from "@/components/ui/button"
 import { openWorkspace } from "@/lib/registries/workspaces"
+import { wantInboxFocus } from "@/lib/watch/focus"
 import type { TurnCardProps } from "@/lib/registries/turn-cards"
-import { confirmWatch, type WatchProposal } from "@/lib/watch/store"
+import { confirmWatch, selectIncident, type WatchProposal } from "@/lib/watch/store"
 
 type Outcome = { state: "saving" | "saved" | "declined" | "error"; message?: string }
 const useOutcomes = create<Record<string, Outcome>>(() => ({}))
@@ -42,6 +43,18 @@ function nowWords(p: WatchProposal) {
   }
   const now = p.values_now.slice(0, 3).map((v) => valueText(p, v))
   return `${watching}${now.length ? ` Now: ${now.join(", ")}.` : ""}`
+}
+
+// The inbox's list, at its watches.
+function showWatches() {
+  selectIncident(null)
+  openWorkspace("incidents")
+  wantInboxFocus(null)
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    const el = document.getElementById("watches-section")
+    el?.scrollIntoView({ block: "nearest" })
+    el?.focus({ preventScroll: true })
+  }))
 }
 
 export function WatchCard({ data }: TurnCardProps) {
@@ -96,7 +109,7 @@ export function WatchCard({ data }: TurnCardProps) {
         {state === "saved" && (
           <>
             <span className="text-[13px]">Saved. A toast tells you when it comes true, on every open page.</span>
-            <Button size="sm" variant="ghost" onClick={() => openWorkspace("incidents")}>See your watches</Button>
+            <Button size="sm" variant="ghost" onClick={showWatches}>See your watches</Button>
           </>
         )}
         {state === "declined" && <span className="text-[13px] text-muted-foreground">Not saved.</span>}

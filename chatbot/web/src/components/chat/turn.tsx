@@ -414,7 +414,9 @@ export function TurnView({ turn, latest }: { turn: Turn; latest: boolean }) {
       <Question turn={turn} editable={current} />
       <Message align="start">
         <MessageContent className="gap-3">
-          {turn.parts.map((p, i) => <PartView key={i} part={p} turnId={turn.id} />)}
+          {turn.parts.map((p, i) => (p.kind === "card" ? null : <PartView key={i} part={p} turnId={turn.id} />))}
+          {/* Cards (a proposed watch to save) come under the answer, whenever their tool ran. */}
+          {turn.parts.map((p, i) => (p.kind === "card" ? <PartView key={i} part={p} turnId={turn.id} /> : null))}
           {quiet && <Working />}
           {turn.status === "stopped" && (
             <Marker className="text-[13px] text-muted-foreground">
