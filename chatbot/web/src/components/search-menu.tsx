@@ -58,23 +58,29 @@ function useSearch(q: string, open: boolean) {
 // Search everything, a keystroke away (Ctrl K or Cmd K): devices by id or street, register
 // buildings by address or file number, places, streets, commands and the prepared questions.
 //
-// The keyboard follows the WAI-ARIA combobox and listbox pattern cmdk implements: the arrow keys
-// move the selection (Home and End to the ends, Page Up and Page Down by eight), Enter opens the
-// selected row, Esc closes and gives the keyboard back to where it was. Until the user moves,
-// the best match stays selected as the server's results come in; once they have moved, their
-// row stays selected wherever the new results put it, and is scrolled into view.
+// The keyboard follows the WAI-ARIA combobox and listbox pattern: the arrow keys move the
+// selection (Home and End to the ends, Page Up and Page Down by eight), Enter opens the selected
+// row, Esc closes and gives the keyboard back to where it was.
+//
+// The list changes under the user as the server's results arrive, so the selection is ours, not
+// cmdk's (cmdk re-selects the first row whenever the selected one goes, and reports it as a
+// change). Until the user moves, the first row is selected. Once they have moved, the row they
+// chose stays selected wherever new results put it; if it is gone (a row from the previous
+// keystroke's results), the row at the position they reached is. Keys pressed before any result
+// arrives count too. The selected row is scrolled into view after every change.
 const PAGE = 8
+
+type Choice = { key: string | null; index: number } | null // null: the user hasn't moved
 
 export function SearchMenu() {
   const open = useLayout((s) => s.questionsOpen)
   const seed = useLayout((s) => s.searchSeed)
   const busy = useChat((s) => s.busy)
   const [q, setQ] = useState("")
-  const [value, setValue] = useState("")
-  const [moved, setMoved] = useState(false)
+  const [choice, setChoice] = useState<Choice>(null)
   const [openedWith, setOpenedWith] = useState<string | null>(null)
   // Each time it opens, it starts from what it was opened with (a street from the inspector).
-  if (open && openedWith === null) { setOpenedWith(seed); setQ(seed); setMoved(false) }
+  if (open && openedWith === null) { setOpenedWith(seed); setQ(seed); setChoice(null) }
   if (!open && openedWith !== null) setOpenedWith(null)
   const { found, waiting, failed } = useSearch(q, open)
   const setOpen = (questionsOpen: boolean) => useLayout.setState({ questionsOpen })
@@ -108,16 +114,26 @@ export function SearchMenu() {
 
   const disabled = (item: SearchItem) => item.disabled || (busy && item.key.startsWith("q:"))
   const keys = groups.flatMap((g) => g.items.filter((i) => !disabled(i)).map((i) => i.key))
-  const selected = moved && keys.includes(value) ? value : (keys[0] ?? "")
+  const at = choice === null ? 0 : choice.key !== null && keys.includes(choice.key)
+    ? keys.indexOf(choice.key) : Math.min(choice.index, keys.length - 1)
+  const selected = keys[at] ?? ""
 
-  // The selected row stays in sight, however it was chosen and wherever new results put it.
+  // The selected row stays in sight after every change, found by its key once the list is drawn.
   useEffect(() => {
-    list.current?.querySelector<HTMLElement>('[cmdk-item][aria-selected="true"]')?.scrollIntoView({ block: "nearest" })
+    if (!selected) return
+    const frame = requestAnimationFrame(() => {
+      list.current?.querySelector<HTMLElement>(`[cmdk-item][data-value="${CSS.escape(selected)}"]`)
+        ?.scrollIntoView({ block: "nearest" })
+    })
+    return () => cancelAnimationFrame(frame)
   }, [selected, groups])
 
-  const choose = (key: string) => {
-    setValue(key)
-    setMoved(true)
+  // Move to a row by position. While results are still coming the position may run past the
+  // rows there are; once they have all come, the arrows wrap round.
+  const moveTo = (index: number, wrap: boolean) => {
+    const n = keys.length
+    const i = wrap && n ? ((index % n) + n) % n : Math.max(0, n && !waiting ? Math.min(index, n - 1) : index)
+    setChoice({ key: keys[i] ?? null, index: i })
   }
   const run = (item: SearchItem) => {
     opens.current = !!item.opens
@@ -140,23 +156,37 @@ export function SearchMenu() {
     >
       <Command
         shouldFilter={false}
-        loop
+        disablePointerSelection
+        vimBindings={false}
         value={selected}
-        onValueChange={(v) => { if (v !== selected) choose(v) }}
+        // cmdk reports its own re-selection here; the selection is ours (above), so it is ignored.
+        onValueChange={() => {}}
         onKeyDown={(e) => {
-          if (e.key !== "PageDown" && e.key !== "PageUp") return
-          e.preventDefault()
-          const i = Math.max(0, keys.indexOf(selected))
-          const next = keys[Math.max(0, Math.min(keys.length - 1, i + (e.key === "PageDown" ? PAGE : -PAGE)))]
-          if (next) choose(next)
+          // From the row shown; while results are still coming, from the position reached so far.
+          const here = choice === null ? 0 : waiting && !(choice.key !== null && keys.includes(choice.key)) ? choice.index : at
+          const step = { ArrowDown: 1, ArrowUp: -1, PageDown: PAGE, PageUp: -PAGE }[e.key]
+          if (step !== undefined) moveTo(here + step, Math.abs(step) === 1 && !waiting)
+          else if (e.key === "Home") moveTo(0, false)
+          else if (e.key === "End") moveTo(Math.max(0, keys.length - 1), false)
+          else return
+          e.preventDefault() // cmdk leaves a key it sees handled alone
         }}
       >
         <CommandInput
           value={q}
-          onValueChange={(v) => { setQ(v); setMoved(false); list.current?.scrollTo({ top: 0 }) }}
+          onValueChange={(v) => { setQ(v); setChoice(null); list.current?.scrollTo({ top: 0 }) }}
           placeholder="Search devices, streets, places, file numbers"
         />
-        <CommandList ref={list} className="max-h-[min(62vh,480px)]">
+        <CommandList
+          ref={list}
+          className="max-h-[min(62vh,480px)]"
+          // The pointer selects what it rests on, like the keys (one selection for both).
+          onPointerMove={(e) => {
+            const row = (e.target as HTMLElement).closest<HTMLElement>("[cmdk-item]")
+            const key = row?.getAttribute("data-value")
+            if (key && key !== selected && keys.includes(key)) setChoice({ key, index: keys.indexOf(key) })
+          }}
+        >
           {empty && (
             <CommandEmpty>
               {failed ? "Search couldn't reach the twin. Commands and questions still work." : (
