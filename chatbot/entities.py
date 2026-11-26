@@ -6,8 +6,9 @@
 Kinds: street_light, parking_sensor, waste_bin, air_station, info_screen and camera (the Smart
 Nicosia devices, read live through CityData and interpreted by collector/interpret.py, so a lamp
 here is "on" by the same rule as everywhere else), register_building (an EOA dangerous-building
-register entry, NIC-409), building_3d (a DLS 3D building, B255563) and place (an OpenStreetMap
-place from the index, n219329628).
+register entry, NIC-409), building_3d (a DLS 3D building, B255563), place (an OpenStreetMap
+place from the index, n219329628) and web_place (a place an answer found on the web and put on the
+map, web-1a2b3c4d; chatbot/webplaces.py).
 
 - `state` is the interpreted verdict: {value, label, color, tone, stale, reason, as_of, age_s}.
 - `readings` are the numbers worth reading out, each with its unit and, for live kinds, its age.
@@ -17,7 +18,8 @@ place from the index, n219329628).
 - `series(id)` is the last 24 hours of the headline reading, where the city's API keeps history.
 
 Ids say their kind: NIC-/LIM-/LAR-/FAM- are register entries, B and digits a DLS building,
-n/w/r and digits an OSM place, anything else a device (or a traffic camera) by its name. A later
+n/w/r and digits an OSM place, web- and 8 hex digits a web place, anything else a device (or a
+traffic camera) by its name. A later
 feature adds a kind with `register_kind`, its search items with `register_search` and its 24-hour
 series with `register_series` (chatbot/mobility/entities.py adds buses, stops, lines and roads).
 
@@ -38,6 +40,7 @@ from collections import Counter, OrderedDict
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
+from urllib.parse import urlsplit
 from zoneinfo import ZoneInfo
 
 from collector import parse
@@ -57,6 +60,7 @@ KIND_LABELS = {
     "street_light": "Street light", "parking_sensor": "Parking bay", "waste_bin": "Waste bin",
     "air_station": "Air station", "info_screen": "Info screen", "camera": "Camera",
     "register_building": "Dangerous building", "building_3d": "Building", "place": "Place",
+    "web_place": "From the web",
 }
 DEVICE_KINDS = tuple(KINDS)
 
@@ -276,8 +280,9 @@ class Entities:
 
     def __init__(self, city: CityData | None, places: Places | None = None,
                  dls: DLS | None = None, registers: eoa.Registry | None = None,
-                 memory=None, mobility=None):
+                 memory=None, mobility=None, web_places=None):
         self.city = city
+        self.web_places = web_places  # places found on the web (chatbot/webplaces.py)
         self.memory = memory  # the twin's memory: the 24-hour series reads it first
         self.mobility = mobility  # buses, stops and road speeds (chatbot/mobility)
         self.places = places
@@ -971,12 +976,73 @@ def build_place(ents: Entities, eid: str, near) -> dict | None:
                   .strftime("%Y-%m-%d") if fetched else None}])
 
 
+# -- places found on the web (chatbot/webplaces.py) ----------------------------------------------
+
+WEB_ID = re.compile(r"^web-[0-9a-f]{8}$", re.IGNORECASE)
+
+
+def nearest_stop(ents: Entities, lat: float, lon: float, max_m: float = 500) -> list[dict]:
+    """The nearest bus stop a bus leaves from, if the timetable is loaded (never waits for it)."""
+    tt = ents.mobility.timetable() if ents.mobility is not None else None
+    if tt is None:
+        return []
+    return [{"relation": "stop", "label": "Nearest bus stop", "id": f"stop-{s.id}",
+             "kind": "bus_stop", "name": s.name, "distance_m": round(d), "lon": s.lon, "lat": s.lat}
+            for d, s in tt.near(lat, lon, max_m, limit=1)]
+
+
+def build_web_place(ents: Entities, eid: str, near) -> dict | None:
+    w = ents.web_places.get(eid) if ents.web_places is not None else None
+    if w is None:
+        return None
+    exact = w["precision"] == "exact"
+    found = datetime.fromtimestamp(w.get("found_at") or 0, tz=timezone.utc).astimezone(TZ)
+    attributes = [attr("Offers", w.get("note")), attr("Address", w.get("address")),
+                  attr("Phone", w.get("phone")), attr("Website", w.get("website")),
+                  attr("On the map", f"At the door, found by {w['located_by']}" if exact else
+                       "On its street" + (f", {w['matched']}," if w.get("matched") else "")
+                       + " not at the door: the map knows the street but not the number")]
+    relations = []
+    if w.get("osm_id") and ents.places is not None and ents.places.by_id(w["osm_id"]):
+        relations.append({"relation": "place", "label": "On OpenStreetMap", "id": w["osm_id"],
+                          "kind": "place", "name": w.get("matched") or w["name"]})
+    b = ents.building_at(w["lat"], w["lon"]) if exact else None
+    if b:
+        relations.append({"relation": "building", "label": "In the DLS building", "id": f"B{b['id']}",
+                          "kind": "building_3d", "name": b["properties"].get("t") or "Building",
+                          "detail": f"{b['properties']['h']} m"})
+    relations += nearest_stop(ents, w["lat"], w["lon"])
+    relations += ents.nearest_devices(w["lat"], w["lon"], max_m=400)
+    sources = [{"name": re.sub(r"^www\.", "", urlsplit(u).netloc), "detail": "web search result",
+                "url": u, "as_of": f"{found:%Y-%m-%d}"} for u in w.get("sources") or []]
+    sources.append({"name": "OpenStreetMap" if w.get("osm_id") else "Nominatim and Photon",
+                    "detail": "where it stands on the map", "url": None, "as_of": f"{found:%Y-%m-%d}"})
+    return new_entity(
+        w["id"], "web_place", w["name"],
+        subtitle=" · ".join(x for x in (", ".join(w.get("topics") or []) or "Found on the web",
+                                        w.get("address")) if x),
+        geometry=point_geom(w["lon"], w["lat"]), center=[w["lon"], w["lat"]],
+        attributes=attributes, relations=relations, sources=sources)
+
+
+def search_web_places(ents: Entities) -> list[dict]:
+    if ents.web_places is None:
+        return []
+    return [index_item(w["id"], "web_place", w["name"], "From the web",
+                       " · ".join(x for x in (", ".join(w.get("topics") or []), w.get("address")) if x),
+                       w["lat"], w["lon"], [w["name"], w.get("address"), w.get("note"),
+                                            *(w.get("topics") or [])])
+            for w in ents.web_places.all()]
+
+
 KIND_RESOLVERS.extend([
     Kind("register_building", lambda i: bool(REGISTER_ID.match(i)), build_register),
     Kind("building_3d", lambda i: bool(BUILDING_ID.match(i)), build_building),
     Kind("place", lambda i: bool(PLACE_ID.match(i)), build_place),
+    Kind("web_place", lambda i: bool(WEB_ID.match(i)), build_web_place, ttl_s=60),
     Kind("device", lambda i: True, build_device, ttl_s=LIVE_TTL_S),
 ])
+register_search(search_web_places, {"From the web": 4})
 
 
 HISTORY_KINDS = ("street_light", "parking_sensor", "waste_bin", "air_station")

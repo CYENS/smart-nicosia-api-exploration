@@ -23,6 +23,8 @@ STATE_COLORS: dict[str, str] = {
     "camera": "#0ea5e9",
     "dangerous": "#dc2626", "needs_repair": "#f59e0b", "you": "#3d8bff",
     "usual route": "#94a3b8",
+    # Places found on the web (locate_web_places): at the door, or only on their street.
+    "from the web": "#e046f0", "on its street": "#c9a3d6",
 }
 
 

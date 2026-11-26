@@ -23,6 +23,7 @@ if TYPE_CHECKING:
     from chatbot.entities import Entities
     from chatbot.mobility import Mobility
     from chatbot.moments import Moments
+    from chatbot.webplaces import WebPlaces
 
 TZ = ZoneInfo(TIMEZONE)
 
@@ -52,6 +53,7 @@ class ToolContext:
     # The city at past moments (chatbot/moments.py), shared with the city clock's endpoints.
     moments: Moments | None = None
     mobility: Mobility | None = None  # buses, stops and road speeds (chatbot/mobility)
+    web_places: WebPlaces | None = None  # places found on the web, placed (chatbot/webplaces.py)
 
 
 # -- schema helpers -----------------------------------------------------------------------------
@@ -119,9 +121,13 @@ def my_location(ctx: ToolContext) -> dict:
 
 def resolve_place(ctx: ToolContext, text: str) -> dict:
     """A place name -> {name, lat, lon, ...}, preferring the places index (it has opening hours).
-    'me', 'my location' or 'here' is the user's shared location."""
+    'me', 'my location' or 'here' is the user's shared location; a web place's id (web-1a2b3c4d)
+    or exact name is where locate_web_places put it."""
     if norm(text) in ME:
         return my_location(ctx)
+    web = ctx.web_places.named(text) if ctx.web_places is not None else None
+    if web:
+        return {"name": web["name"], "lat": web["lat"], "lon": web["lon"], "id": web["id"]}
     if ctx.places.ready:
         loc = ctx.user_location
         exact = ctx.places.named(text, (loc["lat"], loc["lon"]) if loc else None)
