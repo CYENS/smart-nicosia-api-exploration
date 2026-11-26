@@ -21,6 +21,7 @@ from chatbot.store import SessionStore
 
 if TYPE_CHECKING:
     from chatbot.entities import Entities
+    from chatbot.environment.service import Environment
     from chatbot.mobility import Mobility
     from chatbot.moments import Moments
 
@@ -52,6 +53,8 @@ class ToolContext:
     # The city at past moments (chatbot/moments.py), shared with the city clock's endpoints.
     moments: Moments | None = None
     mobility: Mobility | None = None  # buses, stops and road speeds (chatbot/mobility)
+    # Sun and shade, air and noise surfaces and the weather (chatbot/environment).
+    environment: Environment | None = None
 
 
 # -- schema helpers -----------------------------------------------------------------------------

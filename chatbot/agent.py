@@ -21,6 +21,8 @@ import anthropic
 from chatbot.city import CityData
 from chatbot.dls import DLS
 from chatbot.entities import Entities
+from chatbot.environment import spot as _spot  # noqa: F401 - registers the spot kind
+from chatbot.environment.service import Environment
 from chatbot.eoa import Registry
 from chatbot.geo import Places
 from chatbot.memory import Memory
@@ -154,6 +156,9 @@ class Agent:
         self.entities = Entities(city, places, dls, registers, memory,  # shared with the inspector
                                  mobility=self.mobility)
         self.moments = Moments(city, memory)  # the city at past moments, for the clock
+        # Sun and shade, air and noise surfaces, the wind and the rain radar.
+        self.environment = Environment(settings, city, self.moments, dls, memory)
+        self.entities.environment = self.environment
         self.tools = TOOL_DEFS + ([WEB_SEARCH] if settings.web_search else [])
         self.conversations: dict[str, Conversation] = {}
 
@@ -183,7 +188,7 @@ class Agent:
                                emit_threadsafe, conv.id, self.dls, self.registers,
                                user_location(context), memory=self.memory,
                                entities=self.entities, moments=self.moments,
-                               mobility=self.mobility)
+                               mobility=self.mobility, environment=self.environment)
         conv.messages.append({"role": "user", "content": [
             {"type": "text", "text": format_context(context, self.city.now()) + text}]})
 

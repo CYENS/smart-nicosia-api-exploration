@@ -280,6 +280,7 @@ class Entities:
         self.city = city
         self.memory = memory  # the twin's memory: the 24-hour series reads it first
         self.mobility = mobility  # buses, stops and road speeds (chatbot/mobility)
+        self.environment = None  # the environment twin (chatbot/environment), set by the Agent
         self.places = places
         self.dls = dls
         self.registers = registers
