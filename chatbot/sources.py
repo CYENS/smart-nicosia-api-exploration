@@ -116,6 +116,16 @@ SOURCES: tuple[Source, ...] = (
         refresh="Fetched once per area, then kept",
         credit="Buildings: DLS Cyprus"),
     Source(
+        "terrain", "Terrain tiles (Mapzen, on AWS)", "the terrain tiles",
+        "Mapzen and the Linux Foundation's Tilezen, from SRTM (NASA) and EU-DEM (Copernicus)",
+        "The height of the ground everywhere, for the 3D terrain of a view, the heights of high "
+        "places and what can be seen from them",
+        "Map, places and routes", url="https://github.com/tilezen/joerd/blob/master/docs/attribution.md",
+        licence="Open, with credit to each source",
+        licence_url="https://registry.opendata.aws/terrain-tiles/",
+        refresh="Fetched once per area, then kept",
+        credit="Terrain: Mapzen, SRTM, EU-DEM (Copernicus)"),
+    Source(
         "registers", "Dangerous-building registers", "the ΕΟΑ registers", "District local government organisations (ΕΟΑ) "
         "of Nicosia, Limassol, Larnaca and Famagusta",
         "Buildings declared dangerous or in need of repair",
@@ -155,6 +165,8 @@ TOOL_SOURCES: dict[str, tuple[str, ...]] = {
     "get_departures": ("bus_timetable", "bus_live"),
     "plan_transit": ("bus_timetable", "bus_live", "valhalla"),
     "get_road_speeds": ("road_speeds",),
+    "find_high_places": ("terrain", "openstreetmap", "dls", "geocoding"),
+    "view_from": ("terrain", "dls", "openstreetmap", "twin_memory"),
 }
 
 _tool: ContextVar[str | None] = ContextVar("source_tool", default=None)

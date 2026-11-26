@@ -23,6 +23,7 @@ if TYPE_CHECKING:
     from chatbot.entities import Entities
     from chatbot.mobility import Mobility
     from chatbot.moments import Moments
+    from chatbot.terrain import Terrain
     from chatbot.webplaces import WebPlaces
 
 TZ = ZoneInfo(TIMEZONE)
@@ -66,6 +67,7 @@ class ToolContext:
     moments: Moments | None = None
     mobility: Mobility | None = None  # buses, stops and road speeds (chatbot/mobility)
     web_places: WebPlaces | None = None  # places found on the web, placed (chatbot/webplaces.py)
+    terrain: Terrain | None = None  # the ground's height (chatbot/terrain.py)
 
 
 # -- schema helpers -----------------------------------------------------------------------------

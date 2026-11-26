@@ -341,7 +341,8 @@ def test_the_tool_list_keeps_its_order():
         "query_history", "run_sql",
         "get_entity", "open_inspector",
         "set_city_time",
-        "get_buses", "get_departures", "plan_transit", "get_road_speeds"]
+        "get_buses", "get_departures", "plan_transit", "get_road_speeds",
+        "find_high_places", "view_from"]
 
 
 def test_the_context_names_what_the_user_has_open():
