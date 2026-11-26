@@ -97,8 +97,17 @@ npm run build                     # writes chatbot/static (committed, see below)
   read at a glance on night, console and popover surfaces, with sodium for selected and
   current. Lists, menus, sliders, toggle groups and tabs follow the WAI-ARIA keyboard patterns
   (arrows inside, Home and End, Enter, Esc, Tab between groups); reuse `src/lib/roving.ts` for
-  lists; closing a panel returns focus to whatever opened it. Drive these paths with the
-  Playwright MCP and keep screenshots: the owner tries them by hand.
+  lists; closing a panel returns focus to whatever opened it. The owner tries these paths by
+  hand, so drive them first yourself.
+- **Browsers for checking.** Use the `playwright` MCP server (`browser_*` tools; headless, with
+  a fresh browser per session, so parallel sessions never collide) to drive every new path:
+  keyboard only, at desktop size and at 375 px (`browser_resize`), the loading, empty and
+  error states, and the paths of the features next to yours that yours could break. Save
+  the screenshots under `docs/screenshots/<feature>/` and put the telling ones in the pull
+  request. Use the app's built-in browser when the owner should watch, and the
+  `chrome-devtools` server for performance traces and Lighthouse (3D views, frame rate). If
+  `playwright` isn't among your tools (a session started before it was added), say so in
+  the pull request and use the built-in browser instead.
 - UX checklist for every screen: keyboard reachable with visible focus; `aria-live` for live
   readouts; skeletons while loading; an empty state that says what to do next; errors that
   say what happened and what to try; works at 375 px wide; honours
