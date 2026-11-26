@@ -15,16 +15,22 @@ from OpenStreetMap, plans walks, drives and tours with Valhalla, and checks the 
 Open-Meteo. It draws its answers on the map (markers, pulsing highlights, heatmaps, 3D columns,
 animated routes, reachable areas, callouts) and as Vega-Lite charts on a stage under the map.
 
-The page is a control room for the city, built for showing it to people. The map fills the
-screen under a live strip of city readouts (lamps lit, free parking, full bins, air, weather,
-the registers, and when it next gets dark); click one to ask about it. The conversation floats
-on the left and shows the assistant's work as a timed trace. Each answer ends with a few
+The page is a control room for the city, built for showing it to people, and calm by default:
+the map fills the screen and each thing has one place. Top left, four topic chips (Buses,
+Parking, Traffic, Outside): pick one and its layer comes on, with a small card at the bottom
+left that says in a sentence how that part of the city is now, its legend, a question to ask
+about it and one way to go deeper. Top right, one quiet line with the weather, the air in words,
+when it gets dark and the time; the city clock folds into it, and the map's controls sit under
+it. The conversation floats on the left under the chips and shows the assistant's work as a
+timed trace; hide it and an ask bar takes its place. Each answer ends with a few
 suggested next questions to click (or, when a question is unclear, the options to pick from);
 Stop ends an answer early, Retry and Edit redo the latest question, and Copy copies an answer as
 markdown. Charts and custom visuals land on
-the stage, with a filmstrip of earlier ones; the map panel on the right holds the base map, the
-3D city, the registers, your position and the legends. A slim rail on the left holds the twin's
-workspaces (Live today, for now), search and the keyboard shortcuts (press ?).
+the stage, with a filmstrip of earlier ones. For everything else, the Layers button opens one
+sheet: the base map and the 3D view, the city's systems in three groups (sensors, buildings,
+alerts) with a switch and a live summary each, the workspaces (Live and Mobility, also on Alt and
+a number and in Ctrl K), what the answers drew with their legends, and your position. Search
+everything with Ctrl K; press ? for the keyboard shortcuts.
 
 It also has:
 
@@ -81,16 +87,16 @@ It also has:
 - **The 3D city.** The Department of Lands and Surveys (DLS) 3D model of every building in
   Cyprus, with roof heights, floors, use and volume. It streams in as the map moves, coloured by
   height, and Claude can describe the buildings around any place ("how tall is it around
-  Eleftheria Square?"). Both work without an API key from the switches in the map panel.
+  Eleftheria Square?"). Both work without an API key from the switches in the Layers sheet.
   See [docs/dangerous-buildings-and-3d.md](docs/dangerous-buildings-and-3d.md).
-- **Where am I, and safer walks.** Share your position with "Locate me" in the map panel (or the
-  locate button by the zoom controls), or by right-clicking the map and choosing "I'm here";
+- **Where am I, and safer walks.** Share your position with "Locate me" in the Layers sheet (or the
+  locate button in the map's controls), or by right-clicking the map and choosing "I'm here";
   then "me" and "here" work in any question.
   Walking routes report the register buildings they pass, and can avoid them: the map shows the
   safer route beside the usual one, with the buildings marked.
 - **Where the data comes from.** Every source the twin reads is named quietly where its data
-  appears: a "From ..." line under each layer in the map panel and under each chart, the
-  source in each strip readout's tooltip, the map's credits for what it draws now, and the
+  appears: a "From ..." line under each layer in the Layers sheet, under each chart and on each
+  topic card, the map's credits for what it draws now, and the
   inspector's "Where this comes from". Each of them, the conversation's "Data sources" link and
   "Where the data comes from" in Ctrl K open one panel: every source with its publisher,
   licence, what it gives the twin, how fresh its feed is, and a link to read more.

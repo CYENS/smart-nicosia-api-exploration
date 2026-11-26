@@ -14,8 +14,12 @@ import {
   flyToBounds, locateMe, resetView, setBasemapMode, setCity3d, showRegisters, useMapUi,
 } from "@/lib/map/engine"
 import { QUESTION_GROUPS } from "@/lib/questions"
+import { closeLayers, openLayers } from "@/lib/layers-sheet"
+import { cap } from "@/lib/readouts"
 import { openSources } from "@/lib/sources"
 import { matches, registerSearchProvider, type SearchItem } from "@/lib/registries/search"
+import { selectTopic, useTopics } from "@/lib/registries/topics"
+import { openWorkspace, useWorkspace } from "@/lib/registries/workspaces"
 
 registerSearchProvider({
   id: "recent",
@@ -75,10 +79,9 @@ function commands(): SearchItem[] {
     { key: "cmd:auto", icon: SunMoonIcon, title: "Base map follows the sun", detail: "Night from dusk to dawn", run: () => setBasemapMode("auto"), words: "auto" },
     { key: "cmd:locate", icon: LocateFixedIcon, title: "Locate me", detail: "Share this device's position with the assistant", run: locateMe, words: "where am i position gps" },
     {
-      key: "cmd:layers", icon: LayersIcon, title: layout.layersOpen ? "Hide the map panel" : "Show the map panel",
-      detail: "Base map, 3D city, registers and legends",
-      run: () => { if (inspecting) closeInspector(); useLayout.setState({ layersOpen: !layout.layersOpen || inspecting }) },
-      words: "layers legend",
+      key: "cmd:layers", icon: LayersIcon, title: layout.layersOpen && !inspecting ? "Close the layers" : "Open the layers",
+      detail: "Base map, sensors, buildings, alerts and legends",
+      run: () => (layout.layersOpen && !inspecting ? closeLayers() : openLayers()), words: "layers legend map panel sensors",
     },
     {
       key: "cmd:chat", icon: MessageSquareTextIcon, title: layout.chatOpen ? "Hide the conversation" : "Show the conversation",
@@ -118,4 +121,39 @@ registerSearchProvider({
       key: `q:${question}`, title: question, icon: g.icon, group: q ? "Questions" : g.title,
       run: () => { useLayout.setState({ chatOpen: true }); send(question) },
     }))),
+})
+
+// Every workspace, now that the rail has gone: the ones a topic card or the Layers sheet opens
+// too, with their Alt keys.
+registerSearchProvider({
+  id: "workspaces",
+  heading: "Workspaces",
+  order: 15,
+  search: (q) => {
+    const { list, active } = useWorkspace.getState()
+    return list
+      .filter((w) => w.id !== active && matches(q, w.label, w.description, "workspace view"))
+      .map((w): SearchItem => ({
+        key: `ws:${w.id}`, icon: w.icon, title: w.id === "live" ? "Back to Live" : `Open ${w.label}`,
+        detail: cap(w.description.split(": ").slice(1).join(": ") || w.description),
+        run: () => openWorkspace(w.id),
+      }))
+  },
+})
+
+// The topics, the chips' and any beyond the four that have a chip.
+registerSearchProvider({
+  id: "topics",
+  heading: "Topics",
+  order: 16,
+  search: (q) => {
+    const { list, active } = useTopics.getState()
+    return list
+      .filter((t) => matches(q, t.label, t.description, "topic"))
+      .map((t): SearchItem => ({
+        key: `topic:${t.id}`, icon: t.icon, title: t.id === active ? `Close ${t.label.toLowerCase()}` : `Show ${t.label.toLowerCase()}`,
+        detail: t.description,
+        run: () => selectTopic(t.id === active ? null : t.id),
+      }))
+  },
 })

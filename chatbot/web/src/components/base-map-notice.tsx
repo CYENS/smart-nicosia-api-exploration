@@ -2,7 +2,6 @@ import { MapIcon } from "lucide-react"
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { useGeometry } from "@/lib/geometry"
-import { GAP, STRIP_H } from "@/lib/layout"
 import { useMapUi } from "@/lib/map/engine"
 
 // Says why the map is empty, in the open part of the map, under the time-lapse's clock if it's on.
@@ -13,7 +12,7 @@ export function BaseMapNotice() {
   return (
     <div
       className="pointer-events-none absolute z-10 flex justify-center"
-      style={{ top: STRIP_H + GAP + g.clockH + 8, left: g.left, right: g.topRight }}
+      style={{ top: g.insets.top + 8, left: g.left, right: g.topRight }}
     >
       <Alert className="panel-float pointer-events-auto max-w-[440px]" aria-live="polite">
         <MapIcon />

@@ -1,7 +1,7 @@
 /* The map's credits corner: the base map's credits as before, then a short credit for each source
    whose data the map draws now (the live buses, the road detectors, the DLS for the 3D city...)
-   and a "Data sources" link. Each credit opens the data sources panel at its source. It stays
-   compact (the ⓘ), as MapLibre's own control does. */
+   and a "Data sources" link. Each credit opens the data sources panel at its source. It starts
+   closed behind the ⓘ and stays compact, as MapLibre's own control does. */
 import { AttributionControl } from "maplibre-gl"
 
 import { getMap, useMapUi } from "@/lib/map/engine"
@@ -33,8 +33,8 @@ function sync() {
   if (next === shown) return
   shown = next
   // Swapping the control is MapLibre's public way to change custom credits. Keep it as the
-  // reader left it: closed stays closed.
-  const wasOpen = !control || control._container?.classList.contains("maplibregl-compact-show")
+  // reader left it; it starts closed behind the (i), so nothing covers the map until asked.
+  const wasOpen = !!control?._container?.classList.contains("maplibregl-compact-show")
   if (control) map.removeControl(control)
   control = new AttributionControl({ compact: true, customAttribution: next })
   map.addControl(control, "bottom-right")
