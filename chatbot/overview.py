@@ -16,7 +16,7 @@ from zoneinfo import ZoneInfo
 
 from collector.interpret import caqi_band
 
-from chatbot.context import weather, weather_history
+from chatbot.context import MAP_KEYS, dust_history, weather, weather_history
 from chatbot.moments import Moments
 from chatbot.settings import TIMEZONE
 from chatbot.store import point
@@ -101,7 +101,8 @@ def live_strip(agent: Agent) -> dict:
     sky = cached("weather", WEATHER_TTL_S, lambda: weather(agent.settings))
     if sky:
         now = sky["now"]
-        out["weather"] = {"temp_c": now["temp_c"], "sky": now["sky"], "daylight": now["daylight"]}
+        out["weather"] = {"temp_c": now["temp_c"], "sky": now["sky"], "daylight": now["daylight"],
+                          **{k: now.get(k) for k in MAP_KEYS}}
 
     if agent.registers.ready:
         out["registers"] = {"buildings": len(agent.registers.records())}
@@ -135,7 +136,11 @@ def strip_at(agent: Agent, at: datetime) -> dict:
     read as they are now."""
     past = cached("weather_history", 3600, lambda: weather_history(agent.settings)) or {}
     hour = at.astimezone(TZ).replace(minute=0).strftime("%Y-%m-%dT%H:%M")
-    out = moments_of(agent).strip_at(at, past.get(hour))
+    sky = past.get(hour)
+    if sky:  # the dust of that hour joins the weather the map draws (none if its source failed)
+        dust = cached("dust_history", 3600, lambda: dust_history(agent.settings)) or {}
+        sky = {**sky, "dust_ugm3": None, "aod": None, **dust.get(hour, {})}
+    out = moments_of(agent).strip_at(at, sky)
     if agent.registers and agent.registers.ready:
         out["registers"] = {"buildings": len(agent.registers.records())}
     return out
