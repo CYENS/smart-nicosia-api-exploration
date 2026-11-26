@@ -7,6 +7,7 @@ import logging
 import statistics
 import threading
 import time
+from collections import Counter
 from collections.abc import Callable
 from datetime import datetime
 from typing import TYPE_CHECKING, Any
@@ -52,6 +53,12 @@ def cached(key: str, ttl_s: float, fn: Callable[[], Any],
     return value
 
 
+def fresh(agent: Agent, device_type: str) -> Counter | None:
+    """The type's states now, counting only devices whose reading can be trusted (cached)."""
+    return cached(f"fresh:{device_type}", CITY_TTL_S, lambda: Counter(
+        s.interp.state for s in agent.city.states(device_type) if not s.interp.stale))
+
+
 def live_strip(agent: Agent) -> dict:
     """Lamps lit, free parking, full bins, air quality, the weather and the registers. A source
     that fails is left out, so the page shows what it can."""
@@ -65,11 +72,13 @@ def live_strip(agent: Agent) -> dict:
     if lights := by_state("street_light"):
         out["lights"] = {"on": lights[0].get("on", 0), "total": lights[1],
                          "as_of": city["street_light"].get("newest_reading")}
-    if parking := by_state("parking_sensor"):
-        known = parking[0].get("free", 0) + parking[0].get("occupied", 0)
-        out["parking"] = {"free": parking[0].get("free", 0), "total": known}
-    if bins := by_state("waste_bin"):
-        out["bins"] = {"full": bins[0].get("full", 0), "total": bins[1]}
+    # Bays and bins that stopped reporting are left out, as find_devices and every replay of
+    # the twin's memory do, so the strip now and the strip at another moment compare.
+    if by_state("parking_sensor") and (parking := fresh(agent, "Parking")) is not None:
+        known = parking.get("free", 0) + parking.get("occupied", 0)
+        out["parking"] = {"free": parking.get("free", 0), "total": known}
+    if by_state("waste_bin") and (bins := fresh(agent, "Wastebin")) is not None:
+        out["bins"] = {"full": bins.get("full", 0), "total": sum(bins.values())}
     stations = [s["caqi"] for s in (city.get("air_station") or {}).get("stations", [])
                 if isinstance(s.get("caqi"), (int, float))]
     if stations:

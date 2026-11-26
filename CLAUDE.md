@@ -34,11 +34,18 @@ npm run build                     # writes chatbot/static (committed, see below)
 - `chatbot/entities.py` is the twin's entity model: every kind in one shape (state, readings,
   attributes, relations, sources) plus a 24-hour series and search, for the inspector and
   `get_entity`. A new kind registers a `Kind` resolver.
+- `chatbot/moments.py` is the city at a past moment, for the city clock: every device of a kind
+  replayed from the twin's memory (only the memory, never the city API), six hours at a time
+  and cached. `?at=` on `/api/overview`, `/api/lamps` and `/api/entities/{id}` reads it, and
+  `set_city_time` too. A moment the memory holds nothing for is unknown, never a guess.
 - `collector/interpret.py` is the one place that turns raw readings into meaning (a lamp is on
   only if it reported in the last 70 minutes, and so on). Reuse it; never reinterpret elsewhere.
 - `chatbot/web/src/lib/map/engine.ts` draws everything on the map; `lib/chat.ts` handles the
   stream and the stage; `lib/inspector.ts` the open thing; `lib/deeplink.ts` the URL;
-  `components/` holds the strip, rail, chat, stage, inspector, map panel and player.
+  `lib/clock.ts` the city clock (the moment the whole twin shows, ranges, playback, compare);
+  `components/` holds the strip, rail, chat, stage, inspector, map panel and the clock. A new
+  live layer, readout or chart follows the clock: read `useClock` (or `?at=` on the server)
+  rather than assuming now.
   `TOOL_LABELS` in `lib/chat.ts` names each tool in the trace: add new tools there.
 - `chatbot/web/src/lib/registries/` is where page features plug in instead of editing shared
   files: workspaces (the rail), inspector sections per kind, search providers (Ctrl K) and

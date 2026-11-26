@@ -190,6 +190,7 @@ export function initMap(container: HTMLElement, camera?: Camera | null) {
     if (target) for (const fn of inspectSinks) fn(target)
   })
   ;(window as any).__map = map // a hook for scripted demos and browser tests (e.g. map.project)
+  ;(window as any).__twin = { state, clock } // and what the map draws, for the same
   map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), "bottom-right")
   map.addControl(new maplibregl.ScaleControl({ unit: "metric" }), "bottom-left")
   geolocate = new maplibregl.GeolocateControl({
@@ -1470,7 +1471,9 @@ export function setClockView(at: number | null, compare: number | null) {
   if (moved) showSky(at === null ? new Date() : new Date(at))
   else syncNightLights()
   renderClock()
-  if (hoverMs === null) setTimeAll(currentTimeMs())
+  // The clock moved: every chart's line goes to its moment, whatever a pointer last hovered.
+  hoverMs = null
+  setTimeAll(currentTimeMs())
 }
 
 // The lamps and the devices of a kind as they were at moment t, read by lib/clock.ts.

@@ -175,6 +175,23 @@ def test_the_strip_and_the_lamps_at_a_moment(agent):
     assert e.value.status_code == 400 and "future" in e.value.detail
 
 
+def test_the_live_strip_counts_what_the_moments_count(agent, api, monkeypatch):
+    """Now and a past moment compare: a bay that stopped reporting is left out of both."""
+    stale = ms(NOW - timedelta(hours=9))
+
+    def latest(p):
+        name = p["entityName"]
+        ts = stale if name == "YPB" else ms(NOW - timedelta(minutes=5))
+        return [{"key": "status", "timestamp": str(ts), "value": "1" if name == "YPA" else "0"},
+                {"key": "level", "timestamp": str(ts), "value": "50"}]
+
+    api.on("getLatestTelemetry", latest)
+    monkeypatch.setattr(overview, "weather", lambda s: None)
+    agent.registers = SimpleNamespace(ready=False)
+    strip = live_routes.overview(REQUEST, at=None)
+    assert strip["live"] and strip["parking"] == {"free": 1, "total": 2}  # not YPB
+
+
 def test_states_for_restating_a_layer(agent):
     body = json.loads(clock_routes.states(REQUEST, kind="parking_sensor", at="2026-11-20T20:00").body)
     assert body["devices"]["YPA"]["s"] == "occupied" and body["devices"]["YPA"]["occupied"] == 1
