@@ -12,6 +12,7 @@ import type { EntityRef } from "@/lib/entities"
 import { closeInspector, inspectId, inspectingRef } from "@/lib/inspector"
 import { useLayout } from "@/lib/layout"
 import { applyMapUi, mapContext, removeLayer, resetForNewChat } from "@/lib/map/engine"
+import { applyViewCommand, viewContext } from "@/lib/view"
 import type { VisualPayload } from "@/lib/visual"
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -34,6 +35,7 @@ export const TOOL_LABELS: Record<string, string> = {
   get_buses: "Finding the buses on the road", get_departures: "Reading the departures",
   plan_transit: "Planning the bus trip", get_road_speeds: "Reading the road speeds",
   locate_web_places: "Putting the web results on the map",
+  find_high_places: "Finding high places with a view", view_from: "Flying you to the view",
 }
 
 export function toolLabel(name: string) {
@@ -180,6 +182,8 @@ function handleEvent(turnId: string, ev: any) {
         updateTurn(turnId, (t) => ({ ...t, parts: [...t.parts, { kind: "stage", stageId: item.id, title: item.title, visual: item.kind }] }))
       } else if (ev.action === "clock") {
         applyClockCommand(ev)
+      } else if (ev.action === "view") {
+        applyViewCommand(ev)
       } else if (ev.action === "inspect") {
         inspectId(String(ev.id), { at: ev.at ?? undefined, fly: ev.fly !== false })
       } else {
@@ -249,7 +253,7 @@ export async function send(text: string, opts: { subject?: EntityRef | null; rep
   running = { turnId: turn.id, controller }
   useChat.setState((s) => ({ busy: true, turns: [...s.turns.filter((t) => t.id !== replace?.id), turn] }))
   try {
-    const context = { ...mapContext(), clock: clockContext(), inspecting: inspectingRef(), subject: subject ?? null }
+    const context = { ...mapContext(), clock: clockContext(), inspecting: inspectingRef(), subject: subject ?? null, viewing: viewContext() }
     const res = await fetch("/api/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },

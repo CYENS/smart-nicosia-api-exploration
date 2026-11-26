@@ -146,6 +146,10 @@ def format_context(context: dict | None, now: datetime) -> str:
         lines.append(f"asking_about: {subject}")
     if clock := city_clock((context or {}).get("clock")):
         lines.append(f"city_clock: {clock}")
+    if (seen := (context or {}).get("viewing")) and isinstance(seen, dict) and seen.get("name"):
+        lines.append(f"viewing: from {str(seen['name'])[:80]} ({seen.get('lat', 0):.5f}, "
+                     f"{seen.get('lon', 0):.5f}), {seen.get('eye_m', 0):.0f} m above sea level, "
+                     f"looking {seen.get('looking', '?')}")
     errors = (context or {}).get("visual_errors")
     if errors:
         lines.append("visual_errors: " + "; ".join(str(e)[:300] for e in errors[:3]))

@@ -111,6 +111,7 @@ type MapUi = {
   me: { loc: MyLocation | null; error: string }
   picking: boolean // the next map click is the user's position ("Pick my spot on the map")
   flying: string | null // the route the camera is flying along
+  terrain: boolean // the ground is raised in 3D (lib/map/terrain.ts)
 }
 export type MyLocation = { lat: number; lon: number; accuracy_m: number | null; source: string }
 export const useMapUi = create<MapUi>(() => ({
@@ -127,6 +128,7 @@ export const useMapUi = create<MapUi>(() => ({
   me: { loc: null, error: "" },
   picking: false,
   flying: null,
+  terrain: false,
 }))
 const setUi = useMapUi.setState
 
@@ -210,6 +212,7 @@ export function initMap(container: HTMLElement, camera?: Camera | null) {
   // small dots (a lamp is a few pixels across); what lies right under the pointer wins.
   map.on("click", (e) => {
     if (pickDone) { endPick({ lat: e.lngLat.lat, lon: e.lngLat.lng }); return } // the user's spot
+    if (viewFocus) return // in a view, a click is the end of a look about, not a pick
     const layers = map.getLayersOrder().filter(clickableLayer)
     if (!layers.length) return
     const { x, y } = e.point
@@ -349,7 +352,7 @@ async function swapBasemap() {
   const ground = map.getLayersOrder()[0]
   const prefix = newPrefix(to)
   for (const l of named(layers, prefix)) {
-    const hide = l.type === "fill-extrusion" && CITY.on // the 3D city stands in for them
+    const hide = l.type === "fill-extrusion" && CITY.on && !viewFocus // the 3D city stands in for them
     map.addLayer((hide ? { ...l, layout: { ...l.layout, visibility: "none" } } : l) as LayerSpecification, ground)
   }
   await nextFrame() // MapLibre takes up the new layers, and starts on the tiles, with its next frame
@@ -362,6 +365,7 @@ async function swapBasemap() {
   placeOnBase()
   applyTheme()
   applySky()
+  if (viewFocus) applyViewBuildings()
 }
 
 // Until every tile in view is prepared with the layers there are. Both waits end by themselves,
@@ -477,7 +481,10 @@ function showSky(at: Date) {
 function applySky() {
   if (!styleReady) return
   map.setLight(lightFor(shown))
-  try { map.setSky(skyFor(shown)) } catch { /* a style without sky support */ }
+  // Looking out at eye level, the haze gathers only near the horizon: the city a few km off
+  // stays in sight (and its lights at night).
+  const sky = viewFocus ? { ...skyFor(shown), "fog-ground-blend": 0.94, "horizon-fog-blend": shown.dark ? 0.25 : 0.4 } : skyFor(shown)
+  try { map.setSky(sky) } catch { /* a style without sky support */ }
   syncNightLights()
 }
 
@@ -612,6 +619,7 @@ export function setInsets(padding: { top: number; right: number; bottom: number;
 }
 
 export function resetView() {
+  takeOver()
   framed = null
   map.flyTo({ ...HOME, essential: true })
 }
@@ -1143,7 +1151,7 @@ export async function showLayer(spec: LayerSpec, prefetched: FC | null = null) {
     addToMap(entry)
     // A camera move asked for alongside this layer (tools run in parallel, so just before it)
     // or after it, while it loaded, wins over fitting to it.
-    if (spec.fit !== false && !(state.flownAt > askedAt - 3000)) {
+    if (spec.fit !== false && !viewFocus && !(state.flownAt > askedAt - 3000)) {
       framed = { ref: spec.ref, fit: () => fitTo(fc, pitch) }
       framed.fit()
     } else if (spec.style === "buildings_3d" && map.getZoom() >= 15 && map.getPitch() < 45) map.easeTo({ pitch: 55, duration: 900 })
@@ -1208,15 +1216,18 @@ function syncCityClaims() {
       if (f.properties?.ghost_bid !== undefined) ghosts.add(f.properties.ghost_bid)
     }
   }
+  // While looking out from a building, the eye stands in it: it isn't drawn around the camera.
+  if (viewFocus?.hide) claimed.add(viewFocus.hide)
   map.setFilter("city3d::fill", ["!", ["in", ["id"], ["literal", [...claimed, ...ghosts]]]])
   map.setFilter("city3d::ghost", ["in", ["id"], ["literal", [...ghosts].filter((g) => !claimed.has(g))]])
 }
 
 function cityTilesInView() {
-  if (map.getZoom() < CITY_MIN_ZOOM) return []
   const n = 2 ** 16
   const tx = (lon: number) => Math.floor(((lon + 180) / 360) * n)
   const ty = (lat: number) => Math.floor(((1 - Math.asinh(Math.tan((lat * Math.PI) / 180)) / Math.PI) / 2) * n)
+  if (viewFocus) return cityTilesNear(viewFocus, tx, ty)
+  if (map.getZoom() < CITY_MIN_ZOOM) return []
   const b = map.getBounds(), c = map.getCenter()
   const cx = tx(c.lng), cy = ty(c.lat)
   const out: [number, number, number][] = []
@@ -1226,6 +1237,20 @@ function cityTilesInView() {
     }
   }
   return out.sort((p, q) => p[2] - q[2]) // nearest the centre first
+}
+
+// While looking out from a spot, only the tiles within reach of the eye: the DLS is a throttled
+// public service, and a view to the horizon would otherwise ask for a wide ring of them.
+function cityTilesNear(f: ViewFocus, tx: (lon: number) => number, ty: (lat: number) => number) {
+  const dLat = f.radiusM / 110574, dLon = f.radiusM / (111320 * Math.cos((f.lat * Math.PI) / 180))
+  const cx = tx(f.lon), cy = ty(f.lat)
+  const out: [number, number, number][] = []
+  for (let x = tx(f.lon - dLon); x <= tx(f.lon + dLon); x++) {
+    for (let y = ty(f.lat + dLat); y <= ty(f.lat - dLat); y++) {
+      if (!CITY.tiles.has(`${x}/${y}`)) out.push([x, y, (x - cx) ** 2 + (y - cy) ** 2])
+    }
+  }
+  return out.sort((p, q) => p[2] - q[2])
 }
 
 function pumpCity() {
@@ -1257,7 +1282,7 @@ function refreshCity() {
 function cityStatus() {
   let status = ""
   if (CITY.on) {
-    if (map.getZoom() < CITY_MIN_ZOOM) status = "Zoom in to see the 3D buildings"
+    if (map.getZoom() < CITY_MIN_ZOOM && !viewFocus) status = "Zoom in to see the 3D buildings"
     else if (CITY.inflight.size || CITY.queue.length) status = `Loading 3D buildings, ${CITY.inflight.size + CITY.queue.length} areas left`
     else status = `${CITY.features.length.toLocaleString()} DLS buildings loaded`
   }
@@ -1271,7 +1296,8 @@ export function setCity3d(on: boolean) {
   whenStyleReady(() => {
     if (on) {
       addCityLayer()
-      if (map.getPitch() < 40 && map.getZoom() >= CITY_MIN_ZOOM) map.easeTo({ pitch: 55, duration: 900 })
+      if (viewFocus) applyViewBuildings()
+      else if (map.getPitch() < 40 && map.getZoom() >= CITY_MIN_ZOOM) map.easeTo({ pitch: 55, duration: 900 })
       refreshCity()
     } else {
       CITY.queue = []
@@ -1878,6 +1904,7 @@ export function stopFlight() {
 }
 
 export function flyRoute(ref: string) {
+  takeOver()
   stopFlight()
   framed = null
   const entry = state.layers.get(ref)
@@ -2025,6 +2052,7 @@ function syncSelection() {
 // flight under way; as with a layer's fit, the flight is kept as the framing and flown again.
 export function flyToThing(center: [number, number], kind?: string) {
   if (!map) return
+  takeOver()
   state.flownAt = performance.now()
   const building = kind === "building_3d" || kind === "register_building"
   if (kind === "building_3d" && !CITY.on) setCity3d(true)
@@ -2043,6 +2071,7 @@ export function flyToThing(center: [number, number], kind?: string) {
 // Fly to fit an area, given as [west, south, east, north] (a street from search).
 export function flyToBounds(bbox: [number, number, number, number]) {
   if (!map) return
+  takeOver()
   state.flownAt = performance.now()
   const b = new maplibregl.LngLatBounds([bbox[0], bbox[1]], [bbox[2], bbox[3]])
   const go = () => {
@@ -2062,6 +2091,7 @@ export function getCamera(): Camera | null {
 
 export function jumpToCamera(c: Camera) {
   if (!map) return
+  takeOver()
   framed = null
   map.jumpTo(c)
 }
@@ -2081,6 +2111,7 @@ export function applyMapUi(ev: any, onError: (text: string) => void) {
       showLayer({ ...ev.layer, askedAt: performance.now() }).catch((e) => onError(`Couldn't draw layer: ${e.message}`))
       break
     case "fly_to": {
+      takeOver()
       state.flownAt = performance.now()
       framed = null
       const opts: any = { essential: true, duration: 2200 }
@@ -2118,4 +2149,89 @@ export function resetForNewChat() {
   hlValue = null
   state.visualErrors = []
   resetView()
+}
+
+// ---------------------------------------------------------------------------------------------
+// Looking out from a spot (lib/view.ts owns the view; here is what the map does for it). The base
+// map's own buildings come out to the horizon (from z13 tiles, at their full height), except
+// within reach of the eye, where the DLS buildings stand at their surveyed heights; the DLS
+// tiles are asked for only there. Answer layers don't refit the camera meanwhile, and any other
+// camera move (the assistant's, the inspector's, a link's) ends the view first.
+
+export type ViewFocus = { lon: number; lat: number; radiusM: number; hide?: number }
+let viewFocus: ViewFocus | null = null
+const VIEW_BUILDINGS_MINZOOM = 13
+// The base map's 3D building layers as they were, to put back after the view.
+const viewSaved = new Map<string, { minzoom: number; maxzoom: number; filter: any; height: any }>()
+const takeovers = { leave: null as (() => void) | null }
+
+function takeOver() {
+  if (viewFocus && takeovers.leave) takeovers.leave()
+}
+
+// lib/view.ts: called when another camera move takes over from the view.
+export function onViewTakeover(fn: (() => void) | null) {
+  takeovers.leave = fn
+}
+
+export function viewing() {
+  return viewFocus !== null
+}
+
+export function setViewFocus(f: ViewFocus | null) {
+  viewFocus = f
+  if (!map) return
+  whenStyleReady(() => {
+    applyViewBuildings()
+    syncCityClaims()
+    applySky()
+    if (CITY.on) refreshCity()
+  })
+}
+
+// The DLS buildings in a view: stone by day, as they look, rather than coloured by height.
+const VIEW_STONE = ["interpolate", ["linear"], ["get", "h"], 0, "#e9e4da", 20, "#ddd6c8", 60, "#cbc2b0"]
+
+function applyViewBuildings() {
+  if (!styleReady) return
+  for (const l of map.getStyle()?.layers || []) {
+    if (l.type !== "fill-extrusion" || !isBase(l.id)) continue
+    const id = l.id
+    if (viewFocus) {
+      if (!viewSaved.has(id)) {
+        viewSaved.set(id, {
+          minzoom: l.minzoom ?? 0, maxzoom: l.maxzoom ?? 24, filter: map.getFilter(id) ?? null,
+          height: map.getPaintProperty(id, "fill-extrusion-height"),
+        })
+      }
+      const saved = viewSaved.get(id)!
+      const near: any = CITY.on
+        ? [">", ["distance", { type: "Point", coordinates: [viewFocus.lon, viewFocus.lat] }], viewFocus.radiusM]
+        : null
+      const filter: any = saved.filter && near ? ["all", saved.filter, near] : (near ?? saved.filter)
+      map.setLayerZoomRange(id, VIEW_BUILDINGS_MINZOOM, saved.maxzoom)
+      map.setFilter(id, filter)
+      map.setPaintProperty(id, "fill-extrusion-height", ["coalesce", ["get", "render_height"], 6])
+      map.setLayoutProperty(id, "visibility", "visible")
+    } else if (viewSaved.has(id)) {
+      const saved = viewSaved.get(id)!
+      map.setLayerZoomRange(id, saved.minzoom, saved.maxzoom)
+      map.setFilter(id, saved.filter)
+      map.setPaintProperty(id, "fill-extrusion-height", saved.height)
+      map.setLayoutProperty(id, "visibility", CITY.on ? "none" : "visible")
+    }
+  }
+  if (!viewFocus) viewSaved.clear()
+  if (map.getLayer("city3d::fill")) {
+    const day = useMapUi.getState().basemap === "day"
+    map.setPaintProperty("city3d::fill", "fill-extrusion-color",
+      viewFocus && day ? VIEW_STONE : ["interpolate", ["linear"], ["get", "h"], ...cityHeights()])
+  }
+}
+
+// Place the camera for the view: an eye-level camera from lib/view.ts.
+export function viewCamera(opts: maplibregl.JumpToOptions) {
+  framed = null
+  state.flownAt = performance.now()
+  map.jumpTo(opts)
 }

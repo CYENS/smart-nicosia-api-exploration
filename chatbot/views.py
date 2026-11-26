@@ -817,7 +817,7 @@ def camera(v: dict, when: When | None, *, look_around: bool = False) -> dict:
         "name": f["name"], "lat": f["lat"], "lon": f["lon"], "ground_m": f["ground_m"],
         "eye_m": f["eye_m"], "height_m": f["above_ground_m"],
         "above_centre_m": f["above_centre_m"], "bearing": v["bearing"],
-        "landmarks": [{k: m[k] for k in ("title", "lat", "lon", "top_m", "visible", "distance_m")
+        "landmarks": [{k: m[k] for k in ("title", "kind", "lat", "lon", "top_m", "visible", "distance_m")
                        if k in m} | ({"hidden_by": m["hidden_by"]} if m.get("hidden_by") else {})
                       for m in v.get("landmarks", [])],
         "look_around": look_around,

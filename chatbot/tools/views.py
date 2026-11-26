@@ -154,8 +154,9 @@ def h_view_from(ctx: ToolContext, a: dict) -> dict:
             except (V.ViewError, WebError):
                 continue
             tour.append(V.camera(other, when) | {"rank": row["rank"]})
-    cmd["tour"] = [{k: c[k] for k in ("id", "name", "lat", "lon", "ground_m", "eye_m",
-                                      "height_m", "above_centre_m", "bearing")} for c in tour]
+    cmd["tour"] = [{k: c[k] for k in ("id", "name", "lat", "lon", "ground_m", "eye_m", "height_m",
+                                      "above_centre_m", "bearing", "building_id", "toward") if k in c}
+                   for c in tour]
     ctx.emit({"type": "ui", "action": "view", "view": cmd})
     out = {k: v[k] for k in ("from", "looking", "toward", "facts", "when", "dark") if k in v}
     out["landmarks"] = [{k: m[k] for k in ("title", "distance_m", "visible", "hidden_by") if k in m}
