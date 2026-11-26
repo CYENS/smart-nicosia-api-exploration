@@ -34,3 +34,7 @@ testpaths = ["tests"]
 dev = [
     "pytest>=9.1.1",
 ]
+e2e = [
+    "axe-playwright-python>=0.1.9",
+    "pytest-playwright>=0.10.0",
+]
