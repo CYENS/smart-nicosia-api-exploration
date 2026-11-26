@@ -11,8 +11,9 @@ so near a station the estimate is what the station measures, and far from every 
 falls back to the model (or, for what the model doesn't know, to the stations' median). The
 confidence c(x) = sum w / (w0 + sum w) is 1 at a station and 0 far away; the page draws it as
 opacity, so the map fades where the estimate is only the model, and the uncertainty is
-sqrt(c * sensor^2 + (1 - c) * spread^2): the sensors' own error near them, the model's miss
-(how far it is from today's stations) or the stations' spread away from them.
+sqrt(sensor^2 + (1 - c) * spread^2): the sensors' own error at a station, and away from them
+the model's miss (how far it is from today's stations) or the stations' spread on top, so a
+place far from every station is never surer than a station itself.
 
 CAQI is the stations' own index (the model has no such scale) and noise is only measured, so
 both are stations only and fade to nothing between stations; noise is very local (a street, a
@@ -165,7 +166,7 @@ class Field:
         value = bg + (acc / (PRIOR + wsum) if wsum else 0.0)
         conf = wsum / (PRIOR + wsum) if wsum else 0.0
         sensor = max(self.metric.floor, self.metric.sensor * abs(value))
-        sigma = math.sqrt(conf * sensor ** 2 + (1 - conf) * self.spread ** 2)
+        sigma = math.sqrt(sensor ** 2 + (1 - conf) * self.spread ** 2)
         return {"value": value, "uncertainty": sigma, "confidence": conf,
                 "nearest": {"id": nearest[0].id, "name": nearest[0].name,
                             "metres": round(nearest[1])} if nearest else None}

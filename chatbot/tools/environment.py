@@ -263,7 +263,7 @@ def h_environment_surface(ctx: ToolContext, a: dict) -> dict:
         "bands": [f"{b['label']}: up to {b['to']}" if b["to"] is not None else f"{b['label']}: above"
                   for b in surf["bands"]],
         "uncertainty": {"near_a_station": f"about ±{_sensor(m, rows):g} {m.unit}".strip(),
-                        "far_from_stations": f"about ±{surf['spread']:g} {m.unit}".strip()},
+                        "far_from_stations": f"about ±{round(math.hypot(_sensor(m, rows), surf['spread']), m.decimals or 0):g} {m.unit}".strip()},
         "background": ("the Open-Meteo model, corrected by the stations' mean difference "
                        f"({surf['model_bias']:+g} {m.unit})".strip()
                        if surf["background"] == "model" else
