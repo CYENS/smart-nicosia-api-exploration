@@ -1,8 +1,10 @@
 /* Compare: a swipe across the map. Right of the line, the city at the clock's moment; left of
-   it, the compared moment (the same time last week, yesterday, or a moment held). Drag the
-   handle, or focus it and use the arrow keys. */
+   it, the compared moment (the same time last week, yesterday, or a moment held). The handle is
+   a Base UI slider (the primitive under shadcn's Slider) whose control spans the open map: drag
+   the handle, or focus it and use the arrow keys, Page Up and Down, Home and End. Only the
+   handle takes the pointer, so the map still pans everywhere else. */
+import { Slider as SliderPrimitive } from "@base-ui/react/slider"
 import { ChevronsLeftRightIcon } from "lucide-react"
-import { useRef, type KeyboardEvent, type PointerEvent } from "react"
 
 import { compareAt, compareName, fmtMoment, setSwipe, useClock } from "@/lib/clock"
 import { useGeometry } from "@/lib/geometry"
@@ -26,53 +28,48 @@ export function CompareSwipe() {
   const at = useClock((s) => s.at)
   const now = useClock((s) => s.now)
   const swipe = useClock((s) => s.swipe)
-  const dragging = useRef(false)
   if (other === null) return null
 
   const left = g.rail + g.insets.left
   const width = Math.max(1, g.vw - left - g.insets.right)
-  const x = left + swipe * width
   const top = STRIP_H + g.insets.top
-  const share = (clientX: number) => setSwipe((clientX - left) / width)
-
-  const onDown = (e: PointerEvent<HTMLDivElement>) => {
-    dragging.current = true
-    e.currentTarget.setPointerCapture(e.pointerId)
-    share(e.clientX)
-  }
-  const onMove = (e: PointerEvent<HTMLDivElement>) => { if (dragging.current) share(e.clientX) }
-  const onUp = () => { dragging.current = false }
-  const onKey = (e: KeyboardEvent<HTMLDivElement>) => {
-    const step = e.shiftKey ? 0.2 : 0.05
-    const next = { ArrowLeft: swipe - step, ArrowRight: swipe + step, Home: 0, End: 1 }[e.key]
-    if (next === undefined) return
-    e.preventDefault()
-    setSwipe(next)
-  }
+  const bottom = g.insets.bottom + 8
   const name = compareName(compare, other)
+  const thenLabel = name === "last week" || name === "yesterday" ? `${name.replace(/^./, (c) => c.toUpperCase())}, ${fmtMoment(other)}` : fmtMoment(other)
+  const nowLabel = at === null ? `Now, ${fmtMoment(now)}` : fmtMoment(at)
+  const pct = Math.round(swipe * 100)
 
   return (
-    <div className="pointer-events-none absolute z-[5]" style={{ left: x, top, bottom: g.insets.bottom + 8 }}>
-      <div className="absolute inset-y-0 -left-px w-0.5 bg-foreground/85 shadow-[0_0_0_1px_rgb(14_24_40_/_0.6)]" />
-      <Tag side="left">{name === "last week" || name === "yesterday" ? `${name.replace(/^./, (c) => c.toUpperCase())}, ${fmtMoment(other)}` : fmtMoment(other)}</Tag>
-      <Tag side="right"><span className="text-sodium">{at === null ? `Now, ${fmtMoment(now)}` : fmtMoment(at)}</span></Tag>
-      <div
-        role="slider"
-        tabIndex={0}
-        aria-label="Compare swipe: left shows the compared moment, right the clock's moment"
-        aria-valuemin={0}
-        aria-valuemax={100}
-        aria-valuenow={Math.round(swipe * 100)}
-        aria-valuetext={`${Math.round(swipe * 100)}% of the map shows ${fmtMoment(other)}`}
-        onPointerDown={onDown}
-        onPointerMove={onMove}
-        onPointerUp={onUp}
-        onPointerCancel={onUp}
-        onKeyDown={onKey}
-        className="pointer-events-auto absolute top-1/2 left-0 flex size-10 -translate-x-1/2 -translate-y-1/2 cursor-ew-resize touch-none items-center justify-center rounded-full border-2 border-foreground/85 bg-console text-foreground shadow-lg outline-none focus-visible:ring-4 focus-visible:ring-ring/50"
-      >
-        <ChevronsLeftRightIcon className="size-5" aria-hidden="true" />
+    <div className="pointer-events-none absolute z-[5]" style={{ left, width, top, bottom }}>
+      {/* The line and what each side shows. */}
+      <div className="absolute inset-y-0" style={{ left: `${swipe * 100}%` }}>
+        <div className="absolute inset-y-0 -left-px w-0.5 bg-foreground/85 shadow-[0_0_0_1px_rgb(14_24_40_/_0.6)]" />
+        <Tag side="left">{thenLabel}</Tag>
+        <Tag side="right"><span className="text-sodium">{nowLabel}</span></Tag>
       </div>
+      <SliderPrimitive.Root
+        value={pct}
+        min={4}
+        max={96}
+        step={1}
+        largeStep={10}
+        thumbAlignment="center"
+        onValueChange={(v) => setSwipe((Array.isArray(v) ? v[0] : v) / 100)}
+        className="pointer-events-none absolute inset-0"
+      >
+        <SliderPrimitive.Control className="pointer-events-none relative size-full touch-none select-none">
+          <SliderPrimitive.Track className="pointer-events-none relative size-full">
+            <SliderPrimitive.Thumb
+              getAriaLabel={() => "Compare swipe"}
+              getAriaValueText={() => `Left ${pct}% of the map shows ${thenLabel}; the rest shows ${nowLabel}`}
+              className="group/swipe pointer-events-auto flex size-10 cursor-ew-resize items-center justify-center rounded-full border-2 border-foreground/85 bg-console text-foreground shadow-lg outline-none transition-[border-color,box-shadow,color] hover:border-sodium hover:text-sodium has-[:focus-visible]:border-sodium has-[:focus-visible]:text-sodium has-[:focus-visible]:shadow-[0_0_0_4px_rgb(255_174_69_/_0.45)] active:border-sodium active:bg-raised data-dragging:border-sodium data-dragging:bg-raised"
+              style={{ top: "50%" }}
+            >
+              <ChevronsLeftRightIcon className="size-5" aria-hidden="true" />
+            </SliderPrimitive.Thumb>
+          </SliderPrimitive.Track>
+        </SliderPrimitive.Control>
+      </SliderPrimitive.Root>
     </div>
   )
 }

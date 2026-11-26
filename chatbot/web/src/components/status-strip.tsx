@@ -8,7 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { WallsMark } from "@/components/walls-mark"
 import { send, useChat } from "@/lib/chat"
-import { compareAt, compareName, fmtMoment, goLive, useClock } from "@/lib/clock"
+import { compareAt, compareName, fmtMoment, focusClock, goLive, useClock } from "@/lib/clock"
 import { nicosiaTime } from "@/lib/map/engine"
 import { moonName, skyAt } from "@/lib/map/sky"
 import { cn } from "@/lib/utils"
@@ -164,7 +164,7 @@ function MomentReadout() {
         <span className="mt-1 font-readout text-[17px] font-semibold text-sodium">{fmtMoment(at)}</span>
       </div>
       <Tooltip>
-        <TooltipTrigger render={<Button size="sm" className="h-8 gap-1.5" onClick={goLive} />}>
+        <TooltipTrigger render={<Button size="sm" className="h-8 gap-1.5" onClick={() => { goLive(); focusClock(useClock.getState().expanded ? "track" : "toggle") }} />}>
           <RadioIcon data-icon="inline-start" />
           Live
         </TooltipTrigger>

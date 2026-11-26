@@ -18,7 +18,7 @@ import { Kbd } from "@/components/ui/kbd"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import {
-  SPANS, ago, clearRange, compareAt, compareName, cycleSpeed, fmtMoment, goLive, setCompare, setExpanded,
+  SPANS, ago, clearRange, compareAt, compareName, cycleSpeed, fmtMoment, focusClock, goLive, setCompare, setExpanded,
   setSpan, togglePlay, useClock, type Compare, type Span,
 } from "@/lib/clock"
 import { useGeometry } from "@/lib/geometry"
@@ -85,7 +85,13 @@ function SpanToggle({ className }: { className?: string }) {
       className={className}
     >
       {SPANS.map((s) => (
-        <ToggleGroupItem key={s.id} value={s.id} className="h-7 px-2 font-condensed text-[12.5px]">{s.label}</ToggleGroupItem>
+        <ToggleGroupItem
+          key={s.id}
+          value={s.id}
+          className="h-7 px-2 font-condensed text-[12.5px] hover:text-foreground data-pressed:border-sodium/50 data-pressed:bg-sodium/15 data-pressed:text-sodium data-pressed:hover:bg-sodium/20"
+        >
+          {s.label}
+        </ToggleGroupItem>
       ))}
     </ToggleGroup>
   )
@@ -115,7 +121,15 @@ function CompareMenu() {
         <TooltipTrigger
           render={
             <DropdownMenuTrigger
-              render={<Button variant={on ? "secondary" : "ghost"} size="sm" className={cn("h-7 gap-1.5 px-2", on && "text-sodium")} />}
+              render={
+                <Button
+                  data-clock-part="compare"
+                  variant={on ? "secondary" : "ghost"}
+                  size="sm"
+                  aria-label={on ? "Compare two moments (on)" : "Compare two moments"}
+                  className={cn("h-7 gap-1.5 px-2 data-popup-open:bg-accent", on && "bg-sodium/15 text-sodium hover:bg-sodium/20")}
+                />
+              }
             />
           }
         >
@@ -173,7 +187,7 @@ function LiveButton({ compact = false }: { compact?: boolean }) {
   if (live) return null
   return (
     <Tooltip>
-      <TooltipTrigger render={<Button size="sm" className={cn("h-7 gap-1.5 px-2.5", compact && "h-8")} onClick={goLive} />}>
+      <TooltipTrigger render={<Button size="sm" className={cn("h-7 gap-1.5 px-2.5", compact && "h-8")} onClick={() => { goLive(); focusClock(useClock.getState().expanded ? "track" : "toggle") }} />}>
         <RadioIcon data-icon="inline-start" />
         Back to live
       </TooltipTrigger>
@@ -188,7 +202,16 @@ function PlayButton() {
   return (
     <Tooltip>
       <TooltipTrigger
-        render={<Button size="icon-sm" variant="secondary" className="shrink-0 rounded-full" aria-label={playing ? "Pause" : hasRange ? "Play the replay" : "Play from here"} onClick={togglePlay} />}
+        render={
+          <Button
+            data-clock-part="play"
+            size="icon-sm"
+            variant="secondary"
+            className={cn("shrink-0 rounded-full", playing && "bg-sodium text-night hover:bg-sodium/85")}
+            aria-label={playing ? "Pause" : hasRange ? "Play the replay" : "Play from here"}
+            onClick={togglePlay}
+          />
+        }
       >
         {playing ? <PauseIcon /> : <PlayIcon />}
       </TooltipTrigger>
@@ -255,7 +278,7 @@ export function CityClock() {
           {vs && <span className="hidden text-[12.5px] text-muted-foreground sm:inline">vs {vs}</span>}
           <LiveButton />
           <Tooltip>
-            <TooltipTrigger render={<Button variant="ghost" size="icon-sm" aria-label="Show the city clock" onClick={() => setExpanded(true)} />}>
+            <TooltipTrigger render={<Button data-clock-part="toggle" variant="ghost" size="icon-sm" aria-label="Show the city clock" aria-expanded={false} onClick={() => { setExpanded(true); focusClock("toggle") }} />}>
               <ChevronDownIcon />
             </TooltipTrigger>
             <TooltipContent>Show the clock's track <Kbd>T</Kbd></TooltipContent>
@@ -280,7 +303,7 @@ export function CityClock() {
           <div className="flex min-w-0 flex-1 items-center justify-end gap-1.5">
             {range && (
               <span className="hidden min-w-0 @[560px]:flex">
-                <Chip icon={FilmIcon} onClose={() => { clearRange(); goLive() }} closeLabel="Close the replay">
+                <Chip icon={FilmIcon} onClose={() => { clearRange(); goLive(); focusClock("play") }} closeLabel="Close the replay">
                   {range.title}
                   {replay?.reading && <span className="ml-1.5 font-readout font-semibold">{replay.reading}</span>}
                 </Chip>
@@ -288,12 +311,12 @@ export function CityClock() {
             )}
             {vs && (
               <span className="hidden min-w-0 @[460px]:flex">
-                <Chip icon={ColumnsIcon} onClose={() => setCompare(null)} closeLabel="Stop comparing">vs {vs}</Chip>
+                <Chip icon={ColumnsIcon} onClose={() => { setCompare(null); focusClock("compare") }} closeLabel="Stop comparing">vs {vs}</Chip>
               </span>
             )}
             {(range || playing) && (
               <Tooltip>
-                <TooltipTrigger render={<Button variant="ghost" size="sm" className="hidden h-7 px-2 font-readout @[640px]:inline-flex" onClick={cycleSpeed} />}>
+                <TooltipTrigger render={<Button variant="ghost" size="sm" aria-label={`Playback speed ${speed}×, change it`} className={cn("hidden h-7 px-2 font-readout @[640px]:inline-flex", speed > 1 && "text-sodium")} onClick={cycleSpeed} />}>
                   {speed}×
                 </TooltipTrigger>
                 <TooltipContent>Playback speed</TooltipContent>
@@ -304,7 +327,7 @@ export function CityClock() {
             <LiveButton />
             <MoreMenu />
             <Tooltip>
-              <TooltipTrigger render={<Button variant="ghost" size="icon-sm" aria-label="Hide the clock's track" onClick={() => setExpanded(false)} />}>
+              <TooltipTrigger render={<Button data-clock-part="toggle" variant="ghost" size="icon-sm" aria-label="Hide the clock's track" aria-expanded onClick={() => { setExpanded(false); focusClock("toggle") }} />}>
                 <ChevronUpIcon />
               </TooltipTrigger>
               <TooltipContent>Hide the clock's track</TooltipContent>

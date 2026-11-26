@@ -204,6 +204,7 @@ export function ClockTrack({ className }: { className?: string }) {
           <line x1={x(at)} x2={x(at)} y1={-3} y2={BAR_H + 3} stroke="var(--sodium)" strokeWidth={2} />
         </svg>
         <SliderPrimitive.Root
+          data-clock-part="track"
           value={value}
           min={0}
           max={steps}
@@ -220,7 +221,7 @@ export function ClockTrack({ className }: { className?: string }) {
                 onKeyDown={onKey}
                 className={cn(
                   "block size-4 rounded-full border-2 border-console bg-sodium shadow-[0_0_0_1px_rgb(255_174_69_/_0.5)] outline-none",
-                  "transition-[box-shadow] focus-visible:shadow-[0_0_0_4px_rgb(255_174_69_/_0.45)] active:shadow-[0_0_0_5px_rgb(255_174_69_/_0.35)]",
+                  "transition-[box-shadow] has-[:focus-visible]:shadow-[0_0_0_4px_rgb(255_174_69_/_0.45)] hover:shadow-[0_0_0_3px_rgb(255_174_69_/_0.3)] active:shadow-[0_0_0_5px_rgb(255_174_69_/_0.35)]",
                 )}
                 style={{ top: BAR_H / 2 }}
               />

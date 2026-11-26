@@ -209,6 +209,16 @@ export function panWindow(direction: -1 | 1) {
   set({ windowEnd: clampWindow(s.windowEnd + direction * ms * 0.75, s.span, s.now) })
 }
 
+// Put the keyboard on a part of the city clock (marked data-clock-part) once the page has
+// redrawn: the track's slider, the toggle that shows or hides the track, play or compare.
+export function focusClock(part: "track" | "toggle" | "play" | "compare") {
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    const el = document.querySelector<HTMLElement>(`[data-clock-part="${part}"]`)
+    const target = el?.querySelector<HTMLElement>("input") ?? el
+    target?.focus({ preventScroll: true })
+  }))
+}
+
 export function setExpanded(expanded: boolean) {
   set({ expanded })
   try { localStorage.setItem(EXPANDED_KEY, expanded ? "1" : "0") } catch { /* private mode */ }
