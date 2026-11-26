@@ -96,7 +96,7 @@ function local(f: MapGeoJSONFeature, at: [number, number]): LocalThing {
 registerClickHandler({
   id: "answer-layers",
   priority: 10,
-  layers: (l) => l.includes("::") && !/^(city3d|hl|sel)::/.test(l) && !l.endsWith("::street-glow") && !l.endsWith("-pool"),
+  layers: (l) => l.includes("::") && !/^(city3d|hl|sel|ground)::/.test(l) && !l.endsWith("::street-glow") && !l.endsWith("-pool"),
   resolve: (f, at) => {
     const id = f.properties?.id
     if (id === undefined || id === null || id === "") return { local: local(f, at) }
@@ -114,7 +114,8 @@ registerClickHandler({
   id: "city-3d",
   priority: 5,
   layers: (l) => l === "city3d::fill" || l === "city3d::ghost",
-  resolve: (f, at) => (f.id !== undefined ? { id: `B${f.id}`, at } : null),
+  // An old-town house (an outline from the cadastre) opens its block, as DLS models it.
+  resolve: (f, at) => (f.id !== undefined ? { id: `B${f.properties?.blk ?? f.id}`, at } : null),
 })
 
 // The street lamps that glow after dark.

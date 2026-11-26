@@ -4,11 +4,12 @@
    streets' glow at night, the walls and whatever the twin draws. It drapes over the terrain in a
    view by itself. After dark it is dimmed, as the streets around it are.
 
-   The choice is remembered on this device. The photo covers greater Nicosia; past it, and north
+   On the photo the 3D city shows as it looks too (lib/city3d/look.ts). The choice is remembered
+   on this device. The photo covers greater Nicosia; past it, and north
    of the Green Line where DLS has no photo, the base map shows through. */
 import { create } from "zustand"
 
-import { getMap, groundSlot, onStyleReady, themedPaint, useMapUi } from "@/lib/map/engine"
+import { getMap, groundSlot, onStyleReady, setCityRealistic, themedPaint, useMapUi } from "@/lib/map/engine"
 import { registerActiveSources } from "@/lib/sources"
 
 export type Ground = "map" | "photo"
@@ -50,6 +51,7 @@ function sync() {
   if (!map) return
   onStyleReady(() => {
     const on = useGround.getState().ground === "photo"
+    setCityRealistic(on) // on the photo, the 3D city as it looks: plaster, stone and tiles
     if (!on) {
       if (map.getLayer(LAYER)) map.removeLayer(LAYER)
       useGround.setState({ loading: false })

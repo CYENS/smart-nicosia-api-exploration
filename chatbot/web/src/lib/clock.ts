@@ -190,6 +190,9 @@ export function setAt(t: number | null, opts: { keepPlaying?: boolean } = {}) {
   set({ at: t, playing, windowEnd: t === null ? s.now : follow(t, s) })
 }
 
+// A hook for scripted demos and browser tests, as lib/view.ts keeps window.__view.
+;(window as unknown as { __clock: unknown }).__clock = { setAt: (t: number | null) => setAt(t), goLive: () => goLive(), setCompare: (c: Compare | null) => setCompare(c), useClock }
+
 export function goLive() {
   stopLoop()
   set((s) => ({ at: null, playing: false, windowEnd: s.now }))
