@@ -110,6 +110,62 @@ def loose_match(query: str | None, text: str | None) -> bool:
     return bool(q and text) and (q in loose(text) or q in loose(text, eta="e"))
 
 
+STOP_WORDS = {"a", "an", "the", "of", "and", "in", "near", "for", "to", "at", "on", "with", "by",
+              "και", "του", "της", "των", "στο", "στη", "στην"}
+# Words that say little about what a place is ('dance schools', 'yoga classes'): they rank, and
+# are required only when the query has nothing else.
+GENERIC_WORDS = {"place", "shop", "store", "school", "studio", "centre", "center", "class",
+                 "lesson", "service", "academy", "club", "nicosia", "lefkosia", "cyprus"}
+
+
+def _words(text: str | None) -> list[str]:
+    return re.findall(r"[^\W_]+", norm(text))
+
+
+def _stems(word: str) -> set[str]:
+    """A word and its singular ('classes' -> class, 'bars' -> bar, 'pharmacies' -> pharmacy)."""
+    out = {word}
+    if len(word) > 3 and word.endswith("ies"):
+        out.add(word[:-3] + "y")
+    if len(word) > 3 and word.endswith("es"):
+        out.add(word[:-2])
+    if len(word) > 2 and word.endswith("s"):
+        out.add(word[:-1])
+    return out
+
+
+def text_score(query: str | None, names: list[str | None], other: list[str | None]) -> int:
+    """How well a place matches free text, 0 for not at all: 4 its name holds the query
+    (whatever the script or spelling), 3 every telling word is in its name, 2 every telling word
+    is in its name, kind or address; one more for each generic word that is there too ('dance
+    school' finds dance studios, and ranks the schools first)."""
+    if not norm(query):
+        return 1
+    if any(norm(query) in norm(n) or loose_match(query, n) for n in names if n):
+        return 4
+    words = [w for w in _words(query) if w not in STOP_WORDS]
+    telling = [w for w in words if not (_stems(w) & GENERIC_WORDS)] or words
+    generic = [w for w in words if w not in telling]
+    if not telling:
+        return 0
+    name_words = {s for n in names for w in _words(n) for s in _stems(w)}
+    all_words = name_words | {s for t in other for w in _words(t) for s in _stems(w)}
+
+    def has(w: str, pool: set[str], prefix: bool) -> bool:
+        # A word starts a name's word too ('dance' in 'Danceworx'), never a kind's ('bar' isn't
+        # 'barber').
+        return bool(_stems(w) & pool) or (prefix and len(w) >= 4 and any(
+            x.startswith(w) for n in names for x in _words(n)))
+
+    if all(has(w, name_words, True) for w in telling):
+        base = 3
+    elif all(has(w, all_words, True) for w in telling):
+        base = 2
+    else:
+        return 0
+    return base + sum(has(w, all_words, False) for w in generic)
+
+
 def in_bbox(lat: float, lon: float, bbox=NICOSIA_BBOX) -> bool:
     return bbox[0] <= lon <= bbox[2] and bbox[1] <= lat <= bbox[3]
 
@@ -126,8 +182,10 @@ def rank_namesakes(places: list[dict], near: tuple[float, float]) -> list[dict]:
 
 
 class Places:
-    def __init__(self, settings: Settings):
+    def __init__(self, settings: Settings, overture=None):
         self.s = settings
+        # The second index, Overture Maps' places (chatbot/overture.py): searched after this one.
+        self.overture = overture
         self.path = CACHE_DIR / "places.json"
         self._places: list[dict] = []
         self._fetched_at = 0.0
@@ -233,27 +291,41 @@ class Places:
         limit: int = 20,
         named_only: bool = True,
     ) -> tuple[list[dict], str]:
-        """Places matching a category and/or name, nearest first. Returns (places, source)."""
-        if not self._places:
+        """Places matching a category and/or free text (a name, a kind, an address), from the
+        OSM index and then Overture's (less the places OSM has too). Nearest first with `near`;
+        otherwise the best matches, OSM's before Overture's. Returns (places, source)."""
+        ov = self.overture if self.overture is not None and self.overture.ready else None
+        if not self._places and ov is None:
             return self._photon_find(category, query, near, limit), "photon (index still loading)"
-        q = norm(query)
-        out = []
+        found: list[tuple[int, int, float, dict]] = []  # (score, index, confidence, place)
         for p in self._places:
             if category and p["category"] != category:
                 continue
             if named_only and not p.get("name"):
                 continue
-            if q and q not in norm(p.get("name")) and q not in norm(p.get("name_local")):
-                continue
-            item = dict(p)
+            s = text_score(query, [p.get("name"), p.get("name_local")],
+                           [p["category"].replace("_", " "), p.get("street"), p.get("cuisine")])
+            if s:
+                found.append((s, 0, 1.0, {**p, "from": "OpenStreetMap"}))
+        if ov is not None:
+            for s, conf, row in ov.find(category, query, skip=ov.twins(self._places)):
+                found.append((s, 1, conf, row))
+        exact = norm(query)
+        out = []
+        for s, idx, conf, item in found:
             if near:
-                item["distance_m"] = round(haversine_m(near[0], near[1], p["lat"], p["lon"]))
+                item["distance_m"] = round(haversine_m(near[0], near[1], item["lat"], item["lon"]))
                 if radius_m and item["distance_m"] > radius_m:
                     continue
-            out.append(item)
-        if near:
-            out.sort(key=lambda p: p["distance_m"])
-        return out[:limit], "OpenStreetMap (cached)"
+            out.append((s, idx, conf, item))
+        if near:  # a place called exactly that first, then the nearest
+            out.sort(key=lambda t: (norm(t[3].get("name")) != exact or not exact,
+                                    t[3]["distance_m"]))
+        else:
+            out.sort(key=lambda t: (-t[0], t[1], -t[2]))
+        source = " and ".join(x for x in ("OpenStreetMap" if self._places else None,
+                                          "Overture Maps" if ov is not None else None) if x)
+        return [t[3] for t in out[:limit]], f"{source} (cached)"
 
     def _photon_find(self, category, query, near, limit) -> list[dict]:
         params = {"q": query or (category or "").replace("_", " "), "limit": limit,

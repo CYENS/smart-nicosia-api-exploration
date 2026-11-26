@@ -100,6 +100,23 @@ def _memory(agent) -> dict:
     return status("live", note=None, holds_from=earliest)
 
 
+def _overture(agent) -> dict:
+    """The release the twin's copy was cut from, and whether the last look for a newer one
+    worked."""
+    ov = getattr(getattr(agent, "places", None), "overture", None)
+    if ov is None:
+        return status(None)
+    if not ov.ready:
+        return status("unavailable" if ov.error else "waiting",
+                      note=ov.error or "the first copy is being cut from the latest release")
+    date = ov.release_date
+    note = f"release {ov.release}, {len(ov.all()):,} places"
+    if ov.error:
+        return status("stale", date.timestamp() if date else None,
+                      f"{note}; a newer release couldn't be read ({ov.error})", release=ov.release)
+    return status("live", date.timestamp() if date else None, note, release=ov.release)
+
+
 PROBES: dict[str, Callable] = {
     "smart_nicosia": lambda a: _cached("city"),
     "open_meteo": lambda a: _cached("weather"),
@@ -108,6 +125,7 @@ PROBES: dict[str, Callable] = {
     "road_speeds": _roads,
     "registers": _registers,
     "twin_memory": _memory,
+    "overture": _overture,
 }
 
 

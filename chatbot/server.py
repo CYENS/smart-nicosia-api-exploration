@@ -24,6 +24,7 @@ from chatbot.dls import DLS
 from chatbot.eoa import Registry
 from chatbot.geo import Places
 from chatbot.memory import Memory
+from chatbot.overture import Overture
 from chatbot.routes import routers
 from chatbot.routing import Router
 from chatbot.settings import ROOT, STATIC_DIR, load_settings
@@ -57,8 +58,10 @@ async def lifespan(app: FastAPI):
     dls = DLS(settings)
     registers = Registry(settings, dls)
     memory = Memory(settings.memory_path, record=settings.record)
-    agent = Agent(settings, CityData(settings, recorder=memory.recorder), Places(settings),
-                  Router(settings), dls=dls, registers=registers, memory=memory)
+    overture = Overture()  # the second places index, from the last copy on disk
+    agent = Agent(settings, CityData(settings, recorder=memory.recorder),
+                  Places(settings, overture=overture), Router(settings), dls=dls,
+                  registers=registers, memory=memory)
     app.state.agent = agent
     if memory.recorder is not None:
         memory.recorder.start()
@@ -67,6 +70,8 @@ async def lifespan(app: FastAPI):
     log.info("twin's memory: %s (recording %s, full collection %s)", memory.path,
              "on" if memory.recorder else "off", "on" if settings.collect else "off")
     threading.Thread(target=_warm_up, args=(agent,), daemon=True).start()
+    # Overture's places: a newer release is looked for at most monthly (a minute or two to cut).
+    threading.Thread(target=overture.watch, daemon=True).start()
     # The registers refresh daily; the first build (parcels, then 3D heights) takes ~2 minutes.
     threading.Thread(target=registers.refresh_if_needed, daemon=True).start()
     yield

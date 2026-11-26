@@ -5,8 +5,10 @@ guessing and keeps it under a stable id (web-1a2b3c4d), so the answer's chips, t
 search and routes can find it again.
 
 A place is placed, most trusted first:
-- "exact": a place in the OSM index with exactly that name, or its address (or its name) found
-  by Nominatim or Photon as a building, a shop, an office or a house;
+- "exact": a place in the OSM index with exactly that name; a place in Overture Maps' index
+  (chatbot/overture.py) whose name matches loosely and whose address agrees, by its postcode or
+  a street of it (Overture's points stand at the door, so this beats any geocoding); or its
+  address (or its name) found by Nominatim or Photon as a building, a shop, an office or a house;
 - "street": only the street of its address was found, so its pin stands on the street, not at
   the door (the map draws it paler and the answer says so);
 - otherwise it is not placed. A neighbourhood or a town is not a position.
@@ -43,8 +45,9 @@ KEEP = 1000  # places kept on disk, the most recently found
 NAME_NEAR_STREET_M = 1500  # a name match counts only this close to its address's street
 SAME_STREET_M = 1000  # pieces of a street name closer than this are one street; farther, namesakes
 # Bumped when placing changes, so a place kept from before is placed again when it's next found
-# (version 1 put Ithaki on the Nikiforou Foka in Pallouriotissa, not the one by Famagusta Gate).
-PLACER = 2
+# (version 1 put Ithaki on the Nikiforou Foka in Pallouriotissa, not the one by Famagusta Gate;
+# version 3 takes Overture's point before geocoding).
+PLACER = 3
 POSTCODE = re.compile(r"(?<![\d.])(\d{4})(?![\d.])")  # Cyprus: four digits, 1000 to 9999
 
 AREA_TYPES = {"suburb", "neighbourhood", "quarter", "city", "town", "village", "hamlet",
@@ -280,6 +283,8 @@ class WebPlaces:
                 p = hits[0]
                 return {"lat": p["lat"], "lon": p["lon"], "precision": "exact",
                         "located_by": "OpenStreetMap", "matched": p.get("name"), "osm_id": p["id"]}
+        if (found := self._overture(name, address)) is not None:
+            return found
         code = address_postcode(address)
         street, namesakes, streets = None, [], []
         if address:
@@ -318,6 +323,40 @@ class WebPlaces:
         if code:
             return f"no street called {streets[0] if streets else address} in postcode {code}"
         return "its address isn't on the map of Nicosia"
+
+    def _overture(self, name: str, address: str | None) -> dict | None:
+        """The Overture place the result names, at its door: its name matches loosely and its
+        address agrees, by the postcode or a street of it (both, best). A place in another
+        postcode is another place. A result with no address takes only a place called exactly
+        that, and only when Overture has one place of that name."""
+        ov = getattr(self.places, "overture", None)
+        if ov is None or not ov.ready:
+            return None
+        found = ov.named_loosely(name)
+        code = address_postcode(address)
+        streets = address_streets(address) if address else []
+        best = None
+        for p in found:
+            pc = postcode_of({"postcode": p.get("postcode")})
+            if code and pc and pc[:3] != code[:3]:
+                continue
+            agree = 2 * bool(code and pc == code) + any(loose_match(s, p.get("address"))
+                                                        for s in streets)
+            if address and not agree:
+                continue
+            if not address and (len(found) > 1 or norm(p["name"]) != norm(name)):
+                continue
+            if best is None or (agree, p["confidence"]) > best[0]:
+                best = ((agree, p["confidence"]), p)
+        if best is None:
+            return None
+        p = best[1]
+        where = ", ".join(x for x in (p.get("address"), p.get("postcode")) if x)
+        return {"lat": p["lat"], "lon": p["lon"], "precision": "exact",
+                "located_by": "Overture Maps", "matched": clean(f"{p['name']}, {where}" if where
+                                                                else p["name"], 160),
+                "overture_id": p["id"],
+                **{k: p[k] for k in ("phone", "website") if p.get(k)}}
 
     def _street(self, query: str, streets: list[str], code: str | None,
                 address: str) -> tuple[dict | None, list[list[dict]]]:
