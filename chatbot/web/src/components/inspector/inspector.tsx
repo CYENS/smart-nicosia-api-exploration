@@ -20,12 +20,8 @@ import { flyToThing } from "@/lib/map/engine"
 import { sectionsFor } from "@/lib/registries/inspector-sections"
 import { cn } from "@/lib/utils"
 
-// Closing from the keyboard hands the keyboard to the map (arrow keys pan it), not to the page.
-function close() {
-  const inside = document.activeElement?.closest("[data-inspector]")
-  closeInspector()
-  if (inside) document.querySelector<HTMLElement>(".maplibregl-canvas")?.focus({ preventScroll: true })
-}
+// Closing gives the keyboard back to what opened the inspector (see closeInspector).
+const close = () => closeInspector()
 
 const TONE: Record<string, string> = {
   alarm: "border-signal/40 text-signal", warn: "border-line text-foreground",
@@ -188,9 +184,15 @@ export function Inspector() {
     return () => window.removeEventListener("keydown", onKey)
   }, [open])
 
-  // Opened from the keyboard (search, a chip, a relation): the keyboard follows it here.
+  // Opened from the keyboard (search, a chip, a relation): the keyboard follows it here, once the
+  // title is drawn, and once per request (a later map click doesn't pull the keyboard in again).
+  const focused = useRef(0)
   useEffect(() => {
-    if (focusAt) (titleRef.current ?? panelRef.current)?.focus({ preventScroll: true })
+    if (!focusAt || focusAt === focused.current) return
+    const title = titleRef.current
+    if (!title && status === "loading") return // the title comes with the record
+    ;(title ?? panelRef.current)?.focus({ preventScroll: true })
+    focused.current = focusAt
   }, [focusAt, status])
 
   if (!open) return null

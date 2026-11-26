@@ -56,12 +56,41 @@ function selectEntity(e: Entity) {
 
 let ctrl: AbortController | null = null
 
-// fly: move the map to it; focus: put the keyboard in the inspector (search, chips, links).
-export type InspectOptions = { fly?: boolean; focus?: boolean }
+// fly: move the map to it; focus: put the keyboard in the inspector (search, chips, links);
+// opener: where the keyboard goes back to when the inspector closes (by default, whatever had
+// focus when it opened; pass it when that element is about to go, as a search result does).
+export type InspectOptions = { fly?: boolean; focus?: boolean; opener?: HTMLElement | null }
+
+// The element that opened the inspector, for the keyboard to go back to on close. Opening one
+// thing from inside the inspector (a relation row, which is about to be replaced) keeps the
+// opener of the first, so closing the second still goes back to where the user started.
+let opener: HTMLElement | null = null
+
+function rememberOpener(given: HTMLElement | null | undefined) {
+  if (given !== undefined) {
+    opener = given
+    return
+  }
+  const a = document.activeElement as HTMLElement | null
+  if (a && a !== document.body && !a.closest("[data-inspector]") && !a.closest("[role=dialog]")) opener = a
+  else if (!useInspector.getState().open) opener = null
+}
+
+function canFocus(el: HTMLElement | null): el is HTMLElement {
+  return !!el && el.isConnected && !el.closest("[data-inspector]") && el.getClientRects().length > 0
+}
+
+// The keyboard back to the opener, or to the map (arrow keys pan it) when the opener is gone (it
+// was the map, or a row that has since been replaced).
+function returnFocus(to: HTMLElement | null) {
+  const target = canFocus(to) ? to : document.querySelector<HTMLElement>(".maplibregl-canvas")
+  target?.focus({ preventScroll: true })
+}
 
 export function inspect(target: InspectTarget, opts: InspectOptions = {}) {
   ctrl?.abort()
   const mine = (ctrl = new AbortController())
+  rememberOpener(opts.opener)
   if (opts.focus) set({ focusAt: Date.now() })
   if ("local" in target) {
     showLocal(target.local, opts)
@@ -114,11 +143,18 @@ export function retryInspector() {
   if (target) inspect(target, {})
 }
 
-export function closeInspector() {
+// Closing hands the keyboard back to the opener when it was in the inspector (Esc, the close
+// button); a close from elsewhere (a new chat, a link) leaves the keyboard where it is.
+export function closeInspector(opts: { returnFocus?: boolean } = {}) {
+  const a = document.activeElement
+  const inside = !!a && (a === document.body || !!a.closest("[data-inspector]"))
+  const back = opener
+  opener = null
   ctrl?.abort()
   ctrl = null
   set({ open: false, target: null, local: null, note: null, entity: null, status: "idle", error: null, series: null, seriesStatus: "idle" })
   setSelection(null)
+  if (opts.returnFocus !== false && inside) returnFocus(back)
 }
 
 // What the assistant hears about the open thing with each message.

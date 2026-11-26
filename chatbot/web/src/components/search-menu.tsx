@@ -7,7 +7,7 @@ import {
 import { Kbd, KbdGroup } from "@/components/ui/kbd"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useChat } from "@/lib/chat"
-import { useLayout } from "@/lib/layout"
+import { rememberSearchOpener, useLayout } from "@/lib/layout"
 import { searchProviders, type SearchItem } from "@/lib/registries/search"
 
 type Found = { provider: string; heading: string; order: number; items: SearchItem[] }
@@ -91,6 +91,7 @@ export function SearchMenu() {
     const onKey = (e: KeyboardEvent) => {
       if (e.key.toLowerCase() === "k" && (e.ctrlKey || e.metaKey)) {
         e.preventDefault()
+        if (!useLayout.getState().questionsOpen) rememberSearchOpener()
         useLayout.setState((s) => ({ questionsOpen: !s.questionsOpen, searchSeed: "" }))
       }
     }

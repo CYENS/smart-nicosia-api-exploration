@@ -9,7 +9,7 @@ import { newChat, send } from "@/lib/chat"
 import { linkToView } from "@/lib/deeplink"
 import { kindMeta, searchEntities } from "@/lib/entities"
 import { closeInspector, inspect, useInspector } from "@/lib/inspector"
-import { useLayout } from "@/lib/layout"
+import { searchOpenerElement, useLayout } from "@/lib/layout"
 import {
   flyToBounds, locateMe, resetView, setBasemapMode, setCity3d, showRegisters, useMapUi,
 } from "@/lib/map/engine"
@@ -25,7 +25,8 @@ registerSearchProvider({
     .slice(0, q ? 3 : 5)
     .map((r) => ({
       key: `recent:${r.id}`, title: r.name ?? r.id, detail: `${kindMeta(r.kind).label}, ${r.id}`,
-      icon: kindMeta(r.kind).icon, opens: true, run: () => inspect({ id: r.id }, { fly: true, focus: true }),
+      icon: kindMeta(r.kind).icon, opens: true,
+      run: () => inspect({ id: r.id }, { fly: true, focus: true, opener: searchOpenerElement() }),
     })),
 })
 
@@ -45,7 +46,10 @@ registerSearchProvider({
         detail: [r.id && !r.name.includes(r.id) ? r.id : null, r.detail].filter(Boolean).join(", "),
         run: () => {
           if (r.kind === "street" && r.bbox) flyToBounds(r.bbox)
-          else if (r.id) inspect({ id: r.id, at: r.lon != null && r.lat != null ? [r.lon, r.lat] : undefined }, { fly: true, focus: true })
+          else if (r.id) {
+            inspect({ id: r.id, at: r.lon != null && r.lat != null ? [r.lon, r.lat] : undefined },
+              { fly: true, focus: true, opener: searchOpenerElement() })
+          }
         },
       }
     })
