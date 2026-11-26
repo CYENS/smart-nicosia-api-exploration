@@ -14,6 +14,7 @@ import {
 } from "@/lib/clock"
 import { closeInspector, inspect, useInspector } from "@/lib/inspector"
 import { getCamera, jumpToCamera, onCameraMoved, type Camera } from "@/lib/map/engine"
+import { onRouted, routedThing } from "@/lib/registries/inspect-routes"
 
 export type ClockLink = { at: number | null; range: [number, number] | null; compare: Compare | null }
 export type Link = { camera: Camera | null; entity: string | null; clock?: ClockLink | null }
@@ -95,7 +96,8 @@ function clockNow(): ClockLink {
 
 function current(): Link {
   const { open, entity, target } = useInspector.getState()
-  return { camera: getCamera(), entity: open ? (entity?.id ?? target?.id ?? null) : null, clock: clockNow() }
+  // A thing open in a place of its own (an incident in its inbox) when the inspector is closed.
+  return { camera: getCamera(), entity: open ? (entity?.id ?? target?.id ?? null) : routedThing(), clock: clockNow() }
 }
 
 let written = ""
@@ -155,13 +157,14 @@ export function startDeepLinks(initial: Link) {
   useClock.subscribe((s, prev) => {
     if (s.at !== prev.at || s.range !== prev.range || s.compare !== prev.compare) soon()
   })
+  onRouted(soon)
   window.addEventListener("hashchange", () => {
     if (location.hash === written) return
     const link = parseHash(location.hash)
     written = location.hash
     if (link.camera) jumpToCamera(link.camera)
     applyClock(link.clock ?? { at: null, range: null, compare: null })
-    if (link.entity && link.entity !== useInspector.getState().entity?.id) inspect({ id: link.entity }, { fly: !link.camera })
+    if (link.entity && link.entity !== useInspector.getState().entity?.id && link.entity !== routedThing()) inspect({ id: link.entity }, { fly: !link.camera })
     else if (!link.entity && useInspector.getState().open) closeInspector()
   })
   applyClock(initial.clock)

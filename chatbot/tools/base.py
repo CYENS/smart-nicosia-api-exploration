@@ -23,6 +23,7 @@ if TYPE_CHECKING:
     from chatbot.entities import Entities
     from chatbot.mobility import Mobility
     from chatbot.moments import Moments
+    from chatbot.watch import Watcher
     from chatbot.webplaces import WebPlaces
 
 TZ = ZoneInfo(TIMEZONE)
@@ -66,6 +67,7 @@ class ToolContext:
     moments: Moments | None = None
     mobility: Mobility | None = None  # buses, stops and road speeds (chatbot/mobility)
     web_places: WebPlaces | None = None  # places found on the web, placed (chatbot/webplaces.py)
+    watcher: Watcher | None = None  # incidents and watches (chatbot/watch)
 
 
 # -- schema helpers -----------------------------------------------------------------------------

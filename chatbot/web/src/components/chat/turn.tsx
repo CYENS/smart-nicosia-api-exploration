@@ -4,7 +4,7 @@ import {
   SquareIcon, TriangleAlertIcon,
 } from "lucide-react"
 import { marked } from "marked"
-import { memo, useEffect, useMemo, useRef, useState } from "react"
+import { createElement, memo, useEffect, useMemo, useRef, useState } from "react"
 
 import { SubjectChip } from "@/components/chat/composer"
 import { Trace, seconds } from "@/components/chat/trace"
@@ -21,6 +21,7 @@ import { ACTIONS } from "@/lib/actions"
 import { answerText, edit, focusComposer, focusStage, retry, runAction, send, useStage, type Part, type Turn } from "@/lib/chat"
 import { ID_IN_TEXT, kindMeta, kindOfId } from "@/lib/entities"
 import { inspect } from "@/lib/inspector"
+import { turnCard } from "@/lib/registries/turn-cards"
 import { useRovingList } from "@/lib/roving"
 import { cn } from "@/lib/utils"
 
@@ -68,7 +69,7 @@ function chipIds(html: string) {
       b.className = "entity-chip"
       b.dataset.entity = m[0]
       b.dataset.chip = kindMeta(kind).chip
-      b.title = `Open ${m[0]} (${kindMeta(kind).label.toLowerCase()}) in the inspector`
+      b.title = kind === "incident" ? `Open ${m[0]} in the incident inbox` : `Open ${m[0]} (${kindMeta(kind).label.toLowerCase()}) in the inspector`
       b.textContent = m[0]
       frag.append(b)
       last = (m.index ?? 0) + m[0].length
@@ -114,7 +115,7 @@ function StageLink({ stageId, title, visual }: { stageId: string; title: string;
   )
 }
 
-function PartView({ part }: { part: Part }) {
+function PartView({ part, turnId }: { part: Part; turnId: string }) {
   switch (part.kind) {
     case "text":
       return <Answer text={part.text} />
@@ -129,6 +130,11 @@ function PartView({ part }: { part: Part }) {
           <MarkerContent>{part.text}</MarkerContent>
         </Marker>
       )
+    case "card": {
+      // A registered card (a proposed watch with Save and Not now): lib/registries/turn-cards.ts.
+      const card = turnCard(part.card)
+      return card ? createElement(card, { turnId, data: part.data }) : null
+    }
   }
 }
 
@@ -397,7 +403,7 @@ export function TurnView({ turn, latest }: { turn: Turn; latest: boolean }) {
   // Only the latest turn, once it is over, can be asked again or changed, and offers follow-ups.
   const current = latest && !running
   // The trace and streaming text show their own progress; between them, the walls trace.
-  const quiet = running && (!last || last.kind === "stage" || last.kind === "note"
+  const quiet = running && (!last || last.kind === "stage" || last.kind === "note" || last.kind === "card"
     || (last.kind === "trace" && !last.items.some((i) => i.type === "step" && i.status === "running")))
   const offer = current && turn.status === "done"
   const choices = offer ? turn.choices : undefined
@@ -408,7 +414,9 @@ export function TurnView({ turn, latest }: { turn: Turn; latest: boolean }) {
       <Question turn={turn} editable={current} />
       <Message align="start">
         <MessageContent className="gap-3">
-          {turn.parts.map((p, i) => <PartView key={i} part={p} />)}
+          {turn.parts.map((p, i) => (p.kind === "card" ? null : <PartView key={i} part={p} turnId={turn.id} />))}
+          {/* Cards (a proposed watch to save) come under the answer, whenever their tool ran. */}
+          {turn.parts.map((p, i) => (p.kind === "card" ? <PartView key={i} part={p} turnId={turn.id} /> : null))}
           {quiet && <Working />}
           {turn.status === "stopped" && (
             <Marker className="text-[13px] text-muted-foreground">

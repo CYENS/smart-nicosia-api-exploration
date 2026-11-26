@@ -19,6 +19,7 @@
   --color-line: var(--line);
   --color-sodium: var(--sodium);
   --color-signal: var(--signal);
+  --color-amber: var(--amber);
 
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
@@ -75,6 +76,8 @@
   --line: rgb(138 160 190 / 0.16);
   --sodium: #ffae45;
   --signal: #ff5a4e;
+  /* A warning that is not yet an alarm (a medium-severity incident): amber, beside signal red. */
+  --amber: #f5a524;
 
   --background: var(--night);
   --foreground: #e4ebf4;

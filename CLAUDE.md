@@ -52,10 +52,16 @@ npm run build                     # writes chatbot/static (committed, see below)
   live layer, readout or chart follows the clock: read `useClock` (or `?at=` on the server)
   rather than assuming now.
   `TOOL_LABELS` in `lib/chat.ts` names each tool in the trace: add new tools there.
+- `chatbot/watch/` is the twin's watch: detectors over the memory, incidents grouped by place
+  and time with who did what, watches, and a live server-sent events stream
+  (`/api/watch/stream`). On the page, `lib/watch/` is the incident inbox (Alt 4), its Layers
+  row under Alerts, the toasts (shadcn Sonner, Alt T) and the clock's incident marks.
 - `chatbot/web/src/lib/registries/` is where page features plug in instead of editing shared
   files: workspaces (opened from the Layers sheet, Ctrl K and Alt and a number), topics (the
   chips, four at most, and sections on their cards), the Layers sheet's system layer rows,
-  inspector sections per kind, search providers (Ctrl K) and map click handlers. A new readout
+  inspector sections per kind, search providers (Ctrl K), map click handlers, inspect routes (ids
+  that open somewhere else: an incident opens in its inbox), marks on the clock's track, and
+  cards under an answer for a tool's `ui` command (a proposed watch's Save). A new readout
   goes into a topic card or a Layers sheet row, not across the top: the default screen stays calm.
 
 ## House rules for features
