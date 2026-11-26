@@ -103,6 +103,13 @@ SOURCES: tuple[Source, ...] = (
         licence=ODBL, licence_url="https://opendatacommons.org/licenses/odbl/",
         refresh="Asked per question"),
     Source(
+        "web_search", "Web search", "the web", "The web pages Claude's web search finds",
+        "Places the map doesn't list, such as teachers, studios, shops and services, with their "
+        "addresses, phones and websites, and events and news",
+        "Map, places and routes", url="https://docs.claude.com/en/docs/agents-and-tools/tool-use/web-search-tool",
+        refresh="Asked per question; places found are kept with the page they came from",
+        credit="Places: from the web"),
+    Source(
         "dls", "Department of Lands and Surveys (DLS)", "the DLS", "Republic of Cyprus",
         "Every building in 3D at its height and floors, and the plots they stand on",
         "Buildings", url="https://eservices.dls.moi.gov.cy/inspire/",
@@ -137,6 +144,7 @@ TOOL_SOURCES: dict[str, tuple[str, ...]] = {
     "get_weather": ("open_meteo",),
     "geocode": ("geocoding",),
     "find_places": ("openstreetmap",),
+    "locate_web_places": ("web_search", "geocoding", "openstreetmap"),
     "plan_route": ("valhalla", "openstreetmap"),
     "reachable_area": ("valhalla", "openstreetmap"),
     "find_dangerous_buildings": ("registers", "dls"),

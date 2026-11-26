@@ -36,6 +36,7 @@ from chatbot.routing import Router
 from chatbot.settings import TIMEZONE, Settings
 from chatbot.store import SessionStore
 from chatbot.tools import TOOL_DEFS, WEB_SEARCH, ToolContext, run_tool
+from chatbot.webplaces import WebPlaces
 
 log = logging.getLogger(__name__)
 TZ = ZoneInfo(TIMEZONE)
@@ -165,8 +166,9 @@ class Agent:
         self._client = client
         # Buses, stops and road speeds: one fetch of each feed for every page and answer.
         self.mobility = mobility or Mobility(settings, memory, router)
+        self.web_places = WebPlaces(places)  # places the answers found on the web, placed
         self.entities = Entities(city, places, dls, registers, memory,  # shared with the inspector
-                                 mobility=self.mobility)
+                                 mobility=self.mobility, web_places=self.web_places)
         self.moments = Moments(city, memory)  # the city at past moments, for the clock
         self.tools = TOOL_DEFS + ([WEB_SEARCH] if settings.web_search else [])
         self.conversations: dict[str, Conversation] = {}
@@ -213,7 +215,7 @@ class Agent:
                                emit_threadsafe, conv.id, self.dls, self.registers,
                                user_location(context), memory=self.memory,
                                entities=self.entities, moments=self.moments,
-                               mobility=self.mobility)
+                               mobility=self.mobility, web_places=self.web_places)
         conv.messages.append({"role": "user", "content": [
             {"type": "text", "text": format_context(context, self.city.now()) + text}]})
 
