@@ -8,7 +8,7 @@ import { create } from "zustand"
 import { BASE_SOURCE, BASE_SOURCE_URLS, BASEMAP_URLS, baseLayers, type Basemap } from "@/lib/map/basemap"
 import { lightFor, nicosiaWallToDate, skyAt, skyFor, type Sky } from "@/lib/map/sky"
 import { kindOfId } from "@/lib/entities"
-import { clickableLayer, resolveClick, type InspectTarget } from "@/lib/registries/map-clicks"
+import { clickableLayer, handleEmptyClick, resolveClick, type InspectTarget } from "@/lib/registries/map-clicks"
 import { WALLS_RING } from "@/lib/walls"
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -108,6 +108,8 @@ type MapUi = {
   replays: Record<string, ReplayUi> // every time-lapse layer on the map, by ref
   me: { loc: MyLocation | null; error: string }
   flying: string | null // the route the camera is flying along
+  // The right-click menu, where it was asked for (page pixels) and the point of the map there.
+  menu: { x: number; y: number; at: [number, number]; n: number } | null
 }
 export type MyLocation = { lat: number; lon: number; accuracy_m: number | null; source: string }
 export const useMapUi = create<MapUi>(() => ({
@@ -123,6 +125,7 @@ export const useMapUi = create<MapUi>(() => ({
   replays: {},
   me: { loc: null, error: "" },
   flying: null,
+  menu: null,
 }))
 const setUi = useMapUi.setState
 
@@ -192,6 +195,16 @@ export function fmt(v: number) {
 
 export type Camera = { center: [number, number]; zoom: number; pitch: number; bearing: number }
 
+const DOUBLE_CLICK_MS = 250 // an empty-map click waits this long for a second click
+const LONG_PRESS_MS = 550
+const emptyClick = { timer: 0, quietUntil: 0 }
+let press: { x: number; y: number; timer: number } | null = null
+
+function cancelPress() {
+  if (press) clearTimeout(press.timer)
+  press = null
+}
+
 export function initMap(container: HTMLElement, camera?: Camera | null) {
   if (map) return map // React's development mode runs effects twice
   // No style yet: setBasemap loads the first one, recoloured. (Starting from a placeholder style
@@ -203,16 +216,45 @@ export function initMap(container: HTMLElement, camera?: Camera | null) {
     attributionControl: { compact: true },
   })
   // A click opens what is under it in the inspector. The box around the pointer catches the
-  // small dots (a lamp is a few pixels across); what lies right under the pointer wins.
+  // small dots (a lamp is a few pixels across); what lies right under the pointer wins. A click
+  // on empty map goes to the empty-click handlers ("What's here?"), a moment later, so the
+  // first click of a double-click (which zooms) does nothing. A drag is never a click.
   map.on("click", (e) => {
     const layers = map.getLayersOrder().filter(clickableLayer)
-    if (!layers.length) return
     const { x, y } = e.point
-    const exact = map.queryRenderedFeatures(e.point, { layers })
-    const near = exact.length ? exact : map.queryRenderedFeatures([[x - 6, y - 6], [x + 6, y + 6]], { layers })
+    const exact = layers.length ? map.queryRenderedFeatures(e.point, { layers }) : []
+    const near = exact.length || !layers.length ? exact : map.queryRenderedFeatures([[x - 6, y - 6], [x + 6, y + 6]], { layers })
     const target = resolveClick(near, [e.lngLat.lng, e.lngLat.lat])
-    if (target) for (const fn of inspectSinks) fn(target)
+    clearTimeout(emptyClick.timer)
+    if (target) {
+      emptyClick.timer = 0
+      for (const fn of inspectSinks) fn(target)
+      return
+    }
+    if (performance.now() < emptyClick.quietUntil) return // the click that ends a long press
+    if (emptyClick.timer) { emptyClick.timer = 0; return } // a double-click: it zooms
+    const at: [number, number] = [e.lngLat.lng, e.lngLat.lat]
+    emptyClick.timer = window.setTimeout(() => { emptyClick.timer = 0; handleEmptyClick(at, "click") }, DOUBLE_CLICK_MS)
   })
+  map.on("dblclick", () => { clearTimeout(emptyClick.timer); emptyClick.timer = 0 })
+  // A long press on touch asks about the point, as a right-click does with a mouse. Moving the
+  // finger (a pan) or a second finger (a pinch) calls it off.
+  map.on("touchstart", (e) => {
+    cancelPress()
+    if (e.originalEvent.touches.length !== 1) return
+    const at: [number, number] = [e.lngLat.lng, e.lngLat.lat]
+    press = {
+      x: e.point.x, y: e.point.y,
+      timer: window.setTimeout(() => {
+        press = null
+        emptyClick.quietUntil = performance.now() + 800
+        handleEmptyClick(at, "press")
+      }, LONG_PRESS_MS),
+    }
+  })
+  map.on("touchmove", (e) => { if (press && Math.hypot(e.point.x - press.x, e.point.y - press.y) > 10) cancelPress() })
+  map.on("touchend", cancelPress)
+  map.on("touchcancel", cancelPress)
   ;(window as any).__map = map // a hook for scripted demos and browser tests (e.g. map.project)
   ;(window as any).__twin = { state, clock } // and what the map draws, for the same
   map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), "bottom-right")
@@ -224,13 +266,21 @@ export function initMap(container: HTMLElement, camera?: Camera | null) {
   map.addControl(geolocate, "bottom-right")
   geolocate.on("geolocate", (pos: GeolocationPosition) => setMyLocation(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy, "device location"))
   geolocate.on("error", () => setUi({ me: { loc: useMapUi.getState().me.loc, error: "Couldn't read your location here. Right-click the map where you are instead." } }))
+  // Right-click: the map's menu ("What's here?", "I'm here"), drawn by components/map-menu.
+  // A touch browser that turns a long press into a context menu gets the long press instead.
   map.on("contextmenu", (e) => {
-    const button = document.createElement("button")
-    button.type = "button"
-    button.className = "me-btn"
-    button.textContent = "I'm here"
-    const popup = new maplibregl.Popup({ closeButton: false, offset: 6 }).setLngLat(e.lngLat).setDOMContent(button).addTo(map)
-    button.addEventListener("click", () => { setMyLocation(e.lngLat.lat, e.lngLat.lng, NaN, "set on the map"); popup.remove() })
+    e.preventDefault()
+    const touch = (e.originalEvent as PointerEvent).pointerType === "touch" || performance.now() < emptyClick.quietUntil
+    if (touch) {
+      if (press) { // the browser was quicker than our timer
+        cancelPress()
+        emptyClick.quietUntil = performance.now() + 800
+        handleEmptyClick([e.lngLat.lng, e.lngLat.lat], "press")
+      }
+      return
+    }
+    const box = map.getContainer().getBoundingClientRect()
+    setUi({ menu: { x: box.left + e.point.x, y: box.top + e.point.y, at: [e.lngLat.lng, e.lngLat.lat], n: performance.now() } })
   })
   // A page opened in a hidden tab measures a 0-size container; keep the canvas in step.
   new ResizeObserver(() => map.resize()).observe(container)
@@ -1914,10 +1964,12 @@ export type Selection = {
   center: [number, number]
   geometry?: GeoJSON.Geometry | null
   footprints?: { geometry: GeoJSON.Geometry; height_m: number }[]
+  pin?: boolean // a dropped pin (a point of the map, "What's here?") in place of the ring
 }
 
 const SEL_SRC = "sel::src"
 let selection: Selection | null = null
+let pin: maplibregl.Marker | null = null
 const inspectSinks = new Set<(t: InspectTarget) => void>()
 
 export function onInspect(fn: (t: InspectTarget) => void) {
@@ -1928,14 +1980,36 @@ export function onInspect(fn: (t: InspectTarget) => void) {
 export function setSelection(s: Selection | null) {
   selection = s
   if (!s && framed?.ref === "") framed = null // closed: don't fly back to it when panels move
-  if (map) syncSelection()
+  if (map) { syncSelection(); syncPin() }
+}
+
+// The dropped pin: a sodium marker standing on the point, dropped in (unless motion is reduced).
+function syncPin() {
+  if (!selection?.pin) {
+    pin?.remove()
+    pin = null
+    return
+  }
+  if (pin) {
+    pin.setLngLat(selection.center)
+    const el = pin.getElement()
+    el.classList.remove("spot-pin-drop")
+    void el.offsetWidth // restart the drop for a new point
+    el.classList.add("spot-pin-drop")
+    return
+  }
+  const el = document.createElement("div")
+  el.className = "spot-pin spot-pin-drop"
+  el.setAttribute("aria-hidden", "true")
+  el.innerHTML = '<svg viewBox="0 0 28 38" width="28" height="38"><path d="M14 1C6.8 1 1 6.7 1 13.8 1 23.4 14 37 14 37s13-13.6 13-23.2C27 6.7 21.2 1 14 1z"/><circle cx="14" cy="13.6" r="4.6"/></svg>'
+  pin = new maplibregl.Marker({ element: el, anchor: "bottom" }).setLngLat(selection.center).addTo(map)
 }
 
 function syncSelection() {
   if (!styleReady) return
   const features: Feature[] = []
   if (selection) {
-    features.push({ type: "Feature", geometry: { type: "Point", coordinates: selection.center }, properties: { _k: "ring" } })
+    if (!selection.pin) features.push({ type: "Feature", geometry: { type: "Point", coordinates: selection.center }, properties: { _k: "ring" } })
     const g = selection.geometry
     if (g && (g.type === "Polygon" || g.type === "MultiPolygon" || g.type === "LineString")) {
       features.push({ type: "Feature", geometry: g, properties: { _k: "shape" } })

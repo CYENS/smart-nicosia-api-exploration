@@ -4,6 +4,7 @@ import { BaseMapNotice } from "@/components/base-map-notice"
 import { ChatPanel } from "@/components/chat/chat-panel"
 import { Inspector } from "@/components/inspector/inspector"
 import { LayersPanel } from "@/components/layers-panel"
+import { MapMenu } from "@/components/map-menu"
 import { Rail } from "@/components/rail"
 import { SearchMenu } from "@/components/search-menu"
 import { Shortcuts } from "@/components/shortcuts"
@@ -16,6 +17,7 @@ import { startClock } from "@/lib/clock"
 import { parseHash, startDeepLinks } from "@/lib/deeplink"
 import { useGeometry } from "@/lib/geometry"
 import { initMap, setInsets } from "@/lib/map/engine"
+import "@/lib/here" // "What's here?": any point of the map, its card, the click, press and Ctrl K
 import "@/lib/mobility" // buses, stops and road speeds: their workspace, kinds, layers and commands
 import { useWorkspace, useWorkspaceSide } from "@/lib/registries/workspaces"
 
@@ -75,6 +77,7 @@ export function App() {
         <Stage />
         <WorkspacePanels />
         <SearchMenu />
+        <MapMenu />
         <Shortcuts />
       </div>
     </TooltipProvider>

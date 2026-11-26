@@ -248,7 +248,7 @@ def test_registers_around_and_the_building_under_the_pin(tmp_path, monkeypatch):
     assert [(x["id"], x["kind"], x["detail"]) for x in r["rows"]] == [("NIC-1", "register_building", "Dangerous")]
     assert "not an engineering verdict" in r["note"]
     b = here.build(ents, "building", LAT, LON)
-    assert b["status"] == "ok" and b["under"] and b["summary"] == ("Under the pin: high residential "
+    assert b["status"] == "ok" and b["under"] and b["summary"] == ("Under the pin: a high residential "
                                                                    "building, 21 m to the roof, 7 floors")
     assert [x["id"] for x in b["rows"]] == ["B1", "NIC-1"]  # and its register entry
     assert {f["label"]: f["value"] for f in b["facts"]}["Floors"] == 7

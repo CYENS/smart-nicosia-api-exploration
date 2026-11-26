@@ -63,6 +63,7 @@ PARKING_ROWS = 5
 REGISTER_RADIUS_M = 150
 REGISTER_ROWS = 5
 BUILDING_NEAR_M = 40  # past this, a point is open ground, not "next to" a building
+BESIDE_M = 3  # closer than this to a wall is at it (footprints are a metre or two off)
 LAMP_RADIUS_M = 150
 LAMP_ROWS = 3
 PLACE_NEAR_M = 80  # the fallback for an address: a named place this close
@@ -481,16 +482,16 @@ def building(s: Spot) -> dict:
     size = ", ".join(x for x in (f"{p['h']:g} m to the roof" if p.get("h") is not None else None,
                                  _plural(int(floors), "floor") if floors else None) if x)
     c = centroid(b["geometry"])
-    row = {"id": f"B{b['id']}", "kind": "building_3d", "name": use, "detail": size or None,
+    row = {"id": f"B{b['id']}", "kind": "building_3d", "name": use, "detail": "Open it in 3D",
            "distance_m": round(dist), **({"lon": c[0], "lat": c[1]} if c else {})}
     rows = [row]
     for r in s.ents.registers_on_building(b["id"]):
         rows.append({"id": r["id"], "kind": "register_building", "name": r.get("name") or r.get("address") or r["id"],
                      "detail": "On the register: " + {"dangerous": "dangerous", "needs_repair": "needs repair"}[r["status"]],
                      "state": r["status"], "color": STATE_COLORS[r["status"]]})
-    where = "Under the pin" if dist == 0 else f"{round(dist)} m away"
-    return section("building", "ok", f"{where}: {use.lower() if use != 'Building' else 'a building'}"
-                   + (f", {size}" if size else ""), rows=rows, sources=sources,
+    where = "Under the pin" if dist == 0 else "Right by the pin" if dist < BESIDE_M else f"{round(dist)} m away"
+    what = "a building" if use == "Building" else f"a {use.lower()}" if use[0].lower() not in "aeiou" else f"an {use.lower()}"
+    return section("building", "ok", f"{where}: {what}" + (f", {size}" if size else ""), rows=rows, sources=sources,
                    facts=[fact("Height to the roof", f"{p['h']:g} m" if p.get("h") is not None else None),
                           fact("Floors", int(floors) if floors else None), fact("Use", p.get("t")),
                           fact("Roof", p.get("r")),

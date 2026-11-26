@@ -5,8 +5,8 @@ import { create } from "zustand"
 
 import { toWall, useClock } from "@/lib/clock"
 import {
-  EntityError, cachedEntity, fetchBand, fetchEntity, fetchSeries, type Band, type Entity, type EntityRef,
-  type LocalThing, type Series,
+  EntityError, cachedEntity, fetchBand, fetchEntity, fetchSeries, placeholderEntity, type Band, type Entity,
+  type EntityRef, type LocalThing, type Series,
 } from "@/lib/entities"
 import { flyToThing, onInspect, setSelection } from "@/lib/map/engine"
 import type { InspectTarget } from "@/lib/registries/map-clicks"
@@ -47,14 +47,16 @@ export const useInspector = create<InspectorState>(() => ({
 const set = useInspector.setState
 
 function remember(e: Entity) {
-  const recent = [{ id: e.id, kind: e.kind, name: e.name }, ...useInspector.getState().recent.filter((r) => r.id !== e.id)].slice(0, 6)
+  // Points of the map ("What's here?") come and go with every click: only the latest is kept.
+  const older = useInspector.getState().recent.filter((r) => r.id !== e.id && !(e.kind === "spot" && r.kind === "spot"))
+  const recent = [{ id: e.id, kind: e.kind, name: e.name }, ...older].slice(0, 6)
   set({ recent })
   try { localStorage.setItem(RECENT_KEY, JSON.stringify(recent)) } catch { /* private mode: recent stays for this visit */ }
 }
 
 function selectEntity(e: Entity) {
   if (!e.center) { setSelection(null); return }
-  setSelection({ center: e.center, geometry: e.geometry, footprints: e.footprints })
+  setSelection({ center: e.center, geometry: e.geometry, footprints: e.footprints, pin: e.kind === "spot" })
 }
 
 let ctrl: AbortController | null = null
@@ -101,7 +103,8 @@ export function inspect(target: InspectTarget, opts: InspectOptions = {}) {
   }
   const { id, at, fallback, note } = target
   const moment = clockMoment()
-  const cached = cachedEntity(id, moment)
+  // A kind whose id says enough (a spot) shows at once, and fills in when its record comes.
+  const cached = cachedEntity(id, moment) ?? placeholderEntity(id)
   set({
     open: true, target: { id, at }, local: null, note: note ?? null, entity: cached, status: cached ? "ready" : "loading",
     error: null, series: null, seriesStatus: "idle", band: null, moment,
@@ -123,7 +126,8 @@ export function inspect(target: InspectTarget, opts: InspectOptions = {}) {
     .catch((e: Error) => {
       if (mine.signal.aborted || e.name === "AbortError") return
       if (e instanceof EntityError && e.status === 404 && fallback) { showLocal(fallback, {}); return }
-      set({ status: e instanceof EntityError && e.status === 404 ? "missing" : "error", error: e.message })
+      const pending = useInspector.getState().entity?.pending // a placeholder isn't a record to keep showing
+      set({ status: e instanceof EntityError && e.status === 404 ? "missing" : "error", error: e.message, ...(pending ? { entity: null } : {}) })
     })
 }
 
