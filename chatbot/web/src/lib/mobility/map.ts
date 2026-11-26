@@ -15,6 +15,7 @@
    are, so colour never carries it alone. */
 import type { GeoJSONSource, Map as MlMap } from "maplibre-gl"
 
+import { useClock } from "@/lib/clock"
 import { useInspector } from "@/lib/inspector"
 import {
   firstLabelLayer, flyToBounds, getMap, onStyleReady, registerLayerRenderer, setSelection, themedPaint,
@@ -187,7 +188,9 @@ function matches(b: LiveBus, f: BusFilter | null) {
 
 function busFeatures(): any {
   const f = activeFilter()
-  const features = []
+  const features: any[] = []
+  // The live feed is only now: while the clock shows the past, the buses step aside.
+  if (useClock.getState().at !== null) return { type: "FeatureCollection", features }
   for (const t of tracks.values()) {
     const b = t.bus
     if (b.finished || !matches(b, f)) continue
@@ -563,6 +566,15 @@ export function startMobilityMap() {
     if (document.hidden) return
     if (busDemand()) void pollBuses()
     if (roadDemand()) void pollRoads()
+  })
+  // Road speeds follow the city clock (read from the twin's memory at its moment); the buses
+  // hide while it is in the past. A moment that keeps moving (a replay) is read once it rests.
+  let clockTimer: number | undefined
+  useClock.subscribe((st, prev) => {
+    if (st.at === prev.at) return
+    window.clearTimeout(clockTimer)
+    clockTimer = window.setTimeout(() => setRoadMoment(st.at === null ? null : String(st.at)), st.playing ? 600 : 150)
+    setBusState({ paused: st.at !== null })
   })
   // Opening a bus or a road brings its live layer with it, and closing it lets it go again.
   let kind: string | undefined

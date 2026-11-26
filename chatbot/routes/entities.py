@@ -10,7 +10,7 @@ from fastapi import APIRouter, HTTPException, Query, Request
 
 from collector.http import ApiError
 
-from chatbot.entities import HISTORY_KINDS, EntityNotFound, at_moment, public
+from chatbot.entities import AT_RESOLVERS, HISTORY_KINDS, EntityNotFound, at_moment, public
 from chatbot.moments import frame_of, label
 from chatbot.overview import cached, moments_of
 from chatbot.routes import agent_of
@@ -51,6 +51,8 @@ def series_end(at: datetime, now: datetime) -> datetime:
 
 def _at(request: Request, entity: dict, when: datetime) -> dict:
     """The entity at a past moment, cached per quarter hour (the memory doesn't change)."""
+    if entity["kind"] in AT_RESOLVERS:  # a kind that reads its own past (road speeds)
+        return AT_RESOLVERS[entity["kind"]](agent_of(request).entities, entity, when)
     if entity["kind"] not in HISTORY_KINDS or "_device" not in entity:
         return at_moment(entity, None, False, when, label(frame_of(when)))
     moments = moments_of(agent_of(request))

@@ -8,6 +8,7 @@ import { useMobility } from "@/lib/mobility/store"
 
 function busLine(b: ReturnType<typeof useMobility.getState>["buses"]) {
   if (!b.on) return "Live from the national feed, gliding along their routes"
+  if (b.paused) return "Live only: they come back when the clock returns to now"
   switch (b.status) {
     case "loading": case "idle": return "Finding the buses on the road"
     case "unavailable": return "The live bus feed isn't answering. Try again in a minute; stop timetables still work."
@@ -21,8 +22,9 @@ function roadLine(r: ReturnType<typeof useMobility.getState>["roads"]) {
   switch (r.status) {
     case "loading": case "idle": return "Reading the road detectors"
     case "unavailable": return r.at ? "The twin's memory has no road speeds for that moment" : "The national traffic feed isn't answering. Try again in a minute."
+    case "recorded": return r.measured ? `${r.measured} of ${r.total} road segments, as the twin recorded them then` : "No road speeds recorded around that moment"
     case "no_readings": return "No road has a reading in the last 30 minutes"
-    default: return `${r.measured} of ${r.total} road segments measured${r.at && r.status === "recorded" ? ", as recorded then" : ", updated every 5 minutes"}`
+    default: return `${r.measured} of ${r.total} road segments measured, updated every 5 minutes`
   }
 }
 

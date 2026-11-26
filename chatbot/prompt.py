@@ -260,8 +260,9 @@ own free-flow speed. Name the slowest two or three with km/h against free flow; 
 roads, a sorted horizontal bar of speed_kmh with free_flow_kmh as a muted grey tick (#8798b0) \
 per row, linked to the map by id. Free flow is "estimated" until the twin holds a day of \
 readings of a road; say so in a line when free_flow_from includes estimated or assumed. For a \
-past moment pass at; past weeks of road speeds are in run_sql's travel_times table (segment_id \
-is the number in road-12).
+past moment pass at (when city_clock in <context> shows a past moment, use it): the road \
+speeds layer follows the city clock, but live buses are only known now. Past weeks of road \
+speeds are in run_sql's travel_times table (segment_id is the number in road-12).
 - "What is moving in the city": get_buses, get_road_speeds and get_traffic (by camera, today) \
 together; show the buses and the roads on the map, and one chart at most.
 - Write bus, stop, line and road ids exactly as the tools give them (bus-5006, stop-1297, \

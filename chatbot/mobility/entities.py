@@ -272,20 +272,20 @@ def build_line(ents, eid: str, near) -> dict | None:
 # -- road segments ---------------------------------------------------------------------------
 
 
-def road_row(m, seg) -> dict | None:
-    rows = m.roads.speeds()["segments"]
+def road_row(m, seg, at: datetime | None = None) -> dict | None:
+    rows = m.roads.speeds(at)["segments"]
     return next((r for r in rows if r["id"] == seg.id), None)
 
 
-def build_road(ents, eid: str, near) -> dict | None:
+def build_road(ents, eid: str, near, at: datetime | None = None) -> dict | None:
     m = _mobility(ents)
     if m is None:
         return None
     seg = m.roads.segment(eid)
     if seg is None:
         return None
-    row = road_row(m, seg) or {}
-    now = _now(ents)
+    row = road_row(m, seg, at) or {}
+    now = at or _now(ents)
     state_value = row.get("state", "no_reading")
     measured = datetime.fromisoformat(row["measured_at"]) if row.get("measured_at") else None
     speed = row.get("speed_kmh")
@@ -307,7 +307,7 @@ def build_road(ents, eid: str, near) -> dict | None:
     opposite = next((s for s in m.roads.segments() if s.from_site == seg.to_site and s.to_site == seg.from_site), None)
     relations = []
     if opposite:
-        orow = road_row(m, opposite) or {}
+        orow = road_row(m, opposite, at) or {}
         relations.append({"relation": "opposite", "label": "The other way", "id": opposite.id,
                           "kind": "road_segment", "name": opposite.name,
                           "detail": f"{round(orow['speed_kmh'])} km/h" if orow.get("speed_kmh") is not None else "no reading",
@@ -335,6 +335,18 @@ def build_road(ents, eid: str, near) -> dict | None:
               "share": row.get("share_of_free_flow")},
         _for_model={"free_flow_kmh": free, "free_flow_from": how, "usual_kmh_this_hour": row.get("usual_kmh"),
                     "share_of_free_flow": row.get("share_of_free_flow")})
+
+
+def road_at(ents, entity: dict, at: datetime) -> dict:
+    """The road as the twin's memory recorded it at a moment of the city clock."""
+    from chatbot.moments import label  # the clock's own words for a moment
+
+    e = build_road(ents, entity["id"], None, at=at) or dict(entity)
+    known = (e.get("road") or {}).get("speed_kmh") is not None
+    e["moment"] = {"at": _iso(at), "label": label(at), "known": known, "applies": True}
+    if not known and e.get("state"):
+        e["state"] = {**e["state"], "label": "No reading recorded then"}
+    return e
 
 
 def road_series(ents, entity: dict, end: datetime | None = None) -> dict | None:
@@ -420,4 +432,5 @@ E.register_kind(E.Kind("bus_stop", lambda i: i.lower().startswith("stop-"), buil
 E.register_kind(E.Kind("bus_line", lambda i: i.lower().startswith("line-"), build_line, ttl_s=STOP_TTL_S))
 E.register_kind(E.Kind("road_segment", lambda i: i.lower().startswith("road-"), build_road, ttl_s=ROAD_TTL_S))
 E.register_series("road_segment", road_series)
+E.register_at("road_segment", road_at)
 E.register_search(search_items, {"Bus stops": 6, "Bus lines": 4, "Roads": 4})

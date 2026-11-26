@@ -38,6 +38,7 @@ type Mobility = {
   buses: {
     on: boolean; status: "idle" | "loading" | "live" | "stale" | "unavailable"; error: string | null
     count: number; fetchedAt: number; filter: BusFilter | null
+    paused: boolean // the city clock shows the past: the live buses wait for now
   }
   roads: {
     on: boolean; status: "idle" | "loading" | "live" | "recorded" | "unavailable" | "no_readings"
@@ -48,7 +49,7 @@ type Mobility = {
 }
 
 export const useMobility = create<Mobility>(() => ({
-  buses: { on: false, status: "idle", error: null, count: 0, fetchedAt: 0, filter: null },
+  buses: { on: false, status: "idle", error: null, count: 0, fetchedAt: 0, filter: null, paused: false },
   roads: { on: false, status: "idle", error: null, measured: 0, total: 0, at: null, freeFlow: [] },
   summary: null,
   summaryStatus: "idle",

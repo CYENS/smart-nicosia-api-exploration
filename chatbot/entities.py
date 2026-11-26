@@ -261,6 +261,16 @@ def register_series(kind: str, fn: Callable[[Entities, dict, datetime | None], d
     return fn
 
 
+# A kind's own reading of a past moment of the city clock (the devices read theirs through
+# chatbot/moments.py): kind -> fn(ents, entity, at) -> the entity as it was, with its `moment`.
+AT_RESOLVERS: dict[str, Callable[[Entities, dict, datetime], dict]] = {}
+
+
+def register_at(kind: str, fn: Callable[[Entities, dict, datetime], dict]):
+    AT_RESOLVERS[kind] = fn
+    return fn
+
+
 class Entities:
     """Builds entities from the twin's sources, with short caches, and searches them."""
 

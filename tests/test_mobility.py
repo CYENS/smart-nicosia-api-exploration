@@ -588,3 +588,20 @@ def test_the_strip_and_the_workspace_summary(app_agent, monkeypatch):
     assert strip["buses"]["running"] >= 20 and strip["buses"]["lines"] == 6
     summary = json.loads(mobility_routes.mobility(REQUEST).body)
     assert summary["buses"]["by_line"][0]["buses"] >= 1 and "roads" in summary
+
+
+def test_a_road_at_a_past_moment_of_the_city_clock(tmp_path, monkeypatch):
+    from chatbot.entities import AT_RESOLVERS
+    mem = stored_memory(tmp_path)
+    m, _ = make_mobility(tmp_path, now=ROAD_NOW, memory=mem)
+    monkeypatch.setattr(roads_mod.time, "time", lambda: ROAD_NOW.timestamp())
+    ents = Entities(None, mobility=m)
+    live = ents.get("road-1")
+    then = datetime(2026, 10, 18, 9, 0, tzinfo=TZ)  # Sunday morning rush in the stored day
+    past = AT_RESOLVERS["road_segment"](ents, live, then)
+    assert past["moment"]["known"] and past["moment"]["applies"]
+    assert past["road"]["speed_kmh"] == 25.0 and past["state"]["value"] == "slow"
+    unknown = AT_RESOLVERS["road_segment"](ents, live, then - timedelta(days=20))
+    assert not unknown["moment"]["known"] and unknown["state"]["label"] == "No reading recorded then"
+    series = ents.series("road-1", end=then)
+    assert series and series["to"] <= "2026-10-18T09:00" and series["threshold"]["value"] == 55.0
