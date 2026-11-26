@@ -2,7 +2,7 @@ import { MOD_KEY } from "@/components/chat/composer"
 import { Button } from "@/components/ui/button"
 import { Kbd } from "@/components/ui/kbd"
 import { send } from "@/lib/chat"
-import { useLayout } from "@/lib/layout"
+import { openSearch } from "@/lib/layout"
 import { STARTERS } from "@/lib/questions"
 
 export function Welcome() {
@@ -33,8 +33,8 @@ export function Welcome() {
           </li>
         ))}
       </ul>
-      <Button variant="ghost" size="sm" className="self-start text-muted-foreground" onClick={() => useLayout.setState({ questionsOpen: true })}>
-        All questions
+      <Button variant="ghost" size="sm" className="self-start text-muted-foreground" onClick={() => openSearch()}>
+        Search everything
         <Kbd className="max-md:hidden">{MOD_KEY} K</Kbd>
       </Button>
     </div>

@@ -35,13 +35,16 @@ export function ChatPanel() {
   const turns = useChat((s) => s.turns)
   const busy = useChat((s) => s.busy)
   const noKey = useCredentialsMissing()
-  const { desktop, chatW } = useGeometry()
+  const { desktop, chatW, rail, inspecting } = useGeometry()
+
+  if (!desktop && inspecting) return null // a phone shows one sheet: the inspector has it now
 
   if (!open) {
     return (
       <Button
         variant="secondary"
-        className="panel-float absolute top-[64px] left-3 z-10 h-10 gap-2 rounded-xl px-3.5"
+        className="panel-float absolute top-[64px] z-10 h-10 gap-2 rounded-xl px-3.5"
+        style={{ left: rail + 12 }}
         onClick={() => useLayout.setState({ chatOpen: true })}
       >
         {busy ? <WallsMark working className="size-4 text-sodium" /> : <MessageSquareTextIcon data-icon="inline-start" />}
@@ -53,8 +56,8 @@ export function ChatPanel() {
   return (
     <aside
       aria-label="Conversation"
-      className="panel-float absolute inset-x-2 bottom-2 z-10 flex h-[56%] flex-col overflow-hidden rounded-xl md:inset-x-auto md:top-[64px] md:bottom-3 md:left-3 md:h-auto"
-      style={desktop ? { width: chatW } : undefined}
+      className="panel-float absolute inset-x-2 bottom-2 z-10 flex h-[56%] flex-col overflow-hidden rounded-xl md:inset-x-auto md:top-[64px] md:bottom-3 md:h-auto"
+      style={desktop ? { width: chatW, left: rail + 12 } : undefined}
     >
       <div className="flex h-12 shrink-0 items-center justify-between gap-2 border-b border-line pr-2 pl-4">
         <h2 className="text-[14px] font-semibold">Conversation</h2>

@@ -20,9 +20,24 @@ screen under a live strip of city readouts (lamps lit, free parking, full bins, 
 the registers, and when it next gets dark); click one to ask about it. The conversation floats
 on the left and shows the assistant's work as a timed trace. Charts and custom visuals land on
 the stage, with a filmstrip of earlier ones; the map panel on the right holds the base map, the
-3D city, the registers, your position and the legends. Ctrl K (Cmd K) lists prepared questions.
+3D city, the registers, your position and the legends. A slim rail on the left holds the twin's
+workspaces (Live today, for now), search and the keyboard shortcuts (press ?).
 
 It also has:
+
+- **The inspector.** Click anything on the map (a lamp, even one glowing at night, a parking
+  bay, a bin, an air station, a camera, a register building, any building of the 3D city, a
+  place, a route) and it opens beside the map: its status, its live readings with their age, a
+  sparkline of the last 24 hours (it follows the time line like the charts, and the arrow keys
+  read it out), what it is, and what is around it (its street, the nearest device of each other
+  kind, the register entry on a building, the buildings on a plot), each one a click away.
+  "Ask about this" puts it in the composer as a chip; the assistant also sees what is open.
+  Every id the assistant names (YL1015, NIC-409, B255563) is a chip that opens the inspector.
+- **Search everything** from Ctrl K (Cmd K): devices by id, name or street, register buildings
+  by address or file number, places, streets, commands (the 3D city, the base map, the
+  registers, locate me) and the prepared questions.
+- **Links to a view.** The address keeps the camera and the open thing
+  (`#/e/YL1015/@35.16680,33.36082,17z`), so a view can be shared and survives a reload.
 
 - **The real sky.** The map follows the sun and moon over Nicosia (SunCalc): the Night base map
   from civil dusk to civil dawn, so the switch moves through the year; 3D buildings lit from where
@@ -97,11 +112,20 @@ To host it (Docker and Caddy on a free Oracle Cloud VM, with HTTPS and a shared 
   in parallel and loops until Claude answers. History is append-only. The system prompt and
   tool list are fixed, so prompt caching works. Refused requests retry on a fallback model
   (`fallbacks: "default"`).
-- [chatbot/tools.py](chatbot/tools.py) defines 21 tools plus Claude's web search, and
-  registers the two over the twin's memory from [chatbot/memory_tools.py](chatbot/memory_tools.py):
-  `query_history` (a metric over hours, days and weeks, per device or all together, with the
-  typical day) and `run_sql` (one read-only SELECT over the collector's tables). Every input is
-  validated against its JSON schema.
+- [chatbot/tools/](chatbot/tools/) defines 25 tools plus Claude's web search, one module per
+  domain, in the order [registry.py](chatbot/tools/registry.py) sets. Every input is validated
+  against its JSON schema.
+  - **Memory.** The two over the twin's memory come from
+    [chatbot/memory_tools.py](chatbot/memory_tools.py): `query_history` (a metric over hours,
+    days and weeks, per device or all together, with the typical day) and `run_sql` (one
+    read-only SELECT over the collector's tables).
+  - **Entities.** `get_entity` reads any one thing by its id (any kind, a superset of
+    `get_device`) from [chatbot/entities.py](chatbot/entities.py), with a 24-hour series as a
+    data_ref (read from the twin's memory first); `open_inspector` opens it on the page. The
+    page's inspector reads the same model from `/api/entities/{id}` and
+    `/api/entities/search`, built from what is already cached (the inventory, the last
+    snapshot of each device type, the places index, the registers, DLS tiles), so a click
+    asks the city's API for that one device only.
   - **Data tools** return compact JSON. They store big results (map GeoJSON, chart rows) in the
     session and pass Claude a `layer_ref` or `data_ref`.
   - **Map and chart tools** push commands to the browser. The server fills each chart from a

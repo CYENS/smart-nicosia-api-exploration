@@ -288,6 +288,7 @@ class DLS:
         self._mem: OrderedDict[tuple[int, int], list[dict]] = OrderedDict()
         self._mem_lock = threading.Lock()
         self._tile_locks: dict[tuple[int, int], threading.Lock] = {}
+        self._by_id: dict[int, dict | None] = {}  # buildings looked up by id, outside a tile
 
     # -- requests ------------------------------------------------------------------------------
 
@@ -375,6 +376,41 @@ class DLS:
                 while len(self._mem) > MEMORY_TILES:
                     self._mem.popitem(last=False)
             return feats
+
+    def cached_tile(self, x: int, y: int) -> list[dict] | None:
+        """A tile from memory or disk, or None if it isn't cached (never fetched here)."""
+        with self._mem_lock:
+            if (x, y) in self._mem:
+                return self._mem[(x, y)]
+        return self._read_tile(x, y)
+
+    def building_by_id(self, oid: int, near: tuple[float, float] | None = None) -> dict | None:
+        """One 3D building by its OBJECTID. With `near` (lon, lat, e.g. where it was clicked),
+        the tile there and the cached tiles around it are looked through first; otherwise, or
+        if it isn't there, one query by id. None if DLS has no such building."""
+        if near:
+            x, y = lonlat_to_tile(*near)
+            around = [(x + dx, y + dy) for dx in (-1, 0, 1) for dy in (-1, 0, 1)]
+            for k, (tx, ty) in enumerate(sorted(around, key=lambda t: (t != (x, y), t))):
+                try:
+                    feats = self.tile(tx, ty) if k == 0 else self.cached_tile(tx, ty)
+                except WebError as e:  # the lookup by id below may still find it
+                    log.info("tile %s,%s for building %s failed: %s", tx, ty, oid, e)
+                    feats = None
+                hit = next((b for b in feats or [] if b["id"] == oid), None)
+                if hit:
+                    return hit
+        with self._mem_lock:
+            if oid in self._by_id:
+                return self._by_id[oid]
+        feats = self.query(BUILDINGS_URL, {"where": f"OBJECTID={int(oid)}",
+                                           "outFields": BUILDING_FIELDS, "outSR": 4326})
+        hit = next((b for f in feats.get("features") or [] if (b := building(f))), None)
+        with self._mem_lock:
+            if len(self._by_id) > 500:
+                self._by_id.clear()
+            self._by_id[oid] = hit
+        return hit
 
     def _read_tile(self, x: int, y: int) -> list[dict] | None:
         try:

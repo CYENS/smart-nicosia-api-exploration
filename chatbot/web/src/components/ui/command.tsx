@@ -39,12 +39,14 @@ function CommandDialog({
   children,
   className,
   showCloseButton = false,
+  finalFocus,
   ...props
 }: Omit<React.ComponentProps<typeof Dialog>, "children"> & {
   title?: string
   description?: string
   className?: string
   showCloseButton?: boolean
+  finalFocus?: React.ComponentProps<typeof DialogContent>["finalFocus"]
   children: React.ReactNode
 }) {
   return (
@@ -59,6 +61,7 @@ function CommandDialog({
           className
         )}
         showCloseButton={showCloseButton}
+        finalFocus={finalFocus}
       >
         {children}
       </DialogContent>
@@ -156,7 +159,7 @@ function CommandItem({
     <CommandPrimitive.Item
       data-slot="command-item"
       className={cn(
-        "group/command-item relative flex cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-hidden select-none in-data-[slot=dialog-content]:rounded-lg! data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50 data-selected:bg-muted data-selected:text-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 data-selected:*:[svg]:text-foreground",
+        "group/command-item relative flex cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-hidden select-none in-data-[slot=dialog-content]:rounded-lg! data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50 data-selected:bg-sodium/[0.13] data-selected:text-foreground data-selected:inset-ring-1 data-selected:inset-ring-sodium/45 data-selected:before:absolute data-selected:before:inset-y-1.5 data-selected:before:left-0 data-selected:before:w-[3px] data-selected:before:rounded-full data-selected:before:bg-sodium [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 data-selected:*:[svg]:text-sodium",
         className
       )}
       {...props}

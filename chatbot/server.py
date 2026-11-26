@@ -1,11 +1,10 @@
-"""FastAPI app: serves the map + chat page and streams each turn as Server-Sent Events."""
+"""FastAPI app: serves the map and chat page, behind an optional shared password. The API
+routes live in chatbot/routes/, one router per area."""
 
 from __future__ import annotations
 
-import asyncio
 import base64
 import binascii
-import json
 import logging
 import os
 import secrets
@@ -14,32 +13,30 @@ import time
 from contextlib import asynccontextmanager
 
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI
 from fastapi.middleware.gzip import GZipMiddleware
-from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse, StreamingResponse
+from fastapi.responses import FileResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel, Field
 
-from chatbot.agent import Agent, describe_api_error
+from chatbot.agent import Agent
 from chatbot.city import CityData
-from chatbot.dls import DLS, TILE_ZOOM
-from chatbot.eoa import Registry, layer_features
+from chatbot.dls import DLS
+from chatbot.eoa import Registry
 from chatbot.geo import Places
-from chatbot.memory import Memory, Unavailable
-from chatbot.memory_tools import EntityNotFound, entity_history
-from chatbot.overview import cached, live_lamps, live_strip
+from chatbot.memory import Memory
+from chatbot.routes import routers
 from chatbot.routing import Router
 from chatbot.settings import ROOT, STATIC_DIR, load_settings
-from chatbot.store import STATE_COLORS, legend_for
-from chatbot.tools import ToolContext, ToolError, vega_lite_validator
-from chatbot.web import WebError
+from chatbot.tools import vega_lite_validator
 
 log = logging.getLogger("chatbot")
 
 
 def _warm_up(agent: Agent) -> None:
     """Load the slow, cacheable things in the background so the first question is quick."""
-    for step in (agent.city.overview, lambda: vega_lite_validator(agent.settings)):
+    # The traffic cameras (one request, kept 6 h) let search and the inspector find them by name.
+    for step in (agent.city.overview, agent.city.traffic_cameras,
+                 lambda: vega_lite_validator(agent.settings)):
         try:
             step()
         except Exception as e:  # noqa: BLE001 - best effort
@@ -142,158 +139,14 @@ app.add_middleware(SharedPassword)  # added last, so it runs first
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 
-class ChatRequest(BaseModel):
-    message: str = Field(min_length=1, max_length=4000)
-    conversation_id: str | None = None
-    context: dict | None = None
-
-
 @app.get("/")
 def index() -> FileResponse:
     # Always revalidated: it names the hashed bundles of the current build.
     return FileResponse(STATIC_DIR / "index.html", headers={"Cache-Control": "no-cache"})
 
 
-@app.get("/api/health")
-def health() -> dict:
-    agent: Agent = app.state.agent
-    return {
-        "ok": True,
-        "model": agent.settings.model,
-        "has_credentials": bool(os.environ.get("ANTHROPIC_API_KEY")
-                                or os.environ.get("ANTHROPIC_AUTH_TOKEN")),
-        "places_ready": agent.places.ready,
-        "registers_ready": agent.registers.ready,
-        "registers_3d_linked": agent.registers.linked_3d,
-    }
-
-
-@app.get("/api/health/data")
-def health_data() -> JSONResponse:
-    """How fresh and complete the twin's memory is, per source (cached for 30 s)."""
-    agent: Agent = app.state.agent
-    if agent.memory is None:
-        return JSONResponse({"store": {"status": "off"}})
-    body = cached("health_data", 30, lambda: agent.memory.health(agent.city.now()))
-    return JSONResponse(body or {"store": {"status": "error"}},
-                        headers={"Cache-Control": "max-age=30"})
-
-
-@app.get("/api/history/{entity_id}")
-def history_series(entity_id: str, hours: int = Query(24, ge=1, le=168),
-                   metric: str | None = Query(None, max_length=40)) -> JSONResponse:
-    """One device's metric over the last hours with its typical-day band, for the inspector's
-    sparkline: from the twin's memory, the city API filling what it lacks (cached for 2 min)."""
-    agent: Agent = app.state.agent
-    ctx = ToolContext(agent.settings, agent.city, agent.places, agent.router, None,
-                      lambda e: None, "", memory=agent.memory)
-
-    def build():
-        try:
-            return {"ok": entity_history(ctx, entity_id, hours, metric)}
-        except EntityNotFound:
-            return {"status": 404, "detail": f"no device named {entity_id!r}"}
-        except ValueError as e:
-            return {"status": 400, "detail": str(e)}
-        except (ToolError, Unavailable) as e:
-            return {"status": 503, "detail": str(e)}
-        except WebError as e:
-            return {"status": 502, "detail": str(e)}
-
-    out = cached(f"history:{entity_id.lower()}:{hours}:{metric}", 120, build,
-                 keep=lambda v: bool(v) and ("ok" in v or v.get("status") in (400, 404)))
-    if out is None:
-        raise HTTPException(502, "the history could not be read; try again in a minute")
-    if "ok" not in out:
-        raise HTTPException(out["status"], out["detail"])
-    return JSONResponse(out["ok"], headers={"Cache-Control": "max-age=120"})
-
-
-@app.get("/api/overview")
-def overview() -> dict:
-    """The live strip: lamps lit, free parking, full bins, air, weather and the registers."""
-    return live_strip(app.state.agent)
-
-
-@app.get("/api/lamps")
-def lamps() -> JSONResponse:
-    """The smart street lamps and whether each is lit, for the map's night lighting."""
-    return JSONResponse(live_lamps(app.state.agent), headers={"Cache-Control": "max-age=60"})
-
-
-@app.get("/api/buildings3d/{z}/{x}/{y}")
-def buildings_3d(z: int, x: int, y: int) -> JSONResponse:
-    """DLS 3D buildings in one z16 tile, for the map's 3D city layer."""
-    if z != TILE_ZOOM or not (0 <= x < 2 ** z and 0 <= y < 2 ** z):
-        raise HTTPException(404, f"tiles are z{TILE_ZOOM} only")
-    try:
-        feats = app.state.agent.dls.tile(x, y)
-    except WebError as e:
-        raise HTTPException(502, str(e)) from None
-    return JSONResponse({"type": "FeatureCollection", "features": feats},
-                        headers={"Cache-Control": "public, max-age=86400"})
-
-
-@app.get("/api/dangerous")
-def dangerous() -> JSONResponse:
-    """Every register building as a map layer (markers, plot outlines and 3D footprints)."""
-    registers: Registry = app.state.agent.registers
-    records = registers.records(wait_s=90)
-    if not records:
-        raise HTTPException(503, "the registers are still loading; try again in a minute")
-    features = layer_features(records, STATE_COLORS)
-    return JSONResponse({
-        "type": "FeatureCollection", "features": features,
-        "meta": {"ref": "eoa_registers", "title": "Dangerous buildings (EOA registers)",
-                 "geometry": "buildings", "count": len(records),
-                 "legend": legend_for(["dangerous", "needs_repair"]),
-                 "sources": registers.sources, "linked_3d": registers.linked_3d}})
-
-
-@app.post("/api/chat")
-async def chat(req: ChatRequest) -> StreamingResponse:
-    agent: Agent = app.state.agent
-    conv = agent.conversation(req.conversation_id)
-    queue: asyncio.Queue = asyncio.Queue()
-
-    async def run() -> None:
-        try:
-            async with conv.lock:
-                await agent.run_turn(conv, req.message, req.context, queue.put_nowait)
-        except Exception as e:  # noqa: BLE001 - every failure becomes a message in the chat
-            log.exception("turn failed")
-            queue.put_nowait({"type": "error", "message": describe_api_error(e)})
-        finally:
-            queue.put_nowait({"type": "done"})
-
-    task = asyncio.create_task(run())
-
-    async def events():
-        yield f"data: {json.dumps({'type': 'conversation', 'id': conv.id})}\n\n"
-        while True:
-            event = await queue.get()
-            yield f"data: {json.dumps(event, ensure_ascii=False, default=str)}\n\n"
-            if event["type"] == "done":
-                break
-        await task
-
-    return StreamingResponse(events(), media_type="text/event-stream",
-                             headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
-
-
-@app.get("/api/layers/{cid}/{ref}")
-def layer(cid: str, ref: str) -> JSONResponse:
-    agent: Agent = app.state.agent
-    conv = agent.conversations.get(cid)
-    if conv is None or ref not in conv.store.layers:
-        raise HTTPException(404, "unknown layer")
-    return JSONResponse(conv.store.layers[ref])
-
-
-@app.post("/api/reset/{cid}")
-def reset(cid: str) -> dict:
-    app.state.agent.conversations.pop(cid, None)
-    return {"ok": True}
+for router in routers():
+    app.include_router(router)
 
 
 def main() -> None:

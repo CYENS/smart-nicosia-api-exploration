@@ -42,22 +42,24 @@ function ChartView({ chart, size }: { chart: ChartPayload; size: string }) {
 function VisualView({ visual, size }: { visual: VisualPayload; size: string }) {
   const frame = useRef<HTMLIFrameElement>(null)
   const box = useRef<HTMLDivElement>(null)
-  const [error, setError] = useState<string | null>(null)
+  // An error belongs to the drawing it came from: redrawn at a new size, the visual starts clean.
+  const [failure, setFailure] = useState<{ size: string; text: string } | null>(null)
+  const error = failure?.size === size ? failure.text : null
   useEffect(() => {
     const iframe = frame.current!, container = box.current!
     // The visual fills the stage: WIDTH and HEIGHT are the space it actually has.
     const height = Math.max(200, (container.parentElement?.clientHeight ?? visual.height) - 8)
     iframe.style.height = `${height}px`
-    setError(null)
+    const onError = (text: string) => setFailure({ size, text })
     const v: Visual = {
       iframe, title: visual.title,
       onSize: (h) => { iframe.style.height = `${Math.max(80, Math.min(4000, h))}px` },
-      onError: setError,
+      onError,
     }
     registerVisual(v)
     visualDoc(visual, Math.max(200, container.clientWidth), height)
       .then((doc) => { iframe.srcdoc = doc })
-      .catch((e: Error) => setError(e.message))
+      .catch((e: Error) => onError(e.message))
     return () => unregisterVisual(v)
   }, [visual, size])
   return (

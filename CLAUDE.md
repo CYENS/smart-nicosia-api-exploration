@@ -23,14 +23,26 @@ npm run build                     # writes chatbot/static (committed, see below)
 - `chatbot/prompt.py` is the system prompt. It must stay byte-for-byte stable within a
   deployment (prompt cache); anything per turn goes in the user turn's `<context>` block
   (`format_context` in `agent.py`).
-- `chatbot/tools.py` holds every tool: schema, handler and the `HANDLERS` table. Data tools
-  return compact JSON and park big results in the session store (`layer_ref` for map layers,
-  `data_ref` for chart rows). UI tools push a command to the page through `ctx.emit`.
+- `chatbot/tools/` holds every tool, one module per domain (`city`, `places`, `routes`,
+  `buildings`, `maps`, `charts`, `memory`, `entities`): `@tool(name, description, schema)` on
+  a handler registers it. `registry.py` puts the domains in order (the prompt cache keys on it:
+  add a domain at the end of `DOMAINS`) and runs them. Data tools return compact JSON and park big
+  results in the session store (`layer_ref` for map layers, `data_ref` for chart rows). UI tools
+  push a command to the page through `ctx.emit`.
+- `chatbot/routes/` holds the API, one router per area; add a module and list it in
+  `routers()`. `chatbot/server.py` keeps the app, the password guard and the page.
+- `chatbot/entities.py` is the twin's entity model: every kind in one shape (state, readings,
+  attributes, relations, sources) plus a 24-hour series and search, for the inspector and
+  `get_entity`. A new kind registers a `Kind` resolver.
 - `collector/interpret.py` is the one place that turns raw readings into meaning (a lamp is on
   only if it reported in the last 70 minutes, and so on). Reuse it; never reinterpret elsewhere.
 - `chatbot/web/src/lib/map/engine.ts` draws everything on the map; `lib/chat.ts` handles the
-  stream and the stage; `components/` holds the strip, chat, stage, map panel and player.
+  stream and the stage; `lib/inspector.ts` the open thing; `lib/deeplink.ts` the URL;
+  `components/` holds the strip, rail, chat, stage, inspector, map panel and player.
   `TOOL_LABELS` in `lib/chat.ts` names each tool in the trace: add new tools there.
+- `chatbot/web/src/lib/registries/` is where page features plug in instead of editing shared
+  files: workspaces (the rail), inspector sections per kind, search providers (Ctrl K) and
+  map click handlers.
 
 ## House rules for features
 
@@ -60,6 +72,15 @@ npm run build                     # writes chatbot/static (committed, see below)
 - Components are shadcn/ui, style base-nova on **Base UI** (use the `render` prop, not
   `asChild`), lucide icons. Look components up with the shadcn MCP server or skill and add them
   with `npx shadcn@latest add <name>` from `chatbot/web`; compose them rather than hand-rolling.
+- **Interactions feel standard and look obvious.** Find each control and its canonical example
+  through the shadcn MCP (`search_items_in_registries`, `get_item_examples_from_registries`,
+  `view_items_in_registries`) and run `get_audit_checklist` when done; never hand-roll a list,
+  menu, slider, toggle or tabs that shadcn has. Hover, focus, pressed and selected states must
+  read at a glance on night, console and popover surfaces, with sodium for selected and
+  current. Lists, menus, sliders, toggle groups and tabs follow the WAI-ARIA keyboard patterns
+  (arrows inside, Home and End, Enter, Esc, Tab between groups); reuse `src/lib/roving.ts` for
+  lists; closing a panel returns focus to whatever opened it. Drive these paths with the
+  Playwright MCP and keep screenshots: the owner tries them by hand.
 - UX checklist for every screen: keyboard reachable with visible focus; `aria-live` for live
   readouts; skeletons while loading; an empty state that says what to do next; errors that
   say what happened and what to try; works at 375 px wide; honours
@@ -73,9 +94,9 @@ npm run build                     # writes chatbot/static (committed, see below)
 no Node. Hashed file names mean every build conflicts with every other build, so:
 
 - Commit the build once per branch, as the branch's last commit, named "Rebuild the page".
-- If a rebase or merge conflicts inside `chatbot/static/`, never edit it by hand: take either
-  side (`git checkout --theirs -- chatbot/static && git add chatbot/static`), finish the
-  rebase, then `npm run build` and commit the result.
+- If a merge (or a rebase before your first push) conflicts inside `chatbot/static/`, never
+  edit it by hand: take either side (`git checkout --theirs -- chatbot/static && git add
+  chatbot/static`), finish the merge, then `npm run build` and commit the result.
 
 ## Stacked pull requests
 
@@ -90,12 +111,19 @@ on the one before it. Never merge a pull request and never push to `main`.
      --jq '(map(.baseRefName)) as $b | map(select(.headRefName as $h | $b | index($h) | not))'
    ```
 
-2. Before opening yours, `git fetch` and rebase onto the tip:
-   `git rebase --onto origin/<tip> <the commit you started from>`. Resolve conflicts, rebuild
-   the page, run the tests.
-3. Push and open the pull request with `--base <tip>`. Body sections, in order: what changes for
-   someone using it; how it is built; review it (a URL, numbered steps, what to expect);
-   tested; known limits. Mention the pull request it stacks on.
+2. Start your branch at the tip. **Push early and often**: push after every commit that works,
+   and after the first real commit open your pull request as a draft with `--base <tip>`, so
+   the owner can follow the work.
+3. Never rewrite pushed history (auto mode refuses force pushes). To pick up changes from the
+   tip or from a pull request below yours, merge it in: `git fetch origin && git merge
+   origin/<branch>`. A rebase is fine only before your first push.
+4. When the feature is done: find the tip again, merge it in and `gh pr edit --base <tip>` if it
+   moved, rebuild the page as the last commit, run the tests, push, and `gh pr ready`. Body
+   sections, in order: what changes for someone using it; how it is built; review it (a URL,
+   numbered steps, what to expect); tested; known limits. Mention the pull request it stacks
+   on.
+5. When a pull request lower in the stack changes, the ones above it merge it in, top to
+   bottom in order, each rebuilding the page as its last commit.
 
 ## Ports for parallel work
 
@@ -106,6 +134,11 @@ running copies don't collide with each other or with the main checkout (8000 and
 | --- | --- | --- | --- |
 | A | 8110 | 5210 | `lane-a-api`, `lane-a-web` |
 | B | 8120 | 5220 | `lane-b-api`, `lane-b-web` |
+| C | 8130 | 5230 | `lane-c-api`, `lane-c-web` |
+| D | 8140 | 5240 | `lane-d-api`, `lane-d-web` |
+
+Lanes C and D are for when A and B are still serving finished features for review. The whole
+stack is served for review on 8300 from its own worktree.
 
 A new worktree has no `.env` and no caches. If they are missing, copy `.env` and
 `data/chatbot_cache/` from the main checkout (`.worktreeinclude` lists them), then `npm ci` in

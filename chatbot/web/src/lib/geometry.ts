@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react"
 
 import { useStage } from "@/lib/chat"
-import { CHAT_W, GAP, LAYERS_W, STRIP_H, WIDE_PX, useLayout } from "@/lib/layout"
+import { useInspector } from "@/lib/inspector"
+import { CHAT_W, GAP, INSPECTOR_W, LAYERS_W, RAIL_W, STRIP_H, WIDE_PX, useLayout } from "@/lib/layout"
 import { useMapUi } from "@/lib/map/engine"
 
 function useMedia(query: string) {
@@ -26,8 +27,12 @@ function useViewport() {
   return size
 }
 
-// Where the floating panels sit, in px from the edges of the map (which starts under the strip).
-// The stage, the map's camera padding and its controls all read this, so they agree.
+// Where the floating panels sit, in px from the edges of the page (the map starts under the strip
+// and, on wider screens, right of the rail). The stage, the map's camera padding and its controls
+// all read this, so they agree.
+//
+// The right column holds the map panel or, while something is open, the inspector in its place.
+// On a phone the inspector is a sheet at the bottom where the conversation was.
 export function useGeometry() {
   const desktop = useMedia("(min-width: 768px)")
   // Wide enough for the map panel to keep its own column beside the stage.
@@ -35,39 +40,51 @@ export function useGeometry() {
   const { vw, vh } = useViewport()
   const chatOpen = useLayout((s) => s.chatOpen)
   const layersOpen = useLayout((s) => s.layersOpen)
+  const inspecting = useInspector((s) => s.open)
   const stage = {
     open: useStage((s) => s.open && s.items.length > 0),
     expanded: useStage((s) => s.expanded),
   }
   const timelapse = useMapUi((s) => s.timelapse !== null)
 
+  const rail = desktop ? RAIL_W : 0
   const mapH = vh - STRIP_H
-  // The conversation keeps 400 px where it can, and gives way on mid-size screens.
-  const chatW = Math.round(Math.min(CHAT_W, vw * 0.42))
-  const left = desktop && chatOpen ? GAP + chatW + GAP : GAP
-  const layersColumn = desktop && layersOpen ? GAP + LAYERS_W + GAP : GAP
-  // Narrower, the stage runs to the right edge and the map panel stops above it.
-  const right = wide ? layersColumn : GAP
+  // The conversation keeps 400 px where it can, and gives way on mid-size screens, more so when
+  // the inspector needs the right side too.
+  const chatW = Math.round(Math.min(CHAT_W, vw * (inspecting && !wide ? 0.34 : 0.42)))
+  const left = rail + (desktop && chatOpen ? GAP + chatW + GAP : GAP)
+  const inspectorW = Math.round(Math.min(INSPECTOR_W, vw * 0.3))
+  const sideW = inspecting ? inspectorW : LAYERS_W
+  const sideColumn = desktop && (inspecting || layersOpen) ? GAP + sideW + GAP : GAP
+  // Narrower, the stage runs to the right edge and the right column stops above it.
+  const right = wide ? sideColumn : GAP
   const stageH = desktop ? Math.round(Math.min(440, Math.max(280, vh * 0.4))) : Math.round(mapH * 0.4)
-  const chatBottom = !desktop && chatOpen ? Math.round(mapH * 0.56) + 8 : 0
+  const sheetH = Math.round(mapH * 0.52)
+  const chatBottom = !desktop && (chatOpen || inspecting) ? (inspecting ? sheetH : Math.round(mapH * 0.56)) + 8 : 0
   return {
     desktop,
     wide,
+    rail,
     chatW,
     left,
     right,
     stageH,
+    inspectorW,
+    sheetH,
+    inspecting,
     stageOpen: stage.open,
     stageExpanded: stage.expanded,
-    // What the map panel (or its button, when it's closed) takes from the top-right corner.
-    topRight: desktop && layersOpen ? layersColumn : GAP + 150 + GAP,
-    // Room the map panel leaves at the bottom for the stage, when they share the right side.
-    layersBottom: !wide && stage.open && !stage.expanded ? stageH + GAP : 0,
-    // Camera padding: the part of the map the panels leave open.
+    // What the right column (or the map panel's button, when it's closed) takes from the
+    // top-right corner.
+    topRight: desktop && (inspecting || layersOpen) ? sideColumn : GAP + 150 + GAP,
+    // Room the right column leaves at the bottom for the stage when they share the right side,
+    // or, on a phone, for the inspector's sheet.
+    layersBottom: !desktop && inspecting ? sheetH + 8 : !wide && stage.open && !stage.expanded ? stageH + GAP : 0,
+    // Camera padding, from the edges of the map: the part of it the panels leave open.
     insets: {
       top: timelapse ? 76 : 0,
-      left: left - GAP,
-      right: layersColumn - GAP,
+      left: left - rail - GAP,
+      right: sideColumn - GAP,
       bottom: Math.max(chatBottom, stage.open && !stage.expanded && desktop ? stageH + GAP : 0),
     },
   }

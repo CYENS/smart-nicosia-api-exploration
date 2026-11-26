@@ -110,7 +110,9 @@ export function LayersPanel() {
   const registers = useMapUi((s) => s.registers)
   const me = useMapUi((s) => s.me)
   const flying = useMapUi((s) => s.flying)
-  const { layersBottom } = useGeometry()
+  const { layersBottom, desktop, inspecting } = useGeometry()
+
+  if (desktop && inspecting) return null
 
   if (!open) {
     return (
