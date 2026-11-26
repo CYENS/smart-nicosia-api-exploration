@@ -1,5 +1,5 @@
-/* The Buses and Road speeds switches, with what each is showing right now. In the map panel
-   and in the Mobility workspace. */
+/* The Buses and Road speeds switches, with what each is showing right now, in the Mobility
+   workspace (the Layers sheet has its own rows for them, components/layers/system-rows.tsx). */
 import { RoadLegend } from "@/components/mobility/parts"
 import { Field, FieldContent, FieldDescription, FieldLabel } from "@/components/ui/field"
 import { Switch } from "@/components/ui/switch"

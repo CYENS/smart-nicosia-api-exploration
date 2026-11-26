@@ -10,7 +10,7 @@ import { KINDS } from "@/lib/entities"
 import { enterMobilityView, leaveMobilityView, setBusesOn, setRoadsOn, startMobilityMap } from "@/lib/mobility/map"
 import { useMobility } from "@/lib/mobility/store"
 import { matches, registerSearchProvider, type SearchItem } from "@/lib/registries/search"
-import { openWorkspace, registerWorkspace, useWorkspace } from "@/lib/registries/workspaces"
+import { registerWorkspace } from "@/lib/registries/workspaces"
 
 KINDS.bus = { label: "Bus", icon: BusFrontIcon, chip: "place" }
 KINDS.bus_stop = { label: "Bus stop", icon: BusFrontIcon, chip: "place" }
@@ -29,15 +29,11 @@ registerSearchProvider({
   order: 21,
   search: (q) => {
     const { buses, roads } = useMobility.getState()
-    const inMobility = useWorkspace.getState().active === "mobility"
     const items: (SearchItem & { words: string })[] = [
       { key: "cmd:buses", icon: BusFrontIcon, group: "Commands", title: buses.on ? "Hide the buses" : "Show the buses",
         detail: "Live, gliding along their routes", run: () => setBusesOn(!buses.on), words: "bus buses transit live map" },
       { key: "cmd:roads", icon: GaugeIcon, group: "Commands", title: roads.on ? "Hide road speeds" : "Show road speeds",
         detail: "Main roads against their free flow", run: () => setRoadsOn(!roads.on), words: "traffic congestion speed roads" },
-      { key: "cmd:mobility", icon: BusFrontIcon, group: "Commands", title: inMobility ? "Back to Live" : "Open the Mobility workspace",
-        detail: inMobility ? "The city as it is now" : "What is moving in the city now", run: () => openWorkspace(inMobility ? "live" : "mobility"),
-        words: "workspace mobility moving transport" },
     ]
     return q ? items.filter((c) => matches(q, c.title, c.detail, c.words)) : []
   },

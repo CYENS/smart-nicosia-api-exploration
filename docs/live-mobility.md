@@ -45,7 +45,8 @@ CC BY 4.0.
 - `chatbot/routes/mobility.py`: `/api/buses`, `/api/transit/shapes/{id}`, `/api/transit/stops`,
   `/api/roads?at=` (ISO local time or epoch ms, for the city clock) and `/api/mobility`.
 - The page: `chatbot/web/src/lib/mobility/` (store, map layers, registration) and
-  `components/mobility/` (inspector sections, the map panel's switches, the workspace).
+  `components/mobility/` (inspector sections, the workspace and its switches). The Buses and
+  Traffic topic chips and the Layers sheet's rows read the same store.
 
 ## On the map
 
