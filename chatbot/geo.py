@@ -339,7 +339,8 @@ class Places:
             return []
         return [{"name": d.get("name") or d.get("display_name", "").split(",")[0],
                  "address": d.get("display_name"), "lat": float(d["lat"]), "lon": float(d["lon"]),
-                 "kind": d.get("type"), "source": "Nominatim"} for d in data]
+                 "kind": d.get("type"), "class": d.get("category"), "source": "Nominatim"}
+                for d in data]
 
     def _photon_search(self, text: str, limit: int) -> list[dict]:
         try:
@@ -354,6 +355,6 @@ class Places:
             lon, lat = f["geometry"]["coordinates"]
             pr = f.get("properties", {})
             out.append({"name": pr.get("name"), "lat": lat, "lon": lon,
-                        "kind": pr.get("osm_value"), "street": pr.get("street"),
-                        "source": "Photon"})
+                        "kind": pr.get("osm_value"), "class": pr.get("osm_key"),
+                        "street": pr.get("street"), "source": "Photon"})
         return out

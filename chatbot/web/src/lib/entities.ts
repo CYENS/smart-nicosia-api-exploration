@@ -1,14 +1,14 @@
 /* The twin's entities on the page: their shape (as /api/entities sends it), what each kind looks
    like, how to recognise an id in an answer, and cached fetches. */
 import {
-  Building2Icon, CctvIcon, HexagonIcon, LightbulbIcon, LocateFixedIcon, MapPinIcon, MonitorIcon,
-  RouteIcon, SignpostIcon, SquareParkingIcon, Trash2Icon, TriangleAlertIcon, WindIcon,
+  Building2Icon, CctvIcon, GlobeIcon, HexagonIcon, LightbulbIcon, LocateFixedIcon, MapPinIcon,
+  MonitorIcon, RouteIcon, SignpostIcon, SquareParkingIcon, Trash2Icon, TriangleAlertIcon, WindIcon,
   type LucideIcon,
 } from "lucide-react"
 
 export type EntityKind =
   | "street_light" | "parking_sensor" | "waste_bin" | "air_station" | "info_screen" | "camera"
-  | "register_building" | "building_3d" | "place"
+  | "register_building" | "building_3d" | "place" | "web_place"
   | "bus" | "bus_stop" | "bus_line" | "road_segment"
 
 export type Tone = "alarm" | "warn" | "live" | "ok" | "muted"
@@ -75,6 +75,7 @@ export const KINDS: Record<string, KindMeta> = {
   register_building: { label: "Dangerous building", icon: TriangleAlertIcon, chip: "danger" },
   building_3d: { label: "Building", icon: Building2Icon, chip: "building" },
   place: { label: "Place", icon: MapPinIcon, chip: "place" },
+  web_place: { label: "From the web", icon: GlobeIcon, chip: "place" },
   street: { label: "Street", icon: SignpostIcon, chip: "place" },
   route: { label: "Route", icon: RouteIcon, chip: "place" },
   stop: { label: "Stop", icon: MapPinIcon, chip: "place" },
@@ -99,8 +100,9 @@ const ID_KINDS: [RegExp, EntityKind][] = [
   [/^stop-\d{1,7}$/, "bus_stop"],
   [/^line-(npt|ic|pame)-[a-z0-9]{1,8}$/, "bus_line"],
   [/^road-\d{1,5}$/, "road_segment"],
+  [/^web-[0-9a-f]{8}$/, "web_place"],
 ]
-export const ID_IN_TEXT = /\b(Y[LPW]\d{2,6}|(?:NIC|LIM|LAR)-\d{1,5}(?:-\d+)?|FAM-15[AB]-\d{1,5}|B\d{3,10}|[0-9a-f]{12}|bus-\d{1,6}|stop-\d{1,7}|line-(?:npt|ic|pame)-[a-z0-9]{1,8}|road-\d{1,5})\b/g
+export const ID_IN_TEXT = /\b(Y[LPW]\d{2,6}|(?:NIC|LIM|LAR)-\d{1,5}(?:-\d+)?|FAM-15[AB]-\d{1,5}|B\d{3,10}|[0-9a-f]{12}|bus-\d{1,6}|stop-\d{1,7}|line-(?:npt|ic|pame)-[a-z0-9]{1,8}|road-\d{1,5}|web-[0-9a-f]{8})\b/g
 
 export function kindOfId(id: string): EntityKind | undefined {
   return ID_KINDS.find(([re]) => re.test(id))?.[1]

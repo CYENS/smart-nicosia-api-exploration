@@ -1,0 +1,393 @@
+{
+ "captured": "2026-11-26",
+ "nominatim": {
+  "Yiannaki Talioti 7, Strovolos": [],
+  "Yiannaki Talioti, Strovolos": [],
+  "Strovolos": [
+   {
+    "place_id": 209961682,
+    "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+    "osm_type": "relation",
+    "osm_id": 2628527,
+    "lat": "35.1328993",
+    "lon": "33.3454972",
+    "category": "boundary",
+    "type": "administrative",
+    "place_rank": 16,
+    "importance": 0.4909597724754424,
+    "addresstype": "town",
+    "name": "Strovolos",
+    "display_name": "Strovolos, Strovolos Municipality, Nicosia District, Cyprus",
+    "boundingbox": [
+     "35.1030546",
+     "35.1654650",
+     "33.3096963",
+     "33.3817569"
+    ]
+   }
+  ],
+  "Giannaki Talioti": [
+   {
+    "place_id": 210167701,
+    "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+    "osm_type": "way",
+    "osm_id": 1408252378,
+    "lat": "35.1487418",
+    "lon": "33.3707549",
+    "category": "highway",
+    "type": "residential",
+    "place_rank": 26,
+    "importance": 0.053404238193331774,
+    "addresstype": "residential",
+    "name": "Γιαννάκη Ταλιώτη",
+    "display_name": "Γιαννάκη Ταλιώτη, Δασούπολη, Strovolos, Strovolos Municipality, Nicosia District, Cyprus, 2014, Cyprus",
+    "boundingbox": [
+     "35.1484222",
+     "35.1490501",
+     "33.3704190",
+     "33.3710796"
+    ]
+   }
+  ],
+  "Talioti": [
+   {
+    "place_id": 210402644,
+    "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+    "osm_type": "way",
+    "osm_id": 24276904,
+    "lat": "35.1670810",
+    "lon": "33.3969347",
+    "category": "highway",
+    "type": "residential",
+    "place_rank": 26,
+    "importance": 0.053404238193331774,
+    "addresstype": "residential",
+    "name": "Ioanni Talioti",
+    "display_name": "Ioanni Talioti, Sopaz, Nicosia, Panayia, Nicosia Muncipality, Nicosia District, Cyprus, 1646, Cyprus",
+    "boundingbox": [
+     "35.1662160",
+     "35.1679450",
+     "33.3968657",
+     "33.3969892"
+    ]
+   },
+   {
+    "place_id": 210327689,
+    "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+    "osm_type": "way",
+    "osm_id": 1408252378,
+    "lat": "35.1487418",
+    "lon": "33.3707549",
+    "category": "highway",
+    "type": "residential",
+    "place_rank": 26,
+    "importance": 0.053404238193331774,
+    "addresstype": "residential",
+    "name": "Γιαννάκη Ταλιώτη",
+    "display_name": "Γιαννάκη Ταλιώτη, Δασούπολη, Strovolos, Strovolos Municipality, Nicosia District, Cyprus, 2014, Cyprus",
+    "boundingbox": [
+     "35.1484222",
+     "35.1490501",
+     "33.3704190",
+     "33.3710796"
+    ]
+   }
+  ],
+  "Giannaki Talioti 7, Strovolos": [
+   {
+    "place_id": 210167701,
+    "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+    "osm_type": "way",
+    "osm_id": 1408252378,
+    "lat": "35.1487418",
+    "lon": "33.3707549",
+    "category": "highway",
+    "type": "residential",
+    "place_rank": 26,
+    "importance": 0.053404238193331774,
+    "addresstype": "residential",
+    "name": "Γιαννάκη Ταλιώτη",
+    "display_name": "Γιαννάκη Ταλιώτη, Δασούπολη, Strovolos, Strovolos Municipality, Nicosia District, Cyprus, 2014, Cyprus",
+    "boundingbox": [
+     "35.1484222",
+     "35.1490501",
+     "33.3704190",
+     "33.3710796"
+    ]
+   }
+  ],
+  "Giannaki Talioti, Strovolos": [
+   {
+    "place_id": 209443164,
+    "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+    "osm_type": "way",
+    "osm_id": 1408252378,
+    "lat": "35.1487418",
+    "lon": "33.3707549",
+    "category": "highway",
+    "type": "residential",
+    "place_rank": 26,
+    "importance": 0.053404238193331774,
+    "addresstype": "residential",
+    "name": "Γιαννάκη Ταλιώτη",
+    "display_name": "Γιαννάκη Ταλιώτη, Δασούπολη, Strovolos, Strovolos Municipality, Nicosia District, Cyprus, 2014, Cyprus",
+    "boundingbox": [
+     "35.1484222",
+     "35.1490501",
+     "33.3704190",
+     "33.3710796"
+    ]
+   }
+  ],
+  "Annita Constantinou singing": []
+ },
+ "photon": {
+  "Yiannaki Talioti 7, Strovolos": {
+   "type": "FeatureCollection",
+   "features": []
+  },
+  "Giannaki Talioti": {
+   "type": "FeatureCollection",
+   "features": [
+    {
+     "type": "Feature",
+     "properties": {
+      "osm_type": "W",
+      "osm_id": 1384353191,
+      "osm_key": "highway",
+      "osm_value": "residential",
+      "type": "street",
+      "name": "Γιαννάκη Ταλιώτη",
+      "locality": "Δασούπολη",
+      "city": "Apostolos Varnavas & Agios Makarios",
+      "county": "Strovolos Municipality",
+      "state": "Cyprus",
+      "country": "Cyprus",
+      "postcode": "2014",
+      "countrycode": "CY",
+      "extent": [
+       33.3701194,
+       35.1493203,
+       33.370419,
+       35.1490501
+      ]
+     },
+     "geometry": {
+      "type": "Point",
+      "coordinates": [
+       33.3702692,
+       35.1491852
+      ]
+     }
+    }
+   ]
+  },
+  "Talioti": {
+   "type": "FeatureCollection",
+   "features": [
+    {
+     "type": "Feature",
+     "properties": {
+      "osm_type": "W",
+      "osm_id": 24276904,
+      "osm_key": "highway",
+      "osm_value": "residential",
+      "type": "street",
+      "name": "Ioanni Talioti",
+      "district": "Sopaz",
+      "city": "Nicosia",
+      "county": "Nicosia Muncipality",
+      "state": "Cyprus",
+      "country": "Cyprus",
+      "postcode": "1646",
+      "countrycode": "CY",
+      "extent": [
+       33.3968657,
+       35.167945,
+       33.3969892,
+       35.166216
+      ]
+     },
+     "geometry": {
+      "type": "Point",
+      "coordinates": [
+       33.3969347,
+       35.167081
+      ]
+     }
+    },
+    {
+     "type": "Feature",
+     "properties": {
+      "osm_type": "W",
+      "osm_id": 1384353191,
+      "osm_key": "highway",
+      "osm_value": "residential",
+      "type": "street",
+      "name": "Γιαννάκη Ταλιώτη",
+      "locality": "Δασούπολη",
+      "city": "Apostolos Varnavas & Agios Makarios",
+      "county": "Strovolos Municipality",
+      "state": "Cyprus",
+      "country": "Cyprus",
+      "postcode": "2014",
+      "countrycode": "CY",
+      "extent": [
+       33.3701194,
+       35.1493203,
+       33.370419,
+       35.1490501
+      ]
+     },
+     "geometry": {
+      "type": "Point",
+      "coordinates": [
+       33.3702692,
+       35.1491852
+      ]
+     }
+    },
+    {
+     "type": "Feature",
+     "properties": {
+      "osm_type": "W",
+      "osm_id": 537767235,
+      "osm_key": "shop",
+      "osm_value": "yes",
+      "type": "house",
+      "name": "Talbot",
+      "street": "Photeinis",
+      "district": "Anthoupoli",
+      "city": "Lakatamia",
+      "county": "Lakatameia Municipality",
+      "state": "Cyprus",
+      "country": "Cyprus",
+      "postcode": "2350",
+      "countrycode": "CY",
+      "extent": [
+       33.2927417,
+       35.1093143,
+       33.2929839,
+       35.109075
+      ]
+     },
+     "geometry": {
+      "type": "Point",
+      "coordinates": [
+       33.2928628,
+       35.1091947
+      ]
+     }
+    }
+   ]
+  },
+  "Giannaki Talioti 7, Strovolos": {
+   "type": "FeatureCollection",
+   "features": [
+    {
+     "type": "Feature",
+     "properties": {
+      "osm_type": "W",
+      "osm_id": 1384353191,
+      "osm_key": "highway",
+      "osm_value": "residential",
+      "type": "street",
+      "name": "Γιαννάκη Ταλιώτη",
+      "locality": "Δασούπολη",
+      "city": "Apostolos Varnavas & Agios Makarios",
+      "county": "Strovolos Municipality",
+      "state": "Cyprus",
+      "country": "Cyprus",
+      "postcode": "2014",
+      "countrycode": "CY",
+      "extent": [
+       33.3701194,
+       35.1493203,
+       33.370419,
+       35.1490501
+      ]
+     },
+     "geometry": {
+      "type": "Point",
+      "coordinates": [
+       33.3702692,
+       35.1491852
+      ]
+     }
+    },
+    {
+     "type": "Feature",
+     "properties": {
+      "osm_type": "W",
+      "osm_id": 890211154,
+      "osm_key": "building",
+      "osm_value": "residential",
+      "type": "house",
+      "housenumber": "7",
+      "street": "Giannaki Kapitani",
+      "locality": "Δασούπολη",
+      "city": "Apostolos Varnavas & Agios Makarios",
+      "county": "Strovolos Municipality",
+      "state": "Cyprus",
+      "country": "Cyprus",
+      "postcode": "2024",
+      "countrycode": "CY",
+      "extent": [
+       33.3630889,
+       35.1431364,
+       33.3633131,
+       35.142999
+      ]
+     },
+     "geometry": {
+      "type": "Point",
+      "coordinates": [
+       33.363201,
+       35.1430678
+      ]
+     }
+    }
+   ]
+  },
+  "Giannaki Talioti, Strovolos": {
+   "type": "FeatureCollection",
+   "features": [
+    {
+     "type": "Feature",
+     "properties": {
+      "osm_type": "W",
+      "osm_id": 1384353191,
+      "osm_key": "highway",
+      "osm_value": "residential",
+      "type": "street",
+      "name": "Γιαννάκη Ταλιώτη",
+      "locality": "Δασούπολη",
+      "city": "Apostolos Varnavas & Agios Makarios",
+      "county": "Strovolos Municipality",
+      "state": "Cyprus",
+      "country": "Cyprus",
+      "postcode": "2014",
+      "countrycode": "CY",
+      "extent": [
+       33.3701194,
+       35.1493203,
+       33.370419,
+       35.1490501
+      ]
+     },
+     "geometry": {
+      "type": "Point",
+      "coordinates": [
+       33.3702692,
+       35.1491852
+      ]
+     }
+    }
+   ]
+  },
+  "Annita Constantinou singing": {
+   "type": "FeatureCollection",
+   "features": []
+  }
+ }
+}

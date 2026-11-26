@@ -32,6 +32,7 @@ export const TOOL_LABELS: Record<string, string> = {
   set_city_time: "Setting the city clock",
   get_buses: "Finding the buses on the road", get_departures: "Reading the departures",
   plan_transit: "Planning the bus trip", get_road_speeds: "Reading the road speeds",
+  locate_web_places: "Putting the web results on the map",
 }
 
 export function toolLabel(name: string) {
