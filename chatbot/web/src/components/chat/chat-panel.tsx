@@ -92,9 +92,9 @@ export function ChatPanel() {
           <MessageScroller className="min-h-0 flex-1">
             <MessageScrollerViewport>
               <MessageScrollerContent className="gap-8 px-4 py-4">
-                {turns.map((t) => (
+                {turns.map((t, i) => (
                   <MessageScrollerItem key={t.id} messageId={t.id} scrollAnchor>
-                    <TurnView turn={t} />
+                    <TurnView turn={t} latest={i === turns.length - 1} />
                   </MessageScrollerItem>
                 ))}
               </MessageScrollerContent>
