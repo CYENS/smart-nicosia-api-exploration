@@ -155,7 +155,7 @@ export function ViewCard() {
                 </p>
               )}
               {!target && inSight.length > 0 && (
-                <p className="text-[13px] leading-snug text-muted-foreground">In sight: {inSight.join(", ")}.</p>
+                <p className="hidden text-[13px] leading-snug text-muted-foreground md:block">In sight: {inSight.join(", ")}.</p>
               )}
             </div>
 
@@ -194,7 +194,7 @@ export function ViewCard() {
                     </Toggle>
                   )}
                 </div>
-                <p className="text-[12px] text-muted-foreground">Drag the map or use the arrow keys to look about.</p>
+                <p className="hidden text-[12px] text-muted-foreground md:block">Drag the map or use the arrow keys to look about.</p>
               </div>
             )}
           </>

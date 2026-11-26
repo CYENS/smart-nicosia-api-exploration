@@ -478,7 +478,7 @@ export function nextView() {
 const LISTS = "[role=listbox], [role=menu], [role=tablist], [role=radiogroup], [role=slider], [role=grid], [role=tree], [role=toolbar]"
 
 function onKey(e: KeyboardEvent) {
-  const t = e.target as HTMLElement | null
+  const t = e.target instanceof Element ? e.target : null
   if (e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey) return
   if (t?.closest("input, textarea, select, [contenteditable], [role=dialog]")) return
   if (e.key === "Escape") { e.preventDefault(); leaveView(); return }
