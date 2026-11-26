@@ -339,7 +339,8 @@ def test_the_tool_list_keeps_its_order():
         "show_on_map", "map_fly_to", "map_callouts", "map_clear", "show_chart", "show_visual",
         "query_history", "run_sql",
         "get_entity", "open_inspector",
-        "set_city_time"]
+        "set_city_time",
+        "get_buses", "get_departures", "plan_transit", "get_road_speeds"]
 
 
 def test_the_context_names_what_the_user_has_open():

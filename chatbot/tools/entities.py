@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from chatbot.entities import Entities, EntityNotFound, for_model, layer_features, series_rows
+from chatbot.entities import (SERIES_RESOLVERS, Entities, EntityNotFound, for_model,
+                              layer_features, series_rows)
 from chatbot.store import legend_for
 from chatbot.tools.base import ToolContext, ToolError, ToolSet, obj
 
@@ -18,7 +19,8 @@ ID = {"type": "string",
 
 def entities_of(ctx: ToolContext) -> Entities:
     if ctx.entities is None:
-        ctx.entities = Entities(ctx.city, ctx.places, ctx.dls, ctx.registers, ctx.memory)
+        ctx.entities = Entities(ctx.city, ctx.places, ctx.dls, ctx.registers, ctx.memory,
+                                mobility=ctx.mobility)
     return ctx.entities
 
 
@@ -58,7 +60,8 @@ def h_get_entity(ctx: ToolContext, a: dict) -> dict:
             title=entity["name"], legend=legend_for(states),
             value_fields=[r["key"] for r in entity["readings"] if isinstance(r["value"], (int, float))],
             count=1 + sum(1 for r in entity["relations"] if r.get("id") and r.get("lon") is not None))
-    if a.get("history", True) and entity.get("has_series"):
+    # A kind with its own series (a road segment's speeds from the memory) has one too.
+    if a.get("history", True) and (entity.get("has_series") or entity["kind"] in SERIES_RESOLVERS):
         s = entities_of(ctx).series(entity["id"])
         if s:
             out["series_24h"] = {"what": s["label"], "metric": s["metric"], "unit": s["unit"],
@@ -70,6 +73,8 @@ def h_get_entity(ctx: ToolContext, a: dict) -> dict:
             out["data_ref"] = ctx.store.add_dataset(
                 f"{entity['id']}_24h", series_rows(entity, s),
                 title=f"{entity['name']}: {s['label'].lower()}, last 24 hours", link={"key": "id"})
+        elif entity["kind"] in SERIES_RESOLVERS:
+            out["series_24h"] = "the twin's memory holds no readings of it for the last 24 hours yet"
         else:
             out["series_24h"] = "no history from the city's API for the last 24 hours"
     out["_summary"] = f"{entity['kind_label']}: {entity['name']}"

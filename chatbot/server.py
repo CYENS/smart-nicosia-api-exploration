@@ -35,7 +35,8 @@ log = logging.getLogger("chatbot")
 def _warm_up(agent: Agent) -> None:
     """Load the slow, cacheable things in the background so the first question is quick."""
     # The traffic cameras (one request, kept 6 h) let search and the inspector find them by name.
-    for step in (agent.city.overview, agent.city.traffic_cameras,
+    # The bus timetable loads in the background (about 5 MB the first time, then from disk).
+    for step in (agent.mobility.warm_up, agent.city.overview, agent.city.traffic_cameras,
                  lambda: vega_lite_validator(agent.settings)):
         try:
             step()

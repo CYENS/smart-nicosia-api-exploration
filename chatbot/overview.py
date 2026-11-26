@@ -1,5 +1,6 @@
 """Live data the page shows without being asked, cached briefly: the strip of city-wide readouts
-across the top, and the street lamps that light the map at night."""
+across the top (lamps, parking, bins, air, weather, registers, buses running and the slowest
+road), and the street lamps that light the map at night."""
 
 from __future__ import annotations
 
@@ -92,6 +93,18 @@ def live_strip(agent: Agent) -> dict:
 
     if agent.registers.ready:
         out["registers"] = {"buildings": len(agent.registers.records())}
+
+    mob = getattr(agent, "mobility", None)
+    moving = cached("mobility_summary", 30, mob.summary) if mob is not None else None
+    buses = (moving or {}).get("buses") or {}
+    if buses.get("status") in ("live", "stale"):
+        out["buses"] = {"running": buses["running"], "lines": buses.get("lines"), "late": buses.get("late")}
+    worst = ((moving or {}).get("roads") or {}).get("slowest") or []
+    if worst and worst[0]["share_of_free_flow"] is not None:
+        r = worst[0]
+        out["slowest_road"] = {"id": r["id"], "name": r["short"], "segment": r["name"],
+                               "speed_kmh": r["speed_kmh"], "free_flow_kmh": r["free_flow_kmh"],
+                               "state": r["state"]}
     return out
 
 

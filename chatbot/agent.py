@@ -24,6 +24,7 @@ from chatbot.entities import Entities
 from chatbot.eoa import Registry
 from chatbot.geo import Places
 from chatbot.memory import Memory
+from chatbot.mobility import Mobility
 from chatbot.moments import Moments
 from chatbot.prompt import SYSTEM_PROMPT
 from chatbot.routing import Router
@@ -138,7 +139,8 @@ def format_context(context: dict | None, now: datetime) -> str:
 class Agent:
     def __init__(self, settings: Settings, city: CityData, places: Places, router: Router,
                  client: anthropic.AsyncAnthropic | None = None, dls: DLS | None = None,
-                 registers: Registry | None = None, memory: Memory | None = None):
+                 registers: Registry | None = None, memory: Memory | None = None,
+                 mobility: Mobility | None = None):
         self.settings = settings
         self.memory = memory
         self.city = city
@@ -147,7 +149,10 @@ class Agent:
         self.dls = dls
         self.registers = registers
         self._client = client
-        self.entities = Entities(city, places, dls, registers, memory)  # shared with the inspector
+        # Buses, stops and road speeds: one fetch of each feed for every page and answer.
+        self.mobility = mobility or Mobility(settings, memory, router)
+        self.entities = Entities(city, places, dls, registers, memory,  # shared with the inspector
+                                 mobility=self.mobility)
         self.moments = Moments(city, memory)  # the city at past moments, for the clock
         self.tools = TOOL_DEFS + ([WEB_SEARCH] if settings.web_search else [])
         self.conversations: dict[str, Conversation] = {}
@@ -177,7 +182,8 @@ class Agent:
         tool_ctx = ToolContext(self.settings, self.city, self.places, self.router, conv.store,
                                emit_threadsafe, conv.id, self.dls, self.registers,
                                user_location(context), memory=self.memory,
-                               entities=self.entities, moments=self.moments)
+                               entities=self.entities, moments=self.moments,
+                               mobility=self.mobility)
         conv.messages.append({"role": "user", "content": [
             {"type": "text", "text": format_context(context, self.city.now()) + text}]})
 
