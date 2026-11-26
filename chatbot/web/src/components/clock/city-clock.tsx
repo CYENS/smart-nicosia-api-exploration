@@ -88,7 +88,7 @@ function SpanToggle({ className }: { className?: string }) {
         <ToggleGroupItem
           key={s.id}
           value={s.id}
-          className="h-7 px-2 font-condensed text-[12.5px] hover:text-foreground data-pressed:border-sodium/50 data-pressed:bg-sodium/15 data-pressed:text-sodium data-pressed:hover:bg-sodium/20"
+          className="h-7 px-2 font-condensed text-[12.5px] hover:text-foreground"
         >
           {s.label}
         </ToggleGroupItem>
@@ -127,7 +127,7 @@ function CompareMenu() {
                   variant={on ? "secondary" : "ghost"}
                   size="sm"
                   aria-label={on ? "Compare two moments (on)" : "Compare two moments"}
-                  className={cn("h-7 gap-1.5 px-2 data-popup-open:bg-accent", on && "bg-sodium/15 text-sodium hover:bg-sodium/20")}
+                  className={cn("h-7 gap-1.5 px-2 data-popup-open:bg-accent", on && "bg-sodium/[0.14] inset-ring-1 inset-ring-sodium/55 hover:bg-sodium/20 *:[svg]:text-sodium")}
                 />
               }
             />
