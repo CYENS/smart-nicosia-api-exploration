@@ -48,6 +48,7 @@ export type Entity = {
   sources: Source[]; as_of: string | null; has_series: boolean
   // Set when the entity is read at a past moment of the city clock.
   moment?: { at: string; label: string; known: boolean; applies: boolean }
+  pending?: boolean // a placeholder shown while the record loads (see placeholderEntity)
 }
 
 // The usual for each moment of a series (#9's typical day: the median and quartiles for that
@@ -118,6 +119,22 @@ export function kindOfId(id: string): EntityKind | undefined {
 const LOCAL_ID = /^(route|route_usual|stop\d+|iso\d+(\.\d+)?|origin|you|street)$/
 export function isLocalId(id: string) {
   return LOCAL_ID.test(id)
+}
+
+// A record to show at once while the real one loads, for a kind whose id says enough (a spot:
+// where it is). A feature registers its own with registerPlaceholder.
+const placeholders: ((id: string) => Entity | null)[] = []
+
+export function registerPlaceholder(fn: (id: string) => Entity | null) {
+  placeholders.push(fn)
+}
+
+export function placeholderEntity(id: string): Entity | null {
+  for (const fn of placeholders) {
+    const e = fn(id)
+    if (e) return { ...e, pending: true }
+  }
+  return null
 }
 
 // -- fetching, with a short cache so moving between things is instant -------------------------

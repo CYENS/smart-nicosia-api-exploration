@@ -127,6 +127,27 @@ def spot_at(ents, entity: dict, at: datetime) -> dict:
     return e
 
 
+def spot_details(ents, entity: dict, at: datetime | None) -> dict:
+    """The spot as the assistant reads it (get_entity): its record and "What's here?", the
+    sections the page shows under it (chatbot/here.py), at the clock's moment."""
+    from chatbot import here
+
+    where = parse(entity["id"])
+    if where is None:
+        return entity
+    secs = here.sections(ents, where[0], where[1], at)
+    e = dict(entity)
+    e["relations"] = entity["relations"] + here.relations(secs)
+    e["_for_model"] = {**(entity.get("_for_model") or {}), "here": here.for_model(secs)}
+    names = {x["name"] for x in entity["sources"]}
+    e["sources"] = entity["sources"] + [x for s in secs for x in s["sources"]
+                                        if x["name"] not in names and not names.add(x["name"])]
+    # For the layer get_entity draws: the environment's readout and what the sections read.
+    e["_source_ids"] = list(dict.fromkeys(["dls", "smart_nicosia", "open_meteo", *here.source_ids(secs)]))
+    return e
+
+
 E.register_kind(E.Kind("spot", lambda i: i.lower().startswith("spot-"), build_spot, ttl_s=SPOT_TTL_S),
                 first=True)
 E.register_at("spot", spot_at)
+E.register_details("spot", spot_details)

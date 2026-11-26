@@ -70,8 +70,9 @@ function Status({ entity }: { entity: Entity }) {
   if (!s) {
     return m ? <div className="px-4"><MomentBadge entity={entity} /></div> : null
   }
-  // At a past moment, a reading's age is told from that moment.
-  const age = s.as_of && !(m && !m.known) ? ago(s.as_of, m ? Date.parse(m.at) : now) : null
+  // At a past moment, a reading's age is told from that moment. A spot's state is worked out for
+  // the moment itself (sun or shade), not reported, so it has no age.
+  const age = s.as_of && !(m && !m.known) && entity.kind !== "spot" ? ago(s.as_of, m ? Date.parse(m.at) : now) : null
   return (
     <div className="flex flex-wrap items-center gap-2 px-4" aria-live="polite">
       {m && <MomentBadge entity={entity} />}
@@ -124,7 +125,7 @@ function Actions({ entity }: { entity: Entity }) {
       <div className="flex gap-2">
         <Button className="flex-1" onClick={() => askAbout({ id: entity.id, kind: entity.kind, name: entity.name })}>
           <MessageSquarePlusIcon data-icon="inline-start" />
-          Ask about this
+          {entity.kind === "spot" ? "Ask about this place" : "Ask about this"}
         </Button>
         <Tooltip>
           <TooltipTrigger render={<Button variant="outline" size="icon" aria-label="Fly to it" disabled={!entity.center} onClick={() => entity.center && flyToThing(entity.center, entity.kind)} />}>
