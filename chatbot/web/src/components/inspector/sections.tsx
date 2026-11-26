@@ -30,6 +30,7 @@ function value(r: Reading) {
 const HEADLINE: Record<string, string> = {
   street_light: "power_w", waste_bin: "level_pct", air_station: "caqi",
   building_3d: "height_m", register_building: "height_m",
+  road_segment: "speed_kmh", bus: "delay_min", bus_line: "running",
 }
 
 function headlineOf(e: Entity): Reading | null {

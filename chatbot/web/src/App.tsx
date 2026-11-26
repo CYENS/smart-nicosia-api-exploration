@@ -16,12 +16,20 @@ import { startClock } from "@/lib/clock"
 import { parseHash, startDeepLinks } from "@/lib/deeplink"
 import { useGeometry } from "@/lib/geometry"
 import { initMap, setInsets } from "@/lib/map/engine"
-import { useWorkspace } from "@/lib/registries/workspaces"
+import "@/lib/mobility" // buses, stops and road speeds: their workspace, kinds, layers and commands
+import { useWorkspace, useWorkspaceSide } from "@/lib/registries/workspaces"
 
-// The open workspace's own panels, over the map (Live today has none of its own).
+// The open workspace's own panels, over the map (Live today has none of its own), and its side
+// panel in the right column.
 function WorkspacePanels() {
   const panels = useWorkspace((s) => s.list.find((w) => w.id === s.active)?.Panels)
-  return panels ? createElement(panels) : null
+  const side = useWorkspaceSide()
+  return (
+    <>
+      {panels && createElement(panels)}
+      {side && createElement(side)}
+    </>
+  )
 }
 
 export function App() {

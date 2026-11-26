@@ -18,7 +18,8 @@ place from the index, n219329628).
 
 Ids say their kind: NIC-/LIM-/LAR-/FAM- are register entries, B and digits a DLS building,
 n/w/r and digits an OSM place, anything else a device (or a traffic camera) by its name. A later
-feature adds a kind with `register_kind`.
+feature adds a kind with `register_kind`, its search items with `register_search` and its 24-hour
+series with `register_series` (chatbot/mobility/entities.py adds buses, stops, lines and roads).
 
 Nothing here asks a public service for more than the thing asked about: relations and search
 read what is already cached (the device inventory, the attribute cache, the last snapshot of
@@ -233,6 +234,13 @@ class Kind:
 
 
 KIND_RESOLVERS: list[Kind] = []
+# More things to search: each takes the Entities and returns index_item()s (quickly: it runs on
+# every keystroke, so keep its own cache). Groups listed in SEARCH_CAPS are capped there.
+SEARCH_SOURCES: list[Callable[[Entities], list[dict]]] = []
+SEARCH_CAPS = {"Devices": 8, "Dangerous buildings": 6, "Places": 6, "Streets": 4, "Buildings": 1}
+# The 24-hour series of a kind the devices' history doesn't cover: kind -> fn(ents, entity, end),
+# `end` the moment it ends at (None: now).
+SERIES_RESOLVERS: dict[str, Callable[[Entities, dict, datetime | None], dict | None]] = {}
 
 
 def register_kind(kind: Kind, first: bool = False) -> Kind:
@@ -242,14 +250,36 @@ def register_kind(kind: Kind, first: bool = False) -> Kind:
     return kind
 
 
+def register_search(source: Callable[[Entities], list[dict]], caps: dict[str, int] | None = None):
+    SEARCH_SOURCES.append(source)
+    SEARCH_CAPS.update(caps or {})
+    return source
+
+
+def register_series(kind: str, fn: Callable[[Entities, dict, datetime | None], dict | None]):
+    SERIES_RESOLVERS[kind] = fn
+    return fn
+
+
+# A kind's own reading of a past moment of the city clock (the devices read theirs through
+# chatbot/moments.py): kind -> fn(ents, entity, at) -> the entity as it was, with its `moment`.
+AT_RESOLVERS: dict[str, Callable[[Entities, dict, datetime], dict]] = {}
+
+
+def register_at(kind: str, fn: Callable[[Entities, dict, datetime], dict]):
+    AT_RESOLVERS[kind] = fn
+    return fn
+
+
 class Entities:
     """Builds entities from the twin's sources, with short caches, and searches them."""
 
     def __init__(self, city: CityData | None, places: Places | None = None,
                  dls: DLS | None = None, registers: eoa.Registry | None = None,
-                 memory=None):
+                 memory=None, mobility=None):
         self.city = city
         self.memory = memory  # the twin's memory: the 24-hour series reads it first
+        self.mobility = mobility  # buses, stops and road speeds (chatbot/mobility)
         self.places = places
         self.dls = dls
         self.registers = registers
@@ -298,6 +328,8 @@ class Entities:
             out = self._device_series(entity, end)
         elif entity["kind"] == "camera" and entity.get("_feeds"):
             out = self._traffic_series(entity, end)
+        elif entity["kind"] in SERIES_RESOLVERS:
+            out = SERIES_RESOLVERS[entity["kind"]](self, entity, end)
         with self._lock:
             self._series[key] = (time.time(), out)
             while len(self._series) > CACHE_SIZE:
@@ -424,7 +456,13 @@ class Entities:
             out.append((100, {"id": f"B{m.group(1)}", "kind": "building_3d",
                               "name": f"DLS 3D building {m.group(1)}", "group": "Buildings",
                               "detail": "Open it in the inspector"}))
-        for item in self._search_index():
+        extra = []
+        for source in SEARCH_SOURCES:
+            try:
+                extra += source(self)
+            except Exception as e:  # noqa: BLE001 - one source failing leaves the others
+                log.warning("search source failed: %s", e)
+        for item in self._search_index() + extra:
             s = score(item, qn, words, ql)
             if not s and item["kind"] == "register_building" and any(c.isdigit() for c in q):
                 r = item["_record"]
@@ -432,7 +470,7 @@ class Entities:
             if s:
                 out.append((s, item))
         out.sort(key=lambda t: (-t[0], t[1]["name"]))
-        caps = {"Devices": 8, "Dangerous buildings": 6, "Places": 6, "Streets": 4, "Buildings": 1}
+        caps = SEARCH_CAPS
         taken: Counter = Counter()
         results = []
         for s, item in out:
@@ -627,7 +665,7 @@ def index_item(eid, kind, name, group, detail, lat, lon, texts, state=None, reco
 
 
 def score(item: dict, qn: str, words: list[str], ql: str) -> float:
-    if item["_id"] and item["_id"] == qn:
+    if item["_id"] and item["_id"] == qn or qn in item.get("_aliases", ()):
         return 100
     if item["_id"] and len(qn) >= 2 and item["_id"].startswith(qn):
         return 85
@@ -1026,6 +1064,7 @@ def for_model(entity: dict) -> dict:
         out["relations"] = rel
     out["sources"] = [" · ".join(str(x) for x in (s["name"], s.get("detail"), s.get("as_of")) if x)
                       for s in entity["sources"]]
+    out.update(entity.get("_for_model") or {})  # what a kind adds for the model (departures)
     return out
 
 

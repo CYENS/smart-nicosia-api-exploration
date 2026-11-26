@@ -1,7 +1,8 @@
 """The twin's memory: the collector's DuckDB file, written and read by the chatbot.
 
 - `Recorder` writes what the chatbot fetches anyway (device snapshots, history ranges, traffic
-  and speed answers, alarms, the inventory and the camera list) into the collector's tables,
+  and speed answers, alarms, the inventory, the camera list and the national road travel
+  times behind the road speeds layer) into the collector's tables,
   from a background thread, so no request ever waits on the database. It costs the city API
   nothing: it only keeps what was already fetched.
 - `Memory` reads the file: which stretches it covers, raw readings, traffic and speed, its own
@@ -42,8 +43,9 @@ from collector.jobs import (
     Fetched,
     store_speeds,
     store_traffic,
+    store_travel_times,
 )
-from collector.parse import SpeedRow, TrafficRow
+from collector.parse import SpeedRow, TrafficRow, TravelTimeRow
 
 log = logging.getLogger(__name__)
 
@@ -403,13 +405,15 @@ class _Batch:
     traffic: dict[tuple, TrafficRow] = field(default_factory=dict)
     speeds: dict[tuple, tuple[str, str, SpeedRow]] = field(default_factory=dict)
     alarms: dict[str, list] = field(default_factory=dict)
+    travel_times: dict[tuple, TravelTimeRow] = field(default_factory=dict)
 
     def empty(self) -> bool:
         return not (self.telemetry or self.spans or self.inventory or self.attributes
-                    or self.cameras or self.traffic or self.speeds or self.alarms)
+                    or self.cameras or self.traffic or self.speeds or self.alarms
+                    or self.travel_times)
 
     def size(self) -> int:
-        return len(self.telemetry) + len(self.traffic) + len(self.speeds)
+        return len(self.telemetry) + len(self.traffic) + len(self.speeds) + len(self.travel_times)
 
 
 def _never_raises(fn):
@@ -514,6 +518,13 @@ class Recorder:
     def alarms(self, payload_by_state: dict[str, list]) -> None:
         self._batch.alarms.update(payload_by_state)
 
+    @_never_raises
+    def travel_times(self, rows: list[TravelTimeRow]) -> None:
+        """The national Bluetooth travel times, as the collector's travel_times job stores them
+        (the road speeds layer fetches them anyway)."""
+        for r in rows:
+            self._batch.travel_times[(r.segment_id, r.measured_at)] = r
+
     def _bound(self) -> None:
         """Drop the oldest rows beyond max_rows (and the coverage they backed)."""
         extra = self._batch.size() - self.max_rows
@@ -526,6 +537,7 @@ class Recorder:
         if self._batch.size() > self.max_rows:  # traffic or speed rows over the limit
             self._batch.traffic.clear()
             self._batch.speeds.clear()
+            self._batch.travel_times.clear()
 
     # -- writing -----------------------------------------------------------------------------
 
@@ -579,6 +591,7 @@ class Recorder:
         older.traffic.update(newer.traffic)
         older.speeds.update(newer.speeds)
         older.alarms.update(newer.alarms)
+        older.travel_times.update(newer.travel_times)
         self._batch = older
 
     def _write(self, con: duckdb.DuckDBPyConnection, b: _Batch) -> int:
@@ -612,6 +625,8 @@ class Recorder:
                 written += store_speeds(con, rows, g, lt, now)
         if b.alarms:
             AlarmsJob().store(con, Fetched(b.alarms), ctx)
+        if b.travel_times:
+            written += store_travel_times(con, list(b.travel_times.values()))
         return written
 
     # -- the background thread ---------------------------------------------------------------

@@ -35,9 +35,9 @@ export function ChatPanel() {
   const turns = useChat((s) => s.turns)
   const busy = useChat((s) => s.busy)
   const noKey = useCredentialsMissing()
-  const { desktop, chatW, rail, inspecting, belowClock } = useGeometry()
+  const { desktop, chatW, rail, inspecting, belowClock, wsSide } = useGeometry()
 
-  if (!desktop && inspecting) return null // a phone shows one sheet: the inspector has it now
+  if (!desktop && (inspecting || wsSide)) return null // a phone shows one sheet: the inspector or a workspace has it
 
   if (!open) {
     return (

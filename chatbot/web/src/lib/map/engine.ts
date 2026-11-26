@@ -47,6 +47,25 @@ type Entry = {
   b: Record<string, any>[] | null
   legendNow?: Record<string, string>
   frame?: number | null // the frame on show at the clock's moment (null: outside the replay)
+  renderer?: LayerRenderer // drawn by a feature's own renderer (live buses, road speeds)
+}
+
+// A feature that draws some answer layers its own way (live buses gliding, road speeds offset
+// by direction) registers a renderer. It claims a layer by its data and draws it from the
+// layer's source; the layer is otherwise an ordinary one (the map panel lists it, charts link
+// to its features, a fit frames it, clearing removes it).
+export type LayerData = FC
+export type LayerRenderer = {
+  id: string
+  claims: (data: FC) => boolean
+  add: (ref: string, src: string, data: FC, ids: string[]) => void
+  remove?: (ref: string) => void
+}
+const renderers: LayerRenderer[] = []
+export function registerLayerRenderer(r: LayerRenderer) {
+  const i = renderers.findIndex((x) => x.id === r.id)
+  if (i >= 0) renderers.splice(i, 1)
+  renderers.push(r)
 }
 type Stats = { min: number; max: number }
 
@@ -149,6 +168,11 @@ export function getMap() {
 function whenStyleReady(fn: () => void) {
   if (styleReady) fn()
   else map.once("style.load", fn)
+}
+
+// For features that keep their own layers: run once the style is there.
+export function onStyleReady(fn: () => void) {
+  if (map) whenStyleReady(fn)
 }
 
 export function escapeHtml(s: unknown) {
@@ -358,11 +382,20 @@ function firstBaseLayer(type: string) {
   return map.getLayersOrder().find((id) => id.startsWith(basePrefix) && map.getLayer(id)?.type === type)
 }
 
+// The base map's first label layer: a feature's lines go under it, so street names stay on top.
+export function firstLabelLayer() {
+  return firstBaseLayer("symbol")
+}
+
 // Paint that differs between the two base maps: both values are kept while a layer is on the
 // map, so a change of base map repaints it in place.
 type Themed = Record<string, Record<Basemap, any>>
 const themed = new Map<string, Themed>()
 const STROKE: Record<Basemap, string> = { night: NIGHT, day: "#ffffff" }
+
+export function themedPaint(id: string, paint: Themed): any {
+  return forBase(id, paint)
+}
 
 function forBase(id: string, paint: Themed): any {
   themed.set(id, paint)
@@ -679,6 +712,13 @@ function addToMap(entry: Entry) {
   const src = `${ref}::src`
   entry.ids = []
   if (map.getSource(src)) removeFromMap(ref)
+  const renderer = renderers.find((r) => r.claims(data))
+  if (renderer) {
+    entry.renderer = renderer
+    map.addSource(src, { type: "geojson", data: data as any })
+    renderer.add(ref, src, data, entry.ids)
+    return
+  }
   const points: any = ["==", ["geometry-type"], "Point"]
   const vf = spec.value_field ?? undefined
   // A time-lapse keeps one scale across all frames, so heights and heat compare over time.
@@ -758,8 +798,9 @@ function addToMap(entry: Entry) {
 
   if (spec.style === "route") {
     const lines: any = ["==", ["geometry-type"], "LineString"]
-    // A route avoiding dangerous buildings comes with the usual route: thinner, grey, still.
-    const alt: any = ["==", ["get", "state"], "usual route"]
+    // A route avoiding dangerous buildings comes with the usual route, and a bus trip with its
+    // walks: thinner, grey, still.
+    const alt: any = ["match", ["get", "state"], ["usual route", "walk"], true, false]
     addLayerSafe({ id: `${ref}::casing`, type: "line", source: src, filter: lines, layout: { "line-join": "round", "line-cap": "round" }, paint: { ...forBase(`${ref}::casing`, { "line-color": STROKE }), "line-width": ["case", alt, 6.5, 10], "line-opacity": 0.85 } }, entry.ids)
     addLayerSafe({ id: `${ref}::line`, type: "line", source: src, filter: lines, layout: { "line-join": "round", "line-cap": "round" }, paint: { "line-color": ["get", "color"], "line-width": ["case", alt, 3.5, 5.5] } }, entry.ids)
     addLayerSafe({ id: `${ref}::dash`, type: "line", source: src, filter: ["all", lines, ["!", alt]], layout: { "line-join": "round", "line-cap": "round" }, paint: { "line-color": "#ffffff", "line-width": 2.5, "line-dasharray": [0, 4, 3] } }, entry.ids)
@@ -956,6 +997,7 @@ function removeFromMap(ref: string) {
   if (flight?.ref === ref) stopFlight()
   if (framed?.ref === ref) framed = null
   const entry = state.layers.get(ref)
+  entry?.renderer?.remove?.(ref)
   for (const id of entry?.ids || []) {
     if (map.getLayer(id)) map.removeLayer(id)
     state.pulses.delete(id)

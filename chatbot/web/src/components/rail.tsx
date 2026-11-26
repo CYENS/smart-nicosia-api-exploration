@@ -9,8 +9,8 @@ import { STRIP_H, openSearch, useLayout } from "@/lib/layout"
 import { openWorkspace, useWorkspace } from "@/lib/registries/workspaces"
 import { cn } from "@/lib/utils"
 
-function RailButton({ label, hint, active, onClick, children }: {
-  label: string; hint?: React.ReactNode; active?: boolean; onClick: () => void; children: React.ReactNode
+function RailButton({ label, hint, active, onClick, id, children }: {
+  label: string; hint?: React.ReactNode; active?: boolean; onClick: () => void; id?: string; children: React.ReactNode
 }) {
   return (
     <Tooltip>
@@ -19,6 +19,7 @@ function RailButton({ label, hint, active, onClick, children }: {
           <button
             type="button"
             aria-label={label}
+            data-workspace-id={id}
             aria-current={active ? "page" : undefined}
             onClick={onClick}
             className={cn(
@@ -60,7 +61,7 @@ export function Rail() {
       style={{ top: STRIP_H }}
     >
       {list.map((w) => (
-        <RailButton key={w.id} label={w.description} hint={w.key && <Kbd>Alt {w.key}</Kbd>} active={w.id === active} onClick={() => openWorkspace(w.id)}>
+        <RailButton key={w.id} id={w.id} label={w.description} hint={w.key && <Kbd>Alt {w.key}</Kbd>} active={w.id === active} onClick={() => openWorkspace(w.id)}>
           <w.icon />
         </RailButton>
       ))}

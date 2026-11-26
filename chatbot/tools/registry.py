@@ -16,14 +16,14 @@ import jsonschema
 from collector.http import ApiError
 
 from chatbot.settings import TIMEZONE
-from chatbot.tools import (buildings, charts, city, clock, entities, maps, memory, places,
-                           routes)
+from chatbot.tools import (buildings, charts, city, clock, entities, maps, memory, mobility,
+                           places, routes)
 from chatbot.tools.base import Handler, Tool, ToolContext, ToolError
 from chatbot.web import WebError
 
 log = logging.getLogger(__name__)
 
-DOMAINS = (city, places, routes, buildings, maps, charts, memory, entities, clock)
+DOMAINS = (city, places, routes, buildings, maps, charts, memory, entities, clock, mobility)
 
 TOOLS: list[Tool] = [t for domain in DOMAINS for t in domain.TOOLS]
 TOOL_DEFS: list[dict] = [t.definition for t in TOOLS]
