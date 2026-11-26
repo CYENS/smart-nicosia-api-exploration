@@ -10,6 +10,7 @@ export type EntityKind =
   | "street_light" | "parking_sensor" | "waste_bin" | "air_station" | "info_screen" | "camera"
   | "register_building" | "building_3d" | "place"
   | "bus" | "bus_stop" | "bus_line" | "road_segment"
+  | "spot"
 
 export type Tone = "alarm" | "warn" | "live" | "ok" | "muted"
 
@@ -96,8 +97,9 @@ const ID_KINDS: [RegExp, EntityKind][] = [
   [/^stop-\d{1,7}$/, "bus_stop"],
   [/^line-(npt|ic|pame)-[a-z0-9]{1,8}$/, "bus_line"],
   [/^road-\d{1,5}$/, "road_segment"],
+  [/^spot-\d{1,2}\.\d{1,6}-\d{1,2}\.\d{1,6}$/, "spot"],
 ]
-export const ID_IN_TEXT = /\b(Y[LPW]\d{2,6}|(?:NIC|LIM|LAR)-\d{1,5}(?:-\d+)?|FAM-15[AB]-\d{1,5}|B\d{3,10}|[0-9a-f]{12}|bus-\d{1,6}|stop-\d{1,7}|line-(?:npt|ic|pame)-[a-z0-9]{1,8}|road-\d{1,5})\b/g
+export const ID_IN_TEXT = /\b(Y[LPW]\d{2,6}|(?:NIC|LIM|LAR)-\d{1,5}(?:-\d+)?|FAM-15[AB]-\d{1,5}|B\d{3,10}|[0-9a-f]{12}|bus-\d{1,6}|stop-\d{1,7}|line-(?:npt|ic|pame)-[a-z0-9]{1,8}|road-\d{1,5}|spot-\d{1,2}\.\d{1,6}-\d{1,2}\.\d{1,6})\b/g
 
 export function kindOfId(id: string): EntityKind | undefined {
   return ID_KINDS.find(([re]) => re.test(id))?.[1]

@@ -316,6 +316,30 @@
 }
 .me-btn:hover { background: #ffffff; }
 
+/* The map's own menu (right click, or a long press): a popover list of what to do here. */
+.map-menu-popup .maplibregl-popup-content { padding: 4px; min-width: 190px; }
+.map-menu { display: flex; flex-direction: column; gap: 1px; }
+.map-menu-item {
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--popover-foreground);
+  font: inherit;
+  font-size: 13.5px;
+  text-align: left;
+  padding: 7px 10px;
+  cursor: pointer;
+  outline: none;
+}
+.map-menu-first { font-weight: 600; }
+.map-menu-item:hover { background: var(--muted); }
+.map-menu-item:focus-visible,
+.map-menu-item:focus { background: rgb(255 174 69 / 0.12); box-shadow: inset 0 0 0 1.5px var(--sodium); }
+.map-menu-item:active { background: var(--accent); }
+
+/* The wind's particles ride over the map, under every panel; the map still takes the pointer. */
+.wind-canvas { position: absolute; inset: 0; pointer-events: none; }
+
 /* Map callouts the assistant places. The box sits inside MapLibre's marker element (which is
    absolutely positioned and moved with `transform`), so its own position and animation are
    free to use; `relative` anchors the arrow below. */

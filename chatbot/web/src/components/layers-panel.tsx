@@ -4,6 +4,7 @@ import {
 } from "lucide-react"
 import { useMemo } from "react"
 
+import { EnvironmentSwitches } from "@/components/environment/switches"
 import { MobilitySwitches } from "@/components/mobility/switches"
 import { Button } from "@/components/ui/button"
 import { Field, FieldContent, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field"
@@ -14,6 +15,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { useClock } from "@/lib/clock"
 import { useGeometry } from "@/lib/geometry"
 import { useLayout } from "@/lib/layout"
+import { layerKeyFor } from "@/lib/registries/layer-keys"
 import type { Basemap } from "@/lib/map/basemap"
 import { skyAt } from "@/lib/map/sky"
 import {
@@ -202,6 +204,7 @@ export function LayersPanel() {
             <Switch id="tg-dangerous" checked={registers.on} onCheckedChange={(on) => showRegisters(on)} />
           </Field>
           <MobilitySwitches />
+          <EnvironmentSwitches />
           <Field>
             <FieldLabel>Your position</FieldLabel>
             <FieldDescription aria-live="polite">
@@ -235,9 +238,11 @@ export function LayersPanel() {
             </p>
           ) : (
             <ul className="flex flex-col gap-4">
-              {layers.map((l) => (
+              {layers.map((l) => {
+                const Custom = layerKeyFor(l.renderer)
+                return (
                 <LayerRow key={l.ref} title={l.title} count={l.count} removeLabel="Remove this layer" onRemove={() => removeLayer(l.ref)}>
-                  <Keys layer={l} />
+                  {Custom ? <Custom layer={l} /> : <Keys layer={l} />}
                   {l.style === "route" && (
                     <Button
                       variant="outline"
@@ -251,7 +256,8 @@ export function LayersPanel() {
                     </Button>
                   )}
                 </LayerRow>
-              ))}
+                )
+              })}
               {city.on && (
                 <LayerRow title="3D city (DLS)" removeLabel="Turn off the 3D city" onRemove={() => setCity3d(false)}>
                   <Ramp colors={stops} from="0 m" to="60 m+" what="height to roof" />

@@ -90,6 +90,7 @@ const CITY_RADIUS = 3 // tiles around the centre (each ~500 m), so pitched views
 
 export type LayerSummary = {
   ref: string; title: string; count: number; style: string
+  renderer: string | null // the feature drawing it its own way, which may give its own legend
   legend: Record<string, string>; stats: Stats | null; valueField: string | null
   street: { name: string; follows: string | null } | null // `follows`: the total its glow tracks
 }
@@ -224,14 +225,8 @@ export function initMap(container: HTMLElement, camera?: Camera | null) {
   map.addControl(geolocate, "bottom-right")
   geolocate.on("geolocate", (pos: GeolocationPosition) => setMyLocation(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy, "device location"))
   geolocate.on("error", () => setUi({ me: { loc: useMapUi.getState().me.loc, error: "Couldn't read your location here. Right-click the map where you are instead." } }))
-  map.on("contextmenu", (e) => {
-    const button = document.createElement("button")
-    button.type = "button"
-    button.className = "me-btn"
-    button.textContent = "I'm here"
-    const popup = new maplibregl.Popup({ closeButton: false, offset: 6 }).setLngLat(e.lngLat).setDOMContent(button).addTo(map)
-    button.addEventListener("click", () => { setMyLocation(e.lngLat.lat, e.lngLat.lng, NaN, "set on the map"); popup.remove() })
-  })
+  map.on("contextmenu", (e) => openMapMenu(e.lngLat))
+  watchLongPress()
   // A page opened in a hidden tab measures a 0-size container; keep the canvas in step.
   new ResizeObserver(() => map.resize()).observe(container)
 
@@ -615,6 +610,82 @@ export function resetView() {
 
 let geolocate: maplibregl.GeolocateControl
 let meMarker: maplibregl.Marker | null = null
+
+// What a right click (or a long press on a touch screen) on the map offers: "I'm here", and
+// what features add (the environment's "What's it like here?"). A small menu at the point:
+// the arrow keys move between its items, Enter runs one, Esc closes it and gives the keyboard
+// back to the map.
+export type MapMenuItem = { id: string; label: string; order: number; run: (at: { lng: number; lat: number }) => void }
+const menuItems: MapMenuItem[] = [
+  { id: "me", label: "I'm here", order: 90, run: (at) => setMyLocation(at.lat, at.lng, NaN, "set on the map") },
+]
+export function registerMapMenuItem(item: MapMenuItem) {
+  const i = menuItems.findIndex((x) => x.id === item.id)
+  if (i >= 0) menuItems.splice(i, 1)
+  menuItems.push(item)
+  menuItems.sort((a, b) => a.order - b.order)
+}
+
+let menuPopup: maplibregl.Popup | null = null
+export function openMapMenu(at: { lng: number; lat: number }) {
+  menuPopup?.remove()
+  const menu = document.createElement("div")
+  menu.className = "map-menu"
+  menu.setAttribute("role", "menu")
+  menu.setAttribute("aria-label", "This place on the map")
+  const buttons = menuItems.map((item, k) => {
+    const b = document.createElement("button")
+    b.type = "button"
+    b.className = k === 0 ? "map-menu-item map-menu-first" : "map-menu-item"
+    b.setAttribute("role", "menuitem")
+    b.tabIndex = k === 0 ? 0 : -1
+    b.textContent = item.label
+    b.addEventListener("click", () => { close(false); item.run(at) })
+    menu.appendChild(b)
+    return b
+  })
+  const popup = new maplibregl.Popup({ closeButton: false, offset: 6, className: "map-menu-popup" })
+    .setLngLat([at.lng, at.lat]).setDOMContent(menu).addTo(map)
+  menuPopup = popup
+  function close(refocus: boolean) {
+    popup.remove()
+    if (menuPopup === popup) menuPopup = null
+    if (refocus) map.getCanvas().focus({ preventScroll: true })
+  }
+  menu.addEventListener("keydown", (e) => {
+    const i = buttons.indexOf(document.activeElement as HTMLButtonElement)
+    const j = e.key === "ArrowDown" ? (i + 1) % buttons.length
+      : e.key === "ArrowUp" ? (i - 1 + buttons.length) % buttons.length
+        : e.key === "Home" ? 0 : e.key === "End" ? buttons.length - 1 : null
+    if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); close(true); return }
+    if (e.key === "Tab") { close(true); return }
+    if (j === null) return
+    e.preventDefault()
+    buttons.forEach((b, k) => { b.tabIndex = k === j ? 0 : -1 })
+    buttons[j].focus()
+  })
+  requestAnimationFrame(() => buttons[0]?.focus({ preventScroll: true }))
+}
+
+// A finger held still on the map for half a second opens the same menu.
+function watchLongPress() {
+  let timer: number | undefined
+  let start: { x: number; y: number } | null = null
+  const cancel = () => { window.clearTimeout(timer); start = null }
+  map.on("touchstart", (e) => {
+    cancel()
+    if ((e.originalEvent as TouchEvent).touches.length !== 1) return
+    start = { x: e.point.x, y: e.point.y }
+    const at = { lng: e.lngLat.lng, lat: e.lngLat.lat }
+    timer = window.setTimeout(() => { start = null; openMapMenu(at) }, 550)
+  })
+  map.on("touchmove", (e) => {
+    if (start && Math.hypot(e.point.x - start.x, e.point.y - start.y) > 10) cancel()
+  })
+  map.on("touchend", cancel)
+  map.on("touchcancel", cancel)
+  map.on("movestart", cancel)
+}
 
 export function setMyLocation(lat: number, lon: number, accuracy: number, source: string) {
   const loc = { lat, lon, accuracy_m: Number.isFinite(accuracy) ? Math.round(accuracy) : null, source }
@@ -1014,6 +1085,7 @@ function publishLayers() {
       const { spec, stats, data } = entry
       return {
         ref: spec.ref, title: spec.title, count: spec.count, style: spec.style,
+        renderer: entry.renderer?.id ?? null,
         legend: entry.legendNow ?? spec.legend ?? {}, stats, valueField: spec.value_field ?? null,
         street: data.street ? { name: data.street.name, follows: totalsOf(entry)?.field ?? null } : null,
       }
@@ -1190,6 +1262,7 @@ function pumpCity() {
         const add = fc.features.filter((f) => !CITY.ids.has(f.id!))
         for (const f of add) { CITY.ids.add(f.id!); CITY.features.push(f) }
         if (add.length) (map.getSource(CITY_SRC) as GeoJSONSource | undefined)?.updateData({ add: add as any })
+        if (add.length) cityChanged()
       })
       .catch(() => { /* leave it unloaded; the next move retries it */ })
       .finally(() => { CITY.inflight.delete(key); cityStatus(); pumpCity() })
@@ -1214,6 +1287,20 @@ function cityStatus() {
   if (cur.on !== CITY.on || cur.status !== status) setUi({ city: { on: CITY.on, status } })
 }
 
+// The DLS buildings loaded so far (each with its roof height `h`), and a call whenever more
+// arrive or the 3D city is switched: for what is drawn from them, like their shadows.
+export function cityBuildings(): { on: boolean; features: Feature[] } {
+  return { on: CITY.on, features: CITY.features }
+}
+const citySinks = new Set<() => void>()
+export function onCityChange(fn: () => void) {
+  citySinks.add(fn)
+  return () => { citySinks.delete(fn) }
+}
+function cityChanged() {
+  for (const fn of citySinks) fn()
+}
+
 export function setCity3d(on: boolean) {
   CITY.on = on
   cityStatus()
@@ -1227,6 +1314,7 @@ export function setCity3d(on: boolean) {
       removeCityLayer()
     }
     cityStatus()
+    cityChanged()
   })
 }
 

@@ -17,6 +17,7 @@ import { parseHash, startDeepLinks } from "@/lib/deeplink"
 import { useGeometry } from "@/lib/geometry"
 import { initMap, setInsets } from "@/lib/map/engine"
 import "@/lib/mobility" // buses, stops and road speeds: their workspace, kinds, layers and commands
+import "@/lib/environment" // sun, shade, terrain, air, noise and weather: workspace, spot, layers
 import { useWorkspace, useWorkspaceSide } from "@/lib/registries/workspaces"
 
 // The open workspace's own panels, over the map (Live today has none of its own), and its side
