@@ -1645,7 +1645,8 @@ function shownFeatures(entry: Entry): Feature[] {
 }
 
 // Where the swipe is on the canvas, in px: a share of the part of the map the panels leave open.
-function swipeX() {
+// Where the compare swipe divides the map, in the canvas's pixels (lib/map/past-photo.ts too).
+export function swipeX() {
   const p = map.getPadding()
   const w = map.getCanvas().clientWidth
   const left = p.left ?? 0, right = p.right ?? 0

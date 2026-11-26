@@ -99,6 +99,7 @@ function SpanToggle({ className }: { className?: string }) {
 
 function compareValue(c: Compare | null) {
   if (!c) return "off"
+  if ("photo" in c) return `photo${c.photo}`
   if ("offset" in c) return c.offset === -DAY ? "yesterday" : c.offset === -7 * DAY ? "last_week" : "held"
   return "held"
 }
@@ -114,6 +115,7 @@ function CompareMenu() {
     else if (v === "yesterday") setCompare({ offset: -DAY })
     else if (v === "last_week") setCompare({ offset: -7 * DAY })
     else if (v === "held") setCompare({ at: at ?? Math.floor(now / 900e3) * 900e3 })
+    else if (v === "photo1993" || v === "photo1963") setCompare({ photo: v.slice(5) as "1993" | "1963" })
   }
   return (
     <DropdownMenu>
@@ -136,7 +138,7 @@ function CompareMenu() {
           <ColumnsIcon data-icon="inline-start" />
           <span className="hidden @[520px]:inline">Compare</span>
         </TooltipTrigger>
-        <TooltipContent>Compare two moments with a swipe across the map</TooltipContent>
+        <TooltipContent>Compare two moments, or the past, with a swipe across the map</TooltipContent>
       </Tooltip>
       <DropdownMenuContent align="end" className="w-60">
         <DropdownMenuGroup>
@@ -145,6 +147,10 @@ function CompareMenu() {
             <DropdownMenuRadioItem closeOnClick value="last_week">The same time last week</DropdownMenuRadioItem>
             <DropdownMenuRadioItem closeOnClick value="yesterday">The same time yesterday</DropdownMenuRadioItem>
             <DropdownMenuRadioItem closeOnClick value="held">{value === "held" ? "The moment held" : "This moment, held while you move the clock"}</DropdownMenuRadioItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuLabel>Or with Nicosia in the past</DropdownMenuLabel>
+            <DropdownMenuRadioItem closeOnClick value="photo1993">The aerial photo of 1993</DropdownMenuRadioItem>
+            <DropdownMenuRadioItem closeOnClick value="photo1963">The aerial photo of 1963</DropdownMenuRadioItem>
             <DropdownMenuSeparator />
             <DropdownMenuRadioItem closeOnClick value="off">Nothing (no comparison)</DropdownMenuRadioItem>
           </DropdownMenuRadioGroup>

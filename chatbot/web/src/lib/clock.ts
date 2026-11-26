@@ -2,7 +2,7 @@
    the layers on the map, the strip, the sky, the inspector and every chart's time line show that
    moment from the twin's memory. A replay (a chat time-lapse, or a range from set_city_time) is a
    range on the clock with play, pause and speed. Compare puts a second moment beside the first,
-   as a swipe across the map.
+   as a swipe across the map, or Nicosia as DLS photographed it in 1993 or 1963 (lib/map/past-photo.ts).
 
    Moments are instants (epoch ms). The API and links use Nicosia wall time ("2026-11-21T21:00");
    charts read wall time as browser-local ms (see wallMs). */
@@ -33,7 +33,10 @@ export type Range = {
   times?: number[] // that layer's frame moments
   live?: boolean // the range runs up to now
 }
-export type Compare = { offset: number } | { at: number }
+// A compared moment (relative to the clock's, or held), or an aerial photo of the city's past.
+export type Photo = "1963" | "1993"
+export const PHOTOS: Photo[] = ["1993", "1963"]
+export type Compare = { offset: number } | { at: number } | { photo: Photo }
 export type Pin = { at: number; label: string }
 export type Readout = { unknown?: boolean; reason?: string | null; coverage_pct?: number }
 export type Strip = {
@@ -139,6 +142,7 @@ export function ago(t: number, now: number) {
 
 // "last week", "yesterday" or the compared moment itself.
 export function compareName(c: Compare | null, other: number | null) {
+  if (c && "photo" in c) return `the ${c.photo} photo`
   if (!c || other === null) return null
   if ("offset" in c) return c.offset === -7 * DAY ? "last week" : c.offset === -DAY ? "yesterday" : fmtMoment(other)
   return fmtMoment(other)
@@ -155,9 +159,14 @@ export function earliest(s = get()) {
 }
 
 export function compareAt(s = get()): number | null {
-  if (!s.compare) return null
+  if (!s.compare || "photo" in s.compare) return null
   const base = s.at ?? s.now
   return "offset" in s.compare ? snap(base + s.compare.offset) : s.compare.at
+}
+
+// The aerial photo compared with, if the comparison is with one.
+export function comparePhoto(s = get()): Photo | null {
+  return s.compare && "photo" in s.compare ? s.compare.photo : null
 }
 
 export function moment(s = get()) {

@@ -27,10 +27,17 @@ function remembered() {
 
 export const useTrees = create<TreeState>(() => ({ on: remembered(), mapped: 0, estimated: 0, status: "" }))
 
-registerActiveSources(() => {
-  const s = useTrees.getState()
-  return s.on && s.mapped + s.estimated > 0 ? ["openstreetmap"] : []
-}, (fn) => useTrees.subscribe(fn))
+// The map's credits name OpenStreetMap while trees are drawn. Registered on first use, not at
+// import: the map engine imports this module, and lib/sources.ts imports the engine.
+let registered = false
+function registerSource() {
+  if (registered) return
+  registered = true
+  registerActiveSources(() => {
+    const s = useTrees.getState()
+    return s.on && s.mapped + s.estimated > 0 ? ["openstreetmap"] : []
+  }, (fn) => useTrees.subscribe(fn))
+}
 
 // -- the shapes ---------------------------------------------------------------------------------
 
@@ -307,6 +314,7 @@ function retryLater(x: number, y: number) {
 }
 
 export function attachTrees(m: MlMap, before?: string) {
+  registerSource()
   map = m
   layer.ground = (lon, lat) => {
     if (!map?.getTerrain()) return 0
