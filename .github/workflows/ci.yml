@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  python:
+    name: Python tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: uv sync --frozen
+      - run: uv run pytest -q
+
+  web:
+    name: Page (types, lint, build)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: chatbot/web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: chatbot/web/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      # Two errors predate CI (react-hooks rules); feature 1 of the roadmap fixes them and makes
+      # this step blocking.
+      - run: npm run lint
+        continue-on-error: true
+      # Build to a scratch folder: the committed chatbot/static is left alone.
+      - run: npx vite build --outDir "$RUNNER_TEMP/page" --emptyOutDir
