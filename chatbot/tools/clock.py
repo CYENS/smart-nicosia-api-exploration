@@ -101,7 +101,7 @@ def h_set_city_time(ctx: ToolContext, a: dict) -> dict:
     if a.get("live"):
         if a.get("at") or a.get("from"):
             raise ToolError("give either live true or a moment (at, from), not both")
-        ctx.emit({"type": "ui", "action": "clock", "live": True, "compare": None, "range": None})
+        ctx.emit({"type": "ui", "action": "clock", "live": True, "compare": "off", "range": None})
         return {"ok": True, "clock": "live", "_summary": "clock: live"}
 
     start = _when(ctx, a["from"], "from") if a.get("from") else None
@@ -145,7 +145,9 @@ def h_set_city_time(ctx: ToolContext, a: dict) -> dict:
               "at": local_iso(at) if at else None, "range": rng,
               "play": bool(a.get("play", rng is not None)) if rng else False,
               "speed": a.get("speed") or 1,
-              "compare": local_iso(then) if then else ("off" if compare == "off" else None)})
+              "compare": local_iso(then) if then else ("off" if compare == "off" else None),
+              "compare_offset_min": -int(COMPARE[compare].total_seconds() // 60)
+              if compare in COMPARE else None})
 
     here = readouts(m, at) if at else None
     there = readouts(m, then) if then else None

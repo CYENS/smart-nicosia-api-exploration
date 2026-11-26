@@ -2,6 +2,7 @@ import {
   LayersIcon, LocateFixedIcon, MoonIcon, NavigationIcon, PanelRightCloseIcon, SquareIcon, SunIcon,
   SunMoonIcon, XIcon,
 } from "lucide-react"
+import { useMemo } from "react"
 
 import { Button } from "@/components/ui/button"
 import { Field, FieldContent, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field"
@@ -9,9 +10,11 @@ import { Separator } from "@/components/ui/separator"
 import { Switch } from "@/components/ui/switch"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
+import { useClock } from "@/lib/clock"
 import { useGeometry } from "@/lib/geometry"
 import { useLayout } from "@/lib/layout"
 import type { Basemap } from "@/lib/map/basemap"
+import { skyAt } from "@/lib/map/sky"
 import {
   RAMP, cityHeights, flyRoute, fmt, forgetMyLocation, locateMe, nicosiaTime, removeLayer,
   setBasemapMode, setCity3d, setNightLights, showRegisters, stopFlight, useMapUi,
@@ -103,14 +106,16 @@ function Keys({ layer }: { layer: LayerSummary }) {
 export function LayersPanel() {
   const open = useLayout((s) => s.layersOpen)
   const mode = useMapUi((s) => s.basemapMode)
-  const sky = useMapUi((s) => s.skyNow)
+  const clockAt = useClock((s) => s.at)
+  const skyNow = useMapUi((s) => s.skyNow)
+  const sky = useMemo(() => (clockAt === null ? skyNow : skyAt(new Date(clockAt))), [clockAt, skyNow])
   const nightLights = useMapUi((s) => s.nightLights)
   const layers = useMapUi((s) => s.layers)
   const city = useMapUi((s) => s.city)
   const registers = useMapUi((s) => s.registers)
   const me = useMapUi((s) => s.me)
   const flying = useMapUi((s) => s.flying)
-  const { layersBottom, desktop, inspecting } = useGeometry()
+  const { layersBottom, desktop, inspecting, belowClock } = useGeometry()
 
   if (desktop && inspecting) return null
 
@@ -118,7 +123,8 @@ export function LayersPanel() {
     return (
       <Button
         variant="secondary"
-        className="panel-float absolute top-[64px] right-3 z-10 h-10 gap-2 rounded-xl px-3.5"
+        className="panel-float absolute right-3 z-10 h-10 gap-2 rounded-xl px-3.5"
+        style={{ top: belowClock }}
         onClick={() => useLayout.setState({ layersOpen: true })}
       >
         <LayersIcon data-icon="inline-start" />
@@ -169,7 +175,7 @@ export function LayersPanel() {
             </ToggleGroup>
             <FieldDescription>
               {mode === "auto"
-                ? `Follows the sun: ${sky.dark ? "night" : "day"} until ${nicosiaTime(sky.next.at)}`
+                ? `Follows the sun${clockAt === null ? "" : " at the clock's moment"}: ${sky.dark ? "night" : "day"} until ${nicosiaTime(sky.next.at)}`
                 : mode === "night" ? "Night, whatever the time" : "Day, whatever the time"}
             </FieldDescription>
           </Field>

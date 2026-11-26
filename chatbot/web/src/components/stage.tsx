@@ -123,7 +123,7 @@ export function Stage() {
       <Button
         variant="secondary"
         className="panel-float absolute z-10 h-10 gap-2 rounded-xl px-3.5"
-        style={{ left: g.left, bottom: g.desktop ? GAP : undefined, top: g.desktop ? undefined : STRIP_H + 8 }}
+        style={{ left: g.left, bottom: g.desktop ? GAP : undefined, top: g.desktop ? undefined : g.belowClock }}
         onClick={() => setStageOpen(true)}
       >
         <ChartSplineIcon data-icon="inline-start" />
@@ -135,7 +135,7 @@ export function Stage() {
   const size = `${g.left}:${g.right}:${g.stageH}:${expanded}`
   const style = g.desktop
     ? { left: g.left, right: g.right, bottom: GAP, top: expanded ? STRIP_H + GAP : undefined, height: expanded ? undefined : g.stageH }
-    : { left: 8, right: 8, top: STRIP_H + 8, height: expanded ? `calc(100% - ${STRIP_H + 16}px)` : g.stageH }
+    : { left: 8, right: 8, top: g.belowClock, height: expanded ? `calc(100% - ${g.belowClock + 8}px)` : g.stageH }
 
   return (
     <section aria-label="Visual stage" className="panel-float absolute z-10 flex overflow-hidden rounded-xl max-md:flex-col" style={style}>

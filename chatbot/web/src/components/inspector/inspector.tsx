@@ -70,10 +70,15 @@ function Header({ icon: Icon, color, title, subtitle, titleRef }: {
 function Status({ entity }: { entity: Entity }) {
   const now = useNow()
   const s = entity.state
-  if (!s) return null
-  const age = s.as_of ? ago(s.as_of, now) : null
+  const m = entity.moment
+  if (!s) {
+    return m ? <div className="px-4"><MomentBadge entity={entity} /></div> : null
+  }
+  // At a past moment, a reading's age is told from that moment.
+  const age = s.as_of && !(m && !m.known) ? ago(s.as_of, m ? Date.parse(m.at) : now) : null
   return (
     <div className="flex flex-wrap items-center gap-2 px-4" aria-live="polite">
+      {m && <MomentBadge entity={entity} />}
       <Badge variant="outline" className={cn("h-6 gap-1.5 px-2.5 text-[12.5px]", TONE[s.tone])}>
         <span className="size-2 rounded-full" style={{ background: s.color }} aria-hidden="true" />
         {s.label}
@@ -85,8 +90,20 @@ function Status({ entity }: { entity: Entity }) {
           Stale reading
         </Badge>
       )}
-      {age && <span className="font-condensed text-[12.5px] text-muted-foreground">Last report {age}</span>}
+      {age && <span className="font-condensed text-[12.5px] text-muted-foreground">{m ? `Reported ${age.replace(" ago", "")} before` : `Last report ${age}`}</span>}
     </div>
+  )
+}
+
+// The clock shows a past moment: say which, and what the twin's memory holds of it.
+function MomentBadge({ entity }: { entity: Entity }) {
+  const m = entity.moment!
+  const text = !m.applies ? `The clock shows ${m.label}; this has no history` : m.known ? `As it was on ${m.label}` : `No record of ${m.label}`
+  return (
+    <Badge variant="outline" className={cn("h-6 gap-1.5 px-2.5 text-[12.5px]", m.known || !m.applies ? "border-sodium/40 text-sodium" : "text-muted-foreground")}>
+      <HistoryIcon data-icon="inline-start" />
+      {text}
+    </Badge>
   )
 }
 
@@ -127,7 +144,7 @@ function Actions({ entity }: { entity: Entity }) {
         </Tooltip>
       </div>
       <p className="min-h-[1lh] px-0.5 text-[12px] text-muted-foreground" aria-live="polite">
-        {copied === "ok" ? "Link copied. It opens this view with the inspector on it." : copied === "fail" ? "Couldn't copy here. The address bar has the link." : ""}
+        {copied === "ok" ? `Link copied. It opens this view with the inspector on it${entity.moment ? `, at ${entity.moment.label}` : ""}.` : copied === "fail" ? "Couldn't copy here. The address bar has the link." : ""}
       </p>
     </div>
   )
@@ -170,7 +187,7 @@ function LocalBody({ thing }: { thing: LocalThing }) {
 // The inspector: whatever was clicked, searched or named, in one panel. It takes the map panel's
 // place on the right (the map panel comes back when it closes) and is a sheet on a phone.
 export function Inspector() {
-  const { open, entity, local, note, status, error, target, series, seriesStatus, focusAt } = useInspector()
+  const { open, entity, local, note, status, error, target, series, seriesStatus, band, focusAt } = useInspector()
   const g = useGeometry()
   const titleRef = useRef<HTMLHeadingElement>(null)
   const panelRef = useRef<HTMLElement>(null)
@@ -257,7 +274,7 @@ export function Inspector() {
         )}
         <div className="flex min-h-0 flex-col gap-5 overflow-y-auto px-4 pt-4 pb-4">
           {sectionsFor(entity).map(({ id, Component }) => (
-            <Component key={id} entity={entity} series={series} seriesStatus={seriesStatus} />
+            <Component key={id} entity={entity} series={series} seriesStatus={seriesStatus} band={band} />
           ))}
         </div>
         <Actions entity={entity} />

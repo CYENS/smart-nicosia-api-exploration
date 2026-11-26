@@ -970,6 +970,16 @@ def at_moment(entity: dict, interp: Interpretation | None, known: bool, at: date
                 e["readings"].append({"key": key, "label": lab, "value": _round(v), "unit": unit,
                                       "as_of": _iso(interp.as_of), "stale": interp.stale})
     e["as_of"] = _iso(interp.as_of)
+    # Facts read from the live readings are told as they were then, or left out.
+    then = {"Status since": _local_text(d.get("status_since")) if known else None,
+            "Last pickup": _local_text(d.get("last_pickup")) if known else None,
+            "Fill before pickup": f"{_round(d['level_before_pickup'])}%"
+            if known and _num(d.get("level_before_pickup")) is not None else None,
+            "Dominant pollutant": d.get("dominant_pollutant") if known else None}
+    live_only = {"Last sign of life", "Player", "Plan", "Last reported"}
+    e["attributes"] = [a for a in (
+        attr(x["label"], then[x["label"]]) if x["label"] in then else x
+        for x in entity["attributes"] if x["label"] not in live_only) if a]
     e["sources"] = [{"name": "The twin's memory",
                      "detail": f"readings up to {moment_label}" if known else
                      "no record of this moment", "as_of": _iso(interp.as_of)},

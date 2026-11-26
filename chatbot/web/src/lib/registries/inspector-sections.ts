@@ -3,12 +3,13 @@
    parcel) without touching the inspector itself. */
 import type { ComponentType } from "react"
 
-import type { Entity, Series } from "@/lib/entities"
+import type { Band, Entity, Series } from "@/lib/entities"
 
 export type SectionProps = {
   entity: Entity
   series: Series | null
   seriesStatus: "idle" | "loading" | "ready" | "error"
+  band?: Band | null // the usual behind the sparkline, when the twin's memory has one
 }
 
 export type InspectorSection = {

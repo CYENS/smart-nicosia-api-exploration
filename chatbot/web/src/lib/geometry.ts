@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react"
 
 import { useStage } from "@/lib/chat"
+import { useClock } from "@/lib/clock"
 import { useInspector } from "@/lib/inspector"
-import { CHAT_W, GAP, INSPECTOR_W, LAYERS_W, RAIL_W, STRIP_H, WIDE_PX, useLayout } from "@/lib/layout"
-import { useMapUi } from "@/lib/map/engine"
+import { CHAT_W, CLOCK_H, CLOCK_PILL_H, GAP, INSPECTOR_W, LAYERS_W, RAIL_W, STRIP_H, WIDE_PX, useLayout } from "@/lib/layout"
 
 function useMedia(query: string) {
   const [match, setMatch] = useState(() => window.matchMedia(query).matches)
@@ -45,7 +45,7 @@ export function useGeometry() {
     open: useStage((s) => s.open && s.items.length > 0),
     expanded: useStage((s) => s.expanded),
   }
-  const timelapse = useMapUi((s) => s.timelapse !== null)
+  const clockH = useClock((s) => (s.expanded ? CLOCK_H : CLOCK_PILL_H))
 
   const rail = desktop ? RAIL_W : 0
   const mapH = vh - STRIP_H
@@ -63,6 +63,7 @@ export function useGeometry() {
   const chatBottom = !desktop && (chatOpen || inspecting) ? (inspecting ? sheetH : Math.round(mapH * 0.56)) + 8 : 0
   return {
     desktop,
+    vw,
     wide,
     rail,
     chatW,
@@ -80,9 +81,16 @@ export function useGeometry() {
     // Room the right column leaves at the bottom for the stage when they share the right side,
     // or, on a phone, for the inspector's sheet.
     layersBottom: !desktop && inspecting ? sheetH + 8 : !wide && stage.open && !stage.expanded ? stageH + GAP : 0,
+    // The city clock: across the open map at the top on a desktop (clear of the Conversation
+    // button while the conversation is closed), across the phone's width.
+    clockH,
+    clockLeft: desktop ? (chatOpen ? left : rail + GAP + 150 + GAP) : 8,
+    clockRight: desktop ? (inspecting || layersOpen ? sideColumn : GAP + 150 + GAP) : 8,
+    // Where panels that would sit under the clock on a phone start instead.
+    belowClock: desktop ? STRIP_H + GAP : STRIP_H + 8 + clockH + 8,
     // Camera padding, from the edges of the map: the part of it the panels leave open.
     insets: {
-      top: timelapse ? 76 : 0,
+      top: clockH + GAP,
       left: left - rail - GAP,
       right: sideColumn - GAP,
       bottom: Math.max(chatBottom, stage.open && !stage.expanded && desktop ? stageH + GAP : 0),

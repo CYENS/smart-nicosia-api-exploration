@@ -197,6 +197,7 @@ def test_an_entity_reads_as_it_was(agent, api):
     assert then["moment"]["label"] == "Fri 20 Nov 2026 20:00"
     assert then["sources"][0]["name"] == "The twin's memory"
     assert all("state" not in r for r in then["relations"])  # live dots would mislead
+    assert "Last sign of life" not in {a["label"] for a in then["attributes"]}  # a live fact
     old = entity_routes.entity("YPA", REQUEST, series=False,
                                at=(START - timedelta(days=2)).isoformat())
     assert old["state"]["value"] == "unknown" and old["moment"]["known"] is False
@@ -223,7 +224,8 @@ def test_set_city_time_moves_the_clock_and_reads_the_moment(fake_city, memory):
     res, err = run_tool(ctx, "set_city_time", {"at": "2026-11-20T20:00"})
     assert not err, res
     assert events[-1] == {"type": "ui", "action": "clock", "live": False, "at": "2026-11-20T20:00",
-                          "range": None, "play": False, "speed": 1, "compare": None}
+                          "range": None, "play": False, "speed": 1, "compare": None,
+                          "compare_offset_min": None}
     assert res["clock"] == "Fri 20 Nov 2026 20:00"
     assert res["readouts"]["free_parking"] == {"value": 1, "coverage_pct": 100.0, "of_known": 3}
     assert res["readouts"]["lamps_lit"]["value"] is None and "lamps_lit" in res["notes"][0]
@@ -238,7 +240,7 @@ def test_set_city_time_compares_with_last_week(fake_city, memory):
     res, err = run_tool(ctx, "set_city_time", {"at": "2026-11-20T20:00", "compare": "last_week",
                                                "kind": "parking_sensor"})
     assert not err, res
-    assert events[-1]["compare"] == "2026-11-13T20:00"
+    assert events[-1]["compare"] == "2026-11-13T20:00" and events[-1]["compare_offset_min"] == -10080
     assert res["compare"]["readouts"]["free_parking"]["value"] == 3
     assert res["changed"] == 2  # YPA and YPB were free a week earlier
     layer = ctx.store.layers[res["layer_ref"]]
@@ -260,7 +262,7 @@ def test_set_city_time_ranges_live_and_mistakes(fake_city, memory):
     assert ev["at"] == "2026-11-20T18:00"
     res, err = run_tool(ctx, "set_city_time", {"live": True})
     assert not err and events[-1] == {"type": "ui", "action": "clock", "live": True,
-                                      "compare": None, "range": None}
+                                      "compare": "off", "range": None}
     for bad, says in (({"at": "2026-12-01T10:00"}, "future"),
                       ({"from": "2026-11-21T02:00", "to": "2026-11-20T18:00"}, "empty"),
                       ({"from": "2026-11-20T18:00", "to": "2026-11-20T20:00",

@@ -9,8 +9,10 @@ import { SearchMenu } from "@/components/search-menu"
 import { Shortcuts } from "@/components/shortcuts"
 import { Stage } from "@/components/stage"
 import { StatusStrip } from "@/components/status-strip"
-import { TimelapsePlayer } from "@/components/timelapse"
+import { CityClock } from "@/components/clock/city-clock"
+import { CompareSwipe } from "@/components/clock/compare-swipe"
 import { TooltipProvider } from "@/components/ui/tooltip"
+import { startClock } from "@/lib/clock"
 import { parseHash, startDeepLinks } from "@/lib/deeplink"
 import { useGeometry } from "@/lib/geometry"
 import { initMap, setInsets } from "@/lib/map/engine"
@@ -32,6 +34,7 @@ export function App() {
     const link = parseHash(location.hash)
     initMap(mapEl.current!, link.camera)
     startDeepLinks(link)
+    startClock()
   }, [])
 
   // The camera centres on the part of the map the panels leave open.
@@ -59,7 +62,8 @@ export function App() {
         <LayersPanel />
         <Inspector />
         <BaseMapNotice />
-        <TimelapsePlayer />
+        <CompareSwipe />
+        <CityClock />
         <Stage />
         <WorkspacePanels />
         <SearchMenu />
