@@ -1,8 +1,10 @@
 /* The city clock's track: the stretch of time on show, drawn as the sky over Nicosia (nights
    deep, days lighter), with what the twin's memory holds (hatched where it holds nothing), the
    events it logged, the moments answers pointed to, a replay's range and the compared moment.
-   The slider over it moves the clock; its keys step a quarter hour, an hour (Shift) or a day
-   (Page Up and Down), and Home or L goes back to live. */
+   Other features add marks of their own (incidents where they began) through
+   lib/registries/track-marks.ts. The slider over it moves the clock; its keys step a quarter
+   hour, an hour (Shift) or a day (Page Up and Down), [ and ] stop at the next mark, and Home or
+   L goes back to live. */
 import { Slider as SliderPrimitive } from "@base-ui/react/slider"
 import SunCalc from "suncalc"
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type PointerEvent } from "react"
@@ -11,6 +13,7 @@ import {
   STEP_MS, compareAt, earliest, fmtMoment, fmtTime, goLive, setAt, spanMs, stepBy,
   togglePlay, useClock, type Track,
 } from "@/lib/clock"
+import { allTrackMarks, useTrackMarks, type TrackMark } from "@/lib/registries/track-marks"
 import { cn } from "@/lib/utils"
 
 const LAT = 35.1725
@@ -121,6 +124,8 @@ export function ClockTrack({ className }: { className?: string }) {
   const marks = useMemo(() => ticks(start, end, ms), [start, end, ms])
   const events = useMemo(() => eventTicks(s.track, start, end, width), [s.track, start, end, width])
   const cover = useMemo(() => coverageRuns(s.track, start, end), [s.track, start, end])
+  const markSets = useTrackMarks((m) => m.sets)
+  const flags = useMemo(() => allTrackMarks(markSets).filter((m) => m.t >= start && m.t <= end), [markSets, start, end])
 
   // The slider's value: quarter hours from the start of the window.
   const steps = Math.round(ms / STEP_MS)
@@ -150,7 +155,7 @@ export function ClockTrack({ className }: { className?: string }) {
     setHover(Math.max(start, Math.min(end, t)))
   }
 
-  const hoverInfo = hover !== null ? describe(hover, s.track, s.pins) : null
+  const hoverInfo = hover !== null ? describe(hover, s.track, s.pins, flags, ms / width) : null
   const live = s.at === null
 
   return (
@@ -191,6 +196,10 @@ export function ClockTrack({ className }: { className?: string }) {
                 fill={e.alarms ? "var(--signal)" : "#8798b0"} opacity={e.alarms ? 0.9 : 0.45} />
             ))}
           </g>
+          {/* Other features' marks (incidents where they began): small flags on the top edge. */}
+          {flags.map((m, i) => (
+            <path key={`${m.id ?? i}-${m.t}`} d={`M${x(m.t)},0 v-5 h5 l-1.5,2.5 l1.5,2.5 h-5 z`} fill={m.color} stroke="var(--console)" strokeWidth={0.8} />
+          ))}
           {/* Moments an answer pointed to. */}
           {s.pins.filter((p) => p.at >= start && p.at <= end).map((p) => (
             <path key={p.at} d={`M${x(p.at)},${BAR_H - 1} l4,-5 l-4,-5 l-4,5 z`} fill="var(--sodium)" stroke="var(--console)" strokeWidth={1.2} />
@@ -217,7 +226,12 @@ export function ClockTrack({ className }: { className?: string }) {
             <SliderPrimitive.Track className="relative h-full w-full cursor-pointer">
               <SliderPrimitive.Thumb
                 getAriaLabel={() => "City clock"}
-                getAriaValueText={() => (live ? `Live, ${fmtMoment(s.now)}` : `${fmtMoment(at, { year: true })}${s.playing ? ", playing" : ""}`)}
+                getAriaValueText={() => {
+                  const text = live ? `Live, ${fmtMoment(s.now)}` : `${fmtMoment(at, { year: true })}${s.playing ? ", playing" : ""}`
+                  // A mark at this quarter hour (an incident beginning) is read out with it.
+                  const here = live ? [] : flags.filter((m) => Math.abs(m.t - at) < STEP_MS / 2)
+                  return here.length ? `${text}. ${here.slice(0, 2).map((m) => m.label).join(". ")}${here.length > 2 ? `, and ${here.length - 2} more` : ""}` : text
+                }}
                 onKeyDown={onKey}
                 className={cn(
                   "block size-4 rounded-full border-2 border-console bg-sodium shadow-[0_0_0_1px_rgb(255_174_69_/_0.5)] outline-none",
@@ -251,7 +265,7 @@ export function ClockTrack({ className }: { className?: string }) {
 }
 
 // What the track holds at a moment, for its hover label.
-function describe(t: number, track: Track | null, pins: { at: number; label: string }[]) {
+function describe(t: number, track: Track | null, pins: { at: number; label: string }[], flags: TrackMark[] = [], msPerPx = 60e3) {
   const lines: string[] = []
   if (track) {
     const h = Math.floor((t - track.start) / HOUR)
@@ -274,11 +288,15 @@ function describe(t: number, track: Track | null, pins: { at: number; label: str
   }
   const pin = pins.find((p) => Math.abs(p.at - t) < 45 * 60e3)
   if (pin) lines.push(`An answer pointed here: ${pin.label}`)
+  // Marks within a few pixels of the pointer, the first three by name.
+  const near = flags.filter((m) => Math.abs(m.t - t) <= Math.max(10 * 60e3, 5 * msPerPx))
+  for (const m of near.slice(0, 3)) lines.push(m.label)
+  if (near.length > 3) lines.push(`and ${near.length - 3} more`)
   return { lines }
 }
 
 // The previous or next thing worth stopping at: an hour with alarms, a moment an answer pointed
-// to, dusk or dawn.
+// to, another feature's mark (an incident beginning), dusk or dawn.
 export function jumpToMark(direction: 1 | -1) {
   const s = useClock.getState()
   const t = s.at ?? s.now
@@ -286,6 +304,7 @@ export function jumpToMark(direction: 1 | -1) {
   const candidates: number[] = []
   for (const e of s.track?.events ?? []) if (e.full_bins + e.air > 0) candidates.push(e.t)
   for (const p of s.pins) candidates.push(p.at)
+  for (const m of allTrackMarks()) candidates.push(m.t)
   for (const n of nights(t - 3 * DAY, t + 3 * DAY)) candidates.push(n.from, n.to)
   const next = candidates
     .map((c) => Math.round(c / STEP_MS) * STEP_MS)

@@ -58,10 +58,16 @@ npm run build                     # writes chatbot/static (committed, see below)
   live layer, readout or chart follows the clock: read `useClock` (or `?at=` on the server)
   rather than assuming now.
   `TOOL_LABELS` in `lib/chat.ts` names each tool in the trace: add new tools there.
+- `chatbot/watch/` is the twin's watch: detectors over the memory, incidents grouped by place
+  and time with who did what, watches, and a live server-sent events stream
+  (`/api/watch/stream`). On the page, `lib/watch/` is the incident inbox (Alt 4), its Layers
+  row under Alerts, the toasts (shadcn Sonner, Alt T) and the clock's incident marks.
 - `chatbot/web/src/lib/registries/` is where page features plug in instead of editing shared
   files: workspaces (opened from the Layers sheet, Ctrl K and Alt and a number), topics (the
   chips, four at most, and sections on their cards), the Layers sheet's system layer rows,
-  inspector sections per kind, search providers (Ctrl K) and map click handlers. A new readout
+  inspector sections per kind, search providers (Ctrl K), map click handlers, inspect routes (ids
+  that open somewhere else: an incident opens in its inbox), marks on the clock's track, and
+  cards under an answer for a tool's `ui` command (a proposed watch's Save). A new readout
   goes into a topic card or a Layers sheet row, not across the top: the default screen stays calm.
 
 ## House rules for features
@@ -103,8 +109,17 @@ npm run build                     # writes chatbot/static (committed, see below)
   read at a glance on night, console and popover surfaces, with sodium for selected and
   current. Lists, menus, sliders, toggle groups and tabs follow the WAI-ARIA keyboard patterns
   (arrows inside, Home and End, Enter, Esc, Tab between groups); reuse `src/lib/roving.ts` for
-  lists; closing a panel returns focus to whatever opened it. Drive these paths with the
-  Playwright MCP and keep screenshots: the owner tries them by hand.
+  lists; closing a panel returns focus to whatever opened it. The owner tries these paths by
+  hand, so drive them first yourself.
+- **Browsers for checking.** Use the `playwright` MCP server (`browser_*` tools; headless, with
+  a fresh browser per session, so parallel sessions never collide) to drive every new path:
+  keyboard only, at desktop size and at 375 px (`browser_resize`), the loading, empty and
+  error states, and the paths of the features next to yours that yours could break. Save
+  the screenshots under `docs/screenshots/<feature>/` and put the telling ones in the pull
+  request. Use the app's built-in browser when the owner should watch, and the
+  `chrome-devtools` server for performance traces and Lighthouse (3D views, frame rate). If
+  `playwright` isn't among your tools (a session started before it was added), say so in
+  the pull request and use the built-in browser instead.
 - UX checklist for every screen: keyboard reachable with visible focus; `aria-live` for live
   readouts; skeletons while loading; an empty state that says what to do next; errors that
   say what happened and what to try; works at 375 px wide; honours

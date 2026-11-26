@@ -342,6 +342,7 @@ def test_the_tool_list_keeps_its_order():
         "get_entity", "open_inspector",
         "set_city_time",
         "get_buses", "get_departures", "plan_transit", "get_road_speeds",
+        "list_incidents", "explain_incident", "create_watch",
         "sun_and_shade", "environment_surface"]
 
 

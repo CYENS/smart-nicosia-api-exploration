@@ -2,14 +2,14 @@
    like, how to recognise an id in an answer, and cached fetches. */
 import {
   Building2Icon, CctvIcon, GlobeIcon, HexagonIcon, LightbulbIcon, LocateFixedIcon, MapPinIcon,
-  MonitorIcon, RouteIcon, SignpostIcon, SquareParkingIcon, Trash2Icon, TriangleAlertIcon, WindIcon,
+  MonitorIcon, RouteIcon, SignpostIcon, SirenIcon, SquareParkingIcon, Trash2Icon, TriangleAlertIcon, WindIcon,
   type LucideIcon,
 } from "lucide-react"
 
 export type EntityKind =
   | "street_light" | "parking_sensor" | "waste_bin" | "air_station" | "info_screen" | "camera"
-  | "register_building" | "building_3d" | "place" | "web_place"
-  | "bus" | "bus_stop" | "bus_line" | "road_segment"
+  | "register_building" | "building_3d" | "place" | "web_place" | "overture_place"
+  | "bus" | "bus_stop" | "bus_line" | "road_segment" | "incident"
   | "spot"
 
 export type Tone = "alarm" | "warn" | "live" | "ok" | "muted"
@@ -74,9 +74,11 @@ export const KINDS: Record<string, KindMeta> = {
   info_screen: { label: "Info screen", icon: MonitorIcon, chip: "device" },
   camera: { label: "Camera", icon: CctvIcon, chip: "device" },
   register_building: { label: "Dangerous building", icon: TriangleAlertIcon, chip: "danger" },
+  incident: { label: "Incident", icon: SirenIcon, chip: "danger" }, // opens in the incident inbox
   building_3d: { label: "Building", icon: Building2Icon, chip: "building" },
   place: { label: "Place", icon: MapPinIcon, chip: "place" },
   web_place: { label: "From the web", icon: GlobeIcon, chip: "place" },
+  overture_place: { label: "Place", icon: MapPinIcon, chip: "place" },
   street: { label: "Street", icon: SignpostIcon, chip: "place" },
   route: { label: "Route", icon: RouteIcon, chip: "place" },
   stop: { label: "Stop", icon: MapPinIcon, chip: "place" },
@@ -102,9 +104,11 @@ const ID_KINDS: [RegExp, EntityKind][] = [
   [/^line-(npt|ic|pame)-[a-z0-9]{1,8}$/, "bus_line"],
   [/^road-\d{1,5}$/, "road_segment"],
   [/^web-[0-9a-f]{8}$/, "web_place"],
+  [/^ov-[0-9a-f]{12}$/, "overture_place"],
+  [/^INC-\d{1,7}$/, "incident"],
   [/^spot-\d{1,2}\.\d{1,6}-\d{1,2}\.\d{1,6}$/, "spot"],
 ]
-export const ID_IN_TEXT = /\b(Y[LPW]\d{2,6}|(?:NIC|LIM|LAR)-\d{1,5}(?:-\d+)?|FAM-15[AB]-\d{1,5}|B\d{3,10}|[0-9a-f]{12}|bus-\d{1,6}|stop-\d{1,7}|line-(?:npt|ic|pame)-[a-z0-9]{1,8}|road-\d{1,5}|web-[0-9a-f]{8}|spot-\d{1,2}\.\d{1,6}-\d{1,2}\.\d{1,6})\b/g
+export const ID_IN_TEXT = /\b(Y[LPW]\d{2,6}|(?:NIC|LIM|LAR)-\d{1,5}(?:-\d+)?|FAM-15[AB]-\d{1,5}|B\d{3,10}|[0-9a-f]{12}|bus-\d{1,6}|stop-\d{1,7}|line-(?:npt|ic|pame)-[a-z0-9]{1,8}|road-\d{1,5}|web-[0-9a-f]{8}|ov-[0-9a-f]{12}|INC-\d{1,7}|spot-\d{1,2}\.\d{1,6}-\d{1,2}\.\d{1,6})\b/g
 
 export function kindOfId(id: string): EntityKind | undefined {
   return ID_KINDS.find(([re]) => re.test(id))?.[1]

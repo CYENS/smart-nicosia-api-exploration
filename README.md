@@ -216,6 +216,12 @@ To record the three minute showcase video of a running copy (captioned, on live 
 - Caches (device attributes, the OSM places index, the Vega-Lite schema) live in
   `data/chatbot_cache/`. The places index takes about a minute to build from Overpass on first
   start; until then place search falls back to Photon.
+- [chatbot/overture.py](chatbot/overture.py) is the second places index: Overture Maps' places
+  in Nicosia (about 9,500 businesses and services OSM lacks, pinned at the door), cut with
+  DuckDB from Overture's latest monthly release and kept in
+  `data/chatbot_cache/overture_places.json` (about 3.5 MB). The first copy takes a minute or two
+  in the background; a newer release is looked for at most monthly, and a failed refresh keeps
+  the last copy. Its docstring explains the quality rules.
 
 ## What the Smart Nicosia API provides
 

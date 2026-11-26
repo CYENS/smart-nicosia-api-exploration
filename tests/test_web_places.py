@@ -148,7 +148,7 @@ def test_the_tool_draws_them_lists_what_it_could_not_place_and_the_twin_knows_th
     layer = ctx.store.layers[res["layer_ref"]]
     assert layer["meta"]["title"] == "Singing lessons" and layer["meta"]["count"] == 2
     assert set(layer["meta"]["legend"]) == {"from the web", "on its street", "you"}
-    assert layer["meta"]["sources"] == ["web_search", "geocoding", "openstreetmap"]
+    assert layer["meta"]["sources"] == ["web_search", "geocoding", "openstreetmap", "overture"]
     you = layer["features"][-1]["properties"]  # the distances are from here; the camera fits it in
     assert (you["id"], len(layer["features"])) == ("you", 3)
     singing = next(f["properties"] for f in layer["features"] if f["properties"]["label"].startswith("The Art"))
