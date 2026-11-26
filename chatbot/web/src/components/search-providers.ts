@@ -81,7 +81,11 @@ function commands(): SearchItem[] {
     {
       key: "cmd:layers", icon: LayersIcon, title: layout.layersOpen && !inspecting ? "Close the layers" : "Open the layers",
       detail: "Base map, sensors, buildings, alerts and legends",
-      run: () => (layout.layersOpen && !inspecting ? closeLayers() : openLayers()), words: "layers legend map panel sensors",
+      // Opening it hands the keyboard to the sheet's title; closing it later goes back to where
+      // the keyboard was before the search.
+      opens: !(layout.layersOpen && !inspecting),
+      run: () => (layout.layersOpen && !inspecting ? closeLayers() : openLayers(undefined, searchOpenerElement())),
+      words: "layers legend map panel sensors",
     },
     {
       key: "cmd:chat", icon: MessageSquareTextIcon, title: layout.chatOpen ? "Hide the conversation" : "Show the conversation",
