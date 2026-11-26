@@ -127,6 +127,7 @@ function wireTimeChart(view: any, spec: any, field: string) {
 export type ChartPayload = {
   title: string; spec: any; link?: ChartLink | null; time_field?: string | null
   scrub?: boolean // has a flag above the plot at the moment on show
+  sources?: string[] // where its rows come from (lib/sources.ts)
 }
 
 // Draw a chart into `el`; returns a function that takes it down again.

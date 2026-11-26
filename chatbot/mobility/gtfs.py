@@ -618,6 +618,11 @@ class TimetableSource:
         self._loading = threading.Event()
         self.error: str | None = None
 
+    @property
+    def loaded_at(self) -> float:
+        """When the timetable in use was loaded (epoch seconds; 0 before the first)."""
+        return self._loaded_at
+
     def path(self, feed: Feed) -> Path:
         return self.cache_dir / f"{feed.number}_google_transit.zip"
 

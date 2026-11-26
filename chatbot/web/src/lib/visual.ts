@@ -22,6 +22,7 @@ export const VISUAL_THEME = {
 export type VisualPayload = {
   title: string; code: string; libraries: string[]; data: Record<string, unknown[]>
   data_order: string[]; layers: Record<string, unknown>; colors: Record<string, string>; height: number
+  sources?: string[] // where its data and layers come from (lib/sources.ts)
 }
 
 const VISUAL_BOOT = `(function () {

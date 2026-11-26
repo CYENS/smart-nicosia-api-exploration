@@ -54,6 +54,14 @@ def cached(key: str, ttl_s: float, fn: Callable[[], Any],
     return value
 
 
+def last_read(key: str) -> tuple[float, bool] | None:
+    """When `cached(key, ...)` last read its source and whether that worked; None if never.
+    Never reads the source itself (for the data sources panel)."""
+    with _lock:
+        hit = _cache.get(key)
+    return (hit[0], hit[1] is not None) if hit else None
+
+
 def fresh(agent: Agent, device_type: str) -> Counter | None:
     """The type's states now, counting only devices whose reading can be trusted (cached)."""
     return cached(f"fresh:{device_type}", CITY_TTL_S, lambda: Counter(
