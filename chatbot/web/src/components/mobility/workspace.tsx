@@ -14,6 +14,7 @@ import { Separator } from "@/components/ui/separator"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { send, useChat } from "@/lib/chat"
+import { fmtMoment, goLive, useClock } from "@/lib/clock"
 import { useGeometry } from "@/lib/geometry"
 import { typing } from "@/lib/hooks"
 import { inspect } from "@/lib/inspector"
@@ -152,6 +153,7 @@ function Cameras() {
 export function MobilityPanel() {
   const g = useGeometry()
   const busy = useChat((s) => s.busy)
+  const clockAt = useClock((s) => s.at)
   useEffect(() => watchSummary(), [])
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -182,6 +184,13 @@ export function MobilityPanel() {
         </Tooltip>
       </div>
       <div className="flex min-h-0 flex-col gap-4 overflow-y-auto p-4">
+        {clockAt !== null && (
+          <p className="rounded-lg border border-line bg-night/50 px-3 py-2 text-[12.5px] leading-snug text-muted-foreground" aria-live="polite">
+            The clock shows {fmtMoment(clockAt, { weekday: true })}. The road speeds on the map are from then; the buses
+            and the figures below are now.{" "}
+            <button type="button" className="text-foreground underline underline-offset-3 hover:text-sodium" onClick={goLive}>Back to now</button>
+          </p>
+        )}
         <div className="flex flex-col gap-4"><MobilitySwitches idPrefix="ws" /></div>
         <Separator />
         <section aria-label="Buses" className="flex flex-col gap-2.5">
