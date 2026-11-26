@@ -29,9 +29,10 @@ export function layersOpener() {
   return opener && opener.isConnected ? opener : null
 }
 
-export function openLayers(group?: string) {
-  const a = document.activeElement as HTMLElement | null
-  opener = a && a !== document.body ? a : null
+// `from` names the opener when the keyboard is somewhere about to go away (the search box).
+export function openLayers(group?: string, from?: Element | null) {
+  const a = (from ?? document.activeElement) as HTMLElement | null
+  opener = a instanceof HTMLElement && a !== document.body ? a : null
   if (group) setLayersGroup(group)
   if (useInspector.getState().open) closeInspector()
   // A phone shows one sheet at a time: the Layers sheet takes over from the conversation.
