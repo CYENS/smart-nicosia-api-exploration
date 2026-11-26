@@ -10,7 +10,7 @@ import { IncidentInbox } from "@/components/watch/inbox"
 import { SeverityLegend } from "@/components/watch/parts"
 import { WatchCard } from "@/components/watch/watch-card"
 import { Button } from "@/components/ui/button"
-import { fromWall } from "@/lib/clock"
+import { fromWall, useClock } from "@/lib/clock"
 import { closeLayers } from "@/lib/layers-sheet"
 import { registerInspectRoute } from "@/lib/registries/inspect-routes"
 import { registerSystemLayer } from "@/lib/registries/layers"
@@ -21,7 +21,7 @@ import { openWorkspace, registerWorkspace, useWorkspace } from "@/lib/registries
 import { rememberInboxOpener, wantInboxFocus } from "@/lib/watch/focus"
 import { setIncidentsLayer, startIncidentMap, useIncidentLayer } from "@/lib/watch/map"
 import {
-  INCIDENT_ID, SEVERITY_COLOR, countsWords, loadIncidents, loadWatches, selectIncident, useWatch, type Severity,
+  INCIDENT_ID, SEVERITY_COLOR, countsWords, loadIncidents, loadWatches, selectIncident, setFilter, useWatch, type Severity,
 } from "@/lib/watch/store"
 import { startWatchStream } from "@/lib/watch/stream"
 
@@ -42,6 +42,9 @@ registerWorkspace({
   },
   onLeave: () => {
     selectIncident(null)
+    // The layer, if it stays on, shows what its Layers row counts: the incidents to see to.
+    const { status, severity } = useWatch.getState()
+    if (status !== "unresolved" || severity) setFilter({ status: "unresolved", severity: "" })
     if (!layerWasOn) setIncidentsLayer(false)
   },
 })
@@ -75,9 +78,12 @@ registerSystemLayer({
   Summary: function Summary() {
     const counts = useWatch((s) => s.counts)
     const stream = useWatch((s) => s.stream)
+    // The inbox is the incidents as they stand now; at a past moment the row says so, and the
+    // clock's track marks where each one began.
+    const past = useClock((s) => s.at !== null)
     const words = countsWords(counts)
     if (!words) return <>{stream === "down" ? "The twin's watch isn't answering" : "What the twin noticed is wrong, by place and time"}</>
-    return <>{words}</>
+    return <>{past ? `Now, not then: ${words.charAt(0).toLowerCase()}${words.slice(1)}. The track marks when each began` : words}</>
   },
   Legend: function Legend() {
     return (

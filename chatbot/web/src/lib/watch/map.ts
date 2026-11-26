@@ -5,6 +5,7 @@
    inspector, and hovering a row in the inbox rings its mark. */
 import { create } from "zustand"
 
+import { useInspector } from "@/lib/inspector"
 import { flyToBounds, flyToThing, getMap, removeLayer, setSelection, showLayer, useMapUi, type FC } from "@/lib/map/engine"
 import {
   SEVERITY_COLOR, SEVERITY_WORD, STATUS_WORD, loadIncidents, useWatch, when, type IncidentDetail, type IncidentRow,
@@ -99,7 +100,8 @@ export function startIncidentMap() {
   useWatch.subscribe((s, prev) => {
     if (s.rows !== prev.rows && useIncidentLayer.getState().on) drawIncidents()
     if (s.detail !== prev.detail || s.selected !== prev.selected) {
-      if (!s.selected) { drawDetail(null, false); if (prev.selected) setSelection(null) }
+      // The ring was the incident's; the inspector, if open, keeps its own.
+      if (!s.selected) { drawDetail(null, false); if (prev.selected && !useInspector.getState().open) setSelection(null) }
       else if (s.detail && s.detail.id === s.selected) drawDetail(s.detail, s.detail.id !== prev.detail?.id)
     }
   })

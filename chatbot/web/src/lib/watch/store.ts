@@ -3,6 +3,8 @@
    current. Everything comes from /api/incidents and /api/watches (chatbot/routes/watch.py). */
 import { create } from "zustand"
 
+import { linkHover } from "@/lib/map/engine"
+
 export type Severity = "high" | "medium" | "low"
 export type IncidentStatus = "open" | "acknowledged" | "snoozed" | "resolved"
 
@@ -150,6 +152,8 @@ export async function loadDetail(id: string, quiet = false) {
 export function selectIncident(id: string | null) {
   const key = id ? id.toUpperCase() : null
   if (key === get().selected) return
+  // A row hovered or focused as it opened rings its mark; it unmounts without telling.
+  linkHover("id", null, "inbox")
   set({ selected: key, detail: null, detailStatus: key ? "loading" : "idle", detailError: null, actError: null })
   if (key) void loadDetail(key)
 }
