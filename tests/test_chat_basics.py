@@ -3,6 +3,7 @@ the start of a turn while the history stays a valid conversation. Offline, again
 fake of the Claude streaming API."""
 
 import asyncio
+import itertools
 import json
 import threading
 from types import SimpleNamespace
@@ -148,7 +149,7 @@ def assert_valid(messages):
     if not messages:
         return
     assert messages[0]["role"] == "user" and messages[-1]["role"] == "assistant"
-    for a, b in zip(messages, messages[1:]):
+    for a, b in itertools.pairwise(messages):
         assert a["role"] != b["role"]
     for i, m in enumerate(messages):
         if m["role"] != "assistant":
