@@ -95,6 +95,18 @@ function q(params: Record<string, string | number | null | undefined>) {
 export const fetchSurface = (metric: Metric, at: number | null, signal?: AbortSignal) =>
   getJson<Surface>(`/api/environment/surface${q({ metric, at })}`, signal)
 export const fetchWind = (at: number | null, signal?: AbortSignal) => getJson<Wind>(`/api/environment/wind${q({ at })}`, signal)
+// The wind for a readout (the Outside card), one request per hour of the model.
+const windByHour = new Map<string, Promise<Wind>>()
+export function readWind(at: number | null): Promise<Wind> {
+  const hour = at === null ? `now ${new Date().toISOString().slice(0, 13)}` : new Date(at).toISOString().slice(0, 13)
+  let p = windByHour.get(hour)
+  if (!p) {
+    p = fetchWind(at).catch((e) => { windByHour.delete(hour); throw e })
+    windByHour.set(hour, p)
+    if (windByHour.size > 48) windByHour.delete(windByHour.keys().next().value!)
+  }
+  return p
+}
 export const fetchRadar = (signal?: AbortSignal) => getJson<Radar>("/api/environment/radar", signal)
 export const fetchSunHours = (p: Place, date: string, radius: number, signal?: AbortSignal) =>
   getJson<SunHours>(`/api/environment/sun-hours${q({ lat: p.lat, lon: p.lon, radius_m: radius, date })}`, signal)

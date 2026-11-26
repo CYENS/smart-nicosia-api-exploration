@@ -9,6 +9,7 @@ from datetime import datetime, timedelta
 from collector.http import ApiError
 
 from chatbot import context, eoa
+from chatbot import sources as data_sources
 from chatbot.dls import distance_to_path_m
 from chatbot.geo import haversine_m
 from chatbot.routing import MAX_TOUR_STOPS, MODES, PREFERENCES, best_order
@@ -16,6 +17,7 @@ from chatbot.store import STATE_COLORS, point
 from chatbot.tools.base import (ToolContext, ToolError, ToolSet, local_now, obj, resolve_place,
                                 resolve_point)
 from chatbot.tools.buildings import STATUSES
+from chatbot.tools.environment import SHADE_COLORS as ENV_SHADE_COLORS
 from chatbot.web import WebError
 
 log = logging.getLogger(__name__)
@@ -46,7 +48,10 @@ def _hhmm(text: str | None, now: datetime) -> datetime:
       "avoid_dangerous_buildings (keeps off the streets in front of buildings on the "
       "dangerous registers; the reply compares it with the usual route, the one picked "
       "without avoiding them: minutes added, buildings passed by each and how many it "
-      "avoids, and the layer shows both routes and the buildings). Every "
+      "avoids, and the layer shows both routes and the buildings), and shade (walking or "
+      "cycling between two places: the real alternatives are read for the shade of the DLS "
+      "3D buildings at the moment of the walk, from start_time, and the shadiest within "
+      "about a third more time is taken; the reply compares them in `shade`). Every "
       "route reports the register buildings it passes within 25 m. Give each stop a place "
       "name, 'my location', or coordinates, and optionally minutes_here for a visit. Driving "
       "routes use typical speeds, not live per-street traffic; the reply adds the current "
@@ -106,7 +111,9 @@ def h_plan_route(ctx: ToolContext, a: dict) -> dict:
             usual, route = route, safer
     start = _hhmm(a.get("start_time"), local_now(ctx))
     shade = None
-    if "shade" in prefer:
+    if "shade" in prefer and mode == "drive":
+        shade = {"note": "shade is read for walking and cycling, not driving"}
+    elif "shade" in prefer:
         route, shade = shaded_choice(ctx, options or [route], start, len(path), mode)
     passed = passed_by(route["coordinates"], records)
     usual_passed = passed_by(usual["coordinates"], records) if usual else []
@@ -172,8 +179,10 @@ def h_plan_route(ctx: ToolContext, a: dict) -> dict:
     if shade and shade.get("stretches"):
         legend = {**SHADE_COLORS, **({"other ways": STATE_COLORS["usual route"]} if shade["others"] else {}),
                   **{k: v for k, v in legend.items() if k not in ("route", "usual route")}}
+    # A walk read for its shade draws on the DLS buildings too.
     layer = ctx.store.add_layer(f"route_{mode}", feats, geometry="route",
-                                title=f"{mode.capitalize()} route", legend=legend)
+                                title=f"{mode.capitalize()} route", legend=legend,
+                                sources=data_sources.current() + (["dls"] if shade and shade.get("stretches") else []))
     visit_min = sum(s["minutes_here"] for s in stops[1:])
     res = {
         "mode": mode, "prefer": prefer, "optimized": bool(seconds),
@@ -261,7 +270,7 @@ def h_reachable_area(ctx: ToolContext, a: dict) -> dict:
             "_summary": f"{', '.join(map(str, a['minutes']))} min by {a['mode']}"}
 
 
-SHADE_COLORS = {"in shade": "#3d8bff", "in sun": "#f5b700"}
+SHADE_COLORS = ENV_SHADE_COLORS  # one blue and one amber for shade and sun, as on the shade map
 SHADE_MAX_EXTRA = 1.35  # a shadier way may take this much longer than the quickest (plus a minute)
 SHADE_METHOD = ("the shadows of the DLS 3D buildings at the moment the walker passes each point "
                 "(every 8 m, at the route's own pace); trees, awnings and arcades are not in it")

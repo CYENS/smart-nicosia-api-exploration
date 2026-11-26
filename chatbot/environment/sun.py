@@ -99,7 +99,7 @@ def sun_times(day: date, lat: float, lon: float) -> dict:
 
     return {"sunrise": hhmm(rise), "solar_noon": hhmm(noon_m), "sunset": hhmm(set_),
             "noon_altitude_deg": round(noon_alt, 1),
-            "daylight_h": round(((set_ or 0) - (rise or 0)) / 60, 2) if rise and set_ else 0.0}
+            "daylight_h": round(((set_ or 0) - (rise or 0)) / 60, 1) if rise and set_ else 0.0}
 
 
 def utc(at: datetime) -> datetime:

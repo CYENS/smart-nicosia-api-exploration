@@ -28,13 +28,13 @@ import {
   SHADE, SHADOW_INK, WIND_INK, bandColors, hexRgb, sunHoursColor, type Metric,
 } from "@/lib/environment/colors"
 import {
-  bandOf, fetchRadar, fetchSurface, fetchWind, patch, spotId, useEnvironment, type Band, type Grid, type Surface,
-  type SunHours, type Wind,
+  bandOf, fetchRadar, fetchSunHours, fetchSurface, fetchWind, patch, spotId, useEnvironment, type Band, type Grid,
+  type Place, type Surface, type SunHours, type Wind,
 } from "@/lib/environment/store"
 import { inspect } from "@/lib/inspector"
 import type { Basemap } from "@/lib/map/basemap"
 import {
-  cityBuildings, firstLabelLayer, getMap, onCityChange, onStyleReady, registerLayerRenderer,
+  cityBuildings, firstLabelLayer, flyToBounds, getMap, onCityChange, onStyleReady, registerLayerRenderer,
   setCity3d, themedPaint, useMapUi, type LayerData,
 } from "@/lib/map/engine"
 import { skyAt } from "@/lib/map/sky"
@@ -58,8 +58,6 @@ const SUN_AREA_SRC = "env-sunhours-area"
 const RADAR_SRC = "env-radar-src"
 const RADAR = "env-radar"
 const DEM_TILES = ["https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png"]
-const DEM_ATTRIBUTION = '<a href="https://registry.opendata.aws/terrain-tiles/" target="_blank" rel="noreferrer">Terrain tiles</a> (AWS Open Data)'
-const RADAR_ATTRIBUTION = '<a href="https://www.rainviewer.com/" target="_blank" rel="noreferrer">RainViewer</a>'
 const EARTH = 40_075_016.686
 const MAX_SHADOW_M = 420
 const SHADOW_MIN_ZOOM = 14
@@ -71,21 +69,23 @@ const base = (): Basemap => useMapUi.getState().basemap
 const moment = () => useClock.getState().at ?? Date.now()
 const env = useEnvironment.getState
 
-function baseLayerOfType(map: MlMap, type: string) {
-  return map.getLayersOrder().find((id) => /^(night|day)\.\d+\//.test(id) && map.getLayer(id)?.type === type)
+// The base map's first street layer: the hillshade goes just under it, over the land and the
+// water (which would hide it), under the streets and the labels.
+function firstStreetLayer(map: MlMap) {
+  return map.getLayersOrder().find((id) => /^(night|day)\.\d+\/(tunnel|road|bridge|highway|aeroway_runway|building)/.test(id))
 }
 
 // -- where the layers sit ----------------------------------------------------------------------
 
 const answerRasters = new Set<string>() // answer layers' grids, drawn under the labels
 
-// Hillshade above the ground and under the roads; the rasters (surfaces, sun hours, shadows,
+// Hillshade above the land and the water and under the streets; the rasters (surfaces, sun hours, shadows,
 // radar) above the roads and under the labels, in that order. Run again whenever the base map
 // changes, since its layers are replaced.
 function place() {
   const map = getMap()
   if (!map) return
-  const roads = baseLayerOfType(map, "line")
+  const roads = firstStreetLayer(map)
   if (map.getLayer(HILL) && roads) map.moveLayer(HILL, roads)
   const label = firstLabelLayer()
   if (!label) return
@@ -125,7 +125,7 @@ function drop(map: MlMap, layers: string[], sources: string[]) {
 // -- terrain -------------------------------------------------------------------------------------
 
 function demSource() {
-  return { type: "raster-dem" as const, tiles: DEM_TILES, tileSize: 256, maxzoom: 15, encoding: "terrarium" as const, attribution: DEM_ATTRIBUTION }
+  return { type: "raster-dem" as const, tiles: DEM_TILES, tileSize: 256, maxzoom: 15, encoding: "terrarium" as const }
 }
 
 // The relief is lit from the sun while it is up, and from the north-west (the cartographers'
@@ -155,7 +155,7 @@ function syncTerrain() {
           "hillshade-illumination-anchor": "map",
           "hillshade-illumination-direction": lightFrom(),
         },
-      } as LayerSpecification, baseLayerOfType(map, "line"))
+      } as LayerSpecification, firstStreetLayer(map))
     }
     map.setTerrain({ source: DEM_SRC, exaggeration })
   } else {
@@ -182,6 +182,7 @@ export function setRelief(exaggeration: number) {
 // -- shadows of the 3D city ----------------------------------------------------------------------
 
 const shadowCanvas = document.createElement("canvas")
+const inkCanvas = document.createElement("canvas") // the shadows drawn sharp, before softening
 let shadowQueued = false
 
 export function shadowsSoon() {
@@ -250,8 +251,10 @@ function drawShadows() {
   const scale = Math.min(512 * 2 ** map.getZoom(), 2048 / (x1 - x0), 2048 / (y1 - y0))
   const W = Math.max(1, Math.ceil((x1 - x0) * scale)), H = Math.max(1, Math.ceil((y1 - y0) * scale))
   if (shadowCanvas.width !== W || shadowCanvas.height !== H) { shadowCanvas.width = W; shadowCanvas.height = H }
-  const ctx = shadowCanvas.getContext("2d")!
-  ctx.clearRect(0, 0, W, H)
+  if (inkCanvas.width !== W || inkCanvas.height !== H) { inkCanvas.width = W; inkCanvas.height = H }
+  const ink = inkCanvas.getContext("2d")!
+  ink.clearRect(0, 0, W, H)
+  ink.fillStyle = SHADOW_INK[base()]
   // Away from the sun, per metre of height.
   const away = ((sky.sun.bearing + 180) * Math.PI) / 180
   const reach = 1 / Math.tan((sky.sun.altitude * Math.PI) / 180)
@@ -259,7 +262,6 @@ function drawShadows() {
   const dxPerM = Math.sin(away) * reach * perM
   const dyPerM = -Math.cos(away) * reach * perM
   const pad = (MAX_SHADOW_M / 111_000) * 1.3
-  ctx.beginPath()
   for (const f of city.features) {
     const h = Number(f.properties?.h) || 0
     if (h <= 0) continue
@@ -272,18 +274,24 @@ function drawShadows() {
       for (const [lo, la] of ring) pts.push((mx(lo) - x0) * scale, (my(la) - y0) * scale)
       if (pts.length > 2 && pts[0] === pts[pts.length - 2] && pts[1] === pts[pts.length - 1]) pts.length -= 2
       const k = pts.length / 2
-      addLoop(ctx, pts)
-      addLoop(ctx, pts.map((v, i) => v + (i % 2 ? oy : ox)))
+      // One building's shadow at a time: one huge path of every building took the canvas
+      // tens of seconds to fill. The ink is opaque, so where shadows overlap they merge.
+      ink.beginPath()
+      addLoop(ink, pts)
+      addLoop(ink, pts.map((v, i) => v + (i % 2 ? oy : ox)))
       for (let i = 0; i < k; i++) {
         const j = (i + 1) % k
         const ax = pts[2 * i], ay = pts[2 * i + 1], bx = pts[2 * j], by = pts[2 * j + 1]
-        addLoop(ctx, [ax, ay, bx, by, bx + ox, by + oy, ax + ox, ay + oy])
+        addLoop(ink, [ax, ay, bx, by, bx + ox, by + oy, ax + ox, ay + oy])
       }
+      ink.fill("nonzero")
     }
   }
-  ctx.fillStyle = SHADOW_INK[base()]
+  // Softened once, as a whole.
+  const ctx = shadowCanvas.getContext("2d")!
+  ctx.clearRect(0, 0, W, H)
   ctx.filter = `blur(${Math.max(0.6, Math.min(2.5, 0.8 * perM)).toFixed(2)}px)`
-  ctx.fill("nonzero")
+  ctx.drawImage(inkCanvas, 0, 0)
   ctx.filter = "none"
   canvasSource(map, SHADOW_SRC, shadowCanvas, [[w, n], [e, n], [e, s], [w, s]])
   if (!map.getLayer(SHADOWS)) {
@@ -295,9 +303,13 @@ function drawShadows() {
   map.setLayoutProperty(SHADOWS, "visibility", "visible")
 }
 
+// Whether the shadows turned the 3D city on, so turning them off puts it back as it was.
+let cityForShadows = false
+
 export function setShadowsOn(on: boolean) {
   patch("shadows", { on })
-  if (on && !cityBuildings().on) setCity3d(true)
+  if (on && !cityBuildings().on) { cityForShadows = true; setCity3d(true) }
+  if (!on && cityForShadows) { cityForShadows = false; if (cityBuildings().on) setCity3d(false) }
   const map = getMap()
   if (on && map && map.getZoom() < 15.5) {
     map.easeTo({ zoom: 16.2, pitch: Math.max(map.getPitch(), 50), duration: reducedMotion() ? 0 : 900 })
@@ -388,9 +400,17 @@ function paintSun(canvas: HTMLCanvasElement, grid: { nx: number; ny: number; gri
 const surfCanvas = document.createElement("canvas")
 let surfAbort: AbortController | null = null
 
+let lastMetric: Metric = "pm2_5"
+
 export function setSurfaceMetric(metric: Metric | null) {
+  if (metric) lastMetric = metric
   patch("surface", { metric, error: null, ...(metric ? {} : { data: null, status: "idle" as const }) })
   loadSurface()
+}
+
+// On again, the surface comes back as it was last shown (PM2.5 at first).
+export function setSurfaceOn(on: boolean) {
+  setSurfaceMetric(on ? lastMetric : null)
 }
 
 function loadSurface() {
@@ -509,6 +529,8 @@ class WindOverlay {
     if (this.attached) return
     this.canvas.className = "wind-canvas"
     this.canvas.setAttribute("aria-hidden", "true")
+    // Beside the map's canvas, under the markers and the controls; sized from the canvas, since
+    // its container measures no height of its own.
     map.getCanvasContainer().appendChild(this.canvas)
     map.on("move", () => this.moved())
     map.on("moveend", () => this.moved(true))
@@ -547,7 +569,7 @@ class WindOverlay {
 
   resize() {
     const map = getMap()
-    const el = map.getCanvasContainer()
+    const el = map.getCanvas()
     const dpr = Math.min(2, window.devicePixelRatio || 1)
     const W = el.clientWidth, H = el.clientHeight
     this.canvas.style.display = "block"
@@ -564,7 +586,7 @@ class WindOverlay {
   }
 
   spawn(i: number, anywhere = false) {
-    const el = getMap().getCanvasContainer()
+    const el = getMap().getCanvas()
     this.px[i] = Math.random() * el.clientWidth
     this.py[i] = Math.random() * el.clientHeight
     this.life[i] = 50 + Math.random() * 90
@@ -578,7 +600,7 @@ class WindOverlay {
     const map = getMap()
     const w = this.wind
     if (!w) { this.field = null; return }
-    const el = map.getCanvasContainer()
+    const el = map.getCanvas()
     const cols = 14, rows = 10
     const vx = new Float32Array(cols * rows), vy = new Float32Array(cols * rows), speed = new Float32Array(cols * rows)
     for (let r = 0; r < rows; r++) {
@@ -605,7 +627,7 @@ class WindOverlay {
 
   velocity(x: number, y: number): [number, number] {
     const f = this.field!
-    const el = getMap().getCanvasContainer()
+    const el = getMap().getCanvas()
     const gx = Math.min(f.cols - 1.001, Math.max(0, (x / el.clientWidth) * f.cols - 0.5))
     const gy = Math.min(f.rows - 1.001, Math.max(0, (y / el.clientHeight) * f.rows - 0.5))
     const c0 = Math.floor(gx), r0 = Math.floor(gy), fx = gx - c0, fy = gy - r0
@@ -629,7 +651,7 @@ class WindOverlay {
     if (dt < 1 / 40) return // about 30 frames a second is plenty
     this.last = t
     const ctx = this.ctx
-    const el = getMap().getCanvasContainer()
+    const el = getMap().getCanvas()
     const W = el.clientWidth, H = el.clientHeight
     ctx.globalCompositeOperation = "destination-out"
     ctx.fillStyle = "rgba(0,0,0,0.1)"
@@ -659,7 +681,7 @@ class WindOverlay {
   drawArrows() {
     if (!this.field) return
     const ctx = this.ctx
-    const el = getMap().getCanvasContainer()
+    const el = getMap().getCanvas()
     const W = el.clientWidth, H = el.clientHeight
     ctx.clearRect(0, 0, W, H)
     ctx.strokeStyle = WIND_INK[base()]
@@ -713,7 +735,8 @@ function loadWind(force = false) {
   const { on, answers } = env().wind
   if (!on && !answers) { wind.set(null); return }
   const at = useClock.getState().at
-  const hour = at === null ? "live" : new Date(at).toISOString().slice(0, 13)
+  // Live, the wind is read again each hour of the model.
+  const hour = at === null ? `live ${new Date().toISOString().slice(0, 13)}` : new Date(at).toISOString().slice(0, 13)
   if (!force && hour === windHour && env().wind.data) { wind.set(env().wind.data); return }
   windHour = hour
   windAbort?.abort()
@@ -764,7 +787,7 @@ function syncRadar() {
   if (r.frame?.path !== frame.path || r.status !== "ready") patch("rain", { frame, status: "ready" })
   const src = map.getSource(RADAR_SRC) as RasterTileSource | undefined
   if (src) src.setTiles([frame.tiles])
-  else map.addSource(RADAR_SRC, { type: "raster", tiles: [frame.tiles], tileSize: 256, maxzoom: r.radar.max_zoom, attribution: RADAR_ATTRIBUTION })
+  else map.addSource(RADAR_SRC, { type: "raster", tiles: [frame.tiles], tileSize: 256, maxzoom: r.radar.max_zoom })
   addRaster(map, { id: RADAR, type: "raster", source: RADAR_SRC, paint: { "raster-opacity": 0.75, "raster-fade-duration": 0, "raster-resampling": "linear" } } as LayerSpecification)
 }
 
@@ -795,6 +818,46 @@ export function showSunHours(data: SunHours | null) {
   else map.addSource(SUN_AREA_SRC, { type: "geojson", data: area as any })
   addRaster(map, { id: SUN_OUTLINE, type: "line", source: SUN_AREA_SRC, paint: { "line-color": "#ffae45", "line-width": 1.6, "line-dasharray": [2, 2] } } as LayerSpecification)
   patch("sunHours", { shown: true })
+}
+
+// Zoomed in to the streets, the sun hours are read around the map's centre; further out, around
+// the square chosen last (Eleftheria Square at first).
+const CENTRE_ZOOM = 15.5
+let sunAbort: AbortController | null = null
+
+export function sunHoursPlace(): Place {
+  const map = getMap()
+  if (map && map.getZoom() >= CENTRE_ZOOM) {
+    const c = map.getCenter()
+    return { name: "The map's centre", lat: c.lat, lon: c.lng }
+  }
+  return env().sunHours.place
+}
+
+// Maps the hours of direct sun around a place on a date: the grid on the map with the camera on
+// it, and the numbers in the store for the workspace and the Layers sheet.
+export async function mapSunHours(opts: { place?: Place; date?: string } = {}) {
+  const place = opts.place ?? sunHoursPlace()
+  const date = opts.date ?? env().sunHours.date
+  sunAbort?.abort()
+  const ac = (sunAbort = new AbortController())
+  patch("sunHours", { place, date, status: "loading", error: null })
+  try {
+    const data = await fetchSunHours(place, date, env().sunHours.radius, ac.signal)
+    if (ac.signal.aborted) return
+    patch("sunHours", { status: "ready", data })
+    showSunHours(data)
+    const lons = data.bounds.map((b) => b[0]), lats = data.bounds.map((b) => b[1])
+    flyToBounds([Math.min(...lons), Math.min(...lats), Math.max(...lons), Math.max(...lats)])
+  } catch (e) {
+    if (!ac.signal.aborted) patch("sunHours", { status: "error", error: (e as Error).message })
+  }
+}
+
+export function clearSunHours() {
+  sunAbort?.abort()
+  patch("sunHours", { data: null, status: "idle", error: null })
+  showSunHours(null)
 }
 
 // -- answers' layers ---------------------------------------------------------------------------
@@ -928,22 +991,25 @@ export function startEnvironmentMap() {
     })
   })
   onCityChange(shadowsSoon)
-  onStyleReady(() => {
+  // This runs as the page loads, before the map is made: wait for it.
+  const hook = () => {
     const map = getMap()
+    if (!map) { window.setTimeout(hook, 200); return }
     map.on("moveend", shadowsSoon)
-    map.on("zoomend", shadowsSoon)
     map.on("style.load", () => {
       syncTerrain()
       drawSurface()
       syncRadar()
       shadowsSoon()
     })
-  })
+  }
+  hook()
   window.setInterval(() => {
     if (document.hidden) return
     if (useClock.getState().at !== null) return
     if (env().rain.on) syncRadar() // a new frame every 10 minutes
     if (env().surface.metric) loadSurface()
     if (env().shadows.on) shadowsSoon() // the sun moves on
+    loadWind() // a new hour of the model, once it comes
   }, RADAR_REFRESH_MS)
 }

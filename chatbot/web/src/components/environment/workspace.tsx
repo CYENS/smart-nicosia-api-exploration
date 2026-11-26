@@ -1,12 +1,15 @@
 /* The Environment workspace: the physical city at the clock's moment. Where the sun is and what
-   it is like at the map's centre, the environment's layers, the sun hours of a square or street
-   on any date with a chart of its day, and questions to ask. It takes the map panel's place on
-   the right (a sheet on a phone); the inspector still opens over it. */
+   it is like at the map's centre, the environment's layers (the same rows as the Layers sheet's
+   Environment group), the sun hours of a square or street on any date with a chart of its day,
+   and questions to ask. It takes the right column (a sheet on a phone); the inspector still
+   opens over it. Esc or the close button goes back to Live and gives the keyboard back to
+   whatever opened the workspace. */
 import { MapPinnedIcon, MessageSquareTextIcon, SunIcon, SunMediumIcon, XIcon } from "lucide-react"
 import { useEffect, useMemo, useRef } from "react"
 
+import { ENV_GROUP, compass } from "@/components/environment/rows"
 import { DayChart, SunHoursLegend } from "@/components/environment/parts"
-import { EnvironmentSwitches } from "@/components/environment/switches"
+import { SystemRow } from "@/components/shell/layers-sheet"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Field, FieldLabel } from "@/components/ui/field"
@@ -20,13 +23,14 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { send, useChat } from "@/lib/chat"
 import { fmtMoment, goLive, useClock } from "@/lib/clock"
-import { openSpotAtCentre, showSunHours } from "@/lib/environment/map"
-import { PLACES, fetchSunHours, patch, useEnvironment, type Place } from "@/lib/environment/store"
+import { clearSunHours, mapSunHours, openSpotAtCentre } from "@/lib/environment/map"
+import { PLACES, fmtValue, patch, useEnvironment, type Place } from "@/lib/environment/store"
 import { useGeometry } from "@/lib/geometry"
 import { typing } from "@/lib/hooks"
-import { GAP, STRIP_H, useLayout } from "@/lib/layout"
-import { flyToBounds, getMap, useMapUi } from "@/lib/map/engine"
+import { GAP, STRIP_H, setChatOpen } from "@/lib/layout"
+import { getMap, useMapUi } from "@/lib/map/engine"
 import { skyAt } from "@/lib/map/sky"
+import { useLayerRegistry } from "@/lib/registries/layers"
 import { openWorkspace } from "@/lib/registries/workspaces"
 import { cn } from "@/lib/utils"
 
@@ -36,6 +40,15 @@ const QUESTIONS = [
   "Where is the air worst right now?",
 ]
 const CENTRE = "__centre"
+const CENTRE_NAME = "The map's centre"
+
+// What had the keyboard when the workspace opened (a topic card's link, the Layers sheet's row,
+// Ctrl K): leaving gives it back there, or to the map when it has gone.
+let opener: HTMLElement | null = null
+export function rememberEnvironmentOpener() {
+  const a = document.activeElement
+  opener = a instanceof HTMLElement && a !== document.body ? a : null
+}
 
 // The keyboard goes back here when the inspector opened from this panel closes.
 let returnTo: string | null = null
@@ -44,12 +57,8 @@ function nicosiaDate(ms: number) {
   return new Date(ms).toLocaleDateString("en-CA", { timeZone: "Asia/Nicosia" })
 }
 
-function niceDate(iso: string) {
+function longDate(iso: string) {
   return new Date(`${iso}T12:00`).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })
-}
-
-function compass(deg: number) {
-  return ["north", "north-east", "east", "south-east", "south", "south-west", "west", "north-west"][Math.round((deg % 360) / 45) % 8]
 }
 
 function SunNow() {
@@ -89,33 +98,15 @@ function SunHoursTool() {
     { value: `${year}-06-21`, label: "21 June" },
     { value: `${year}-12-21`, label: "21 December" },
   ]
-  const ac = useRef<AbortController | null>(null)
   const placeValue = PLACES.some((p) => p.name === sh.place.name) ? sh.place.name : CENTRE
 
-  const run = async () => {
-    ac.current?.abort()
-    const ctl = (ac.current = new AbortController())
+  const run = () => {
     let place: Place = sh.place
     if (placeValue === CENTRE) {
       const c = getMap().getCenter()
-      place = { name: "The map's centre", lat: c.lat, lon: c.lng }
-      patch("sunHours", { place })
+      place = { name: CENTRE_NAME, lat: c.lat, lon: c.lng }
     }
-    patch("sunHours", { status: "loading", error: null })
-    try {
-      const data = await fetchSunHours(place, sh.date, sh.radius, ctl.signal)
-      if (ctl.signal.aborted) return
-      patch("sunHours", { status: "ready", data })
-      showSunHours(data)
-      const lons = data.bounds.map((b) => b[0]), lats = data.bounds.map((b) => b[1])
-      flyToBounds([Math.min(...lons), Math.min(...lats), Math.max(...lons), Math.max(...lats)])
-    } catch (e) {
-      if (!ctl.signal.aborted) patch("sunHours", { status: "error", error: (e as Error).message })
-    }
-  }
-  const clear = () => {
-    patch("sunHours", { data: null, status: "idle" })
-    showSunHours(null)
+    void mapSunHours({ place, date: sh.date })
   }
   const d = sh.data
   return (
@@ -124,12 +115,12 @@ function SunHoursTool() {
         <FieldLabel htmlFor="ews-place" className="text-[12.5px] font-normal text-muted-foreground">Around</FieldLabel>
         <Select
           value={placeValue}
-          onValueChange={(v) => patch("sunHours", { place: PLACES.find((p) => p.name === v) ?? { name: "The map's centre", lat: 0, lon: 0 } })}
+          onValueChange={(v) => patch("sunHours", { place: PLACES.find((p) => p.name === v) ?? { name: CENTRE_NAME, lat: 0, lon: 0 } })}
         >
-          <SelectTrigger id="ews-place" size="sm" className="w-full"><SelectValue>{placeValue === CENTRE ? "The map's centre" : placeValue}</SelectValue></SelectTrigger>
+          <SelectTrigger id="ews-place" size="sm" className="w-full"><SelectValue>{placeValue === CENTRE ? CENTRE_NAME : placeValue}</SelectValue></SelectTrigger>
           <SelectContent>
             {PLACES.map((p) => <SelectItem key={p.name} value={p.name}>{p.name}</SelectItem>)}
-            <SelectItem value={CENTRE}>The map's centre</SelectItem>
+            <SelectItem value={CENTRE}>{CENTRE_NAME}</SelectItem>
           </SelectContent>
         </Select>
       </Field>
@@ -148,7 +139,7 @@ function SunHoursTool() {
           {sh.status === "loading" ? <Spinner data-icon="inline-start" /> : <SunIcon data-icon="inline-start" />}
           {sh.status === "loading" ? "Reading the buildings" : "Map the sun hours"}
         </Button>
-        {d && <Button size="sm" variant="outline" onClick={clear}>Clear</Button>}
+        {d && <Button size="sm" variant="outline" onClick={clearSunHours}>Clear</Button>}
       </div>
       {sh.status === "loading" && !d && <Skeleton className="h-24 w-full" />}
       {sh.status === "error" && (
@@ -161,7 +152,7 @@ function SunHoursTool() {
         <div className="flex flex-col gap-3" aria-live="polite">
           <p className="text-[13px] leading-snug">
             <span className="font-readout text-[24px] font-semibold text-sodium">{d.hours.mean ?? "?"}</span>
-            <span className="text-muted-foreground"> hours of direct sun on average, {d.hours.min} to {d.hours.max} across the open ground, of {d.sun.daylight_h} hours of daylight on {niceDate(d.date)}</span>
+            <span className="text-muted-foreground"> hours of direct sun on average, {fmtValue(d.hours.min)} to {fmtValue(d.hours.max)} across the open ground, of {d.sun.daylight_h} hours of daylight on {longDate(d.date)}</span>
           </p>
           <SunHoursLegend />
           <DayChart points={d.profile} title={`${sh.place.name}, open ground in sun`} />
@@ -178,14 +169,17 @@ function leave() {
   const inside = document.activeElement?.closest("[data-workspace]")
   openWorkspace("live")
   if (!inside) return
-  const back = document.querySelector<HTMLElement>('nav[aria-label="Workspaces"] [data-workspace-id="environment"]')
-  ;(back ?? document.querySelector<HTMLElement>(".maplibregl-canvas"))?.focus({ preventScroll: true })
+  const back = opener?.isConnected ? opener : document.querySelector<HTMLElement>(".maplibregl-canvas")
+  opener = null
+  back?.focus({ preventScroll: true })
 }
 
 export function EnvironmentPanel() {
   const g = useGeometry()
   const busy = useChat((s) => s.busy)
   const clockAt = useClock((s) => s.at)
+  const layers = useLayerRegistry((s) => s.layers)
+  const rows = useMemo(() => layers.filter((l) => l.group === ENV_GROUP), [layers])
   const title = useRef<HTMLHeadingElement>(null)
   useEffect(() => { title.current?.focus({ preventScroll: true }) }, [])
   useEffect(() => {
@@ -217,17 +211,17 @@ export function EnvironmentPanel() {
           <p className="truncate text-[12.5px] text-muted-foreground">Sun, shade, terrain, air and weather</p>
         </div>
         <Tooltip>
-          <TooltipTrigger render={<Button variant="ghost" size="icon-sm" aria-label="Back to Live" onClick={leave} />}>
+          <TooltipTrigger render={<Button variant="ghost" size="icon-sm" aria-label="Close Environment" onClick={leave} />}>
             <XIcon />
           </TooltipTrigger>
-          <TooltipContent>Back to Live <Kbd>Alt 1</Kbd></TooltipContent>
+          <TooltipContent>Back to Live <Kbd>Esc</Kbd></TooltipContent>
         </Tooltip>
       </div>
       <div className="flex min-h-0 flex-col gap-4 overflow-y-auto p-4">
         {clockAt !== null && (
           <p className="rounded-lg border border-line bg-night/50 px-3 py-2 text-[12.5px] leading-snug text-muted-foreground" aria-live="polite">
             The clock shows {fmtMoment(clockAt, { weekday: true })}: the sun, the shadows, the surfaces and the wind are from then.{" "}
-            <button type="button" className="text-foreground underline underline-offset-3 hover:text-sodium" onClick={goLive}>Back to now</button>
+            <button type="button" className="rounded-sm text-foreground underline underline-offset-3 outline-none hover:text-sodium focus-visible:ring-2 focus-visible:ring-ring/60" onClick={goLive}>Back to now</button>
           </p>
         )}
         <section aria-label="The sun now" className="flex flex-col gap-3">
@@ -237,11 +231,11 @@ export function EnvironmentPanel() {
             <MapPinnedIcon data-icon="inline-start" />
             What's it like at the map's centre?
           </Button>
-          <p className="text-[12px] leading-snug text-muted-foreground">Or right-click (long-press on a phone) anywhere on the map.</p>
         </section>
         <Separator />
-        <section aria-label="Layers" className="flex flex-col gap-4">
-          <EnvironmentSwitches idPrefix="ews" />
+        <section aria-labelledby="ews-layers" className="flex flex-col gap-4">
+          <h3 id="ews-layers" className="text-[13px] font-semibold">On the map</h3>
+          {rows.map((l) => <SystemRow key={l.id} layer={l} idPrefix="ews" />)}
         </section>
         <Separator />
         <section aria-labelledby="ews-sunhours" className="flex flex-col gap-2.5">
@@ -254,9 +248,9 @@ export function EnvironmentPanel() {
           {QUESTIONS.map((q) => (
             <Button key={q} variant="ghost" size="sm" disabled={busy} className="h-auto justify-start py-1.5 text-left whitespace-normal"
               onClick={() => {
-                useLayout.setState({ chatOpen: true })
+                setChatOpen(true)
                 if (!g.desktop) openWorkspace("live")
-                send(q)
+                void send(q)
               }}>
               <MessageSquareTextIcon data-icon="inline-start" />{q}
             </Button>

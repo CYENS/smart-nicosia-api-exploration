@@ -151,10 +151,14 @@ class Area:
     def shade(self, at: datetime) -> np.ndarray | None:
         """True where open ground is in a building's shadow at `at` (roof cells are False).
         None while the sun is down: everything is in shade."""
+        if ("shade", at) in self._cache:
+            return self._cache[("shade", at)]
         step = S.shadow_step(S.position(at, self.lat, self.lon))
-        if step is None:
-            return None
-        return self._shade(step)
+        mask = None if step is None else self._shade(step)
+        self._cache[("shade", at)] = mask
+        if len(self._cache) > 64:  # a few days of sun hours and many moments
+            self._cache.pop(next(iter(self._cache)))
+        return mask
 
     def _shade(self, step: tuple[float, float, float]) -> np.ndarray:
         east, north, rise = step

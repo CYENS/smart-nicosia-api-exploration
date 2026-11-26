@@ -1,6 +1,6 @@
-/* A layer drawn by a feature's own renderer can bring its own legend to the map panel (a ramp
-   that follows the base map, a note on how sure the surface is). The panel asks here before
-   drawing its usual swatches. */
+/* A layer drawn by a feature's own renderer can bring its own legend to the Layers sheet's "On
+   the map now" (a ramp that follows the base map, a note on how sure the surface is). The sheet
+   asks here before drawing its usual swatches. */
 import type { ComponentType } from "react"
 
 import type { LayerSummary } from "@/lib/map/engine"

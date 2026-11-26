@@ -121,7 +121,7 @@ def h_sun_and_shade(ctx: ToolContext, a: dict) -> dict:
         at = datetime.combine(day, _hhmm(a["time"]), TZ)
         grid = env.shade_grid(lat, lon, radius, at)
         area = env.shade.area(lat, lon, radius)
-        mask = area.shade(at)
+        mask = area.shade(at)  # kept on the area: shade_grid has just worked it out
         res |= {"mode": "moment", "time": at.strftime("%H:%M"),
                 "sun_up": grid["sun_up"], "shade_pct": grid["shade_pct"],
                 "sun_now": grid["sun"]}
@@ -168,11 +168,17 @@ def _at(ctx: ToolContext, text: str | None) -> datetime | None:
         raise ToolError(str(e)) from None
 
 
+# Places worth naming a spot of the city by: not a bench, a cash machine or a bike stand.
+LANDMARKS = {"park", "place_of_worship", "hospital", "monument", "museum", "theatre", "attraction",
+             "historic_site", "gallery", "hotel", "bus_station", "viewpoint", "supermarket"}
+
+
 def _place_near(ctx: ToolContext, lat: float, lon: float, stations: list[dict]) -> str | None:
     if ctx.entities is not None:
-        near = ctx.entities.places_within(lat, lon, 400, limit=1)
-        if near:
-            return f"near {near[0]['name']}"
+        near = ctx.entities.places_within(lat, lon, 400, limit=40)
+        named = next((p for p in near if p.get("detail", "").replace(" ", "_") in LANDMARKS), None)
+        if named:
+            return f"near {named['name']}"
     if stations:
         s = min(stations, key=lambda s: (s["lat"] - lat) ** 2 + (s["lon"] - lon) ** 2)
         return f"near the {s['name']} station"
@@ -263,7 +269,7 @@ def h_environment_surface(ctx: ToolContext, a: dict) -> dict:
         "bands": [f"{b['label']}: up to {b['to']}" if b["to"] is not None else f"{b['label']}: above"
                   for b in surf["bands"]],
         "uncertainty": {"near_a_station": f"about ±{_sensor(m, rows):g} {m.unit}".strip(),
-                        "far_from_stations": f"about ±{surf['spread']:g} {m.unit}".strip()},
+                        "far_from_stations": f"about ±{round(math.hypot(_sensor(m, rows), surf['spread']), m.decimals or 0):g} {m.unit}".strip()},
         "background": ("the Open-Meteo model, corrected by the stations' mean difference "
                        f"({surf['model_bias']:+g} {m.unit})".strip()
                        if surf["background"] == "model" else
@@ -297,9 +303,10 @@ def _wind(ctx: ToolContext, env, at: datetime | None, when: datetime) -> dict:
                                     "state": "wind", "color": "#8798b0", "speed_ms": sp}))
     title = f"Wind, {'now' if at is None else when.strftime('%a %d %b %H:%M')}"
     layer = ctx.store.add_layer("wind", feats, geometry="point", title=title,
-                                legend={}, value_fields=["speed_ms"])
+                                legend={}, value_fields=["speed_ms"], sources=["open_meteo"])
     ctx.store.layers[layer]["meta"]["environment"] = {"kind": "wind", "at": w["at"]}
-    data = ctx.store.add_dataset("wind", rows, title="Modelled wind at 10 m", link={"key": "id"})
+    data = ctx.store.add_dataset("wind", rows, title="Modelled wind at 10 m", link={"key": "id"},
+                                 sources=["open_meteo"])
     c = w["centre"]
     return {"metric": "wind", "at": w["at"] or "now", "model_hour": w["model_hour"],
             "over_nicosia": {"speed_kmh": round(c["speed_ms"] * 3.6) if c["speed_ms"] is not None else None,
