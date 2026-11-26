@@ -18,6 +18,8 @@ import { SourcesPanel } from "@/components/sources/sources-panel"
 import { Stage } from "@/components/stage"
 import { CityClock } from "@/components/clock/city-clock"
 import { CompareSwipe } from "@/components/clock/compare-swipe"
+import { ViewCard } from "@/components/view-card"
+import "@/components/view-section" // "View from here" in the inspector
 import "@/components/topics/builtin" // Buses, Parking, Traffic and Outside
 import { Toaster } from "@/components/ui/sonner"
 import { TooltipProvider } from "@/components/ui/tooltip"
@@ -34,6 +36,7 @@ import "@/lib/environment" // sun, shade, terrain, air, noise and weather: works
 // environment's "What's it like here?" too.
 import "@/lib/here" // "What's here?": any point of the map, its card, the click, press and Ctrl K
 import { useWorkspace, useWorkspaceSide } from "@/lib/registries/workspaces"
+import { useView } from "@/lib/view"
 
 // The open workspace's own panels, over the map (Live has none of its own), and its side panel
 // in the right column (the Layers sheet takes the column while it is open).
@@ -41,10 +44,11 @@ function WorkspacePanels() {
   const panels = useWorkspace((s) => s.list.find((w) => w.id === s.active)?.Panels)
   const side = useWorkspaceSide()
   const layersOpen = useLayout((s) => s.layersOpen)
+  const viewing = useView((s) => s.open)
   return (
     <>
       {panels && createElement(panels)}
-      {side && !layersOpen && createElement(side)}
+      {side && !layersOpen && !viewing && createElement(side)}
     </>
   )
 }
@@ -92,6 +96,7 @@ export function App() {
         <CityClock />
         <MapControls />
         <Inspector />
+        <ViewCard />
         <WorkspacePanels />
         <LayersSheet />
         <TopicCard />

@@ -25,6 +25,7 @@ if TYPE_CHECKING:
     from chatbot.environment.service import Environment
     from chatbot.mobility import Mobility
     from chatbot.moments import Moments
+    from chatbot.terrain import Terrain
     from chatbot.watch import Watcher
     from chatbot.webplaces import WebPlaces
 
@@ -72,6 +73,7 @@ class ToolContext:
     watcher: Watcher | None = None  # incidents and watches (chatbot/watch)
     # Sun and shade, air and noise surfaces and the weather (chatbot/environment).
     environment: Environment | None = None
+    terrain: Terrain | None = None  # the ground's height (chatbot/terrain.py)
 
 
 # -- schema helpers -----------------------------------------------------------------------------

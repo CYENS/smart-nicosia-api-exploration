@@ -35,14 +35,15 @@ import { inspect } from "@/lib/inspector"
 import type { Basemap } from "@/lib/map/basemap"
 import {
   cityBuildings, firstLabelLayer, flyToBounds, getMap, onCityChange, onStyleReady, registerLayerRenderer,
-  setCity3d, themedPaint, useMapUi, type LayerData,
+  setCity3d, themedPaint, useMapUi, viewing, type LayerData,
 } from "@/lib/map/engine"
 import { skyAt } from "@/lib/map/sky"
+import { TERRAIN_SOURCE, addTerrainSource } from "@/lib/map/terrain"
 import { registerClickHandler } from "@/lib/registries/map-clicks"
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-const DEM_SRC = "env-dem"
+const DEM_SRC = TERRAIN_SOURCE // one stream of height tiles, shared with the view from a place (lib/map/terrain.ts)
 const HILL_SRC = "env-hill-dem"
 const HILL = "env-hillshade"
 const SHADOW_SRC = "env-shadows-src"
@@ -140,7 +141,7 @@ function syncTerrain() {
   if (!map) return
   const { on, exaggeration } = env().terrain
   if (on) {
-    if (!map.getSource(DEM_SRC)) map.addSource(DEM_SRC, demSource())
+    if (!map.getSource(DEM_SRC)) addTerrainSource(map)
     if (!map.getSource(HILL_SRC)) map.addSource(HILL_SRC, demSource())
     if (!map.getLayer(HILL)) {
       map.addLayer({
@@ -157,9 +158,9 @@ function syncTerrain() {
         },
       } as LayerSpecification, firstStreetLayer(map))
     }
-    map.setTerrain({ source: DEM_SRC, exaggeration })
+    if (!viewing()) map.setTerrain({ source: DEM_SRC, exaggeration }) // a view holds the ground while open
   } else {
-    if (map.getTerrain()) map.setTerrain(null)
+    if (map.getTerrain() && !viewing()) map.setTerrain(null)
     if (map.getLayer(HILL)) map.removeLayer(HILL)
   }
   place()

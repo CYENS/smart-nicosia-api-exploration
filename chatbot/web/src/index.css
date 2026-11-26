@@ -409,3 +409,14 @@
   font-size: 12.5px;
 }
 #vg-tooltip-element.vg-tooltip td.key { color: var(--muted-foreground); }
+
+/* A view from a place (lib/view.ts): dragging the map turns the head; the labels say what is in
+   sight, and dim what stands hidden behind something. */
+.is-viewing .maplibregl-canvas-container { cursor: grab; touch-action: none; }
+.is-viewing .maplibregl-canvas-container:active { cursor: grabbing; }
+.is-viewing .maplibregl-ctrl-scale { display: none; }
+.view-label { pointer-events: none; }
+.view-label .callout { max-width: 200px; }
+.view-label .callout.is-hidden { opacity: 0.72; border-color: var(--line); color: var(--muted-foreground); }
+.view-label .callout.is-hidden::after { border-color: var(--line); }
+@media (prefers-reduced-motion: reduce) { .view-label .callout { animation: none; } }

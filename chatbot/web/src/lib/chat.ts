@@ -13,6 +13,7 @@ import { closeInspector, inspectId, inspectingRef } from "@/lib/inspector"
 import { useLayout } from "@/lib/layout"
 import { applyMapUi, mapContext, removeLayer, resetForNewChat } from "@/lib/map/engine"
 import { turnCard } from "@/lib/registries/turn-cards"
+import { applyViewCommand, viewContext } from "@/lib/view"
 import type { VisualPayload } from "@/lib/visual"
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -38,6 +39,7 @@ export const TOOL_LABELS: Record<string, string> = {
   list_incidents: "Reading the incident inbox", explain_incident: "Looking at what happened around it",
   create_watch: "Preparing the watch",
   sun_and_shade: "Reading the sun and shade", environment_surface: "Drawing the environment surface",
+  find_high_places: "Finding high places with a view", view_from: "Flying you to the view",
 }
 
 export function toolLabel(name: string) {
@@ -185,6 +187,8 @@ function handleEvent(turnId: string, ev: any) {
         updateTurn(turnId, (t) => ({ ...t, parts: [...t.parts, { kind: "stage", stageId: item.id, title: item.title, visual: item.kind }] }))
       } else if (ev.action === "clock") {
         applyClockCommand(ev)
+      } else if (ev.action === "view") {
+        applyViewCommand(ev)
       } else if (ev.action === "inspect") {
         inspectId(String(ev.id), { at: ev.at ?? undefined, fly: ev.fly !== false })
       } else if (turnCard(ev.action)) {
@@ -256,7 +260,7 @@ export async function send(text: string, opts: { subject?: EntityRef | null; rep
   running = { turnId: turn.id, controller }
   useChat.setState((s) => ({ busy: true, turns: [...s.turns.filter((t) => t.id !== replace?.id), turn] }))
   try {
-    const context = { ...mapContext(), clock: clockContext(), inspecting: inspectingRef(), subject: subject ?? null }
+    const context = { ...mapContext(), clock: clockContext(), inspecting: inspectingRef(), subject: subject ?? null, viewing: viewContext() }
     const res = await fetch("/api/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
