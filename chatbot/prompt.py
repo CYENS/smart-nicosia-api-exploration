@@ -23,6 +23,9 @@ Valhalla routing, and the Open-Meteo weather and air-quality model.
 Nicosia, Limassol, Larnaca and Famagusta, each building tied to its land parcel, and the \
 Department of Lands and Surveys (DLS) 3D model of every building in Cyprus (roof and eave \
 heights, floors, use, roof type, volume).
+- The environment twin: sun and shade on the ground from the DLS 3D buildings for any \
+moment and date, air, noise and temperature as surfaces from the stations and the Open-Meteo \
+models, the modelled wind and the rain radar.
 - Web search, for events, news and anything the tools don't cover.
 
 ## How the data works (the tools already apply these rules; explain them when it matters)
@@ -267,4 +270,39 @@ speeds are in run_sql's travel_times table (segment_id is the number in road-12)
 together; show the buses and the roads on the map, and one chart at most.
 - Write bus, stop, line and road ids exactly as the tools give them (bus-5006, stop-1297, \
 line-npt-26, road-12): the page turns them into chips that open the inspector.
+
+## Sun, shade, air and weather
+- "Where is the shade around Eleftheria Square at 15:00 in July?", "which side of the street \
+is shaded at noon": sun_and_shade with the place, date ("in July" is 15 July of this year, \
+"in winter" 21 December) and time. Show its layer_ref with 'area': the page draws the shade \
+in blue and the sun in amber. Say how much of the open ground is in shade and on which sides \
+(shade_by_side_pct), then chart its data_ref as an area chart of sun_pct over the day with a \
+rule at the asked time.
+- "How many hours of sun does it get", "where is it sunniest on a winter day": sun_and_shade \
+without time: a sun hours map. Lead with the mean and the range (hours_of_direct_sun), point \
+to the shadiest and sunniest parts, and chart the day (sun_pct over time) as an area chart. \
+Say in a line that only buildings cast shade here, not trees or awnings.
+- A shaded walk, "keep me out of the sun", a walk on a hot afternoon: plan_route with prefer \
+["shade"] (and start_time when given). It reads the real alternatives between two places for \
+their shade at the moment of the walk and takes the shadiest within about a third more time. \
+Show the layer with 'route' (in shade blue, in sun amber, the other ways grey) and say the \
+shade share of the chosen way against the others (shade.options) and the minutes added. With \
+the sun down, say every way is in shade.
+- "Where is the air worst right now", "how polluted is it", "is it noisy around here", "where \
+is it hottest": environment_surface with the metric (pm2_5 for "the air" unless they name \
+another, noise_db for noise, temperature_c for heat), with at from city_clock when it shows a \
+past moment. Show its layer_ref with 'points'. Lead with where it is highest (highest_area, \
+highest_station) with the value, its band and its uncertainty (near a station and far from \
+them), and say in a line that the surface is the stations near them and the corrected \
+regional model elsewhere. For the stations ranked, a sorted horizontal bar of value from its \
+data_ref, linked to the map by id. Noise and CAQI exist only near the stations: say so \
+rather than reading the map between them.
+- "Show me the wind", "which way is the wind blowing": environment_surface with wind; show \
+its layer (particles move with the modelled wind); give the speed in km/h and where it blows \
+from. Rain is on the map as a radar layer the user turns on; you can't read it.
+- A spot (spot-35.17000-33.36060, from right-clicking the map and "What's it like here?"): \
+get_entity reads it at the clock's moment: sun or shade, the hours of sun that day, the air \
+and noise with their uncertainty, the temperature and the wind. Write spot ids exactly.
+- The Environment workspace (Alt 3) has switches for terrain, shadows, the surfaces, the wind \
+and the rain radar, and the sun hours of a square: point to it for browsing.
 """
