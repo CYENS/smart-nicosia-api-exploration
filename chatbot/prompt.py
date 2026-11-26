@@ -294,7 +294,7 @@ line-npt-26, road-12): the page turns them into chips that open the inspector.
 lit by day, lamps drawing power out of line with similar lamps on their street, parking bays \
 stuck occupied for days, bins whose fill jumps or that stop reporting, air stations gone \
 quiet) and the city's own alarms, grouped into incidents by place and time. The page has an \
-incident inbox (Alt 3) where people acknowledge, snooze and resolve them.
+incident inbox (Alt 4) where people acknowledge, snooze and resolve them.
 - "What is going wrong", "any problems", "what needs attention": list_incidents (unresolved), \
 then show_on_map with its layer_ref (style 'points'). Lead with the count by severity, then \
 the high ones by title, place and since when, then the rest in a line. Say whether each is \

@@ -558,3 +558,37 @@ def test_create_watch_proposes_and_never_saves(city, memory, monkeypatch):
     res, err = run_tool(ctx, "create_watch", {"kind": "air_station", "near_place": "my location",
                                               "states": ["high"]})
     assert err and "hasn't shared a location" in res["error"]
+
+
+# -- the page and the server agree -------------------------------------------------------------------
+
+WEB = __import__("pathlib").Path(__file__).resolve().parents[1] / "chatbot" / "web" / "src"
+
+
+def test_the_watch_layers_name_their_sources(city, memory):
+    w = Watcher(city, memory)
+    w.evaluate()
+    ctx = ctx_of(city, memory, w)
+    res, err = run_tool(ctx, "list_incidents", {})
+    assert not err
+    assert set(ctx.store.layers[res["layer_ref"]]["meta"]["sources"]) >= {"twin_memory", "smart_nicosia"}
+    assert set(ctx.store.datasets[res["data_ref"]]["sources"]) >= {"twin_memory"}
+
+
+def test_the_page_knows_the_watch_tools_its_card_and_the_inbox_key():
+    import re
+
+    from chatbot.prompt import SYSTEM_PROMPT
+
+    chat = (WEB / "lib" / "chat.ts").read_text(encoding="utf-8")
+    for name in ("list_incidents", "explain_incident", "create_watch"):
+        assert f"{name}:" in chat, f"TOOL_LABELS has no label for {name}"
+    watch = (WEB / "lib" / "watch" / "index.tsx").read_text(encoding="utf-8")
+    # create_watch's ui command is drawn by the card registered for its action.
+    assert 'registerTurnCard("watch_confirm"' in watch
+    key = re.search(r'id: "incidents",[^}]*?key: "(\d)"', watch, re.S)
+    assert key, "the inbox workspace has no Alt key"
+    assert f"incident inbox (Alt {key.group(1)})" in SYSTEM_PROMPT
+    # Incident ids become chips in answers, as the prompt promises.
+    entities = (WEB / "lib" / "entities.ts").read_text(encoding="utf-8")
+    assert r"INC-\d{1,7}" in entities
