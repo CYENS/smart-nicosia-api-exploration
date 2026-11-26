@@ -15,10 +15,11 @@ import jsonschema
 
 from collector.http import ApiError
 
+from chatbot import sources
 from chatbot.settings import TIMEZONE
 from chatbot.tools import (buildings, charts, city, clock, entities, maps, memory, mobility,
                            places, routes, watch)
-from chatbot.tools.base import Handler, Tool, ToolContext, ToolError
+from chatbot.tools.base import Handler, LocationNotShared, Tool, ToolContext, ToolError
 from chatbot.web import WebError
 
 log = logging.getLogger(__name__)
@@ -55,7 +56,11 @@ def run_tool(ctx: ToolContext, name: str, args: object) -> tuple[dict, bool]:
         where = "/".join(map(str, e.path)) or "input"
         return {"error": f"invalid input at {where}: {e.message[:300]}"}, True
     try:
-        return HANDLERS[real](ctx, args), False
+        with sources.during(real):  # what it stores says where it comes from
+            return HANDLERS[real](ctx, args), False
+    except LocationNotShared as e:  # the page offers what only the user can do
+        return {"error": str(e), "_actions": list(e.ACTIONS),
+                "_summary": "Your location isn't shared yet"}, True
     except ToolError as e:
         return {"error": str(e)}, True
     except (ApiError, WebError) as e:

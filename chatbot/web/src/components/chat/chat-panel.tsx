@@ -2,6 +2,7 @@ import { MessageSquareTextIcon, PanelLeftCloseIcon, RotateCcwIcon } from "lucide
 import { useEffect, useState } from "react"
 
 import { Composer } from "@/components/chat/composer"
+import { PickHint } from "@/components/chat/pick-hint"
 import { TurnView } from "@/components/chat/turn"
 import { Welcome } from "@/components/chat/welcome"
 import { WallsMark } from "@/components/walls-mark"
@@ -11,16 +12,11 @@ import {
   MessageScroller, MessageScrollerButton, MessageScrollerContent, MessageScrollerItem,
   MessageScrollerProvider, MessageScrollerViewport,
 } from "@/components/ui/message-scroller"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { newChat, useChat } from "@/lib/chat"
 import { useGeometry } from "@/lib/geometry"
 import { useLayout } from "@/lib/layout"
-
-const SOURCES = [
-  "Smart Nicosia city sensors", "OpenStreetMap", "Open-Meteo", "Valhalla routing",
-  "DLS Cyprus cadastre and 3D buildings", "The ΕΟΑ dangerous-building registers",
-]
+import { openSources } from "@/lib/sources"
 
 function useCredentialsMissing() {
   const [missing, setMissing] = useState(false)
@@ -30,7 +26,17 @@ function useCredentialsMissing() {
   return missing
 }
 
+// The conversation, and the hint it raises over the map while the user picks their spot.
 export function ChatPanel() {
+  return (
+    <>
+      <Conversation />
+      <PickHint />
+    </>
+  )
+}
+
+function Conversation() {
   const open = useLayout((s) => s.chatOpen)
   const turns = useChat((s) => s.turns)
   const busy = useChat((s) => s.busy)
@@ -97,9 +103,9 @@ export function ChatPanel() {
           <MessageScroller className="min-h-0 flex-1">
             <MessageScrollerViewport>
               <MessageScrollerContent className="gap-8 px-4 py-4">
-                {turns.map((t) => (
+                {turns.map((t, i) => (
                   <MessageScrollerItem key={t.id} messageId={t.id} scrollAnchor>
-                    <TurnView turn={t} />
+                    <TurnView turn={t} latest={i === turns.length - 1} />
                   </MessageScrollerItem>
                 ))}
               </MessageScrollerContent>
@@ -113,14 +119,13 @@ export function ChatPanel() {
         <Composer />
         <p className="px-1 text-[12px] text-muted-foreground">
           Answers can be wrong, so check what matters.{" "}
-          <Popover>
-            <PopoverTrigger className="underline decoration-line underline-offset-3 hover:text-foreground">Sources</PopoverTrigger>
-            <PopoverContent side="top" align="start" className="w-72">
-              <ul className="flex flex-col gap-1 text-[13px]">
-                {SOURCES.map((s) => <li key={s}>{s}</li>)}
-              </ul>
-            </PopoverContent>
-          </Popover>
+          <button
+            type="button"
+            className="rounded-sm underline decoration-line underline-offset-3 outline-none hover:text-foreground focus-visible:text-foreground focus-visible:ring-2 focus-visible:ring-ring/60"
+            onClick={(e) => openSources(null, e.currentTarget)}
+          >
+            Data sources
+          </button>
         </p>
       </div>
     </aside>

@@ -24,12 +24,25 @@ if TYPE_CHECKING:
     from chatbot.mobility import Mobility
     from chatbot.moments import Moments
     from chatbot.watch import Watcher
+    from chatbot.webplaces import WebPlaces
 
 TZ = ZoneInfo(TIMEZONE)
 
 
 class ToolError(Exception):
     """A problem the model can fix (bad name, nothing found). Sent back with is_error."""
+
+
+class LocationNotShared(ToolError):
+    """The tool needs the user's position and they haven't shared it. Only the user can fix
+    this, so the page offers them the actions that share it (run_tool adds them)."""
+
+    ACTIONS = ("share_location", "pick_on_map")
+
+    def __init__(self, what: str = "the user hasn't shared a location") -> None:
+        super().__init__(f"{what}. The page now offers them buttons to share it or to pick it on "
+                         "the map, and asks again by itself once it is shared: say so in one "
+                         "short line, and don't explain how to share it")
 
 
 @dataclass
@@ -53,6 +66,7 @@ class ToolContext:
     # The city at past moments (chatbot/moments.py), shared with the city clock's endpoints.
     moments: Moments | None = None
     mobility: Mobility | None = None  # buses, stops and road speeds (chatbot/mobility)
+    web_places: WebPlaces | None = None  # places found on the web, placed (chatbot/webplaces.py)
     watcher: Watcher | None = None  # incidents and watches (chatbot/watch)
 
 
@@ -114,16 +128,19 @@ ME = {norm(w) for w in ("me", "my location", "my position", "here", "where i am"
 def my_location(ctx: ToolContext) -> dict:
     loc = ctx.user_location
     if not loc:
-        raise ToolError("the user hasn't shared a location: ask them to press the locate button "
-                        "(top left of the map) or right-click the map and choose 'I'm here'")
+        raise LocationNotShared()
     return {"name": "your location", "lat": loc["lat"], "lon": loc["lon"]}
 
 
 def resolve_place(ctx: ToolContext, text: str) -> dict:
     """A place name -> {name, lat, lon, ...}, preferring the places index (it has opening hours).
-    'me', 'my location' or 'here' is the user's shared location."""
+    'me', 'my location' or 'here' is the user's shared location; a web place's id (web-1a2b3c4d)
+    or exact name is where locate_web_places put it."""
     if norm(text) in ME:
         return my_location(ctx)
+    web = ctx.web_places.named(text) if ctx.web_places is not None else None
+    if web:
+        return {"name": web["name"], "lat": web["lat"], "lon": web["lon"], "id": web["id"]}
     if ctx.places.ready:
         loc = ctx.user_location
         exact = ctx.places.named(text, (loc["lat"], loc["lon"]) if loc else None)

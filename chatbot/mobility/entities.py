@@ -59,9 +59,9 @@ def _sources_bus(ents, as_of=None) -> list[dict]:
     versions = ", ".join(f"{f['operator']} {f['version']}" for f in (tt.feeds if tt else []) if f.get("version"))
     out = []
     if as_of is not None:
-        out.append({"name": "GTFS-RT live feed", "detail": f"vehicle positions, {RT_LICENCE}",
+        out.append({"source": "bus_live", "name": "GTFS-RT live feed", "detail": f"vehicle positions, {RT_LICENCE}",
                     "url": RT_PAGE, "as_of": _iso(as_of)})
-    out.append({"name": "Bus timetables (GTFS)", "detail": f"{versions or 'NPT, Intercity, Pame Express'}, "
+    out.append({"source": "bus_timetable", "name": "Bus timetables (GTFS)", "detail": f"{versions or 'NPT, Intercity, Pame Express'}, "
                                                            f"{GTFS_LICENCE}", "url": GTFS_PAGE})
     return out
 
@@ -328,7 +328,7 @@ def build_road(ents, eid: str, near, at: datetime | None = None) -> dict | None:
                     E.attr("Usual", usual_note),
                     E.attr("Detectors", f"Bluetooth sites {seg.from_site} and {seg.to_site}")],
         relations=relations,
-        sources=[{"name": "Bluetooth travel times", "detail": f"National Access Point, {ROAD_LICENCE}",
+        sources=[{"source": "road_speeds", "name": "Bluetooth travel times", "detail": f"National Access Point, {ROAD_LICENCE}",
                   "url": ROAD_PAGE, "as_of": row.get("measured_at")}],
         as_of=row.get("measured_at"),
         road={"speed_kmh": speed, "free_flow_kmh": free, "free_flow": how, "usual_kmh": row.get("usual_kmh"),

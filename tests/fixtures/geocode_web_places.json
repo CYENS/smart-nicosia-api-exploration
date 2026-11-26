@@ -1,0 +1,1347 @@
+{
+ "captured": "2026-11-26",
+ "nominatim": {
+  "Yiannaki Talioti 7, Strovolos": [],
+  "Yiannaki Talioti, Strovolos": [],
+  "Strovolos": [
+   {
+    "place_id": 209961682,
+    "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+    "osm_type": "relation",
+    "osm_id": 2628527,
+    "lat": "35.1328993",
+    "lon": "33.3454972",
+    "category": "boundary",
+    "type": "administrative",
+    "place_rank": 16,
+    "importance": 0.4909597724754424,
+    "addresstype": "town",
+    "name": "Strovolos",
+    "display_name": "Strovolos, Strovolos Municipality, Nicosia District, Cyprus",
+    "boundingbox": [
+     "35.1030546",
+     "35.1654650",
+     "33.3096963",
+     "33.3817569"
+    ]
+   }
+  ],
+  "Giannaki Talioti": [
+   {
+    "place_id": 210167701,
+    "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+    "osm_type": "way",
+    "osm_id": 1408252378,
+    "lat": "35.1487418",
+    "lon": "33.3707549",
+    "category": "highway",
+    "type": "residential",
+    "place_rank": 26,
+    "importance": 0.053404238193331774,
+    "addresstype": "residential",
+    "name": "Γιαννάκη Ταλιώτη",
+    "display_name": "Γιαννάκη Ταλιώτη, Δασούπολη, Strovolos, Strovolos Municipality, Nicosia District, Cyprus, 2014, Cyprus",
+    "boundingbox": [
+     "35.1484222",
+     "35.1490501",
+     "33.3704190",
+     "33.3710796"
+    ]
+   }
+  ],
+  "Talioti": [
+   {
+    "place_id": 210402644,
+    "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+    "osm_type": "way",
+    "osm_id": 24276904,
+    "lat": "35.1670810",
+    "lon": "33.3969347",
+    "category": "highway",
+    "type": "residential",
+    "place_rank": 26,
+    "importance": 0.053404238193331774,
+    "addresstype": "residential",
+    "name": "Ioanni Talioti",
+    "display_name": "Ioanni Talioti, Sopaz, Nicosia, Panayia, Nicosia Muncipality, Nicosia District, Cyprus, 1646, Cyprus",
+    "boundingbox": [
+     "35.1662160",
+     "35.1679450",
+     "33.3968657",
+     "33.3969892"
+    ]
+   },
+   {
+    "place_id": 210327689,
+    "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+    "osm_type": "way",
+    "osm_id": 1408252378,
+    "lat": "35.1487418",
+    "lon": "33.3707549",
+    "category": "highway",
+    "type": "residential",
+    "place_rank": 26,
+    "importance": 0.053404238193331774,
+    "addresstype": "residential",
+    "name": "Γιαννάκη Ταλιώτη",
+    "display_name": "Γιαννάκη Ταλιώτη, Δασούπολη, Strovolos, Strovolos Municipality, Nicosia District, Cyprus, 2014, Cyprus",
+    "boundingbox": [
+     "35.1484222",
+     "35.1490501",
+     "33.3704190",
+     "33.3710796"
+    ]
+   }
+  ],
+  "Giannaki Talioti 7, Strovolos": [
+   {
+    "place_id": 210167701,
+    "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+    "osm_type": "way",
+    "osm_id": 1408252378,
+    "lat": "35.1487418",
+    "lon": "33.3707549",
+    "category": "highway",
+    "type": "residential",
+    "place_rank": 26,
+    "importance": 0.053404238193331774,
+    "addresstype": "residential",
+    "name": "Γιαννάκη Ταλιώτη",
+    "display_name": "Γιαννάκη Ταλιώτη, Δασούπολη, Strovolos, Strovolos Municipality, Nicosia District, Cyprus, 2014, Cyprus",
+    "boundingbox": [
+     "35.1484222",
+     "35.1490501",
+     "33.3704190",
+     "33.3710796"
+    ]
+   }
+  ],
+  "Giannaki Talioti, Strovolos": [
+   {
+    "place_id": 209443164,
+    "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+    "osm_type": "way",
+    "osm_id": 1408252378,
+    "lat": "35.1487418",
+    "lon": "33.3707549",
+    "category": "highway",
+    "type": "residential",
+    "place_rank": 26,
+    "importance": 0.053404238193331774,
+    "addresstype": "residential",
+    "name": "Γιαννάκη Ταλιώτη",
+    "display_name": "Γιαννάκη Ταλιώτη, Δασούπολη, Strovolos, Strovolos Municipality, Nicosia District, Cyprus, 2014, Cyprus",
+    "boundingbox": [
+     "35.1484222",
+     "35.1490501",
+     "33.3704190",
+     "33.3710796"
+    ]
+   }
+  ],
+  "Annita Constantinou singing": [],
+  "Nikiforou Foka 33, 1016 Nicosia": [
+   {
+    "place_id": 210362346,
+    "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+    "osm_type": "way",
+    "osm_id": 20290961,
+    "lat": "35.1789773",
+    "lon": "33.3816200",
+    "category": "highway",
+    "type": "residential",
+    "place_rank": 26,
+    "importance": 0.053404238193331774,
+    "addresstype": "residential",
+    "name": "Nikiforou Foka",
+    "display_name": "Nikiforou Foka, Frederick, Pallouriotissa, Nicosia, Panayia, Nicosia Muncipality, Nicosia District, Cyprus, 1036, Cyprus",
+    "address": {
+     "road": "Nikiforou Foka",
+     "neighbourhood": "Frederick",
+     "suburb": "Pallouriotissa",
+     "city": "Nicosia",
+     "municipality": "Panayia",
+     "county": "Nicosia Muncipality",
+     "state_district": "Nicosia District",
+     "ISO3166-2-lvl5": "CY-01",
+     "state": "Cyprus",
+     "postcode": "1036",
+     "country": "Cyprus",
+     "country_code": "cy"
+    },
+    "boundingbox": [
+     "35.1779746",
+     "35.1801262",
+     "33.3799388",
+     "33.3832066"
+    ]
+   },
+   {
+    "place_id": 210425774,
+    "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+    "osm_type": "way",
+    "osm_id": 55705463,
+    "lat": "35.1122327",
+    "lon": "33.3683080",
+    "category": "highway",
+    "type": "residential",
+    "place_rank": 26,
+    "importance": 0.053404238193331774,
+    "addresstype": "residential",
+    "name": "Nikiforou Foka",
+    "display_name": "Nikiforou Foka, Agios Georgios, Latsia, Latsia - Geri Municipality, Nicosia District, Cyprus, 2236, Cyprus",
+    "address": {
+     "road": "Nikiforou Foka",
+     "city_district": "Agios Georgios",
+     "town": "Latsia",
+     "county": "Latsia - Geri Municipality",
+     "state_district": "Nicosia District",
+     "ISO3166-2-lvl5": "CY-01",
+     "state": "Cyprus",
+     "postcode": "2236",
+     "country": "Cyprus",
+     "country_code": "cy"
+    },
+    "boundingbox": [
+     "35.1108432",
+     "35.1126071",
+     "33.3664615",
+     "33.3701554"
+    ]
+   }
+  ],
+  "Nikiforou Foka, Nicosia": [
+   {
+    "place_id": 210328493,
+    "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+    "osm_type": "way",
+    "osm_id": 20290961,
+    "lat": "35.1789773",
+    "lon": "33.3816200",
+    "category": "highway",
+    "type": "residential",
+    "place_rank": 26,
+    "importance": 0.053404238193331774,
+    "addresstype": "residential",
+    "name": "Nikiforou Foka",
+    "display_name": "Nikiforou Foka, Frederick, Pallouriotissa, Nicosia, Panayia, Nicosia Muncipality, Nicosia District, Cyprus, 1036, Cyprus",
+    "address": {
+     "road": "Nikiforou Foka",
+     "neighbourhood": "Frederick",
+     "suburb": "Pallouriotissa",
+     "city": "Nicosia",
+     "municipality": "Panayia",
+     "county": "Nicosia Muncipality",
+     "state_district": "Nicosia District",
+     "ISO3166-2-lvl5": "CY-01",
+     "state": "Cyprus",
+     "postcode": "1036",
+     "country": "Cyprus",
+     "country_code": "cy"
+    },
+    "boundingbox": [
+     "35.1779746",
+     "35.1801262",
+     "33.3799388",
+     "33.3832066"
+    ]
+   },
+   {
+    "place_id": 210049156,
+    "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+    "osm_type": "way",
+    "osm_id": 55705463,
+    "lat": "35.1122327",
+    "lon": "33.3683080",
+    "category": "highway",
+    "type": "residential",
+    "place_rank": 26,
+    "importance": 0.053404238193331774,
+    "addresstype": "residential",
+    "name": "Nikiforou Foka",
+    "display_name": "Nikiforou Foka, Agios Georgios, Latsia, Latsia - Geri Municipality, Nicosia District, Cyprus, 2236, Cyprus",
+    "address": {
+     "road": "Nikiforou Foka",
+     "city_district": "Agios Georgios",
+     "town": "Latsia",
+     "county": "Latsia - Geri Municipality",
+     "state_district": "Nicosia District",
+     "ISO3166-2-lvl5": "CY-01",
+     "state": "Cyprus",
+     "postcode": "2236",
+     "country": "Cyprus",
+     "country_code": "cy"
+    },
+    "boundingbox": [
+     "35.1108432",
+     "35.1126071",
+     "33.3664615",
+     "33.3701554"
+    ]
+   }
+  ],
+  "Ithaki": [
+   {
+    "place_id": 207582892,
+    "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+    "osm_type": "way",
+    "osm_id": 1095185179,
+    "lat": "35.1417954",
+    "lon": "33.3454827",
+    "category": "building",
+    "type": "apartments",
+    "place_rank": 30,
+    "importance": 7.090485999842859e-05,
+    "addresstype": "building",
+    "name": "Ithaki 9",
+    "display_name": "Ithaki 9, 8, Ηλία Αρσαλίδη, Χρυσελεούσα, Strovolos, Strovolos Municipality, Nicosia District, Cyprus, 2020, Cyprus",
+    "address": {
+     "building": "Ithaki 9",
+     "house_number": "8",
+     "road": "Ηλία Αρσαλίδη",
+     "quarter": "Χρυσελεούσα",
+     "town": "Strovolos",
+     "county": "Strovolos Municipality",
+     "state_district": "Nicosia District",
+     "ISO3166-2-lvl5": "CY-01",
+     "state": "Cyprus",
+     "postcode": "2020",
+     "country": "Cyprus",
+     "country_code": "cy"
+    },
+    "boundingbox": [
+     "35.1417045",
+     "35.1418863",
+     "33.3453518",
+     "33.3456135"
+    ]
+   }
+  ],
+  "Nikiforou Foka 33, Nicosia": [
+   {
+    "place_id": 212848541,
+    "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+    "osm_type": "way",
+    "osm_id": 20290961,
+    "lat": "35.1789773",
+    "lon": "33.3816200",
+    "category": "highway",
+    "type": "residential",
+    "place_rank": 26,
+    "importance": 0.053404238193331774,
+    "addresstype": "residential",
+    "name": "Nikiforou Foka",
+    "display_name": "Nikiforou Foka, Frederick, Pallouriotissa, Nicosia, Panayia, Nicosia Muncipality, Nicosia District, Cyprus, 1036, Cyprus",
+    "address": {
+     "road": "Nikiforou Foka",
+     "neighbourhood": "Frederick",
+     "suburb": "Pallouriotissa",
+     "city": "Nicosia",
+     "municipality": "Panayia",
+     "county": "Nicosia Muncipality",
+     "state_district": "Nicosia District",
+     "ISO3166-2-lvl5": "CY-01",
+     "state": "Cyprus",
+     "postcode": "1036",
+     "country": "Cyprus",
+     "country_code": "cy"
+    },
+    "boundingbox": [
+     "35.1779746",
+     "35.1801262",
+     "33.3799388",
+     "33.3832066"
+    ]
+   },
+   {
+    "place_id": 209417900,
+    "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+    "osm_type": "way",
+    "osm_id": 55705463,
+    "lat": "35.1122327",
+    "lon": "33.3683080",
+    "category": "highway",
+    "type": "residential",
+    "place_rank": 26,
+    "importance": 0.053404238193331774,
+    "addresstype": "residential",
+    "name": "Nikiforou Foka",
+    "display_name": "Nikiforou Foka, Agios Georgios, Latsia, Latsia - Geri Municipality, Nicosia District, Cyprus, 2236, Cyprus",
+    "address": {
+     "road": "Nikiforou Foka",
+     "city_district": "Agios Georgios",
+     "town": "Latsia",
+     "county": "Latsia - Geri Municipality",
+     "state_district": "Nicosia District",
+     "ISO3166-2-lvl5": "CY-01",
+     "state": "Cyprus",
+     "postcode": "2236",
+     "country": "Cyprus",
+     "country_code": "cy"
+    },
+    "boundingbox": [
+     "35.1108432",
+     "35.1126071",
+     "33.3664615",
+     "33.3701554"
+    ]
+   }
+  ],
+  "Emanuel Roidi 2, Strovolos, Nicosia 1095": [],
+  "Emanuel Roidi, Strovolos, Nicosia": [],
+  "DownTown Live": [
+   {
+    "place_id": 210321291,
+    "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+    "osm_type": "node",
+    "osm_id": 227081961,
+    "lat": "35.1650029",
+    "lon": "33.3498425",
+    "category": "amenity",
+    "type": "music_venue",
+    "place_rank": 30,
+    "importance": 7.090485999842859e-05,
+    "addresstype": "amenity",
+    "name": "Avlaia - Downtown live",
+    "display_name": "Avlaia - Downtown live, Προδρόμου, Agioi Omologites, Nicosia, Nicosia Muncipality, Nicosia District, Cyprus, 1095, Cyprus",
+    "address": {
+     "amenity": "Avlaia - Downtown live",
+     "road": "Προδρόμου",
+     "suburb": "Agioi Omologites",
+     "city": "Nicosia",
+     "county": "Nicosia Muncipality",
+     "state_district": "Nicosia District",
+     "ISO3166-2-lvl5": "CY-01",
+     "state": "Cyprus",
+     "postcode": "1095",
+     "country": "Cyprus",
+     "country_code": "cy"
+    },
+    "boundingbox": [
+     "35.1649529",
+     "35.1650529",
+     "33.3497925",
+     "33.3498925"
+    ]
+   }
+  ],
+  "Emanuel Roidi 2, Nicosia": [],
+  "Emanuel Roidi, Nicosia": [],
+  "Theofanous Theodotou 18, 1065 Nicosia": [
+   {
+    "place_id": 429066437,
+    "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+    "osm_type": "way",
+    "osm_id": 184168390,
+    "lat": "35.1676254",
+    "lon": "33.3590459",
+    "category": "highway",
+    "type": "living_street",
+    "place_rank": 26,
+    "importance": 0.053404238193331774,
+    "addresstype": "living_street",
+    "name": "Theofanous Theodotou",
+    "display_name": "Theofanous Theodotou, Λαϊκή Γειτονιά, Trypiotis, Nicosia, Nicosia Muncipality, Nicosia District, Cyprus, 1066, Cyprus",
+    "address": {
+     "road": "Theofanous Theodotou",
+     "neighbourhood": "Λαϊκή Γειτονιά",
+     "quarter": "Trypiotis",
+     "city": "Nicosia",
+     "county": "Nicosia Muncipality",
+     "state_district": "Nicosia District",
+     "ISO3166-2-lvl5": "CY-01",
+     "state": "Cyprus",
+     "postcode": "1066",
+     "country": "Cyprus",
+     "country_code": "cy"
+    },
+    "boundingbox": [
+     "35.1673993",
+     "35.1678515",
+     "33.3588952",
+     "33.3591966"
+    ]
+   },
+   {
+    "place_id": 208532196,
+    "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+    "osm_type": "way",
+    "osm_id": 1130925372,
+    "lat": "35.1681427",
+    "lon": "33.3593925",
+    "category": "highway",
+    "type": "pedestrian",
+    "place_rank": 26,
+    "importance": 0.053404238193331774,
+    "addresstype": "pedestrian",
+    "name": "Theofanous Theodotou",
+    "display_name": "Theofanous Theodotou, Λαϊκή Γειτονιά, Trypiotis, Nicosia, Nicosia Muncipality, Nicosia District, Cyprus, 1066, Cyprus",
+    "address": {
+     "road": "Theofanous Theodotou",
+     "neighbourhood": "Λαϊκή Γειτονιά",
+     "quarter": "Trypiotis",
+     "city": "Nicosia",
+     "county": "Nicosia Muncipality",
+     "state_district": "Nicosia District",
+     "ISO3166-2-lvl5": "CY-01",
+     "state": "Cyprus",
+     "postcode": "1066",
+     "country": "Cyprus",
+     "country_code": "cy"
+    },
+    "boundingbox": [
+     "35.1678515",
+     "35.1684359",
+     "33.3591966",
+     "33.3595851"
+    ]
+   }
+  ],
+  "Theofanous Theodotou, Nicosia": [
+   {
+    "place_id": 210185867,
+    "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+    "osm_type": "way",
+    "osm_id": 1130925372,
+    "lat": "35.1681427",
+    "lon": "33.3593925",
+    "category": "highway",
+    "type": "pedestrian",
+    "place_rank": 26,
+    "importance": 0.053404238193331774,
+    "addresstype": "pedestrian",
+    "name": "Theofanous Theodotou",
+    "display_name": "Theofanous Theodotou, Λαϊκή Γειτονιά, Trypiotis, Nicosia, Nicosia Muncipality, Nicosia District, Cyprus, 1066, Cyprus",
+    "address": {
+     "road": "Theofanous Theodotou",
+     "neighbourhood": "Λαϊκή Γειτονιά",
+     "quarter": "Trypiotis",
+     "city": "Nicosia",
+     "county": "Nicosia Muncipality",
+     "state_district": "Nicosia District",
+     "ISO3166-2-lvl5": "CY-01",
+     "state": "Cyprus",
+     "postcode": "1066",
+     "country": "Cyprus",
+     "country_code": "cy"
+    },
+    "boundingbox": [
+     "35.1678515",
+     "35.1684359",
+     "33.3591966",
+     "33.3595851"
+    ]
+   },
+   {
+    "place_id": 429232970,
+    "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+    "osm_type": "way",
+    "osm_id": 184168390,
+    "lat": "35.1676254",
+    "lon": "33.3590459",
+    "category": "highway",
+    "type": "living_street",
+    "place_rank": 26,
+    "importance": 0.053404238193331774,
+    "addresstype": "living_street",
+    "name": "Theofanous Theodotou",
+    "display_name": "Theofanous Theodotou, Λαϊκή Γειτονιά, Trypiotis, Nicosia, Nicosia Muncipality, Nicosia District, Cyprus, 1066, Cyprus",
+    "address": {
+     "road": "Theofanous Theodotou",
+     "neighbourhood": "Λαϊκή Γειτονιά",
+     "quarter": "Trypiotis",
+     "city": "Nicosia",
+     "county": "Nicosia Muncipality",
+     "state_district": "Nicosia District",
+     "ISO3166-2-lvl5": "CY-01",
+     "state": "Cyprus",
+     "postcode": "1066",
+     "country": "Cyprus",
+     "country_code": "cy"
+    },
+    "boundingbox": [
+     "35.1673993",
+     "35.1678515",
+     "33.3588952",
+     "33.3591966"
+    ]
+   }
+  ],
+  "S//IP Club": []
+ },
+ "photon": {
+  "Yiannaki Talioti 7, Strovolos": {
+   "type": "FeatureCollection",
+   "features": []
+  },
+  "Giannaki Talioti": {
+   "type": "FeatureCollection",
+   "features": [
+    {
+     "type": "Feature",
+     "properties": {
+      "osm_type": "W",
+      "osm_id": 1384353191,
+      "osm_key": "highway",
+      "osm_value": "residential",
+      "type": "street",
+      "name": "Γιαννάκη Ταλιώτη",
+      "locality": "Δασούπολη",
+      "city": "Apostolos Varnavas & Agios Makarios",
+      "county": "Strovolos Municipality",
+      "state": "Cyprus",
+      "country": "Cyprus",
+      "postcode": "2014",
+      "countrycode": "CY",
+      "extent": [
+       33.3701194,
+       35.1493203,
+       33.370419,
+       35.1490501
+      ]
+     },
+     "geometry": {
+      "type": "Point",
+      "coordinates": [
+       33.3702692,
+       35.1491852
+      ]
+     }
+    }
+   ]
+  },
+  "Talioti": {
+   "type": "FeatureCollection",
+   "features": [
+    {
+     "type": "Feature",
+     "properties": {
+      "osm_type": "W",
+      "osm_id": 24276904,
+      "osm_key": "highway",
+      "osm_value": "residential",
+      "type": "street",
+      "name": "Ioanni Talioti",
+      "district": "Sopaz",
+      "city": "Nicosia",
+      "county": "Nicosia Muncipality",
+      "state": "Cyprus",
+      "country": "Cyprus",
+      "postcode": "1646",
+      "countrycode": "CY",
+      "extent": [
+       33.3968657,
+       35.167945,
+       33.3969892,
+       35.166216
+      ]
+     },
+     "geometry": {
+      "type": "Point",
+      "coordinates": [
+       33.3969347,
+       35.167081
+      ]
+     }
+    },
+    {
+     "type": "Feature",
+     "properties": {
+      "osm_type": "W",
+      "osm_id": 1384353191,
+      "osm_key": "highway",
+      "osm_value": "residential",
+      "type": "street",
+      "name": "Γιαννάκη Ταλιώτη",
+      "locality": "Δασούπολη",
+      "city": "Apostolos Varnavas & Agios Makarios",
+      "county": "Strovolos Municipality",
+      "state": "Cyprus",
+      "country": "Cyprus",
+      "postcode": "2014",
+      "countrycode": "CY",
+      "extent": [
+       33.3701194,
+       35.1493203,
+       33.370419,
+       35.1490501
+      ]
+     },
+     "geometry": {
+      "type": "Point",
+      "coordinates": [
+       33.3702692,
+       35.1491852
+      ]
+     }
+    },
+    {
+     "type": "Feature",
+     "properties": {
+      "osm_type": "W",
+      "osm_id": 537767235,
+      "osm_key": "shop",
+      "osm_value": "yes",
+      "type": "house",
+      "name": "Talbot",
+      "street": "Photeinis",
+      "district": "Anthoupoli",
+      "city": "Lakatamia",
+      "county": "Lakatameia Municipality",
+      "state": "Cyprus",
+      "country": "Cyprus",
+      "postcode": "2350",
+      "countrycode": "CY",
+      "extent": [
+       33.2927417,
+       35.1093143,
+       33.2929839,
+       35.109075
+      ]
+     },
+     "geometry": {
+      "type": "Point",
+      "coordinates": [
+       33.2928628,
+       35.1091947
+      ]
+     }
+    }
+   ]
+  },
+  "Giannaki Talioti 7, Strovolos": {
+   "type": "FeatureCollection",
+   "features": [
+    {
+     "type": "Feature",
+     "properties": {
+      "osm_type": "W",
+      "osm_id": 1384353191,
+      "osm_key": "highway",
+      "osm_value": "residential",
+      "type": "street",
+      "name": "Γιαννάκη Ταλιώτη",
+      "locality": "Δασούπολη",
+      "city": "Apostolos Varnavas & Agios Makarios",
+      "county": "Strovolos Municipality",
+      "state": "Cyprus",
+      "country": "Cyprus",
+      "postcode": "2014",
+      "countrycode": "CY",
+      "extent": [
+       33.3701194,
+       35.1493203,
+       33.370419,
+       35.1490501
+      ]
+     },
+     "geometry": {
+      "type": "Point",
+      "coordinates": [
+       33.3702692,
+       35.1491852
+      ]
+     }
+    },
+    {
+     "type": "Feature",
+     "properties": {
+      "osm_type": "W",
+      "osm_id": 890211154,
+      "osm_key": "building",
+      "osm_value": "residential",
+      "type": "house",
+      "housenumber": "7",
+      "street": "Giannaki Kapitani",
+      "locality": "Δασούπολη",
+      "city": "Apostolos Varnavas & Agios Makarios",
+      "county": "Strovolos Municipality",
+      "state": "Cyprus",
+      "country": "Cyprus",
+      "postcode": "2024",
+      "countrycode": "CY",
+      "extent": [
+       33.3630889,
+       35.1431364,
+       33.3633131,
+       35.142999
+      ]
+     },
+     "geometry": {
+      "type": "Point",
+      "coordinates": [
+       33.363201,
+       35.1430678
+      ]
+     }
+    }
+   ]
+  },
+  "Giannaki Talioti, Strovolos": {
+   "type": "FeatureCollection",
+   "features": [
+    {
+     "type": "Feature",
+     "properties": {
+      "osm_type": "W",
+      "osm_id": 1384353191,
+      "osm_key": "highway",
+      "osm_value": "residential",
+      "type": "street",
+      "name": "Γιαννάκη Ταλιώτη",
+      "locality": "Δασούπολη",
+      "city": "Apostolos Varnavas & Agios Makarios",
+      "county": "Strovolos Municipality",
+      "state": "Cyprus",
+      "country": "Cyprus",
+      "postcode": "2014",
+      "countrycode": "CY",
+      "extent": [
+       33.3701194,
+       35.1493203,
+       33.370419,
+       35.1490501
+      ]
+     },
+     "geometry": {
+      "type": "Point",
+      "coordinates": [
+       33.3702692,
+       35.1491852
+      ]
+     }
+    }
+   ]
+  },
+  "Annita Constantinou singing": {
+   "type": "FeatureCollection",
+   "features": []
+  },
+  "Nikiforou Foka, Nicosia": {
+   "type": "FeatureCollection",
+   "features": [
+    {
+     "type": "Feature",
+     "properties": {
+      "osm_type": "W",
+      "osm_id": 20290961,
+      "osm_key": "highway",
+      "osm_value": "residential",
+      "type": "street",
+      "name": "Nikiforou Foka",
+      "locality": "Frederick",
+      "district": "Pallouriotissa",
+      "city": "Nicosia",
+      "county": "Nicosia Muncipality",
+      "state": "Cyprus",
+      "country": "Cyprus",
+      "postcode": "1036",
+      "countrycode": "CY",
+      "extent": [
+       33.3799388,
+       35.1801262,
+       33.3832066,
+       35.1779746
+      ]
+     },
+     "geometry": {
+      "type": "Point",
+      "coordinates": [
+       33.38162,
+       35.1789773
+      ]
+     }
+    },
+    {
+     "type": "Feature",
+     "properties": {
+      "osm_type": "W",
+      "osm_id": 1221986407,
+      "osm_key": "highway",
+      "osm_value": "tertiary",
+      "type": "street",
+      "name": "Leoforos Nikiforou Foka",
+      "locality": "Taht-el-Kale",
+      "district": "Taht-el-Kale",
+      "city": "Nicosia",
+      "county": "Nicosia Muncipality",
+      "state": "Cyprus",
+      "country": "Cyprus",
+      "postcode": "1017",
+      "countrycode": "CY",
+      "extent": [
+       33.3707632,
+       35.1742428,
+       33.3708544,
+       35.1738838
+      ]
+     },
+     "geometry": {
+      "type": "Point",
+      "coordinates": [
+       33.3707914,
+       35.1740686
+      ]
+     }
+    },
+    {
+     "type": "Feature",
+     "properties": {
+      "osm_type": "W",
+      "osm_id": 55705463,
+      "osm_key": "highway",
+      "osm_value": "residential",
+      "type": "street",
+      "name": "Nikiforou Foka",
+      "district": "Agios Georgios",
+      "city": "Latsia",
+      "county": "Latsia - Geri Municipality",
+      "state": "Cyprus",
+      "country": "Cyprus",
+      "postcode": "2236",
+      "countrycode": "CY",
+      "extent": [
+       33.3664615,
+       35.1126071,
+       33.3701554,
+       35.1108432
+      ]
+     },
+     "geometry": {
+      "type": "Point",
+      "coordinates": [
+       33.368308,
+       35.1122327
+      ]
+     }
+    },
+    {
+     "type": "Feature",
+     "properties": {
+      "osm_type": "W",
+      "osm_id": 1376493078,
+      "osm_key": "highway",
+      "osm_value": "tertiary",
+      "type": "street",
+      "name": "Λεωφόρος Νικηφόρου Φωκά",
+      "locality": "Taht-el-Kale",
+      "district": "Taht-el-Kale",
+      "city": "Nicosia",
+      "county": "Nicosia Muncipality",
+      "state": "Cyprus",
+      "country": "Cyprus",
+      "postcode": "1017",
+      "countrycode": "CY",
+      "extent": [
+       33.3708544,
+       35.1743616,
+       33.3709188,
+       35.1742428
+      ]
+     },
+     "geometry": {
+      "type": "Point",
+      "coordinates": [
+       33.3708866,
+       35.1743022
+      ]
+     }
+    },
+    {
+     "type": "Feature",
+     "properties": {
+      "osm_type": "W",
+      "osm_id": 1355502033,
+      "osm_key": "highway",
+      "osm_value": "tertiary",
+      "type": "street",
+      "name": "Λεωφόρος Νικηφόρου Φωκά",
+      "locality": "Agios Ioannis",
+      "city": "Agios Ioannis",
+      "county": "Nicosia Muncipality",
+      "state": "Cyprus",
+      "country": "Cyprus",
+      "postcode": "1016",
+      "countrycode": "CY",
+      "extent": [
+       33.3699346,
+       35.1738838,
+       33.3707632,
+       35.1717584
+      ]
+     },
+     "geometry": {
+      "type": "Point",
+      "coordinates": [
+       33.3704279,
+       35.1727971
+      ]
+     }
+    }
+   ]
+  },
+  "Emanuel Roidi 2, Strovolos, Nicosia 1095": {
+   "type": "FeatureCollection",
+   "features": []
+  },
+  "Emanuel Roidi, Strovolos, Nicosia": {
+   "type": "FeatureCollection",
+   "features": [
+    {
+     "type": "Feature",
+     "properties": {
+      "osm_type": "W",
+      "osm_id": 1374234879,
+      "osm_key": "highway",
+      "osm_value": "residential",
+      "type": "street",
+      "name": "Εμμανουήλ Ροΐδη",
+      "district": "Agioi Omologites",
+      "city": "Agioi Omologites",
+      "county": "Nicosia Muncipality",
+      "state": "Cyprus",
+      "country": "Cyprus",
+      "postcode": "1090",
+      "countrycode": "CY",
+      "extent": [
+       33.3500441,
+       35.1640204,
+       33.350337,
+       35.1636396
+      ]
+     },
+     "geometry": {
+      "type": "Point",
+      "coordinates": [
+       33.350188,
+       35.1638321
+      ]
+     }
+    }
+   ]
+  },
+  "Emanuel Roidi 2, Nicosia": {
+   "type": "FeatureCollection",
+   "features": [
+    {
+     "type": "Feature",
+     "properties": {
+      "osm_type": "W",
+      "osm_id": 1374234879,
+      "osm_key": "highway",
+      "osm_value": "residential",
+      "type": "street",
+      "name": "Εμμανουήλ Ροΐδη",
+      "district": "Agioi Omologites",
+      "city": "Agioi Omologites",
+      "county": "Nicosia Muncipality",
+      "state": "Cyprus",
+      "country": "Cyprus",
+      "postcode": "1090",
+      "countrycode": "CY",
+      "extent": [
+       33.3500441,
+       35.1640204,
+       33.350337,
+       35.1636396
+      ]
+     },
+     "geometry": {
+      "type": "Point",
+      "coordinates": [
+       33.350188,
+       35.1638321
+      ]
+     }
+    },
+    {
+     "type": "Feature",
+     "properties": {
+      "osm_type": "W",
+      "osm_id": 21061124,
+      "osm_key": "highway",
+      "osm_value": "residential",
+      "type": "street",
+      "name": "Εμμανουήλ Ξάνθου",
+      "locality": "Makedonitissa",
+      "district": "Engomi",
+      "county": "Nicosia Muncipality",
+      "state": "Cyprus",
+      "country": "Cyprus",
+      "postcode": "2415",
+      "countrycode": "CY",
+      "extent": [
+       33.3095062,
+       35.1579849,
+       33.312801,
+       35.1552809
+      ]
+     },
+     "geometry": {
+      "type": "Point",
+      "coordinates": [
+       33.3102143,
+       35.1571564
+      ]
+     }
+    }
+   ]
+  },
+  "Emanuel Roidi, Nicosia": {
+   "type": "FeatureCollection",
+   "features": [
+    {
+     "type": "Feature",
+     "properties": {
+      "osm_type": "W",
+      "osm_id": 1374234879,
+      "osm_key": "highway",
+      "osm_value": "residential",
+      "type": "street",
+      "name": "Εμμανουήλ Ροΐδη",
+      "district": "Agioi Omologites",
+      "city": "Agioi Omologites",
+      "county": "Nicosia Muncipality",
+      "state": "Cyprus",
+      "country": "Cyprus",
+      "postcode": "1090",
+      "countrycode": "CY",
+      "extent": [
+       33.3500441,
+       35.1640204,
+       33.350337,
+       35.1636396
+      ]
+     },
+     "geometry": {
+      "type": "Point",
+      "coordinates": [
+       33.350188,
+       35.1638321
+      ]
+     }
+    },
+    {
+     "type": "Feature",
+     "properties": {
+      "osm_type": "W",
+      "osm_id": 21114049,
+      "osm_key": "highway",
+      "osm_value": "residential",
+      "type": "street",
+      "name": "Εμμανουήλ Ροϊδη",
+      "district": "Agioi Omologites",
+      "city": "Agioi Omologites",
+      "county": "Nicosia Muncipality",
+      "state": "Cyprus",
+      "country": "Cyprus",
+      "postcode": "1095",
+      "countrycode": "CY",
+      "extent": [
+       33.3498682,
+       35.1651849,
+       33.3504986,
+       35.1645213
+      ]
+     },
+     "geometry": {
+      "type": "Point",
+      "coordinates": [
+       33.3501884,
+       35.164858
+      ]
+     }
+    },
+    {
+     "type": "Feature",
+     "properties": {
+      "osm_type": "W",
+      "osm_id": 21061124,
+      "osm_key": "highway",
+      "osm_value": "residential",
+      "type": "street",
+      "name": "Εμμανουήλ Ξάνθου",
+      "locality": "Makedonitissa",
+      "district": "Engomi",
+      "county": "Nicosia Muncipality",
+      "state": "Cyprus",
+      "country": "Cyprus",
+      "postcode": "2415",
+      "countrycode": "CY",
+      "extent": [
+       33.3095062,
+       35.1579849,
+       33.312801,
+       35.1552809
+      ]
+     },
+     "geometry": {
+      "type": "Point",
+      "coordinates": [
+       33.3102143,
+       35.1571564
+      ]
+     }
+    }
+   ]
+  },
+  "Theofanous Theodotou, Nicosia": {
+   "type": "FeatureCollection",
+   "features": [
+    {
+     "type": "Feature",
+     "properties": {
+      "osm_type": "W",
+      "osm_id": 184168390,
+      "osm_key": "highway",
+      "osm_value": "living_street",
+      "type": "street",
+      "name": "Theofanous Theodotou",
+      "locality": "Λαϊκή Γειτονιά",
+      "city": "Trypiotis",
+      "county": "Nicosia Muncipality",
+      "state": "Cyprus",
+      "country": "Cyprus",
+      "postcode": "1066",
+      "countrycode": "CY",
+      "extent": [
+       33.3588952,
+       35.1678515,
+       33.3591966,
+       35.1673993
+      ]
+     },
+     "geometry": {
+      "type": "Point",
+      "coordinates": [
+       33.3590459,
+       35.1676254
+      ]
+     }
+    },
+    {
+     "type": "Feature",
+     "properties": {
+      "osm_type": "W",
+      "osm_id": 1130925372,
+      "osm_key": "highway",
+      "osm_value": "pedestrian",
+      "type": "street",
+      "name": "Theofanous Theodotou",
+      "locality": "Λαϊκή Γειτονιά",
+      "city": "Trypiotis",
+      "county": "Nicosia Muncipality",
+      "state": "Cyprus",
+      "country": "Cyprus",
+      "postcode": "1066",
+      "countrycode": "CY",
+      "extent": [
+       33.3591966,
+       35.1684359,
+       33.3595851,
+       35.1678515
+      ]
+     },
+     "geometry": {
+      "type": "Point",
+      "coordinates": [
+       33.3593925,
+       35.1681427
+      ]
+     }
+    }
+   ]
+  },
+  "S//IP Club": {
+   "type": "FeatureCollection",
+   "features": [
+    {
+     "type": "Feature",
+     "properties": {
+      "osm_type": "N",
+      "osm_id": 5203105340,
+      "osm_key": "shop",
+      "osm_value": "beauty",
+      "type": "house",
+      "name": "Simneza S Beauty Club",
+      "street": "Şht. Sabahattin Kundak Sokak",
+      "locality": "Taşkınköy",
+      "district": "Taşkınköy",
+      "city": "Kızılbaş",
+      "county": "Lefkoşa District",
+      "state": "Northern Cyprus",
+      "country": "Cyprus",
+      "postcode": "99010",
+      "countrycode": "CY"
+     },
+     "geometry": {
+      "type": "Point",
+      "coordinates": [
+       33.3483461,
+       35.2052603
+      ]
+     }
+    },
+    {
+     "type": "Feature",
+     "properties": {
+      "osm_type": "W",
+      "osm_id": 537812892,
+      "osm_key": "club",
+      "osm_value": "jazz",
+      "type": "house",
+      "name": "Sarah's Jazz CLub",
+      "street": "Ξάνθης Ξενιέρου",
+      "locality": "Άγιος Αντώνιος",
+      "district": "Lykavitos",
+      "city": "Agios Antonios",
+      "county": "Nicosia Muncipality",
+      "state": "Cyprus",
+      "country": "Cyprus",
+      "postcode": "1015",
+      "countrycode": "CY",
+      "extent": [
+       33.3657684,
+       35.1699801,
+       33.3659168,
+       35.1698284
+      ]
+     },
+     "geometry": {
+      "type": "Point",
+      "coordinates": [
+       33.3658413,
+       35.16988
+      ]
+     }
+    },
+    {
+     "type": "Feature",
+     "properties": {
+      "osm_type": "N",
+      "osm_id": 13975234418,
+      "osm_key": "amenity",
+      "osm_value": "cafe",
+      "type": "house",
+      "name": "Sarah's Jazz Club",
+      "street": "Φανερωμένης",
+      "locality": "Faneromeni",
+      "city": "Faneromeni",
+      "county": "Nicosia Muncipality",
+      "state": "Cyprus",
+      "country": "Cyprus",
+      "postcode": "1011",
+      "countrycode": "CY"
+     },
+     "geometry": {
+      "type": "Point",
+      "coordinates": [
+       33.3624271,
+       35.1730915
+      ]
+     }
+    }
+   ]
+  }
+ }
+}

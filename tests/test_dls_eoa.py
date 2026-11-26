@@ -333,7 +333,8 @@ def test_my_location_is_a_place_once_shared(tmp_path, monkeypatch):
 
     ctx = tool_ctx(tmp_path, monkeypatch, [])
     res, err = run_tool(ctx, "where_am_i", {})
-    assert err and "locate button" in res["error"]
+    assert err and "hasn't shared a location" in res["error"]
+    assert res["_actions"] == ["share_location", "pick_on_map"]  # the page offers to share it
     ctx.user_location = user_location({"user_location": {"lat": LAT, "lon": LON,
                                                          "source": "set on the map"}})
     assert resolve_place(ctx, "My location")["lat"] == LAT

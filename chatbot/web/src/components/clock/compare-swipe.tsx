@@ -8,7 +8,6 @@ import { ChevronsLeftRightIcon } from "lucide-react"
 
 import { compareAt, compareName, fmtMoment, setSwipe, useClock } from "@/lib/clock"
 import { useGeometry } from "@/lib/geometry"
-import { STRIP_H } from "@/lib/layout"
 
 function Tag({ children, side }: { children: React.ReactNode; side: "left" | "right" }) {
   return (
@@ -32,7 +31,7 @@ export function CompareSwipe() {
 
   const left = g.rail + g.insets.left
   const width = Math.max(1, g.vw - left - g.insets.right)
-  const top = STRIP_H + g.insets.top
+  const top = g.insets.top
   const bottom = g.insets.bottom + 8
   const name = compareName(compare, other)
   const thenLabel = name === "last week" || name === "yesterday" ? `${name.replace(/^./, (c) => c.toUpperCase())}, ${fmtMoment(other)}` : fmtMoment(other)

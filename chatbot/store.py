@@ -11,6 +11,8 @@ import itertools
 import re
 import threading
 
+from chatbot import sources as data_sources
+
 # Colours per state, shared with the frontend legend. Chosen for contrast on light and dark maps.
 STATE_COLORS: dict[str, str] = {
     "on": "#f5b700", "off": "#64748b", "offline": "#dc2626", "unknown": "#a3a3a3",
@@ -23,6 +25,8 @@ STATE_COLORS: dict[str, str] = {
     "camera": "#0ea5e9",
     "dangerous": "#dc2626", "needs_repair": "#f59e0b", "you": "#3d8bff",
     "usual route": "#94a3b8",
+    # Places found on the web (locate_web_places): at the door, or only on their street.
+    "from the web": "#e046f0", "on its street": "#c9a3d6",
 }
 
 
@@ -41,13 +45,16 @@ class SessionStore:
     def add_layer(self, hint: str, features: list[dict], *, geometry: str,
                   title: str, legend: dict[str, str] | None = None,
                   value_fields: list[str] | None = None, frames: dict | None = None,
-                  count: int | None = None, street: dict | None = None) -> str:
+                  count: int | None = None, street: dict | None = None,
+                  sources: list[str] | None = None) -> str:
         """`frames` makes a time-lapse layer: per-frame states and values for each feature
         (and, optionally, `totals` per value field for the layer as a whole).
         `count` is what the legend counts, when that isn't one per feature (a building layer
         has a marker, a plot and footprints for each building).
         `street` ({"name", "coordinates": [[lon, lat], ...]}) is the street the layer is
-        about: the map highlights it under the features."""
+        about: the map highlights it under the features.
+        `sources` names where the data comes from (chatbot/sources.py); by default the sources
+        of the tool that made the layer."""
         ref = self._ref("L", hint)
         self.layers[ref] = {
             "type": "FeatureCollection",
@@ -55,7 +62,8 @@ class SessionStore:
             "meta": {"ref": ref, "title": title, "geometry": geometry,
                      "legend": legend or {}, "value_fields": value_fields or [],
                      "count": len(features) if count is None else count,
-                     "frames": len(frames["times"]) if frames else 0},
+                     "frames": len(frames["times"]) if frames else 0,
+                     "sources": data_sources.known(data_sources.current() if sources is None else sources)},
         }
         if frames:
             self.layers[ref]["frames"] = frames
@@ -64,11 +72,13 @@ class SessionStore:
         return ref
 
     def add_dataset(self, hint: str, rows: list[dict], *, title: str,
-                    link: dict | None = None) -> str:
+                    link: dict | None = None, sources: list[str] | None = None) -> str:
         """`link` names the field that ties a row to the map: {"key": "id"} matches feature ids,
-        {"key": "frame", "layer": ref} matches a time-lapse frame. Charts use it for highlights."""
+        {"key": "frame", "layer": ref} matches a time-lapse frame. Charts use it for highlights.
+        `sources` as for add_layer."""
         ref = self._ref("D", hint)
-        self.datasets[ref] = {"title": title, "rows": rows, "link": link}
+        self.datasets[ref] = {"title": title, "rows": rows, "link": link,
+                              "sources": data_sources.known(data_sources.current() if sources is None else sources)}
         return ref
 
 

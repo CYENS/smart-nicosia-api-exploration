@@ -1,14 +1,15 @@
-/* The city clock: one time control for the whole twin, across the top of the map. Live by
-   default; drag the track (or use the arrow keys) back to any moment the twin's memory holds.
+/* The city clock: one time control for the whole twin. Folded into the now line by default; shown,
+   it runs across the top of the open map. Live by default; drag the track (or use the arrow
+   keys) back to any moment the twin's memory holds.
    A replay from the chat is a range on it with play, pause and speed. Compare holds a second
    moment and splits the map with a swipe. */
 import {
-  ChevronDownIcon, ChevronUpIcon, ColumnsIcon, EllipsisIcon, FilmIcon, HistoryIcon, PauseIcon,
-  PlayIcon, RadioIcon, XIcon,
+  ChevronUpIcon, ColumnsIcon, EllipsisIcon, FilmIcon, HistoryIcon, PauseIcon, PlayIcon, RadioIcon,
+  XIcon,
 } from "lucide-react"
-import { useEffect, useRef, useState } from "react"
 
 import { ClockTrack } from "@/components/clock/track"
+import { CLOCK_ID } from "@/components/shell/now-line"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuLabel, DropdownMenuRadioGroup,
@@ -22,8 +23,7 @@ import {
   setSpan, togglePlay, useClock, type Compare, type Span,
 } from "@/lib/clock"
 import { useGeometry } from "@/lib/geometry"
-import { typing } from "@/lib/hooks"
-import { CLOCK_H, CLOCK_PILL_H, GAP, STRIP_H } from "@/lib/layout"
+import { CLOCK_H } from "@/lib/layout"
 import { useMapUi } from "@/lib/map/engine"
 import { cn } from "@/lib/utils"
 
@@ -182,12 +182,12 @@ function MoreMenu() {
   )
 }
 
-function LiveButton({ compact = false }: { compact?: boolean }) {
+function LiveButton() {
   const live = useClock((s) => s.at === null)
   if (live) return null
   return (
     <Tooltip>
-      <TooltipTrigger render={<Button size="sm" className={cn("h-7 gap-1.5 px-2.5", compact && "h-8")} onClick={() => { goLive(); focusClock(useClock.getState().expanded ? "track" : "toggle") }} />}>
+      <TooltipTrigger render={<Button size="sm" className="h-7 gap-1.5 px-2.5" onClick={() => { goLive(); focusClock(useClock.getState().expanded ? "track" : "toggle") }} />}>
         <RadioIcon data-icon="inline-start" />
         Back to live
       </TooltipTrigger>
@@ -220,40 +220,8 @@ function PlayButton() {
   )
 }
 
-// The clock's keys anywhere on the page: L goes back to live, T puts the keyboard on the track.
-function useClockKeys(root: React.RefObject<HTMLElement | null>) {
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (typing(e) || e.ctrlKey || e.metaKey || e.altKey) return
-      const k = e.key.toLowerCase()
-      if (k === "l" && useClock.getState().at !== null) { e.preventDefault(); goLive() }
-      else if (k === "t") {
-        e.preventDefault()
-        if (!useClock.getState().expanded) setExpanded(true)
-        requestAnimationFrame(() => root.current?.querySelector<HTMLInputElement>("input[type=range]")?.focus())
-      }
-    }
-    window.addEventListener("keydown", onKey)
-    return () => window.removeEventListener("keydown", onKey)
-  }, [root])
-}
-
-// What the clock says to a screen reader once it settles on a moment.
-function useAnnouncement() {
-  const at = useClock((s) => s.at)
-  const loading = useClock((s) => s.loading)
-  const strip = useClock((s) => s.strip)
-  const [text, setText] = useState("")
-  useEffect(() => {
-    const t = window.setTimeout(() => {
-      if (at === null) setText("Live: the twin shows now")
-      else if (!loading) setText(`Showing ${fmtMoment(at, { year: true })}${nothingRecorded(strip) ? ". The twin's memory holds nothing for this moment" : ""}`)
-    }, 700)
-    return () => window.clearTimeout(t)
-  }, [at, loading, strip])
-  return text
-}
-
+// The city clock's console: across the top of the open map, under the top band, while shown. The
+// now line (components/shell/now-line.tsx) is the clock folded up, and holds its keys.
 export function CityClock() {
   const g = useGeometry()
   const expanded = useClock((s) => s.expanded)
@@ -263,39 +231,25 @@ export function CityClock() {
   const compare = useClock((s) => s.compare)
   const other = useClock((s) => compareAt(s))
   const replay = useMapUi((s) => (range?.ref ? s.replays[range.ref] : null))
-  const root = useRef<HTMLElement>(null)
-  useClockKeys(root)
-  const said = useAnnouncement()
 
-  const place = { top: STRIP_H + (g.desktop ? GAP : 8), left: g.clockLeft, right: g.clockRight }
+  if (!expanded) return null
+  const place = { top: g.clockTop, left: g.clockLeft, right: g.clockRight }
   const vs = compareName(compare, other)
 
-  if (!expanded) {
-    return (
-      <div className="pointer-events-none absolute z-10 flex justify-center" style={place}>
-        <section ref={root} aria-label="City clock" className="panel-float pointer-events-auto flex items-center gap-2 rounded-xl py-1 pr-1 pl-3" style={{ height: CLOCK_PILL_H }}>
-          <MomentLabel />
-          {vs && <span className="hidden text-[12.5px] text-muted-foreground sm:inline">vs {vs}</span>}
-          <LiveButton />
-          <Tooltip>
-            <TooltipTrigger render={<Button data-clock-part="toggle" variant="ghost" size="icon-sm" aria-label="Show the city clock" aria-expanded={false} onClick={() => { setExpanded(true); focusClock("toggle") }} />}>
-              <ChevronDownIcon />
-            </TooltipTrigger>
-            <TooltipContent>Show the clock's track <Kbd>T</Kbd></TooltipContent>
-          </Tooltip>
-          <span className="sr-only" aria-live="polite">{said}</span>
-        </section>
-      </div>
-    )
-  }
-
   return (
-    <div className="pointer-events-none absolute z-10 flex justify-center" style={place}>
+    <div className="pointer-events-none absolute z-20 flex justify-center" style={place}>
       <section
-        ref={root}
+        id={CLOCK_ID}
         aria-label="City clock"
-        className="@container panel-float pointer-events-auto flex w-full max-w-[860px] flex-col justify-between rounded-xl px-2.5 pt-2 pb-1.5"
+        className="@container panel-float pointer-events-auto flex w-full max-w-[860px] flex-col justify-between rounded-xl px-2.5 pt-2 pb-1.5 motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-top-1"
         style={{ height: CLOCK_H }}
+        onKeyDown={(e) => {
+          if (e.key === "Escape" && !e.defaultPrevented && !(e.target as HTMLElement).closest("[role=menu]")) {
+            e.preventDefault()
+            setExpanded(false)
+            focusClock("toggle")
+          }
+        }}
       >
         <div className="flex h-[34px] min-w-0 items-center gap-1.5">
           <PlayButton />
@@ -324,18 +278,18 @@ export function CityClock() {
             )}
             <SpanToggle className="hidden @[640px]:flex" />
             <CompareMenu />
-            <LiveButton />
+            {/* On a desktop the now line keeps its Live button beside it; a phone's console stands in for the now line. */}
+            {!g.desktop && <LiveButton />}
             <MoreMenu />
             <Tooltip>
-              <TooltipTrigger render={<Button data-clock-part="toggle" variant="ghost" size="icon-sm" aria-label="Hide the clock's track" aria-expanded onClick={() => { setExpanded(false); focusClock("toggle") }} />}>
+              <TooltipTrigger render={<Button data-clock-part="toggle" variant="ghost" size="icon-sm" aria-label="Hide the city clock" aria-expanded onClick={() => { setExpanded(false); focusClock("toggle") }} />}>
                 <ChevronUpIcon />
               </TooltipTrigger>
-              <TooltipContent>Hide the clock's track</TooltipContent>
+              <TooltipContent>Hide the city clock <Kbd>Esc</Kbd></TooltipContent>
             </Tooltip>
           </div>
         </div>
         <ClockTrack />
-        <span className="sr-only" aria-live="polite">{said}</span>
       </section>
     </div>
   )

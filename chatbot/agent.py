@@ -1,7 +1,11 @@
 """The agent loop: stream a turn from Claude, run the tools it asks for, repeat until it answers.
 
 History is append-only (Sonnet 5.5 binds thinking blocks to the exact conversation), so the
-assistant content goes back unchanged and per-turn context rides in the user message.
+assistant content goes back unchanged and per-turn context rides in the user message. The one
+other change it allows is going back to where a turn started: a stopped or failed turn is
+taken out whole, and Retry or Edit replaces the latest turn. A prefix of the history is always a
+valid conversation (no tool_use without its tool_result, no half-streamed message), and the
+prompt cache keeps it, because the prefix is unchanged.
 """
 
 from __future__ import annotations
@@ -22,6 +26,7 @@ from chatbot.city import CityData
 from chatbot.dls import DLS
 from chatbot.entities import Entities
 from chatbot.eoa import Registry
+from chatbot.followups import TagFilter, merge_actions
 from chatbot.geo import Places
 from chatbot.memory import Memory
 from chatbot.mobility import Mobility
@@ -32,6 +37,7 @@ from chatbot.settings import TIMEZONE, Settings
 from chatbot.store import SessionStore
 from chatbot.tools import TOOL_DEFS, WEB_SEARCH, ToolContext, run_tool
 from chatbot.watch import Watcher
+from chatbot.webplaces import WebPlaces
 
 log = logging.getLogger(__name__)
 TZ = ZoneInfo(TIMEZONE)
@@ -43,9 +49,18 @@ class Conversation:
     def __init__(self, cid: str):
         self.id = cid
         self.messages: list[dict] = []
+        self.turns: list[int] = []  # where each finished turn starts in messages
+        self.runs: dict[str, asyncio.Task] = {}  # turns asked for and not yet over, by run id
         self.store = SessionStore()
         self.lock = asyncio.Lock()
         self.last_used = time.time()
+
+    def rewind(self, turn: int) -> None:
+        """Forget turn `turn` and every turn after it: the history goes back to where it
+        started. A turn that is already gone (stopped, failed) leaves nothing to forget."""
+        if 0 <= turn < len(self.turns):
+            del self.messages[self.turns[turn]:]
+            del self.turns[turn:]
 
 
 def user_location(context: dict | None) -> dict | None:
@@ -152,8 +167,9 @@ class Agent:
         self._client = client
         # Buses, stops and road speeds: one fetch of each feed for every page and answer.
         self.mobility = mobility or Mobility(settings, memory, router)
+        self.web_places = WebPlaces(places)  # places the answers found on the web, placed
         self.entities = Entities(city, places, dls, registers, memory,  # shared with the inspector
-                                 mobility=self.mobility)
+                                 mobility=self.mobility, web_places=self.web_places)
         self.moments = Moments(city, memory)  # the city at past moments, for the clock
         self.watcher = Watcher(city, memory)  # alerts, incidents and watches
         self.entities.watcher = self.watcher  # incidents open by their id (INC-12)
@@ -176,7 +192,23 @@ class Agent:
         return conv
 
     async def run_turn(self, conv: Conversation, text: str, context: dict | None,
-                       emit: Emit) -> None:
+                       emit: Emit, replace: int | None = None) -> None:
+        """One question and its answer. `replace` (a turn number) asks it in place of that turn
+        and every turn after it (Retry, Edit). A turn that is cancelled (Stop) or fails comes out
+        of the history whole, so the next one starts from the last finished turn."""
+        if replace is not None:
+            conv.rewind(replace)
+        turn = len(conv.turns)
+        conv.turns.append(len(conv.messages))
+        emit({"type": "turn", "index": turn})
+        try:
+            await self._turn(conv, text, context, emit)
+        except BaseException:  # CancelledError included: that is Stop
+            conv.rewind(turn)
+            raise
+
+    async def _turn(self, conv: Conversation, text: str, context: dict | None,
+                    emit: Emit) -> None:
         loop = asyncio.get_running_loop()
 
         def emit_threadsafe(event: dict) -> None:
@@ -186,14 +218,16 @@ class Agent:
                                emit_threadsafe, conv.id, self.dls, self.registers,
                                user_location(context), memory=self.memory,
                                entities=self.entities, moments=self.moments,
-                               mobility=self.mobility, watcher=self.watcher)
+                               mobility=self.mobility, web_places=self.web_places,
+                               watcher=self.watcher)
         conv.messages.append({"role": "user", "content": [
             {"type": "text", "text": format_context(context, self.city.now()) + text}]})
 
         json_retries = 0
+        offered: list[str] = []  # actions the tools asked the page to offer (share_location...)
         for _ in range(self.settings.max_steps):
             try:
-                final = await self._stream(conv, emit)
+                final, follow_ups = await self._stream(conv, emit)
             except ValueError:
                 # Tool input JSON the SDK couldn't parse at all (eager streaming): no tool_use
                 # block to answer, so re-issue the same request, a bounded number of times.
@@ -217,6 +251,13 @@ class Agent:
             if not tool_uses:
                 if final.stop_reason == "max_tokens":
                     emit({"type": "error", "message": "The answer was cut off (max_tokens)."})
+                else:  # only a finished answer offers what to ask and do next
+                    out = {k: v for k, v in follow_ups.items() if k != "do"}
+                    # The tools' actions come whether or not the model remembered its <do> tag.
+                    if do := merge_actions(offered, follow_ups.get("do")):
+                        out["do"] = do
+                    if out:
+                        emit({"type": "follow_ups", **out})
                 return
             if final.stop_reason == "max_tokens":
                 # A truncated tool input parses as a valid partial object; never run it.
@@ -226,11 +267,20 @@ class Agent:
                     for b in tool_uses]})
                 emit({"type": "error", "message": "The answer was cut off (max_tokens)."})
                 return
-            results = await asyncio.gather(*(self._run_tool(tool_ctx, b, emit) for b in tool_uses))
+            results = await asyncio.gather(*(self._run_tool(tool_ctx, b, emit, offered)
+                                             for b in tool_uses))
             conv.messages.append({"role": "user", "content": list(results)})
         emit({"type": "error", "message": f"Stopped after {self.settings.max_steps} steps."})
 
     async def _stream(self, conv: Conversation, emit: Emit):
+        """One request, streamed to the page. Returns the final message and the follow-ups
+        (`<next>`, `<choices>`) taken out of its text."""
+        tags = TagFilter()
+
+        def text_out(text: str) -> None:
+            if text:
+                emit({"type": "text", "text": text})
+
         async with self.client.beta.messages.stream(
             model=self.settings.model,
             max_tokens=self.settings.max_tokens,
@@ -244,6 +294,8 @@ class Agent:
             fallbacks="default",
         ) as stream:
             async for event in stream:
+                if event.type in ("content_block_start", "content_block_stop"):
+                    text_out(tags.flush())  # tags never span blocks
                 if event.type == "content_block_start":
                     b = event.content_block
                     if b.type in ("tool_use", "server_tool_use"):
@@ -260,16 +312,18 @@ class Agent:
                 elif event.type == "content_block_delta":
                     d = event.delta
                     if d.type == "text_delta":
-                        emit({"type": "text", "text": d.text})
+                        text_out(tags.feed(d.text))
                     elif d.type == "thinking_delta" and d.thinking:
                         emit({"type": "thinking", "text": d.thinking})
-            return await stream.get_final_message()
+            text_out(tags.flush())
+            return await stream.get_final_message(), tags.found
 
-    async def _run_tool(self, ctx: ToolContext, block, emit: Emit) -> dict:
+    async def _run_tool(self, ctx: ToolContext, block, emit: Emit, offered: list[str]) -> dict:
         result, is_error = await asyncio.to_thread(run_tool, ctx, block.name, block.input)
         summary = result.pop("_summary", None)
+        offered += result.pop("_actions", None) or []
         emit({"type": "tool_end", "id": block.id, "name": block.name, "ok": not is_error,
-              "summary": result.get("error", "")[:160] if is_error else (summary or "")})
+              "summary": (summary or result.get("error", "")[:160]) if is_error else (summary or "")})
         return {"type": "tool_result", "tool_use_id": block.id, "is_error": is_error,
                 "content": json.dumps(result, ensure_ascii=False, default=str)}
 

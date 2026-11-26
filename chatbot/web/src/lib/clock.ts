@@ -72,17 +72,19 @@ type ClockState = {
   compareStrip: Strip | null
   loading: boolean // the moment's data is on its way
   error: string | null
-  expanded: boolean // the full console, or the compact pill
+  expanded: boolean // the console shown, or folded into the now line
   swipe: number // where the compare swipe divides the open map, 0 to 1
 }
 
-const EXPANDED_KEY = "twin.clock.expanded"
+// Folded into the now line until someone opens it (then remembered on this device). A new key:
+// the old one remembered the console open, as it used to start.
+const EXPANDED_KEY = "twin.clock.shown"
 function readExpanded() {
   try {
     const v = localStorage.getItem(EXPANDED_KEY)
     if (v !== null) return v === "1"
   } catch { /* private mode */ }
-  return typeof window === "undefined" || window.innerWidth >= 768
+  return false
 }
 
 export const useClock = create<ClockState>(() => ({

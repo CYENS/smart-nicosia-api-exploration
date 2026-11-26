@@ -46,13 +46,17 @@ npm run build                     # writes chatbot/static (committed, see below)
 - `chatbot/web/src/lib/map/engine.ts` draws everything on the map; `lib/chat.ts` handles the
   stream and the stage; `lib/inspector.ts` the open thing; `lib/deeplink.ts` the URL;
   `lib/clock.ts` the city clock (the moment the whole twin shows, ranges, playback, compare);
-  `components/` holds the strip, rail, chat, stage, inspector, map panel and the clock. A new
+  `components/shell/` holds the calm layout (the ask bar, the topic chips and card, the now line,
+  the map's controls and the Layers sheet); `components/` also holds the chat, stage, inspector
+  and the clock. A new
   live layer, readout or chart follows the clock: read `useClock` (or `?at=` on the server)
   rather than assuming now.
   `TOOL_LABELS` in `lib/chat.ts` names each tool in the trace: add new tools there.
 - `chatbot/web/src/lib/registries/` is where page features plug in instead of editing shared
-  files: workspaces (the rail), inspector sections per kind, search providers (Ctrl K) and
-  map click handlers.
+  files: workspaces (opened from the Layers sheet, Ctrl K and Alt and a number), topics (the
+  chips, four at most, and sections on their cards), the Layers sheet's system layer rows,
+  inspector sections per kind, search providers (Ctrl K) and map click handlers. A new readout
+  goes into a topic card or a Layers sheet row, not across the top: the default screen stays calm.
 
 ## House rules for features
 
@@ -60,6 +64,10 @@ npm run build                     # writes chatbot/static (committed, see below)
   and a `data_ref`, a map style that shows it well, and lines in the system prompt on which
   visual fits which question. Map switches are a fallback for browsing without a key.
 - **Every number comes from a tool.** Charts are filled from a `data_ref` by the server.
+- **Say where it comes from.** Every new data source gets an entry in `chatbot/sources.py`
+  (publisher, licence, link, what it gives, a short map credit, and a freshness probe in
+  `chatbot/routes/sources.py` if it is a live feed), and every tool that reads it lists it in
+  `TOOL_SOURCES`, so its layers, charts and the data sources panel name it.
 - **Linking.** Rows that carry an `id` (device, building, entity) link charts to the map;
   temporal x axes follow the time line. Keep new datasets linkable.
 - **Be gentle with public services.** Cache (in `data/chatbot_cache/`), throttle, send the

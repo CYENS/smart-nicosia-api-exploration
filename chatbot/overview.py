@@ -30,18 +30,22 @@ log = logging.getLogger("chatbot")
 
 CITY_TTL_S = 60
 WEATHER_TTL_S = 15 * 60
+# A source that failed is asked again after this, however long its good answers are kept, so a
+# moment's outage (a DNS blip, a timeout) doesn't leave the strip without the weather for 15 min.
+FAILED_RETRY_S = 60
 
 _lock = threading.Lock()
-_cache: dict[str, tuple[float, Any]] = {}
+_cache: dict[str, tuple[float, Any]] = {}  # key -> (read at, value; None when the read failed)
 
 
 def cached(key: str, ttl_s: float, fn: Callable[[], Any],
            keep: Callable[[Any], bool] | None = None) -> Any:
-    """fn()'s value, reused for ttl_s. A failure is logged and kept as None for ttl_s too, so
-    a broken source isn't asked again on every request."""
+    """fn()'s value, reused for ttl_s. A failure is logged and kept as None for FAILED_RETRY_S
+    (or ttl_s if shorter), so a broken source isn't asked on every request, and one that was
+    down for a moment is read again a minute later."""
     with _lock:
         hit = _cache.get(key)
-        if hit and time.time() - hit[0] < ttl_s:
+        if hit and time.time() - hit[0] < (ttl_s if hit[1] is not None else min(ttl_s, FAILED_RETRY_S)):
             return hit[1]
     try:
         value = fn()
@@ -52,6 +56,14 @@ def cached(key: str, ttl_s: float, fn: Callable[[], Any],
         if keep is None or keep(value):
             _cache[key] = (time.time(), value)
     return value
+
+
+def last_read(key: str) -> tuple[float, bool] | None:
+    """When `cached(key, ...)` last read its source and whether that worked; None if never.
+    Never reads the source itself (for the data sources panel)."""
+    with _lock:
+        hit = _cache.get(key)
+    return (hit[0], hit[1] is not None) if hit else None
 
 
 def fresh(agent: Agent, device_type: str) -> Counter | None:
