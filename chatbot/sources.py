@@ -155,6 +155,9 @@ TOOL_SOURCES: dict[str, tuple[str, ...]] = {
     "get_departures": ("bus_timetable", "bus_live"),
     "plan_transit": ("bus_timetable", "bus_live", "valhalla"),
     "get_road_speeds": ("road_speeds",),
+    "list_incidents": ("twin_memory", "smart_nicosia"),
+    "explain_incident": ("twin_memory", "smart_nicosia", "open_meteo"),
+    "create_watch": ("smart_nicosia",),
 }
 
 _tool: ContextVar[str | None] = ContextVar("source_tool", default=None)
