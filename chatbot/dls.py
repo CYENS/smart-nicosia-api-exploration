@@ -290,6 +290,11 @@ class DLS:
         self._tile_locks: dict[tuple[int, int], threading.Lock] = {}
         self._by_id: dict[int, dict | None] = {}  # buildings looked up by id, outside a tile
 
+    @property
+    def throttle(self) -> Throttle:
+        """The pace of every request to DLS (the aerial photos share it: chatbot/imagery.py)."""
+        return self._throttle
+
     # -- requests ------------------------------------------------------------------------------
 
     def query(self, layer_url: str, params: dict) -> dict:

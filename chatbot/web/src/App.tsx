@@ -29,6 +29,7 @@ import { useGeometry } from "@/lib/geometry"
 import { useLayout } from "@/lib/layout"
 import { startCredits } from "@/lib/map/credits"
 import { initMap, setInsets } from "@/lib/map/engine"
+import { startGround } from "@/lib/map/ground"
 import "@/lib/mobility" // buses, stops and road speeds: their workspace, kinds, layers and commands
 import "@/lib/watch" // the incident inbox, its Layers row, marks on the clock, toasts from the live stream
 import "@/lib/environment" // sun, shade, terrain, air, noise and weather: workspace, spot, layers
@@ -64,6 +65,7 @@ export function App() {
     const link = parseHash(location.hash)
     initMap(mapEl.current!, link.camera)
     startCredits()
+    startGround()
     startDeepLinks(link)
     startClock()
   }, [])

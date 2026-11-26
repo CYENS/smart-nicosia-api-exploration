@@ -142,6 +142,15 @@ SOURCES: tuple[Source, ...] = (
         refresh="Fetched once per area, then kept",
         credit="Buildings: DLS Cyprus"),
     Source(
+        "dls_imagery", "DLS aerial photos", "the DLS aerial photos", "Department of Lands and Surveys, "
+        "Republic of Cyprus",
+        "The aerial photo of 2019 on the ground (about 7.5 cm a pixel), and the black and white "
+        "photos of 1993 and 1963 to compare the city with",
+        "Buildings", url="https://eservices.dls.moi.gov.cy/arcgis/rest/services/BASEMAPS",
+        licence="No terms of use stated by DLS: to be confirmed with DLS before public use",
+        refresh="Tiles fetched once as you move the map, then kept",
+        credit="Aerial photo: DLS Cyprus"),
+    Source(
         "registers", "Dangerous-building registers", "the ΕΟΑ registers", "District local government organisations (ΕΟΑ) "
         "of Nicosia, Limassol, Larnaca and Famagusta",
         "Buildings declared dangerous or in need of repair",

@@ -4,7 +4,7 @@
    puts the map back as it was. */
 import {
   ArrowRightIcon, ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon, ChevronUpIcon, EyeIcon,
-  MapIcon, RotateCwIcon, XIcon,
+  ImageIcon, MapIcon, RotateCwIcon, XIcon,
 } from "lucide-react"
 import { useEffect, useRef } from "react"
 
@@ -20,6 +20,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { fmtMoment, useClock } from "@/lib/clock"
 import { useGeometry } from "@/lib/geometry"
 import { GAP, PHONE_GAP, STRIP_H, useLayout } from "@/lib/layout"
+import { setGround, useGround } from "@/lib/map/ground"
 import { moonName, skyAt } from "@/lib/map/sky"
 import { bearingTo, compass, leaveView, look, nextView, toggleLookAround, useView } from "@/lib/view"
 
@@ -64,6 +65,7 @@ export function ViewCard() {
   const error = useView((s) => s.error)
   const clockAt = useClock((s) => s.at)
   const clockNote = useView((s) => s.clockNote)
+  const ground = useGround((s) => s.ground)
   const g = useGeometry()
   const box = useRef<HTMLElement>(null)
   const title = useRef<HTMLHeadingElement>(null)
@@ -194,12 +196,18 @@ export function ViewCard() {
                     </Toggle>
                   )}
                 </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Toggle variant="outline" pressed={ground === "photo"} onPressedChange={(p) => setGround(p ? "photo" : "map")}>
+                    <ImageIcon data-icon="inline-start" />
+                    Aerial photo
+                  </Toggle>
+                </div>
                 <p className="hidden text-[12px] text-muted-foreground md:block">Drag the map or use the arrow keys to look about.</p>
               </div>
             )}
           </>
         )}
-        {spec && <FromSources ids={["terrain_tiles", "dls", "openfreemap", ...(sky.dark ? ["smart_nicosia"] : [])]} />}
+        {spec && <FromSources ids={["terrain_tiles", "dls", "openfreemap", ...(ground === "photo" ? ["dls_imagery"] : []), ...(sky.dark ? ["smart_nicosia"] : [])]} />}
       </div>
 
       {spec && (

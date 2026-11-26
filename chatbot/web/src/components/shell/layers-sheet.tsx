@@ -4,7 +4,7 @@
    the workspaces; what the answers drew; and your position. A sheet that leaves the map usable
    beside it: the right column on a desktop, a bottom sheet on a phone. Esc or the close button
    gives the keyboard back to whatever opened it. */
-import { MoonIcon, NavigationIcon, SquareIcon, SunIcon, SunMoonIcon, XIcon, LocateFixedIcon } from "lucide-react"
+import { ImageIcon, LocateFixedIcon, MapIcon, MoonIcon, NavigationIcon, SquareIcon, SunIcon, SunMoonIcon, XIcon } from "lucide-react"
 import { useMemo, type KeyboardEvent, type ReactNode } from "react"
 
 import { useCameraAngles, set3dView } from "@/components/shell/map-controls"
@@ -24,6 +24,7 @@ import { useGeometry } from "@/lib/geometry"
 import { closeLayers, layersHandedOff, layersOpener, setLayersGroup, useLayersSheet } from "@/lib/layers-sheet"
 import { GAP, PHONE_GAP, STRIP_H, useLayout } from "@/lib/layout"
 import type { Basemap } from "@/lib/map/basemap"
+import { setGround, useGround, type Ground } from "@/lib/map/ground"
 import { skyAt } from "@/lib/map/sky"
 import {
   RAMP, REGISTERS_REF, flyRoute, fmt, forgetMyLocation, locateMe, nicosiaTime, removeLayer, setBasemapMode,
@@ -56,6 +57,8 @@ function MapSection() {
   const skyNow = useMapUi((s) => s.skyNow)
   const sky = useMemo(() => (clockAt === null ? skyNow : skyAt(new Date(clockAt))), [clockAt, skyNow])
   const { pitch } = useCameraAngles()
+  const ground = useGround((s) => s.ground)
+  const groundLoading = useGround((s) => s.loading)
   return (
     <Section title="Map">
       <FieldGroup className="gap-4">
@@ -78,6 +81,26 @@ function MapSection() {
             {mode === "auto"
               ? `Follows the sun${clockAt === null ? "" : " at the clock's moment"}: ${sky.dark ? "night" : "day"} until ${nicosiaTime(sky.next.at)}`
               : mode === "night" ? "Night, whatever the time" : "Day, whatever the time"}
+          </FieldDescription>
+        </Field>
+        <Field>
+          <FieldLabel id="ground-label">Ground</FieldLabel>
+          <ToggleGroup
+            aria-labelledby="ground-label"
+            variant="outline"
+            size="sm"
+            spacing={0}
+            className="w-full"
+            value={[ground]}
+            onValueChange={(v) => { if (v[0] && v[0] !== ground) setGround(v[0] as Ground) }}
+          >
+            <ToggleGroupItem value="map" className="flex-1"><MapIcon />Map</ToggleGroupItem>
+            <ToggleGroupItem value="photo" className="flex-1"><ImageIcon />Aerial photo</ToggleGroupItem>
+          </ToggleGroup>
+          <FieldDescription aria-live="polite">
+            {ground === "map"
+              ? "The base map's streets and fields"
+              : groundLoading ? "Loading the photo for this area" : "The DLS aerial photo of 2019, dimmed after dark"}
           </FieldDescription>
         </Field>
         <Field orientation="horizontal">

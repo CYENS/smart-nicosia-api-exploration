@@ -451,6 +451,17 @@ export function firstLabelLayer() {
   return firstBaseLayer("symbol")
 }
 
+// Where something that covers the ground goes (the aerial photo, lib/map/ground.ts): over the
+// base map's fields and streets, under its labels and 3D buildings, the streets' glow and
+// everything the twin draws.
+export function groundSlot() {
+  return map.getLayersOrder().find((id) => {
+    if (!isBase(id)) return true
+    const type = map.getLayer(id)?.type
+    return type === "symbol" || type === "fill-extrusion" || id.endsWith("street-glow")
+  })
+}
+
 // Paint that differs between the two base maps: both values are kept while a layer is on the
 // map, so a change of base map repaints it in place.
 type Themed = Record<string, Record<Basemap, any>>
@@ -2338,8 +2349,31 @@ function syncViewLights() {
 // The DLS buildings in a view: stone by day, as they look, rather than coloured by height.
 const VIEW_STONE = ["interpolate", ["linear"], ["get", "h"], 0, "#e9e4da", 20, "#ddd6c8", 60, "#cbc2b0"]
 
+// One-way arrows and road shields, repeated along every street. At eye level the base map's
+// z14 tiles are laid out for zoom 20 or more, and one of them would place tens of thousands of
+// these, past what MapLibre holds in a tile. They say nothing from the street anyway: in a view
+// they rest, and come back as they were after it.
+const viewHiddenSymbols = new Map<string, string>()
+
+function applyViewSymbols() {
+  for (const l of map.getStyle()?.layers || []) {
+    if (l.type !== "symbol" || !isBase(l.id)) continue
+    const layout = (l.layout ?? {}) as Record<string, unknown>
+    const alongLines = JSON.stringify(layout["symbol-placement"] ?? "point").includes("line")
+    if (!alongLines || !layout["icon-image"]) continue
+    if (viewFocus) {
+      if (!viewHiddenSymbols.has(l.id)) viewHiddenSymbols.set(l.id, String(layout.visibility ?? "visible"))
+      map.setLayoutProperty(l.id, "visibility", "none")
+    } else if (viewHiddenSymbols.has(l.id)) {
+      map.setLayoutProperty(l.id, "visibility", viewHiddenSymbols.get(l.id)!)
+    }
+  }
+  if (!viewFocus) viewHiddenSymbols.clear()
+}
+
 function applyViewBuildings() {
   if (!styleReady) return
+  applyViewSymbols()
   for (const l of map.getStyle()?.layers || []) {
     if (l.type !== "fill-extrusion" || !isBase(l.id)) continue
     const id = l.id

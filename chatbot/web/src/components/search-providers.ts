@@ -1,8 +1,8 @@
 /* The search menu's built-in providers: things opened lately, everything in the twin (from the
    server's caches), commands, and the prepared questions. */
 import {
-  Building2Icon, CopyIcon, DatabaseIcon, KeyboardIcon, LayersIcon, LocateFixedIcon, MessageSquareTextIcon, MoonIcon,
-  RotateCcwIcon, ShieldAlertIcon, SunIcon, SunMoonIcon, XIcon,
+  Building2Icon, CopyIcon, DatabaseIcon, ImageIcon, KeyboardIcon, LayersIcon, LocateFixedIcon, MapIcon,
+  MessageSquareTextIcon, MoonIcon, RotateCcwIcon, ShieldAlertIcon, SunIcon, SunMoonIcon, XIcon,
 } from "lucide-react"
 
 import { newChat, send } from "@/lib/chat"
@@ -13,6 +13,7 @@ import { searchOpenerElement, useLayout } from "@/lib/layout"
 import {
   flyToBounds, locateMe, resetView, setBasemapMode, setCity3d, showRegisters, useMapUi,
 } from "@/lib/map/engine"
+import { setGround, useGround } from "@/lib/map/ground"
 import { QUESTION_GROUPS } from "@/lib/questions"
 import { closeLayers, openLayers } from "@/lib/layers-sheet"
 import { cap } from "@/lib/readouts"
@@ -76,6 +77,9 @@ function commands(): SearchItem[] {
     },
     { key: "cmd:night", icon: MoonIcon, title: "Night base map", detail: "Whatever the time", run: () => setBasemapMode("night"), words: "dark base map" },
     { key: "cmd:day", icon: SunIcon, title: "Day base map", detail: "Whatever the time", run: () => setBasemapMode("day"), words: "light base map" },
+    useGround.getState().ground === "photo"
+      ? { key: "cmd:ground", icon: MapIcon, title: "Show the map on the ground", detail: "Instead of the aerial photo", run: () => setGround("map"), words: "ground streets base map" }
+      : { key: "cmd:ground", icon: ImageIcon, title: "Show the aerial photo on the ground", detail: "DLS, 2019", run: () => setGround("photo"), words: "ground photo satellite orthophoto imagery" },
     { key: "cmd:auto", icon: SunMoonIcon, title: "Base map follows the sun", detail: "Night from dusk to dawn", run: () => setBasemapMode("auto"), words: "auto" },
     { key: "cmd:locate", icon: LocateFixedIcon, title: "Locate me", detail: "Share this device's position with the assistant", run: locateMe, words: "where am i position gps" },
     {
