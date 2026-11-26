@@ -720,3 +720,36 @@ def test_shared_password_guards_the_site_only_when_set(monkeypatch):
     assert any(k == b"www-authenticate" and v.startswith(b"Basic") for k, v in denied["headers"])
     assert _call(guarded, [(b"authorization", _basic("x", "nope").encode())])[0]["status"] == 401
     assert _call(guarded, [(b"authorization", _basic("x", "s3cret").encode())])[0]["status"] == 200
+
+
+# -- the strip's cache --------------------------------------------------------------------------
+
+
+def test_a_failed_read_is_tried_again_after_a_minute_not_its_whole_ttl(monkeypatch):
+    # Regression: a DNS blip kept the weather off the strip for its whole 15 minutes.
+    from chatbot import overview
+
+    now = [1_000_000.0]
+    monkeypatch.setattr(overview.time, "time", lambda: now[0])
+    monkeypatch.setattr(overview, "_cache", {})
+    calls = []
+
+    def weather():
+        calls.append(now[0])
+        if len(calls) == 1:
+            raise OSError("nodename nor servname provided, or not known")
+        return {"temp_c": 20}
+
+    ttl = overview.WEATHER_TTL_S
+    assert overview.cached("weather", ttl, weather) is None
+    now[0] += overview.FAILED_RETRY_S - 1
+    assert overview.cached("weather", ttl, weather) is None and len(calls) == 1  # kept a while
+    now[0] += 2
+    assert overview.cached("weather", ttl, weather) == {"temp_c": 20} and len(calls) == 2
+    now[0] += ttl - 1
+    assert overview.cached("weather", ttl, weather) == {"temp_c": 20} and len(calls) == 2
+    assert overview.last_read("weather") == (calls[1], True)
+    # A source kept for less than the retry wait is retried on its own time, as before.
+    assert overview.cached("short", 10, lambda: None) is None
+    now[0] += 11
+    assert overview.cached("short", 10, lambda: "back") == "back"
