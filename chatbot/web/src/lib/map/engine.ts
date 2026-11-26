@@ -217,8 +217,9 @@ export function initMap(container: HTMLElement, camera?: Camera | null) {
   })
   ;(window as any).__map = map // a hook for scripted demos and browser tests (e.g. map.project)
   ;(window as any).__twin = { state, clock } // and what the map draws, for the same
-  map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), "bottom-right")
-  map.addControl(new maplibregl.ScaleControl({ unit: "metric" }), "bottom-left")
+  // Zoom, the 3D view and the compass are the page's own (components/shell/map-controls.tsx);
+  // the scale sits with the credits in the bottom-right corner.
+  map.addControl(new maplibregl.ScaleControl({ unit: "metric" }), "bottom-right")
   geolocate = new maplibregl.GeolocateControl({
     positionOptions: { enableHighAccuracy: true }, trackUserLocation: false, showUserLocation: false,
     fitBoundsOptions: { maxZoom: 16.5 },
