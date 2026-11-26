@@ -34,7 +34,7 @@ import {
 import { inspect } from "@/lib/inspector"
 import type { Basemap } from "@/lib/map/basemap"
 import {
-  cityBuildings, firstLabelLayer, getMap, onCityChange, onStyleReady, registerLayerRenderer, registerMapMenuItem,
+  cityBuildings, firstLabelLayer, getMap, onCityChange, onStyleReady, registerLayerRenderer,
   setCity3d, themedPaint, useMapUi, type LayerData,
 } from "@/lib/map/engine"
 import { skyAt } from "@/lib/map/sky"
@@ -892,8 +892,6 @@ export function openSpotAtCentre(opener?: HTMLElement | null) {
   const c = getMap().getCenter()
   openSpot(c.lat, c.lng, { opener })
 }
-
-registerMapMenuItem({ id: "spot", label: "What's it like here?", order: 10, run: (at) => openSpot(at.lat, at.lng) })
 
 // -- following the clock and the base map ----------------------------------------------------
 

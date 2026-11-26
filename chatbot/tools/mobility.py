@@ -13,7 +13,8 @@ from chatbot.mobility.gtfs import TZ, line_order, slice_shape
 from chatbot.mobility.realtime import delay_text
 from chatbot.mobility.roads import LEGEND, parse_moment, segment_feature, slowest
 from chatbot.store import point
-from chatbot.tools.base import NEAR, ToolContext, ToolError, ToolSet, local_now, my_location, obj, resolve_point
+from chatbot.tools.base import (NEAR, LocationNotShared, ToolContext, ToolError, ToolSet, local_now,
+                                my_location, obj, resolve_point)
 from chatbot.web import WebError
 
 log = logging.getLogger(__name__)
@@ -164,7 +165,8 @@ def h_get_departures(ctx: ToolContext, a: dict) -> dict:
         near = _near(ctx, a, 300)
         if near is None:
             if not ctx.user_location:
-                raise ToolError("give a stop or a place (near_place)")
+                raise LocationNotShared("give a stop or a place (near_place): the user hasn't "
+                                        "shared a location")
             loc = my_location(ctx)
             near = (loc["lat"], loc["lon"], loc["name"], float(a.get("radius_m") or 300))
         stops = [s for _, s in tt.near(near[0], near[1], near[3], limit=6)]
@@ -270,7 +272,7 @@ def h_plan_transit(ctx: ToolContext, a: dict) -> dict:
         loc = my_location(ctx)
         origin = (loc["lat"], loc["lon"], loc["name"])
     else:
-        raise ToolError("give from_place (the user hasn't shared a location)")
+        raise LocationNotShared("give from_place: the user hasn't shared a location")
     dest = resolve_point(ctx, a.get("to_place"), a.get("to_lat"), a.get("to_lon"))
     if origin is None or dest is None:
         raise ToolError("give both ends: from_place and to_place (or coordinates)")

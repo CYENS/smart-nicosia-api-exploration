@@ -1,13 +1,17 @@
 /* The conversation: turns streamed from /api/chat (Server-Sent Events), and the stage that holds
-   the charts and custom visuals they bring. Map commands go straight to the map engine. */
+   the charts and custom visuals they bring. Map commands go straight to the map engine.
+   The latest turn can be stopped while it runs, and asked again (Retry) or changed (Edit) once
+   it is over: the server takes it out of its history and the page takes out its charts and its
+   layers. */
 import { create } from "zustand"
 
+import { ACTIONS, knownActions } from "@/lib/actions"
 import type { ChartPayload } from "@/lib/charts"
 import { applyClockCommand, clockContext } from "@/lib/clock"
 import type { EntityRef } from "@/lib/entities"
 import { closeInspector, inspectId, inspectingRef } from "@/lib/inspector"
 import { useLayout } from "@/lib/layout"
-import { applyMapUi, mapContext, resetForNewChat } from "@/lib/map/engine"
+import { applyMapUi, mapContext, removeLayer, resetForNewChat } from "@/lib/map/engine"
 import type { VisualPayload } from "@/lib/visual"
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -29,6 +33,7 @@ export const TOOL_LABELS: Record<string, string> = {
   set_city_time: "Setting the city clock",
   get_buses: "Finding the buses on the road", get_departures: "Reading the departures",
   plan_transit: "Planning the bus trip", get_road_speeds: "Reading the road speeds",
+  locate_web_places: "Putting the web results on the map",
   sun_and_shade: "Reading the sun and shade", environment_surface: "Drawing the environment surface",
 }
 
@@ -36,8 +41,10 @@ export function toolLabel(name: string) {
   return TOOL_LABELS[name] ?? name.replace(/_/g, " ").replace(/^./, (c) => c.toUpperCase())
 }
 
+export type StepStatus = "running" | "ok" | "bad" | "stopped"
+
 export type TraceItem =
-  | { type: "step"; id: string; name: string; status: "running" | "ok" | "bad"; summary?: string; startedAt: number; ms?: number }
+  | { type: "step"; id: string; name: string; status: StepStatus; summary?: string; startedAt: number; ms?: number }
   | { type: "thinking"; text: string }
 
 export type Part =
@@ -51,10 +58,16 @@ export type Turn = {
   question: string
   subject?: EntityRef // the thing the question was asked about (a chip in the composer)
   parts: Part[]
-  status: "running" | "done"
+  status: "running" | "done" | "stopped"
   startedAt: number
   endedAt?: number
   usage: { input: number; output: number; cacheRead: number }
+  index?: number // the server's number for this turn: Retry and Edit replace it
+  run?: string // the server's id for this run of it: Stop names it
+  next?: string[] // suggested next questions, written by the model with the answer
+  choices?: string[] // the options, when the answer is a clarifying question
+  actions?: string[] // what the page can do for it (lib/actions.ts): share the location...
+  layers: string[] // the map layers it drew, to take off the map when it is replaced
 }
 
 type ChatState = {
@@ -117,6 +130,13 @@ function handleEvent(turnId: string, ev: any) {
   switch (ev.type) {
     case "conversation":
       useChat.setState({ conversationId: ev.id })
+      updateTurn(turnId, (t) => ({ ...t, run: ev.run }))
+      break
+    case "turn":
+      updateTurn(turnId, (t) => ({ ...t, index: ev.index }))
+      break
+    case "follow_ups":
+      updateTurn(turnId, (t) => ({ ...t, next: ev.next, choices: ev.choices, actions: knownActions(ev.do) }))
       break
     case "text":
       updateTurn(turnId, (t) => withLastPart(t, "text", () => ({ kind: "text", text: "" }), (p) => ({ ...p, text: p.text + ev.text })))
@@ -154,7 +174,7 @@ function handleEvent(turnId: string, ev: any) {
         const item: StageItem = {
           id: nextId("v"), turnId, title: ev.title, kind: ev.action,
           ...(ev.action === "chart"
-            ? { chart: { title: ev.title, spec: ev.spec, link: ev.link, time_field: ev.time_field, scrub: ev.scrub } }
+            ? { chart: { title: ev.title, spec: ev.spec, link: ev.link, time_field: ev.time_field, scrub: ev.scrub, sources: ev.sources } }
             : { visual: ev as VisualPayload }),
         }
         useStage.setState((s) => ({ items: [...s.items, item], focusId: item.id, open: true }))
@@ -164,6 +184,9 @@ function handleEvent(turnId: string, ev: any) {
       } else if (ev.action === "inspect") {
         inspectId(String(ev.id), { at: ev.at ?? undefined, fly: ev.fly !== false })
       } else {
+        if (ev.action === "show_layer" && ev.layer?.ref) {
+          updateTurn(turnId, (t) => ({ ...t, layers: [...t.layers, String(ev.layer.ref)] }))
+        }
         applyMapUi(ev, (text) => note(turnId, text, true))
       }
       break
@@ -186,21 +209,53 @@ function handleEvent(turnId: string, ev: any) {
   }
 }
 
-export async function send(text: string, opts: { subject?: EntityRef | null } = {}) {
-  const { busy, conversationId } = useChat.getState()
+// The turn being answered: its fetch, so Stop can abort it.
+let running: { turnId: string; controller: AbortController } | null = null
+
+// Steps still running when a turn ends were cut short.
+function settle(parts: Part[]): Part[] {
+  return parts.map((p) => p.kind !== "trace" || !p.items.some((i) => i.type === "step" && i.status === "running") ? p : {
+    ...p,
+    items: p.items.map((i) => i.type === "step" && i.status === "running" ? { ...i, status: "stopped" as const } : i),
+  })
+}
+
+// What a replaced turn put on the page goes with it: its charts leave the stage and its layers
+// leave the map (unless another turn drew the same layer). The new turn takes the old one's id
+// and place (in send), so the conversation refills that row instead of jumping elsewhere.
+function clearTurn(turn: Turn) {
+  const others = useChat.getState().turns.filter((t) => t.id !== turn.id)
+  const kept = new Set(others.flatMap((t) => t.layers))
+  for (const ref of new Set(turn.layers)) if (!kept.has(ref)) removeLayer(ref)
+  useStage.setState((s) => {
+    const items = s.items.filter((i) => i.turnId !== turn.id)
+    if (items.length === s.items.length) return s
+    const focusId = items.some((i) => i.id === s.focusId) ? s.focusId : (items[items.length - 1]?.id ?? null)
+    return { items, focusId, open: s.open && items.length > 0, expanded: s.expanded && items.length > 0 }
+  })
+}
+
+export async function send(text: string, opts: { subject?: EntityRef | null; replace?: Turn } = {}) {
+  const { busy } = useChat.getState()
   if (busy || !text.trim()) return
+  const { replace } = opts
+  if (replace) clearTurn(replace)
+  const { conversationId } = useChat.getState()
   const subject = opts.subject ?? undefined
   const turn: Turn = {
-    id: nextId("t"), question: text.trim(), subject, parts: [], status: "running",
-    startedAt: performance.now(), usage: { input: 0, output: 0, cacheRead: 0 },
+    id: replace?.id ?? nextId("t"), question: text.trim(), subject, parts: [], status: "running",
+    startedAt: performance.now(), usage: { input: 0, output: 0, cacheRead: 0 }, layers: [],
   }
-  useChat.setState((s) => ({ busy: true, turns: [...s.turns, turn] }))
+  const controller = new AbortController()
+  running = { turnId: turn.id, controller }
+  useChat.setState((s) => ({ busy: true, turns: [...s.turns.filter((t) => t.id !== replace?.id), turn] }))
   try {
     const context = { ...mapContext(), clock: clockContext(), inspecting: inspectingRef(), subject: subject ?? null }
     const res = await fetch("/api/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message: turn.question, conversation_id: conversationId, context }),
+      body: JSON.stringify({ message: turn.question, conversation_id: conversationId, context, replace_turn: replace?.index ?? null }),
+      signal: controller.signal,
     })
     if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`)
     const reader = res.body.getReader()
@@ -220,11 +275,66 @@ export async function send(text: string, opts: { subject?: EntityRef | null } = 
       }
     }
   } catch (e) {
-    note(turn.id, `Connection problem: ${(e as Error).message}`, true)
+    if (!controller.signal.aborted) note(turn.id, `Connection problem: ${(e as Error).message}`, true)
   } finally {
-    updateTurn(turn.id, (t) => ({ ...t, status: "done", endedAt: performance.now() }))
+    const stopped = controller.signal.aborted
+    updateTurn(turn.id, (t) => ({ ...t, status: stopped ? "stopped" : "done", endedAt: performance.now(), parts: settle(t.parts) }))
+    if (running?.turnId === turn.id) running = null
     useChat.setState({ busy: false })
   }
+}
+
+// Stop the answer being written. The page keeps what came so far; the server forgets the turn.
+export function stop() {
+  if (!running) return
+  const { turnId, controller } = running
+  const { conversationId, turns } = useChat.getState()
+  const run = turns.find((t) => t.id === turnId)?.run
+  controller.abort()
+  // Closing the stream stops the turn too, but only once the server next writes to it.
+  if (conversationId && run) fetch(`/api/stop/${conversationId}/${run}`, { method: "POST" }).catch(() => {})
+}
+
+// Ask the latest question again, in place of its answer.
+export function retry(turn: Turn) {
+  return send(turn.question, { subject: turn.subject, replace: turn })
+}
+
+// An action chip. When it gave the turn what it was missing (the location), the turn's question
+// is asked again in its place, so the answer just appears and the history stays clean. When it
+// fails, the turn says why and offers what to do instead.
+export async function runAction(turnId: string, key: string, opts: { opener?: HTMLElement | null; keyboard?: boolean } = {}) {
+  const action = ACTIONS[key]
+  if (!action) return
+  const outcome = await action.run(opts.opener ?? null)
+  const { turns, busy } = useChat.getState()
+  const turn = turns.find((t) => t.id === turnId)
+  if (!turn) return
+  if (outcome === "continue") {
+    if (busy || turns[turns.length - 1] !== turn) return // they asked something else meanwhile
+    void retry(turn)
+    if (opts.keyboard) focusComposer()
+  } else if (outcome === "cancelled") {
+    if (opts.opener?.isConnected) opts.opener.focus()
+  } else if (outcome !== "done") {
+    note(turnId, outcome.failed, false)
+    updateTurn(turnId, (t) => ({
+      ...t,
+      actions: [...outcome.offer, ...(t.actions ?? []).filter((k) => k !== key && !outcome.offer.includes(k))],
+    }))
+    // The chip that failed is gone: the keyboard goes to what replaced it.
+    if (opts.keyboard) requestAnimationFrame(() => document.querySelector<HTMLElement>(`[data-action="${outcome.offer[0]}"]`)?.focus())
+  }
+}
+
+// Ask a changed question in place of the latest one.
+export function edit(turn: Turn, text: string) {
+  return send(text, { subject: turn.subject, replace: turn })
+}
+
+// The answer as markdown, for Copy: the text the user read, without the trace or the tags.
+export function answerText(turn: Turn) {
+  return turn.parts.flatMap((p) => (p.kind === "text" && p.text.trim() ? [p.text.trim()] : [])).join("\n\n")
 }
 
 export function newChat() {
@@ -241,6 +351,11 @@ export function newChat() {
 // The composer's chip: the thing the next question is about ("Ask about this" in the inspector).
 type ComposerState = { subject: EntityRef | null; focusAt: number }
 export const useComposer = create<ComposerState>(() => ({ subject: null, focusAt: 0 }))
+
+// Put the keyboard in the composer (after a turn the keyboard was in went away).
+export function focusComposer() {
+  useComposer.setState({ focusAt: Date.now() })
+}
 
 export function askAbout(ref: EntityRef) {
   useComposer.setState({ subject: ref, focusAt: Date.now() })

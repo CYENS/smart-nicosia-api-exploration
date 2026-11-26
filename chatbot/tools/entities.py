@@ -13,14 +13,15 @@ tool = TOOLS.tool
 ID = {"type": "string",
       "description": "The thing's id as the tools give it: a device (YL1015 street light, YP974 "
                      "parking bay, YW1394 bin, an air station's or camera's name), a register "
-                     "building (NIC-409, LIM-12, LAR-120, FAM-15B-3), a DLS 3D building (B255563) "
-                     "or an OpenStreetMap place (n219329628)."}
+                     "building (NIC-409, LIM-12, LAR-120, FAM-15B-3), a DLS 3D building (B255563), "
+                     "an OpenStreetMap place (n219329628) or a place found on the web "
+                     "(web-1a2b3c4d)."}
 
 
 def entities_of(ctx: ToolContext) -> Entities:
     if ctx.entities is None:
         ctx.entities = Entities(ctx.city, ctx.places, ctx.dls, ctx.registers, ctx.memory,
-                                mobility=ctx.mobility)
+                                mobility=ctx.mobility, web_places=ctx.web_places)
     return ctx.entities
 
 

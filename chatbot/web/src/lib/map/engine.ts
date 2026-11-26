@@ -32,6 +32,7 @@ export type LayerSpec = {
   ref: string; url?: string; style: string; title: string; count: number
   legend?: Record<string, string>; value_field?: string | null; fit?: boolean; labels?: boolean
   askedAt?: number
+  sources?: string[] // where its data comes from (lib/sources.ts)
 }
 type Entry = {
   spec: LayerSpec; data: FC; ids: string[]; stats: Stats | null; half?: number
@@ -93,6 +94,7 @@ export type LayerSummary = {
   renderer: string | null // the feature drawing it its own way, which may give its own legend
   legend: Record<string, string>; stats: Stats | null; valueField: string | null
   street: { name: string; follows: string | null } | null // `follows`: the total its glow tracks
+  sources: string[] // where its data comes from (lib/sources.ts)
 }
 // What a time-lapse layer reads at the clock's moment, e.g. "2,716 people" (null outside it).
 export type ReplayUi = { ref: string; title: string; frame: number | null; frames: number; reading: string | null }
@@ -108,6 +110,7 @@ type MapUi = {
   registers: { on: boolean; status: string }
   replays: Record<string, ReplayUi> // every time-lapse layer on the map, by ref
   me: { loc: MyLocation | null; error: string }
+  picking: boolean // the next map click is the user's position ("Pick my spot on the map")
   flying: string | null // the route the camera is flying along
 }
 export type MyLocation = { lat: number; lon: number; accuracy_m: number | null; source: string }
@@ -123,6 +126,7 @@ export const useMapUi = create<MapUi>(() => ({
   registers: { on: false, status: "" },
   replays: {},
   me: { loc: null, error: "" },
+  picking: false,
   flying: null,
 }))
 const setUi = useMapUi.setState
@@ -201,11 +205,12 @@ export function initMap(container: HTMLElement, camera?: Camera | null) {
     container,
     ...(camera ?? HOME),
     maxPitch: 75,
-    attributionControl: { compact: true },
+    attributionControl: false, // lib/map/credits.ts adds it, with the sources of what is drawn
   })
   // A click opens what is under it in the inspector. The box around the pointer catches the
   // small dots (a lamp is a few pixels across); what lies right under the pointer wins.
   map.on("click", (e) => {
+    if (pickDone) { endPick({ lat: e.lngLat.lat, lon: e.lngLat.lng }); return } // the user's spot
     const layers = map.getLayersOrder().filter(clickableLayer)
     if (!layers.length) return
     const { x, y } = e.point
@@ -216,8 +221,9 @@ export function initMap(container: HTMLElement, camera?: Camera | null) {
   })
   ;(window as any).__map = map // a hook for scripted demos and browser tests (e.g. map.project)
   ;(window as any).__twin = { state, clock } // and what the map draws, for the same
-  map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), "bottom-right")
-  map.addControl(new maplibregl.ScaleControl({ unit: "metric" }), "bottom-left")
+  // Zoom, the 3D view and the compass are the page's own (components/shell/map-controls.tsx);
+  // the scale sits with the credits in the bottom-right corner.
+  map.addControl(new maplibregl.ScaleControl({ unit: "metric" }), "bottom-right")
   geolocate = new maplibregl.GeolocateControl({
     positionOptions: { enableHighAccuracy: true }, trackUserLocation: false, showUserLocation: false,
     fitBoundsOptions: { maxZoom: 16.5 },
@@ -225,8 +231,14 @@ export function initMap(container: HTMLElement, camera?: Camera | null) {
   map.addControl(geolocate, "bottom-right")
   geolocate.on("geolocate", (pos: GeolocationPosition) => setMyLocation(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy, "device location"))
   geolocate.on("error", () => setUi({ me: { loc: useMapUi.getState().me.loc, error: "Couldn't read your location here. Right-click the map where you are instead." } }))
-  map.on("contextmenu", (e) => openMapMenu(e.lngLat))
-  watchLongPress()
+  map.on("contextmenu", (e) => {
+    const button = document.createElement("button")
+    button.type = "button"
+    button.className = "me-btn"
+    button.textContent = "I'm here"
+    const popup = new maplibregl.Popup({ closeButton: false, offset: 6 }).setLngLat(e.lngLat).setDOMContent(button).addTo(map)
+    button.addEventListener("click", () => { setMyLocation(e.lngLat.lat, e.lngLat.lng, NaN, "set on the map"); popup.remove() })
+  })
   // A page opened in a hidden tab measures a 0-size container; keep the canvas in step.
   new ResizeObserver(() => map.resize()).observe(container)
 
@@ -611,82 +623,6 @@ export function resetView() {
 let geolocate: maplibregl.GeolocateControl
 let meMarker: maplibregl.Marker | null = null
 
-// What a right click (or a long press on a touch screen) on the map offers: "I'm here", and
-// what features add (the environment's "What's it like here?"). A small menu at the point:
-// the arrow keys move between its items, Enter runs one, Esc closes it and gives the keyboard
-// back to the map.
-export type MapMenuItem = { id: string; label: string; order: number; run: (at: { lng: number; lat: number }) => void }
-const menuItems: MapMenuItem[] = [
-  { id: "me", label: "I'm here", order: 90, run: (at) => setMyLocation(at.lat, at.lng, NaN, "set on the map") },
-]
-export function registerMapMenuItem(item: MapMenuItem) {
-  const i = menuItems.findIndex((x) => x.id === item.id)
-  if (i >= 0) menuItems.splice(i, 1)
-  menuItems.push(item)
-  menuItems.sort((a, b) => a.order - b.order)
-}
-
-let menuPopup: maplibregl.Popup | null = null
-export function openMapMenu(at: { lng: number; lat: number }) {
-  menuPopup?.remove()
-  const menu = document.createElement("div")
-  menu.className = "map-menu"
-  menu.setAttribute("role", "menu")
-  menu.setAttribute("aria-label", "This place on the map")
-  const buttons = menuItems.map((item, k) => {
-    const b = document.createElement("button")
-    b.type = "button"
-    b.className = k === 0 ? "map-menu-item map-menu-first" : "map-menu-item"
-    b.setAttribute("role", "menuitem")
-    b.tabIndex = k === 0 ? 0 : -1
-    b.textContent = item.label
-    b.addEventListener("click", () => { close(false); item.run(at) })
-    menu.appendChild(b)
-    return b
-  })
-  const popup = new maplibregl.Popup({ closeButton: false, offset: 6, className: "map-menu-popup" })
-    .setLngLat([at.lng, at.lat]).setDOMContent(menu).addTo(map)
-  menuPopup = popup
-  function close(refocus: boolean) {
-    popup.remove()
-    if (menuPopup === popup) menuPopup = null
-    if (refocus) map.getCanvas().focus({ preventScroll: true })
-  }
-  menu.addEventListener("keydown", (e) => {
-    const i = buttons.indexOf(document.activeElement as HTMLButtonElement)
-    const j = e.key === "ArrowDown" ? (i + 1) % buttons.length
-      : e.key === "ArrowUp" ? (i - 1 + buttons.length) % buttons.length
-        : e.key === "Home" ? 0 : e.key === "End" ? buttons.length - 1 : null
-    if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); close(true); return }
-    if (e.key === "Tab") { close(true); return }
-    if (j === null) return
-    e.preventDefault()
-    buttons.forEach((b, k) => { b.tabIndex = k === j ? 0 : -1 })
-    buttons[j].focus()
-  })
-  requestAnimationFrame(() => buttons[0]?.focus({ preventScroll: true }))
-}
-
-// A finger held still on the map for half a second opens the same menu.
-function watchLongPress() {
-  let timer: number | undefined
-  let start: { x: number; y: number } | null = null
-  const cancel = () => { window.clearTimeout(timer); start = null }
-  map.on("touchstart", (e) => {
-    cancel()
-    if ((e.originalEvent as TouchEvent).touches.length !== 1) return
-    start = { x: e.point.x, y: e.point.y }
-    const at = { lng: e.lngLat.lng, lat: e.lngLat.lat }
-    timer = window.setTimeout(() => { start = null; openMapMenu(at) }, 550)
-  })
-  map.on("touchmove", (e) => {
-    if (start && Math.hypot(e.point.x - start.x, e.point.y - start.y) > 10) cancel()
-  })
-  map.on("touchend", cancel)
-  map.on("touchcancel", cancel)
-  map.on("movestart", cancel)
-}
-
 export function setMyLocation(lat: number, lon: number, accuracy: number, source: string) {
   const loc = { lat, lon, accuracy_m: Number.isFinite(accuracy) ? Math.round(accuracy) : null, source }
   if (!meMarker) {
@@ -708,6 +644,50 @@ export function forgetMyLocation() {
 
 export function locateMe() {
   geolocate.trigger()
+}
+
+// Ask the browser for the device's position (the click that calls this is the user gesture it
+// wants). Resolves "ok" once the position is set, or why it isn't.
+export function requestMyLocation(timeoutMs = 15e3): Promise<"ok" | "denied" | "unavailable" | "timeout"> {
+  if (!("geolocation" in navigator) || !geolocate) return Promise.resolve("unavailable")
+  return new Promise((resolve) => {
+    const finish = (r: "ok" | "denied" | "unavailable" | "timeout") => {
+      window.clearTimeout(timer)
+      geolocate.off("geolocate", ok)
+      geolocate.off("error", bad)
+      resolve(r)
+    }
+    const ok = () => finish("ok")
+    const bad = (e?: GeolocationPositionError) => finish(e?.code === 1 ? "denied" : "unavailable")
+    const timer = window.setTimeout(() => finish("timeout"), timeoutMs)
+    geolocate.on("geolocate", ok)
+    geolocate.on("error", bad)
+    if (!geolocate.trigger()) finish("unavailable")
+  })
+}
+
+// "Pick my spot on the map": the next click on the map sets the user's position, as "I'm here"
+// does. useMapUi's `picking` shows the hint (components/chat/pick-hint.tsx), which also offers
+// the map's centre (for the keyboard) and Cancel; Esc cancels. Resolves with the point or null.
+let pickDone: ((p: { lat: number; lon: number } | null) => void) | null = null
+
+export function pickMyLocation(): Promise<{ lat: number; lon: number } | null> {
+  endPick(null) // one pick at a time
+  map.getCanvasContainer().style.cursor = "crosshair"
+  setUi({ picking: true })
+  return new Promise((resolve) => { pickDone = resolve })
+}
+
+export function endPick(p: { lat: number; lon: number } | "centre" | null) {
+  const done = pickDone
+  if (!done) return
+  pickDone = null
+  map.getCanvasContainer().style.cursor = ""
+  setUi({ picking: false })
+  const c = map.getCenter()
+  const at = p === "centre" ? { lat: c.lat, lon: c.lng } : p
+  if (at) setMyLocation(at.lat, at.lon, NaN, "set on the map")
+  done(at)
 }
 
 // The Venetian walls: a faint sodium ring that keeps the old town readable at any zoom.
@@ -1088,6 +1068,7 @@ function publishLayers() {
         renderer: entry.renderer?.id ?? null,
         legend: entry.legendNow ?? spec.legend ?? {}, stats, valueField: spec.value_field ?? null,
         street: data.street ? { name: data.street.name, follows: totalsOf(entry)?.field ?? null } : null,
+        sources: spec.sources ?? [],
       }
     }),
   })

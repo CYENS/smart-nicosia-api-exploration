@@ -1,10 +1,10 @@
-import { ArrowUpIcon, SearchIcon, XIcon } from "lucide-react"
+import { ArrowUpIcon, SearchIcon, SquareIcon, XIcon } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupTextarea } from "@/components/ui/input-group"
 import { Kbd } from "@/components/ui/kbd"
-import { Spinner } from "@/components/ui/spinner"
-import { send, useChat, useComposer } from "@/lib/chat"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
+import { send, stop, useChat, useComposer } from "@/lib/chat"
 import { kindMeta, type EntityRef } from "@/lib/entities"
 import { openSearch, useLayout } from "@/lib/layout"
 
@@ -98,16 +98,36 @@ export function Composer() {
             Search
             <Kbd className="max-md:hidden">{MOD_KEY} K</Kbd>
           </InputGroupButton>
-          <InputGroupButton
-            type="submit"
-            variant="default"
-            size="icon-sm"
-            className="rounded-lg"
-            disabled={busy || !text.trim()}
-            aria-label={busy ? "Working" : "Send"}
-          >
-            {busy ? <Spinner /> : <ArrowUpIcon />}
-          </InputGroupButton>
+          {busy ? (
+            // While it answers, Send becomes Stop; the keyboard stays in the field to ask again.
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <InputGroupButton
+                    variant="default"
+                    size="icon-sm"
+                    className="rounded-lg"
+                    aria-label="Stop answering"
+                    onClick={() => { stop(); ref.current?.focus() }}
+                  />
+                }
+              >
+                <SquareIcon className="fill-current" />
+              </TooltipTrigger>
+              <TooltipContent>Stop answering</TooltipContent>
+            </Tooltip>
+          ) : (
+            <InputGroupButton
+              type="submit"
+              variant="default"
+              size="icon-sm"
+              className="rounded-lg"
+              disabled={!text.trim()}
+              aria-label="Send"
+            >
+              <ArrowUpIcon />
+            </InputGroupButton>
+          )}
         </InputGroupAddon>
       </InputGroup>
     </form>
