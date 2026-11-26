@@ -11,6 +11,7 @@ export type SearchItem = {
   color?: string // a status dot beside the title
   group?: string // overrides the provider's heading
   disabled?: boolean
+  opens?: boolean // opens something that takes the keyboard (the inspector): focus goes there
   run: () => void
 }
 

@@ -171,29 +171,39 @@ function RelationRow({ r }: { r: Relation }) {
       <ItemDescription className="line-clamp-1 text-[12.5px]">{detail}</ItemDescription>
     </ItemContent>
   )
+  // A list item that holds a button (the button keeps its role, so it is announced as one).
   if (r.id) {
     return (
-      <Item
-        size="xs"
-        role="listitem"
-        className="cursor-pointer text-left hover:bg-accent/60"
-        render={<button type="button" onClick={() => inspect({ id: r.id!, at: r.lon !== undefined ? [r.lon, r.lat!] : undefined }, { fly: true, focus: true })} />}
-      >
-        {media}{body}
-        <ItemActions><ChevronRightIcon className="size-4 text-muted-foreground" /></ItemActions>
-      </Item>
+      <div role="listitem">
+        <Item
+          size="xs"
+          className="cursor-pointer text-left hover:bg-accent/60"
+          render={<button type="button" onClick={() => inspect({ id: r.id!, at: r.lon !== undefined ? [r.lon, r.lat!] : undefined }, { fly: true, focus: true })} />}
+        >
+          {media}{body}
+          <ItemActions><ChevronRightIcon className="size-4 text-muted-foreground" aria-hidden="true" /></ItemActions>
+        </Item>
+      </div>
     )
   }
   if (r.relation === "street" && r.name) {
     return (
-      <Item size="xs" role="listitem" className="cursor-pointer text-left hover:bg-accent/60" render={<button type="button" onClick={() => openSearch(r.name!)} />}>
-        {media}{body}
-        <ItemActions><SearchIcon className="size-4 text-muted-foreground" aria-label="Search this street" /></ItemActions>
-      </Item>
+      <div role="listitem">
+        <Item
+          size="xs"
+          className="cursor-pointer text-left hover:bg-accent/60"
+          aria-label={`Search ${r.name}`}
+          render={<button type="button" onClick={() => openSearch(r.name!)} />}
+        >
+          {media}{body}
+          <ItemActions><SearchIcon className="size-4 text-muted-foreground" aria-hidden="true" /></ItemActions>
+        </Item>
+      </div>
     )
   }
-  return <Item size="xs" role="listitem">{media}{body}</Item>
+  return <div role="listitem"><Item size="xs">{media}{body}</Item></div>
 }
+
 
 function Relations({ entity }: SectionProps) {
   if (!entity.relations.length) return null

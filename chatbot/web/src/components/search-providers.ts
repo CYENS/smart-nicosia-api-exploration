@@ -25,7 +25,7 @@ registerSearchProvider({
     .slice(0, q ? 3 : 5)
     .map((r) => ({
       key: `recent:${r.id}`, title: r.name ?? r.id, detail: `${kindMeta(r.kind).label}, ${r.id}`,
-      icon: kindMeta(r.kind).icon, run: () => inspect({ id: r.id }, { fly: true, focus: true }),
+      icon: kindMeta(r.kind).icon, opens: true, run: () => inspect({ id: r.id }, { fly: true, focus: true }),
     })),
 })
 
@@ -41,6 +41,7 @@ registerSearchProvider({
       const meta = kindMeta(r.kind)
       return {
         key: `twin:${r.group}:${r.id ?? r.name}`, title: r.name, group: r.group, icon: meta.icon, color: r.color,
+        opens: r.kind !== "street",
         detail: [r.id && !r.name.includes(r.id) ? r.id : null, r.detail].filter(Boolean).join(", "),
         run: () => {
           if (r.kind === "street" && r.bbox) flyToBounds(r.bbox)

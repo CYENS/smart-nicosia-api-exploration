@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 
 import "@/components/search-providers"
 import {
   Command, CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList,
 } from "@/components/ui/command"
+import { Kbd, KbdGroup } from "@/components/ui/kbd"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useChat } from "@/lib/chat"
 import { useLayout } from "@/lib/layout"
@@ -56,17 +57,29 @@ function useSearch(q: string, open: boolean) {
 
 // Search everything, a keystroke away (Ctrl K or Cmd K): devices by id or street, register
 // buildings by address or file number, places, streets, commands and the prepared questions.
+//
+// The keyboard follows the WAI-ARIA combobox and listbox pattern cmdk implements: the arrow keys
+// move the selection (Home and End to the ends, Page Up and Page Down by eight), Enter opens the
+// selected row, Esc closes and gives the keyboard back to where it was. Until the user moves,
+// the best match stays selected as the server's results come in; once they have moved, their
+// row stays selected wherever the new results put it, and is scrolled into view.
+const PAGE = 8
+
 export function SearchMenu() {
   const open = useLayout((s) => s.questionsOpen)
   const seed = useLayout((s) => s.searchSeed)
   const busy = useChat((s) => s.busy)
   const [q, setQ] = useState("")
+  const [value, setValue] = useState("")
+  const [moved, setMoved] = useState(false)
   const [openedWith, setOpenedWith] = useState<string | null>(null)
   // Each time it opens, it starts from what it was opened with (a street from the inspector).
-  if (open && openedWith === null) { setOpenedWith(seed); setQ(seed) }
+  if (open && openedWith === null) { setOpenedWith(seed); setQ(seed); setMoved(false) }
   if (!open && openedWith !== null) setOpenedWith(null)
   const { found, waiting, failed } = useSearch(q, open)
   const setOpen = (questionsOpen: boolean) => useLayout.setState({ questionsOpen })
+  const list = useRef<HTMLDivElement>(null)
+  const opens = useRef(false) // the chosen row takes the keyboard elsewhere (the inspector)
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -93,17 +106,57 @@ export function SearchMenu() {
     return out
   }, [found])
 
+  const disabled = (item: SearchItem) => item.disabled || (busy && item.key.startsWith("q:"))
+  const keys = groups.flatMap((g) => g.items.filter((i) => !disabled(i)).map((i) => i.key))
+  const selected = moved && keys.includes(value) ? value : (keys[0] ?? "")
+
+  // The selected row stays in sight, however it was chosen and wherever new results put it.
+  useEffect(() => {
+    list.current?.querySelector<HTMLElement>('[cmdk-item][aria-selected="true"]')?.scrollIntoView({ block: "nearest" })
+  }, [selected, groups])
+
+  const choose = (key: string) => {
+    setValue(key)
+    setMoved(true)
+  }
   const run = (item: SearchItem) => {
+    opens.current = !!item.opens
     setOpen(false)
     item.run()
   }
   const empty = !groups.length && !waiting
 
   return (
-    <CommandDialog open={open} onOpenChange={setOpen} title="Search the twin" description="Search devices, streets, places, register buildings, commands and questions">
-      <Command shouldFilter={false} loop>
-        <CommandInput value={q} onValueChange={setQ} placeholder="Search devices, streets, places, file numbers" />
-        <CommandList className="max-h-[min(62vh,480px)]">
+    <CommandDialog
+      open={open}
+      onOpenChange={setOpen}
+      title="Search the twin"
+      description="Search devices, streets, places, register buildings, commands and questions"
+      finalFocus={() => {
+        const back = !opens.current // Esc, or a command: back to where the keyboard was
+        opens.current = false
+        return back
+      }}
+    >
+      <Command
+        shouldFilter={false}
+        loop
+        value={selected}
+        onValueChange={(v) => { if (v !== selected) choose(v) }}
+        onKeyDown={(e) => {
+          if (e.key !== "PageDown" && e.key !== "PageUp") return
+          e.preventDefault()
+          const i = Math.max(0, keys.indexOf(selected))
+          const next = keys[Math.max(0, Math.min(keys.length - 1, i + (e.key === "PageDown" ? PAGE : -PAGE)))]
+          if (next) choose(next)
+        }}
+      >
+        <CommandInput
+          value={q}
+          onValueChange={(v) => { setQ(v); setMoved(false); list.current?.scrollTo({ top: 0 }) }}
+          placeholder="Search devices, streets, places, file numbers"
+        />
+        <CommandList ref={list} className="max-h-[min(62vh,480px)]">
           {empty && (
             <CommandEmpty>
               {failed ? "Search couldn't reach the twin. Commands and questions still work." : (
@@ -124,14 +177,14 @@ export function SearchMenu() {
                 <CommandItem
                   key={item.key}
                   value={item.key}
-                  disabled={item.disabled || (busy && item.key.startsWith("q:"))}
+                  disabled={disabled(item)}
                   onSelect={() => run(item)}
                 >
                   <item.icon />
                   <span className="flex min-w-0 flex-1 flex-col">
                     <span className="flex items-center gap-1.5">
                       {item.color && <span className="size-2 shrink-0 rounded-full" style={{ background: item.color }} aria-hidden="true" />}
-                      <span className="whitespace-normal" lang={/[Ͱ-Ͽ]/.test(item.title) ? "el" : undefined}>{item.title}</span>
+                      <span className="whitespace-normal" lang={/[\u0370-\u03ff]/.test(item.title) ? "el" : undefined}>{item.title}</span>
                     </span>
                     {item.detail && <span className="truncate text-[12px] text-muted-foreground">{item.detail}</span>}
                   </span>
@@ -140,6 +193,11 @@ export function SearchMenu() {
             </CommandGroup>
           ))}
         </CommandList>
+        <div className="flex items-center gap-4 border-t border-line px-3 py-2 text-[12px] text-muted-foreground max-md:hidden">
+          <span className="flex items-center gap-1.5"><KbdGroup><Kbd>↑</Kbd><Kbd>↓</Kbd></KbdGroup>to move</span>
+          <span className="flex items-center gap-1.5"><Kbd>Enter</Kbd>to choose</span>
+          <span className="flex items-center gap-1.5"><Kbd>Esc</Kbd>to close</span>
+        </div>
       </Command>
     </CommandDialog>
   )
