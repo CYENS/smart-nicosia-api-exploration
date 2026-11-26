@@ -911,9 +911,11 @@ class EntityNotFound(KeyError):
     pass
 
 
-def entity_history(ctx, entity_id: str, hours: int = 24, metric_name: str | None = None) -> dict:
-    """One device's metric over the last `hours`, with its typical-day band, for a sparkline:
-    {id, kind, metric, unit, points: [{time, value, usual, usual_low, usual_high}], ...}."""
+def entity_history(ctx, entity_id: str, hours: int = 24, metric_name: str | None = None,
+                   until: datetime | None = None) -> dict:
+    """One device's metric over the `hours` up to `until` (default now), with its typical-day
+    band, for a sparkline: {id, kind, metric, unit, points: [{time, value, usual, usual_low,
+    usual_high}], ...}."""
     want = entity_id.strip().lower()
     try:
         device_type = next((d.type for d in ctx.city.devices() if d.name.lower() == want), None)
@@ -934,7 +936,7 @@ def entity_history(ctx, entity_id: str, hours: int = 24, metric_name: str | None
     metric = METRICS[kind].get(metric_name or DEFAULT_ENTITY_METRIC[kind])
     if metric is None:
         raise ValueError(f"metric for {kind} must be one of {sorted(METRICS[kind])}")
-    end = ctx.city.now()
+    end = min(until, ctx.city.now()) if until is not None else ctx.city.now()
     start = end - timedelta(hours=hours)
     series, base, rd = device_series(ctx, kind, metric, [found], start, end, baseline=True,
                                      step_min=15 if hours <= 48 else 60)

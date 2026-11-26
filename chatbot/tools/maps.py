@@ -55,7 +55,8 @@ def h_show_on_map(ctx: ToolContext, a: dict) -> dict:
     }})
     res = {"ok": True, "shown": ref, "features": meta["count"], "_summary": f"map: {ref}"}
     if meta["frames"]:
-        res["timelapse"] = f"{meta['frames']} frames, playing with a time slider on the map"
+        res["timelapse"] = (f"{meta['frames']} frames, playing as a range on the city clock; "
+                            "the lamps, the strip and the charts follow it")
     return res
 
 

@@ -338,7 +338,8 @@ def test_the_tool_list_keeps_its_order():
         "reachable_area", "find_dangerous_buildings", "where_am_i", "get_buildings_3d",
         "show_on_map", "map_fly_to", "map_callouts", "map_clear", "show_chart", "show_visual",
         "query_history", "run_sql",
-        "get_entity", "open_inspector"]
+        "get_entity", "open_inspector",
+        "set_city_time"]
 
 
 def test_the_context_names_what_the_user_has_open():

@@ -89,6 +89,25 @@ def weather(s: Settings) -> dict:
     }
 
 
+WEATHER_PAST_DAYS = 62
+
+
+def weather_history(s: Settings) -> dict[str, dict]:
+    """The modelled weather hour by hour over the last WEATHER_PAST_DAYS days (Open-Meteo), keyed
+    by local hour ('2026-11-21T21:00'), for the city clock. One request covers every moment the
+    clock can show, so callers cache it for an hour."""
+    lat, lon = NICOSIA_CENTER
+    f = get_json(s.open_meteo_url, user_agent=s.user_agent, params={
+        "latitude": lat, "longitude": lon, "timezone": TIMEZONE, "forecast_days": 1,
+        "past_days": WEATHER_PAST_DAYS, "hourly": "temperature_2m,weather_code,is_day",
+    }, timeout=20)
+    h = f["hourly"]
+    return {t[:16]: {"temp_c": h["temperature_2m"][i],
+                     "sky": WEATHER_CODES.get(h["weather_code"][i], str(h["weather_code"][i])),
+                     "daylight": bool(h["is_day"][i])}
+            for i, t in enumerate(h["time"]) if h["temperature_2m"][i] is not None}
+
+
 def _period_bounds(period: str, now: datetime) -> tuple[datetime, datetime, list[date]]:
     local = now.astimezone(TZ)
     today = local.date()

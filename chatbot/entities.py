@@ -283,20 +283,21 @@ class Entities:
             "building) or n219329628 (place); find_devices, find_dangerous_buildings, "
             "get_buildings_3d and find_places return them")
 
-    def series(self, eid: str, near: tuple[float, float] | None = None) -> dict | None:
-        """The last 24 hours of the entity's headline reading, or None where the API keeps no
-        history for its kind."""
+    def series(self, eid: str, near: tuple[float, float] | None = None,
+               end: datetime | None = None) -> dict | None:
+        """The 24 hours up to `end` (default now) of the entity's headline reading, or None
+        where the API keeps no history for its kind."""
         entity = self.get(eid, near)
-        key = entity["id"].casefold()
+        key = entity["id"].casefold() + (f"@{int(end.timestamp()) // 900}" if end else "")
         with self._lock:
             hit = self._series.get(key)
             if hit and time.time() - hit[0] < SERIES_TTL_S:
                 return hit[1]
         out = None
         if entity["kind"] in ("street_light", "parking_sensor", "waste_bin", "air_station"):
-            out = self._device_series(entity)
+            out = self._device_series(entity, end)
         elif entity["kind"] == "camera" and entity.get("_feeds"):
-            out = self._traffic_series(entity)
+            out = self._traffic_series(entity, end)
         with self._lock:
             self._series[key] = (time.time(), out)
             while len(self._series) > CACHE_SIZE:
@@ -522,10 +523,10 @@ class Entities:
 
     # -- series --------------------------------------------------------------------------------
 
-    def _device_series(self, entity: dict) -> dict | None:
+    def _device_series(self, entity: dict, end: datetime | None = None) -> dict | None:
         device: Device = entity["_device"]
         metric, label, unit, draw = SERIES[device.type]
-        now = self.now()
+        now = end or self.now()
         times = history.frame_times(now, 24, SERIES_STEP_MIN)
         # From the twin's memory, the city's API filling only what it lacks.
         try:
@@ -568,13 +569,13 @@ class Entities:
                 out["summary"] = {"occupied_pct": round(share)}
         return out
 
-    def _traffic_series(self, entity: dict) -> dict | None:
-        """People (or, at a camera that counts none, everything) per hour over the last 24
-        hours: yesterday's hours and today's, one small request each (an hourly report can't
-        cross midnight)."""
+    def _traffic_series(self, entity: dict, until: datetime | None = None) -> dict | None:
+        """People (or, at a camera that counts none, everything) per hour over the 24 hours up
+        to `until` (default now): the day before and that day, one small request each (an
+        hourly report can't cross midnight)."""
         feeds = entity["_feeds"]
         va_ids = json.dumps([f["analytics_id"] for f in feeds], separators=(",", ":"))
-        now = self.now()
+        now = until or self.now()
         by_hour: dict[str, Counter] = {}
         for period in ("yesterday", "today"):
             start, end, days = context._period_bounds(period, now)
@@ -938,6 +939,44 @@ KIND_RESOLVERS.extend([
     Kind("place", lambda i: bool(PLACE_ID.match(i)), build_place),
     Kind("device", lambda i: True, build_device, ttl_s=LIVE_TTL_S),
 ])
+
+
+HISTORY_KINDS = ("street_light", "parking_sensor", "waste_bin", "air_station")
+
+
+def at_moment(entity: dict, interp: Interpretation | None, known: bool, at: datetime,
+              moment_label: str) -> dict:
+    """The entity as it was at a past moment (the city clock): its state and readings from the
+    twin's memory then (unknown where the memory holds nothing, never the live value), the rest
+    of its record as it is. Things with no history (buildings, places) only say so."""
+    e = dict(entity)
+    e["moment"] = {"at": _iso(at), "label": moment_label, "known": known,
+                   "applies": interp is not None}
+    if interp is None:
+        return e
+    # The neighbours' state dots are live; at another moment they would mislead.
+    e["relations"] = [{k: v for k, v in r.items() if k not in ("state", "color")}
+                      for r in entity["relations"]]
+    kind = entity["kind"]
+    e["state"] = state_block(kind, interp.state if known else "unknown", stale=interp.stale,
+                             reason=interp.reason, as_of=interp.as_of, now=at)
+    d = interp.detail
+    device: Device = entity["_device"]
+    e["readings"] = []
+    if known:
+        for key, lab, unit in READINGS[device.type]:
+            v = _num(d.get(key))
+            if v is not None:
+                e["readings"].append({"key": key, "label": lab, "value": _round(v), "unit": unit,
+                                      "as_of": _iso(interp.as_of), "stale": interp.stale})
+    e["as_of"] = _iso(interp.as_of)
+    e["sources"] = [{"name": "The twin's memory",
+                     "detail": f"readings up to {moment_label}" if known else
+                     "no record of this moment", "as_of": _iso(interp.as_of)},
+                    {"name": "The twin's reading rules", "detail": interp.reason},
+                    *[s for s in entity["sources"]
+                      if s["name"] not in ("Smart Nicosia platform", "The twin's reading rules")]]
+    return e
 
 
 def public(entity: dict) -> dict:

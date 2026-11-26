@@ -8,12 +8,18 @@ import statistics
 import threading
 import time
 from collections.abc import Callable
+from datetime import datetime
 from typing import TYPE_CHECKING, Any
+from zoneinfo import ZoneInfo
 
 from collector.interpret import caqi_band
 
-from chatbot.context import weather
+from chatbot.context import weather, weather_history
+from chatbot.moments import Moments
+from chatbot.settings import TIMEZONE
 from chatbot.store import point
+
+TZ = ZoneInfo(TIMEZONE)
 
 if TYPE_CHECKING:
     from chatbot.agent import Agent
@@ -76,6 +82,27 @@ def live_strip(agent: Agent) -> dict:
         out["weather"] = {"temp_c": now["temp_c"], "sky": now["sky"], "daylight": now["daylight"]}
 
     if agent.registers.ready:
+        out["registers"] = {"buildings": len(agent.registers.records())}
+    return out
+
+
+def moments_of(agent) -> Moments:
+    """The agent's view of past moments (made on first use, for agents built without one)."""
+    m = getattr(agent, "moments", None)
+    if m is None:
+        m = Moments(agent.city, agent.memory)
+        agent.moments = m
+    return m
+
+
+def strip_at(agent: Agent, at: datetime) -> dict:
+    """The strip as it was at a past moment, from the twin's memory: lamps lit, free parking,
+    full bins, air and the modelled weather of that hour. Registers have no history, so they
+    read as they are now."""
+    past = cached("weather_history", 3600, lambda: weather_history(agent.settings)) or {}
+    hour = at.astimezone(TZ).replace(minute=0).strftime("%Y-%m-%dT%H:%M")
+    out = moments_of(agent).strip_at(at, past.get(hour))
+    if agent.registers and agent.registers.ready:
         out["registers"] = {"buildings": len(agent.registers.records())}
     return out
 
