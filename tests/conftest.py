@@ -80,3 +80,16 @@ def api() -> FakeApi:
 @pytest.fixture
 def client(cfg, api) -> Client:
     return Client(cfg, fetch=api.fetch, sleep=lambda s: None)
+
+
+# The browser tests need the e2e dependency group (Playwright); without it, leave them out.
+try:
+    import pytest_playwright  # noqa: F401
+except ImportError:
+    collect_ignore_glob = ["e2e/*"]
+
+
+def pytest_configure(config):
+    if "e2e" in (config.option.markexpr or "") and "not e2e" not in config.option.markexpr \
+            and "collect_ignore_glob" in globals():
+        raise pytest.UsageError("The browser tests need the e2e group: uv run --group e2e pytest -m e2e")
