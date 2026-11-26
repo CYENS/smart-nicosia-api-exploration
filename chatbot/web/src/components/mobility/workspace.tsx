@@ -23,6 +23,15 @@ import { useMobility, watchSummary } from "@/lib/mobility/store"
 import { openWorkspace } from "@/lib/registries/workspaces"
 import { cn } from "@/lib/utils"
 
+// The row that opened the inspector: the panel steps aside for it, and on its return the
+// keyboard goes back to that row (WAI-ARIA: focus returns to what opened it).
+let returnTo: string | null = null
+
+function open(key: string, target: Parameters<typeof inspect>[0]) {
+  returnTo = key
+  inspect(target, { fly: true, focus: true })
+}
+
 const QUESTIONS = [
   "Where are the buses right now?",
   "Which roads are slow right now?",
@@ -72,7 +81,7 @@ function Buses() {
       ) : (
         <RowList label="Buses on the road per line">
           {lines.slice(0, 8).map((l) => (
-            <Row key={l.id} rowKey={l.id} onSelect={() => inspect({ id: l.id }, { fly: true, focus: true })}
+            <Row key={l.id} rowKey={l.id} onSelect={() => open(l.id, { id: l.id })}
               label={`Line ${l.line}, ${l.name ?? l.operator}: ${l.buses} on the road, ${l.late ? `${l.late} late` : "on time"}`}>
                 <LinePill line={l.line} color={l.color} />
                 <span className="min-w-0 flex-1">
@@ -107,7 +116,7 @@ function Roads() {
   return (
     <RowList label="The slowest roads">
       {rows.map((x) => (
-        <Row key={x.id} rowKey={x.id} className="flex-col flex-nowrap items-stretch gap-1.5" onSelect={() => inspect({ id: x.id }, { fly: true, focus: true })}
+        <Row key={x.id} rowKey={x.id} className="flex-col flex-nowrap items-stretch gap-1.5" onSelect={() => open(x.id, { id: x.id })}
           label={`${x.name}: ${x.speed_kmh !== null ? Math.round(x.speed_kmh) : "no reading"} of ${x.free_flow_kmh ? Math.round(x.free_flow_kmh) : "unknown"} km/h free flow, ${x.state_label}`}>
             <span className="flex w-full items-baseline gap-2">
               <span className="size-2 shrink-0 translate-y-[-1px] rounded-full" style={{ background: colors[x.state] }} aria-hidden="true" />
@@ -133,7 +142,7 @@ function Cameras() {
     <RowList label="Busiest counting cameras today">
       {cams.slice(0, 5).map((c) => (
         <Row key={c.camera} rowKey={c.camera}
-            onSelect={() => inspect({ id: c.camera, at: c.lon !== null && c.lat !== null ? [c.lon, c.lat] : undefined }, { fly: true, focus: true })}>
+            onSelect={() => open(c.camera, { id: c.camera, at: c.lon !== null && c.lat !== null ? [c.lon, c.lat] : undefined })}>
             <span className="min-w-0 flex-1 truncate text-[13px]">{c.camera}</span>
             <span className="shrink-0 font-readout text-[13.5px] tabular-nums">
               {(c.people ?? 0).toLocaleString("en-GB")} <span className="text-muted-foreground">people, {(c.car ?? 0).toLocaleString("en-GB")} cars</span>
@@ -159,8 +168,16 @@ export function MobilityPanel() {
   const clockAt = useClock((s) => s.at)
   const title = useRef<HTMLHeadingElement>(null)
   useEffect(() => watchSummary(), [])
-  // Opened from the rail or a shortcut: the keyboard comes into the panel, at its title.
+  // Opened from the rail or a shortcut, the keyboard comes into the panel at its title.
   useEffect(() => { title.current?.focus({ preventScroll: true }) }, [])
+  // Back from the inspector (the panel stays mounted, drawing nothing, while it is open), the
+  // keyboard goes to the row that opened it.
+  useEffect(() => {
+    if (g.inspecting || !returnTo) return
+    const key = returnTo
+    returnTo = null
+    document.querySelector<HTMLElement>(`[data-workspace] [data-row][data-key="${CSS.escape(key)}"]`)?.focus({ preventScroll: true })
+  }, [g.inspecting])
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape" && !typing(e) && !g.inspecting && document.activeElement?.closest("[data-workspace]")) leave()
