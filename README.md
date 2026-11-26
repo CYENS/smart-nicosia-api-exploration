@@ -19,8 +19,9 @@ The page is a control room for the city, built for showing it to people. The map
 screen under a live strip of city readouts (lamps lit, free parking, full bins, air, weather,
 the registers, and when it next gets dark); click one to ask about it. The conversation floats
 on the left and shows the assistant's work as a timed trace. Each answer ends with a few
-suggested next questions to click (or, when a question is unclear, the options to pick from);
-Stop ends an answer early, Retry and Edit redo the latest question, and Copy copies an answer as
+suggested next questions to click (or, when a question is unclear, the options to pick from),
+and with buttons for what only you can do on the page, such as sharing your location or picking
+your spot on the map, after which the answer comes by itself; Stop ends an answer early, Retry and Edit redo the latest question, and Copy copies an answer as
 markdown. Charts and custom visuals land on
 the stage, with a filmstrip of earlier ones; the map panel on the right holds the base map, the
 3D city, the registers, your position and the legends. A slim rail on the left holds the twin's

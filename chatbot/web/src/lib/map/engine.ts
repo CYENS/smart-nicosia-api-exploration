@@ -109,6 +109,7 @@ type MapUi = {
   registers: { on: boolean; status: string }
   replays: Record<string, ReplayUi> // every time-lapse layer on the map, by ref
   me: { loc: MyLocation | null; error: string }
+  picking: boolean // the next map click is the user's position ("Pick my spot on the map")
   flying: string | null // the route the camera is flying along
 }
 export type MyLocation = { lat: number; lon: number; accuracy_m: number | null; source: string }
@@ -124,6 +125,7 @@ export const useMapUi = create<MapUi>(() => ({
   registers: { on: false, status: "" },
   replays: {},
   me: { loc: null, error: "" },
+  picking: false,
   flying: null,
 }))
 const setUi = useMapUi.setState
@@ -207,6 +209,7 @@ export function initMap(container: HTMLElement, camera?: Camera | null) {
   // A click opens what is under it in the inspector. The box around the pointer catches the
   // small dots (a lamp is a few pixels across); what lies right under the pointer wins.
   map.on("click", (e) => {
+    if (pickDone) { endPick({ lat: e.lngLat.lat, lon: e.lngLat.lng }); return } // the user's spot
     const layers = map.getLayersOrder().filter(clickableLayer)
     if (!layers.length) return
     const { x, y } = e.point
@@ -639,6 +642,50 @@ export function forgetMyLocation() {
 
 export function locateMe() {
   geolocate.trigger()
+}
+
+// Ask the browser for the device's position (the click that calls this is the user gesture it
+// wants). Resolves "ok" once the position is set, or why it isn't.
+export function requestMyLocation(timeoutMs = 15e3): Promise<"ok" | "denied" | "unavailable" | "timeout"> {
+  if (!("geolocation" in navigator) || !geolocate) return Promise.resolve("unavailable")
+  return new Promise((resolve) => {
+    const finish = (r: "ok" | "denied" | "unavailable" | "timeout") => {
+      window.clearTimeout(timer)
+      geolocate.off("geolocate", ok)
+      geolocate.off("error", bad)
+      resolve(r)
+    }
+    const ok = () => finish("ok")
+    const bad = (e?: GeolocationPositionError) => finish(e?.code === 1 ? "denied" : "unavailable")
+    const timer = window.setTimeout(() => finish("timeout"), timeoutMs)
+    geolocate.on("geolocate", ok)
+    geolocate.on("error", bad)
+    if (!geolocate.trigger()) finish("unavailable")
+  })
+}
+
+// "Pick my spot on the map": the next click on the map sets the user's position, as "I'm here"
+// does. useMapUi's `picking` shows the hint (components/chat/pick-hint.tsx), which also offers
+// the map's centre (for the keyboard) and Cancel; Esc cancels. Resolves with the point or null.
+let pickDone: ((p: { lat: number; lon: number } | null) => void) | null = null
+
+export function pickMyLocation(): Promise<{ lat: number; lon: number } | null> {
+  endPick(null) // one pick at a time
+  map.getCanvasContainer().style.cursor = "crosshair"
+  setUi({ picking: true })
+  return new Promise((resolve) => { pickDone = resolve })
+}
+
+export function endPick(p: { lat: number; lon: number } | "centre" | null) {
+  const done = pickDone
+  if (!done) return
+  pickDone = null
+  map.getCanvasContainer().style.cursor = ""
+  setUi({ picking: false })
+  const c = map.getCenter()
+  const at = p === "centre" ? { lat: c.lat, lon: c.lng } : p
+  if (at) setMyLocation(at.lat, at.lon, NaN, "set on the map")
+  done(at)
 }
 
 // The Venetian walls: a faint sodium ring that keeps the old town readable at any zoom.

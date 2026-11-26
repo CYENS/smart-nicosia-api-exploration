@@ -15,8 +15,10 @@ import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupText, InputGro
 import { Kbd } from "@/components/ui/kbd"
 import { Marker, MarkerContent, MarkerIcon } from "@/components/ui/marker"
 import { Message, MessageContent, MessageFooter } from "@/components/ui/message"
+import { Spinner } from "@/components/ui/spinner"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
-import { answerText, edit, focusComposer, focusStage, retry, send, useStage, type Part, type Turn } from "@/lib/chat"
+import { ACTIONS } from "@/lib/actions"
+import { answerText, edit, focusComposer, focusStage, retry, runAction, send, useStage, type Part, type Turn } from "@/lib/chat"
 import { ID_IN_TEXT, kindMeta, kindOfId } from "@/lib/entities"
 import { inspect } from "@/lib/inspector"
 import { useRovingList } from "@/lib/roving"
@@ -239,19 +241,50 @@ function TurnFooter({ turn, latest }: { turn: Turn; latest: boolean }) {
   )
 }
 
-// What to ask next, or the options of a clarifying question: one group of chips, arrow keys
-// inside it. A chip asks its question.
-function FollowUps({ items, choices }: { items: string[]; choices: boolean }) {
+// What to do and ask next, or the options of a clarifying question: one group of chips, arrow
+// keys inside it. Actions come first (lib/actions.ts: an icon, a stronger outline, and the page
+// does them); a question chip asks its question.
+function FollowUps({ turnId, actions, items, choices }: { turnId: string; actions: string[]; items: string[]; choices: boolean }) {
   const { ref, onKeyDown, onFocus } = useRovingList<HTMLDivElement>({ orientation: "both" })
+  const [pending, setPending] = useState<string | null>(null)
+  const act = async (key: string, e: React.MouseEvent<HTMLButtonElement>) => {
+    const opener = e.currentTarget
+    setPending(key)
+    try {
+      await runAction(turnId, key, { opener, keyboard: e.detail === 0 })
+    } finally {
+      setPending(null)
+    }
+  }
   return (
     <div
       ref={ref}
       role="toolbar"
-      aria-label={choices ? "Choose an answer" : "Suggested questions"}
+      aria-label={choices ? "Choose an answer" : "Suggested next steps"}
       onKeyDown={onKeyDown}
       onFocus={onFocus}
       className="flex flex-wrap gap-1.5"
     >
+      {actions.map((key) => {
+        const { label, icon: Icon, pending: waiting } = ACTIONS[key]
+        const busy = pending === key
+        return (
+          <Button
+            key={key}
+            data-row
+            data-key={`do:${key}`}
+            data-action={key}
+            variant="outline"
+            size="sm"
+            aria-busy={busy || undefined}
+            className="h-auto min-h-8 max-w-full justify-start rounded-full border-foreground/35 px-3 py-1 text-left text-[13.5px] leading-snug font-medium whitespace-normal"
+            onClick={(e) => { if (!pending) void act(key, e) }}
+          >
+            {busy ? <Spinner className="shrink-0" /> : <Icon className="shrink-0" aria-hidden="true" />}
+            {busy && waiting ? waiting : label}
+          </Button>
+        )
+      })}
       {items.map((q) => (
         <Button
           key={q}
@@ -366,8 +399,10 @@ export function TurnView({ turn, latest }: { turn: Turn; latest: boolean }) {
   // The trace and streaming text show their own progress; between them, the walls trace.
   const quiet = running && (!last || last.kind === "stage" || last.kind === "note"
     || (last.kind === "trace" && !last.items.some((i) => i.type === "step" && i.status === "running")))
-  const choices = current && turn.status === "done" ? turn.choices : undefined
-  const next = current && turn.status === "done" && !choices?.length ? turn.next : undefined
+  const offer = current && turn.status === "done"
+  const choices = offer ? turn.choices : undefined
+  const next = offer && !choices?.length ? turn.next : undefined
+  const actions = offer ? turn.actions ?? [] : []
   return (
     <div className="flex flex-col gap-4">
       <Question turn={turn} editable={current} />
@@ -381,9 +416,11 @@ export function TurnView({ turn, latest }: { turn: Turn; latest: boolean }) {
               <MarkerContent>Stopped</MarkerContent>
             </Marker>
           )}
-          {!!choices?.length && <FollowUps items={choices} choices />}
+          {!!choices?.length && <FollowUps turnId={turn.id} actions={actions} items={choices} choices />}
           {!running && <TurnFooter turn={turn} latest={current} />}
-          {!!next?.length && <FollowUps items={next} choices={false} />}
+          {!choices?.length && (actions.length > 0 || !!next?.length) && (
+            <FollowUps turnId={turn.id} actions={actions} items={next ?? []} choices={false} />
+          )}
         </MessageContent>
       </Message>
     </div>

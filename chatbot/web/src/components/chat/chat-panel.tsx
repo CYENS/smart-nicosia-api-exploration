@@ -2,6 +2,7 @@ import { MessageSquareTextIcon, PanelLeftCloseIcon, RotateCcwIcon } from "lucide
 import { useEffect, useState } from "react"
 
 import { Composer } from "@/components/chat/composer"
+import { PickHint } from "@/components/chat/pick-hint"
 import { TurnView } from "@/components/chat/turn"
 import { Welcome } from "@/components/chat/welcome"
 import { WallsMark } from "@/components/walls-mark"
@@ -25,7 +26,17 @@ function useCredentialsMissing() {
   return missing
 }
 
+// The conversation, and the hint it raises over the map while the user picks their spot.
 export function ChatPanel() {
+  return (
+    <>
+      <Conversation />
+      <PickHint />
+    </>
+  )
+}
+
+function Conversation() {
   const open = useLayout((s) => s.chatOpen)
   const turns = useChat((s) => s.turns)
   const busy = useChat((s) => s.busy)
