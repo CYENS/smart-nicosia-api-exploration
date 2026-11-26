@@ -136,8 +136,8 @@ SOURCES: tuple[Source, ...] = (
         credit="Places: from the web"),
     Source(
         "dls", "Department of Lands and Surveys (DLS)", "the DLS", "Republic of Cyprus",
-        "Every building in 3D at its height and floors, the plots they stand on, and the shade "
-        "they cast",
+        "Every building in 3D at its height and floors with its roof type, the plots they stand "
+        "on, the outlines of the old town's houses, and the shade they cast",
         "Buildings", url="https://eservices.dls.moi.gov.cy/inspire/",
         refresh="Fetched once per area, then kept",
         credit="Buildings: DLS Cyprus"),

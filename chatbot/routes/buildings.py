@@ -1,4 +1,5 @@
-"""Buildings for the map: the DLS 3D city in z16 tiles, and every register building as a layer."""
+"""Buildings for the map: the DLS 3D city in z16 tiles (the old town split into its houses), and
+every register building as a layer."""
 
 from __future__ import annotations
 
@@ -16,13 +17,18 @@ router = APIRouter()
 
 @router.get("/api/buildings3d/{z}/{x}/{y}")
 def buildings_3d(z: int, x: int, y: int, request: Request) -> JSONResponse:
-    """DLS 3D buildings in one z16 tile, for the map's 3D city layer."""
+    """DLS 3D buildings in one z16 tile, for the map's 3D city layer, with the walled city's
+    blocks split into their houses (chatbot/oldtown.py)."""
     if z != TILE_ZOOM or not (0 <= x < 2 ** z and 0 <= y < 2 ** z):
         raise HTTPException(404, f"tiles are z{TILE_ZOOM} only")
+    agent = agent_of(request)
     try:
-        feats = agent_of(request).dls.tile(x, y)
+        feats = agent.dls.tile(x, y)
     except WebError as e:
         raise HTTPException(502, str(e)) from None
+    oldtown = getattr(agent, "oldtown", None)
+    if oldtown is not None:
+        feats = oldtown.tile(x, y, feats)
     return JSONResponse({"type": "FeatureCollection", "features": feats},
                         headers={"Cache-Control": "public, max-age=86400"})
 
