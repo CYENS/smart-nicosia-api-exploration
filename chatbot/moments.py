@@ -316,21 +316,23 @@ class Moments:
 
     def device_at(self, device: Device, at: datetime) -> tuple[Interpretation, bool]:
         """One device interpreted at `at` from every reading the memory holds for it, and
-        whether the memory covers that moment."""
+        whether the memory covers that moment. Raises Unavailable when the memory can't be
+        read, so a busy moment is never kept as one with no record."""
         blank = Interpretation(device.type, "unknown", True, None, None, NOTHING)
         if self.memory is None:
             return blank, False
         t_ms = _ms(at)
         try:
             covered = self.memory.coverage(device.type, [device.name], t_ms, t_ms)
-            if not any(s <= t_ms <= e for s, e in covered.get(device.name, [])):
-                return blank, False
-            back = history.LOOKBACK.get(device.type, timedelta(hours=6))
-            keys = interpret.READING_KEYS.get(device.type, ())
-            records = self.memory.readings([device.name], keys, _ms(at - back), t_ms)
         except Unavailable as e:
-            return Interpretation(device.type, "unknown", True, None, None,
-                                  f"the twin's memory was not available ({e})"), False
+            if e.reason == "missing":  # nothing recorded at all is an answer: no record
+                return blank, False
+            raise
+        if not any(s <= t_ms <= e for s, e in covered.get(device.name, [])):
+            return blank, False
+        back = history.LOOKBACK.get(device.type, timedelta(hours=6))
+        keys = interpret.READING_KEYS.get(device.type, ())
+        records = self.memory.readings([device.name], keys, _ms(at - back), t_ms)
         latest = interpret.latest_from_records(records.get(device.name, []))
         kwargs = {}
         if device.type == "Lighting":

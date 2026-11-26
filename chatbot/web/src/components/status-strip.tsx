@@ -202,7 +202,7 @@ export function StatusStrip() {
         </div>
       </div>
 
-      <div ref={readouts} className="flex min-w-0 flex-1 items-stretch overflow-hidden" aria-live="polite" aria-busy={loading}>
+      <div ref={readouts} className="flex min-w-0 flex-1 items-stretch overflow-hidden" aria-busy={loading}>
         {(loading || d.lights) && (
           <Readout id="lights" hidden={hidden} label="Lamps lit" question={ask("Which street lights are on right now?", "Which street lights were on")} note={reason(d.lights)} loading={loading}>
             {d.lights?.unknown ? <NoRecord /> : <><span className="text-sodium">{d.lights?.on?.toLocaleString()}</span> <Of>of {d.lights?.total?.toLocaleString()}</Of></>}

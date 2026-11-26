@@ -4,7 +4,11 @@ answer's numbers come from a tool like every other."""
 
 from __future__ import annotations
 
+import statistics
+from collections import Counter
 from datetime import datetime, timedelta
+
+from collector.interpret import caqi_band
 
 from chatbot.city import KINDS
 from chatbot.moments import (CLOCK_KINDS, MAX_DAYS, NOTHING, OutOfRange, Moments, frame_of,
@@ -42,10 +46,33 @@ def _when(ctx: ToolContext, text: str, what: str) -> datetime | None:
         raise ToolError(f"{what}: {e}") from None
 
 
-def readouts(m: Moments, at: datetime) -> dict:
-    """The strip at a moment, compactly: each readout's value, or None where the memory holds
-    nothing, with the coverage behind it."""
-    strip = m.strip_at(at)
+def live_strip(ctx: ToolContext) -> dict:
+    """The strip's readouts now, by the rules the moments use (a bay or bin that stopped
+    reporting is left out), so now and another moment compare."""
+    out: dict = {}
+    states = {t: ctx.city.states(t) for t in ("Lighting", "Parking", "Wastebin", "smartsense")}
+    lamps = Counter(s.interp.state for s in states["Lighting"])
+    out["lights"] = {"on": lamps.get("on", 0), "total": sum(lamps.values()) - lamps.get("unknown", 0),
+                     "coverage_pct": 100.0}
+    bays = Counter(s.interp.state for s in states["Parking"] if not s.interp.stale)
+    out["parking"] = {"free": bays.get("free", 0), "total": bays.get("free", 0) + bays.get("occupied", 0),
+                      "coverage_pct": 100.0}
+    bins = Counter(s.interp.state for s in states["Wastebin"] if not s.interp.stale)
+    out["bins"] = {"full": bins.get("full", 0), "total": sum(bins.values()), "coverage_pct": 100.0}
+    caqis = [s.interp.detail.get("caqi") for s in states["smartsense"] if not s.interp.stale]
+    caqis = [c for c in caqis if isinstance(c, (int, float))]
+    if caqis:
+        median = statistics.median(caqis)
+        out["air"] = {"caqi": round(median), "band": caqi_band(median), "coverage_pct": 100.0}
+    else:
+        out["air"] = {"unknown": True}
+    return out
+
+
+def readouts(m: Moments, at: datetime | None, ctx: ToolContext | None = None) -> dict:
+    """The strip at a moment (now when `at` is None), compactly: each readout's value, or None
+    where the memory holds nothing, with the coverage behind it."""
+    strip = m.strip_at(at) if at is not None else live_strip(ctx)
     out = {}
     for key, lab, unit, read in READOUTS:
         part = strip.get({"lamps_lit": "lights", "free_parking": "parking", "full_bins": "bins",
@@ -149,17 +176,14 @@ def h_set_city_time(ctx: ToolContext, a: dict) -> dict:
               "compare_offset_min": -int(COMPARE[compare].total_seconds() // 60)
               if compare in COMPARE else None})
 
-    here = readouts(m, at) if at else None
+    here = readouts(m, at, ctx)
     there = readouts(m, then) if then else None
     res: dict = {"ok": True, "clock": label(frame_of(at)) if at else "live (now)"}
     if rng:
         res["range"] = rng["label"]
         res["playing"] = bool(a.get("play", True))
-    if here is not None:
-        res["readouts"] = here
-        res["events_in_the_hour_before"] = m.events_near(at)
-    else:
-        res["readouts"] = "live: the strip shows them now; find_devices reads them"
+    res["readouts"] = here
+    res["events_in_the_hour_before"] = m.events_near(at or now)
     if then is not None:
         res["compare"] = {"at": label(frame_of(then)), "readouts": there,
                           "events_in_the_hour_before": m.events_near(then)}
@@ -167,7 +191,7 @@ def h_set_city_time(ctx: ToolContext, a: dict) -> dict:
     for key, lab, unit, _ in READOUTS:
         row = {"readout": lab, "key": key, "unit": unit,
                "at": label(frame_of(at)) if at else "now",
-               "value": here[key]["value"] if here else None}
+               "value": here[key]["value"]}
         if there is not None:
             row["then"] = there[key]["value"]
             row["then_at"] = label(frame_of(then))
@@ -175,7 +199,7 @@ def h_set_city_time(ctx: ToolContext, a: dict) -> dict:
     res["data_ref"] = ctx.store.add_dataset("city_time", rows, title=f"The city at {res['clock']}")
     if a.get("kind"):
         res.update(_kind_layer(ctx, m, a["kind"], at, then))
-    gaps = [k for k, v in (here or {}).items() if v["value"] is None]
+    gaps = [k for k, v in here.items() if v["value"] is None]
     if gaps:
         res["notes"] = [f"{NOTHING} for: {', '.join(gaps)}; say so, don't guess"]
     res["page"] = ("the map, the strip, the lamps and the charts now follow this moment; the user "

@@ -86,6 +86,8 @@ export function inspect(target: InspectTarget, opts: InspectOptions = {}) {
       set({ entity, status: "ready", target: { id: entity.id, at } })
       selectEntity(entity)
       remember(entity)
+      // The clock moved while it loaded: read it again at the clock's moment.
+      if (clockMoment() !== moment) followClock()
       if (opts.fly && !cached && !at && entity.center) flyToThing(entity.center, entity.kind)
       if (entity.has_series) loadSeries(entity, at, mine)
     })

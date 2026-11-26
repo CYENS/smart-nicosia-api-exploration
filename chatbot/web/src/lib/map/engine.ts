@@ -488,14 +488,23 @@ function loadLamps() {
 // The ambient lamps at the clock's moment (and, in a comparison, the other moment's left of the
 // swipe). A moment not read yet keeps what is on show until it comes.
 const lampsShown: { a: FC | null; b: FC | null } = { a: null, b: null }
+const NO_LAMPS: FC = { type: "FeatureCollection", features: [] }
 function lampsFor(t: number | null): FC | null {
   return t === null ? lamps : clock.lamps.get(t) ?? null
 }
 
+// The lamps of a moment not read yet: none glow in daylight; after dark, what is on show stays
+// until the moment's own come.
+function lampsOr(t: number | null, shown: FC | null) {
+  const got = lampsFor(t)
+  if (got) return got
+  return t !== null && !skyAt(new Date(t)).dark ? NO_LAMPS : shown
+}
+
 function pushLamps() {
   const src = map.getSource("lamps") as GeoJSONSource | undefined
-  const a = lampsFor(clock.at) ?? lampsShown.a
-  const b = clock.compare !== null ? lampsFor(clock.compare) ?? lampsShown.b : null
+  const a = lampsOr(clock.at, lampsShown.a)
+  const b = clock.compare !== null ? lampsOr(clock.compare, lampsShown.b) : null
   lampsShown.a = a
   lampsShown.b = b
   if (!src || !a) return

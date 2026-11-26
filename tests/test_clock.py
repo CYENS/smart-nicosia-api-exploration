@@ -267,6 +267,27 @@ def test_set_city_time_compares_with_last_week(fake_city, memory):
     assert next(r for r in rows if r["key"] == "free_parking")["then"] == 3
 
 
+def test_set_city_time_compares_now_with_numbers_for_now(fake_city, memory, api):
+    """Comparing now: the rows hold today's values too, read by the moments' rules."""
+    def latest(p):
+        name = p["entityName"]
+        ts = str(ms(NOW - (timedelta(hours=9) if name == "YPB" else timedelta(minutes=5))))
+        return [{"key": "status", "timestamp": ts, "value": "1" if name == "YPA" else "0"},
+                {"key": "level", "timestamp": ts, "value": "85"}]
+
+    api.on("getLatestTelemetry", latest)
+    events = []
+    ctx = make_ctx(fake_city, memory)
+    ctx.emit = events.append
+    res, err = run_tool(ctx, "set_city_time", {"compare": "last_week"})
+    assert not err, res
+    assert events[-1]["live"] and events[-1]["compare"] == "2026-11-16T00:00"
+    assert res["readouts"]["free_parking"] == {"value": 1, "coverage_pct": 100.0, "of_known": 2}
+    rows = {r["key"]: r for r in ctx.store.datasets[res["data_ref"]]["rows"]}
+    assert rows["free_parking"]["value"] == 1 and rows["free_parking"]["then"] == 3
+    assert rows["full_bins"]["value"] == 2  # both bins at 85%
+
+
 def test_set_city_time_ranges_live_and_mistakes(fake_city, memory):
     events = []
     ctx = make_ctx(fake_city, memory)
