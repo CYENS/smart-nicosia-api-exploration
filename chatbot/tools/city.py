@@ -62,6 +62,20 @@ def filter_by_place(ctx: ToolContext, states: list, a: dict):
     return states, center, dist
 
 
+def device_feature(s, summ: dict | None = None) -> dict | None:
+    """A device as a map point coloured by its state (None when it has no position). The page's
+    own device layers (routes/devices.py) draw the same points as find_devices."""
+    if s.device.lat is None or s.device.lon is None:
+        return None
+    as_of = (summ or s.summary()).get("as_of")
+    popup = f"{s.label}\n{s.interp.state} · {s.interp.reason}" + (f"\nas of {as_of}" if as_of else "")
+    return point(s.device.lon, s.device.lat, {
+        "id": s.device.name, "label": s.street or s.label, "state": s.interp.state,
+        "color": STATE_COLORS.get(s.interp.state, STATE_COLORS["unknown"]), "popup": popup,
+        **{k: v for k, v in s.values().items() if v is not None},
+    })
+
+
 @tool("find_devices",
       "Find smart-city devices by kind, state, street or distance from a place, with their "
       "live interpreted state. Returns counts, the nearest or first matches, a `layer_ref` "
@@ -109,16 +123,8 @@ def h_find_devices(ctx: ToolContext, a: dict) -> dict:
         if center:
             summ["distance_m"] = round(dist[s.device.name])
         rows.append(summ)
-        if s.device.lat is None:
-            continue
-        popup = f"{s.label}\n{s.interp.state} · {s.interp.reason}"
-        if summ.get("as_of"):
-            popup += f"\nas of {summ['as_of']}"
-        features.append(point(s.device.lon, s.device.lat, {
-            "id": s.device.name, "label": s.street or s.label, "state": s.interp.state,
-            "color": STATE_COLORS.get(s.interp.state, STATE_COLORS["unknown"]), "popup": popup,
-            **{k: v for k, v in s.values().items() if v is not None},
-        }))
+        if (f := device_feature(s, summ)) is not None:
+            features.append(f)
     by_state = Counter(s.interp.state for s in states)
     title = kind.replace("_", " ") + "s" + (f": {a['state']}" if a.get("state") else "")
     if center:
@@ -262,16 +268,21 @@ def h_get_device(ctx: ToolContext, a: dict) -> dict:
             "_summary": state.device.name}
 
 
+def alarm_features(alarms: list[dict]) -> list[dict]:
+    """Active alarms as map points at their devices (the page's Alarms layer draws the same)."""
+    return [point(x["lon"], x["lat"], {
+        "id": x["device"], "label": x["alarm"], "state": "alarm", "color": STATE_COLORS["alarm"],
+        "popup": f"{x['device']} ({x['device_type']})\n{x['alarm']} · {x['severity']}\nsince {x['since']}",
+    }) for x in alarms if x["lat"] is not None and x["lon"] is not None]
+
+
 @tool("get_alarms",
       "The newest active, unacknowledged alarms in the city (lost connections, full bins, "
       "lamp faults, air-quality warnings), with locations and a layer_ref.",
       obj({"limit": {"type": "integer", "minimum": 1, "maximum": 20}}))
 def h_get_alarms(ctx: ToolContext, a: dict) -> dict:
     res = context.alarms(ctx.city, a.get("limit") or 20)
-    feats = [point(x["lon"], x["lat"], {
-        "id": x["device"], "label": x["alarm"], "state": "alarm", "color": STATE_COLORS["alarm"],
-        "popup": f"{x['device']} ({x['device_type']})\n{x['alarm']} · {x['severity']}\nsince {x['since']}",
-    }) for x in res["alarms"] if x["lat"] is not None]
+    feats = alarm_features(res["alarms"])
     res["layer_ref"] = ctx.store.add_layer("alarms", feats, geometry="point", title="Active alarms",
                                            legend={"alarm": STATE_COLORS["alarm"]})
     res["_summary"] = f"{len(res['alarms'])} alarms"
