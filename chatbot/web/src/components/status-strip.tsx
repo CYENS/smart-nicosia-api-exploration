@@ -35,7 +35,7 @@ function useNicosiaClock() {
 
 // Which readouts go first when the strip runs out of room: weather first (the sky readout covers
 // part of it), lamps lit last.
-const PRIORITY = ["lights", "registers", "bins", "parking", "air", "weather"]
+const PRIORITY = ["lights", "registers", "buses", "bins", "parking", "roads", "air", "weather"]
 
 // The readouts that don't fit whole, dropped lowest priority first, so none is ever cut off.
 // Widths are measured while a readout is shown and remembered while it is hidden.
@@ -236,6 +236,17 @@ export function StatusStrip() {
         {d.registers && (
           <Readout id="registers" hidden={hidden} label="Dangerous buildings" question="Show the dangerous buildings in the old town in 3D" loading={false}>
             <span className="text-signal">{d.registers.buildings.toLocaleString()}</span> <Of>on the registers</Of>
+          </Readout>
+        )}
+        {d.buses && (
+          <Readout id="buses" hidden={hidden} label="Buses running" question="Where are the buses right now?" loading={false}>
+            <span className="text-sodium">{d.buses.running.toLocaleString()}</span> <Of>on {d.buses.lines ?? 0} lines</Of>
+          </Readout>
+        )}
+        {d.slowest_road && (
+          <Readout id="roads" hidden={hidden} label="Slowest road" question="Which roads are slow right now?" loading={false}>
+            <span className="inline-block max-w-[11rem] truncate align-bottom">{d.slowest_road.name}</span>{" "}
+            <Of>{Math.round(d.slowest_road.speed_kmh)} km/h</Of>
           </Readout>
         )}
       </div>

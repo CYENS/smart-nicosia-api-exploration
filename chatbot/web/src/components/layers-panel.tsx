@@ -4,6 +4,7 @@ import {
 } from "lucide-react"
 import { useMemo } from "react"
 
+import { MobilitySwitches } from "@/components/mobility/switches"
 import { Button } from "@/components/ui/button"
 import { Field, FieldContent, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Separator } from "@/components/ui/separator"
@@ -115,9 +116,9 @@ export function LayersPanel() {
   const registers = useMapUi((s) => s.registers)
   const me = useMapUi((s) => s.me)
   const flying = useMapUi((s) => s.flying)
-  const { layersBottom, desktop, inspecting, belowClock } = useGeometry()
+  const { layersBottom, desktop, inspecting, belowClock, wsSide } = useGeometry()
 
-  if (desktop && inspecting) return null
+  if (desktop && (inspecting || wsSide)) return null
 
   if (!open) {
     return (
@@ -200,6 +201,7 @@ export function LayersPanel() {
             </FieldContent>
             <Switch id="tg-dangerous" checked={registers.on} onCheckedChange={(on) => showRegisters(on)} />
           </Field>
+          <MobilitySwitches />
           <Field>
             <FieldLabel>Your position</FieldLabel>
             <FieldDescription aria-live="polite">

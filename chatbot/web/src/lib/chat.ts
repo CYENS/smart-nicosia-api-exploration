@@ -27,6 +27,8 @@ export const TOOL_LABELS: Record<string, string> = {
   map_fly_to: "Moving the map", map_callouts: "Adding callouts", map_clear: "Clearing the map",
   show_chart: "Drawing a chart", show_visual: "Drawing a custom visual", web_search: "Searching the web",
   set_city_time: "Setting the city clock",
+  get_buses: "Finding the buses on the road", get_departures: "Reading the departures",
+  plan_transit: "Planning the bus trip", get_road_speeds: "Reading the road speeds",
 }
 
 export function toolLabel(name: string) {

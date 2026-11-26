@@ -13,6 +13,11 @@ export type Workspace = {
   order: number
   key?: string // Alt + this key opens it
   Panels?: ComponentType // drawn over the map while the workspace is open
+  // Drawn in the right column in place of the map panel while the workspace is open (the
+  // inspector still takes the column when something is opened); a sheet on a phone.
+  Side?: ComponentType
+  onEnter?: () => void // sets the map up for it
+  onLeave?: () => void // puts back what onEnter changed
 }
 
 const workspaces: Workspace[] = []
@@ -28,7 +33,17 @@ export function registerWorkspace(w: Workspace) {
 export const useWorkspace = create<{ active: string; list: Workspace[] }>(() => ({ active: "live", list: [] }))
 
 export function openWorkspace(id: string) {
-  if (workspaces.some((w) => w.id === id)) useWorkspace.setState({ active: id })
+  const next = workspaces.find((w) => w.id === id)
+  const { active } = useWorkspace.getState()
+  if (!next || id === active) return
+  workspaces.find((w) => w.id === active)?.onLeave?.()
+  useWorkspace.setState({ active: id })
+  next.onEnter?.()
+}
+
+// The open workspace's side panel, if it has one.
+export function useWorkspaceSide() {
+  return useWorkspace((s) => s.list.find((w) => w.id === s.active)?.Side ?? null)
 }
 
 registerWorkspace({

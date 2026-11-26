@@ -44,6 +44,9 @@ export type Strip = {
   air?: Readout & { caqi?: number; band?: string; stations?: number }
   weather?: { temp_c: number; sky: string; daylight: boolean }
   registers?: { buildings: number }
+  // Live mobility (now only: the strip leaves them out at a past moment).
+  buses?: { running: number; lines?: number; late?: number }
+  slowest_road?: { id: string; name: string; segment: string; speed_kmh: number; free_flow_kmh: number | null; state: string }
 }
 export type Track = {
   status: string; message?: string
