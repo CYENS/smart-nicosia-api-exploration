@@ -38,6 +38,9 @@ npm run build                     # writes chatbot/static (committed, see below)
   replayed from the twin's memory (only the memory, never the city API), six hours at a time
   and cached. `?at=` on `/api/overview`, `/api/lamps` and `/api/entities/{id}` reads it, and
   `set_city_time` too. A moment the memory holds nothing for is unknown, never a guess.
+- `chatbot/mobility/` is live mobility: the bus timetables and live feed, departures and
+  trips, and road speeds against free flow ([docs/live-mobility.md](docs/live-mobility.md)). One
+  `Mobility` on the Agent shares each feed's fetch between pages, tools and the inspector.
 - `collector/interpret.py` is the one place that turns raw readings into meaning (a lamp is on
   only if it reported in the last 70 minutes, and so on). Reuse it; never reinterpret elsewhere.
 - `chatbot/web/src/lib/map/engine.ts` draws everything on the map; `lib/chat.ts` handles the
