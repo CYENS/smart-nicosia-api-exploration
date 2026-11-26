@@ -17,8 +17,8 @@ def agent_of(request: Request) -> Agent:
 
 
 def routers() -> list:
-    from chatbot.routes import (buildings, chat, clock, entities, environment, live, memory,
-                                mobility)
+    from chatbot.routes import (buildings, chat, clock, entities, environment, here, live,
+                                memory, mobility)
 
     return [live.router, memory.router, chat.router, buildings.router, entities.router,
-            clock.router, mobility.router, environment.router]
+            clock.router, mobility.router, environment.router, here.router]

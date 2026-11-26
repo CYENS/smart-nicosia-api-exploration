@@ -271,6 +271,17 @@ def register_at(kind: str, fn: Callable[[Entities, dict, datetime], dict]):
     return fn
 
 
+# What a kind adds when the assistant asks about it (get_entity) beyond the record the page
+# opens, read then rather than on every open: kind -> fn(ents, entity, at) -> the entity with
+# more (a spot adds "What's here?": its address, buses, parking and the rest, chatbot/here.py).
+DETAIL_RESOLVERS: dict[str, Callable[[Entities, dict, datetime | None], dict]] = {}
+
+
+def register_details(kind: str, fn: Callable[[Entities, dict, datetime | None], dict]):
+    DETAIL_RESOLVERS[kind] = fn
+    return fn
+
+
 class Entities:
     """Builds entities from the twin's sources, with short caches, and searches them."""
 
@@ -281,6 +292,7 @@ class Entities:
         self.memory = memory  # the twin's memory: the 24-hour series reads it first
         self.mobility = mobility  # buses, stops and road speeds (chatbot/mobility)
         self.environment = None  # the environment twin (chatbot/environment), set by the Agent
+        self.moments = None  # the city at past moments (chatbot/moments.py), set by the Agent
         self.places = places
         self.dls = dls
         self.registers = registers

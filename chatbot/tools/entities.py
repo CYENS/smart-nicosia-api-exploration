@@ -2,8 +2,13 @@
 
 from __future__ import annotations
 
-from chatbot.entities import (SERIES_RESOLVERS, Entities, EntityNotFound, for_model,
-                              layer_features, series_rows)
+from datetime import datetime, timedelta
+
+from chatbot.entities import (AT_RESOLVERS, DETAIL_RESOLVERS, HISTORY_KINDS, SERIES_RESOLVERS,
+                              Entities, EntityNotFound, at_moment, for_model, layer_features,
+                              series_rows)
+from chatbot.memory import Unavailable
+from chatbot.moments import OutOfRange, frame_of, label, parse_at
 from chatbot.store import legend_for
 from chatbot.tools.base import ToolContext, ToolError, ToolSet, obj
 
@@ -13,8 +18,9 @@ tool = TOOLS.tool
 ID = {"type": "string",
       "description": "The thing's id as the tools give it: a device (YL1015 street light, YP974 "
                      "parking bay, YW1394 bin, an air station's or camera's name), a register "
-                     "building (NIC-409, LIM-12, LAR-120, FAM-15B-3), a DLS 3D building (B255563) "
-                     "or an OpenStreetMap place (n219329628)."}
+                     "building (NIC-409, LIM-12, LAR-120, FAM-15B-3), a DLS 3D building (B255563), "
+                     "an OpenStreetMap place (n219329628) or a spot, any point of the map "
+                     "(spot-35.17000-33.36060: latitude and longitude, five decimals)."}
 
 
 def entities_of(ctx: ToolContext) -> Entities:
@@ -31,6 +37,29 @@ def lookup(ctx: ToolContext, eid: str) -> dict:
         raise ToolError(str(e)) from None
 
 
+def moment_of(ctx: ToolContext, value: object) -> datetime | None:
+    if value in (None, ""):
+        return None
+    try:
+        return parse_at(value, ctx.city.now() if ctx.city is not None else datetime.now().astimezone())
+    except OutOfRange as e:
+        raise ToolError(str(e)) from None
+
+
+def entity_at(ctx: ToolContext, entity: dict, at: datetime) -> dict:
+    """The entity as it was at a past moment of the city clock, as the inspector reads it."""
+    ents = entities_of(ctx)
+    if entity["kind"] in AT_RESOLVERS:
+        return AT_RESOLVERS[entity["kind"]](ents, entity, at)
+    if entity["kind"] not in HISTORY_KINDS or "_device" not in entity or ctx.moments is None:
+        return at_moment(entity, None, False, at, label(frame_of(at)))
+    try:
+        interp, known = ctx.moments.device_at(entity["_device"], at)
+    except Unavailable:
+        raise ToolError("the twin's memory could not be read just now; try again") from None
+    return at_moment(entity, interp, known, at, label(at))
+
+
 @tool("get_entity",
       "Everything the twin knows about one thing, of any kind, by its id: a street light, "
       "parking bay, bin, air station, camera, info screen, dangerous-register building, DLS 3D "
@@ -42,14 +71,25 @@ def lookup(ctx: ToolContext, eid: str) -> dict:
       "data_ref with one row per 15 minutes: time, the metric, state) and for a counting "
       "camera people per hour. The layer_ref holds the thing and its related things "
       "('pulse' for one thing, 'buildings_3d' for a building). Covers everything get_device "
-      "returns.",
+      "returns. A spot (spot-35.17000-33.36060, any point of the map) also returns `here`: "
+      "its address, the nearest bus stops with their next departures, free parking bays, "
+      "register buildings, the DLS building there and, after dark, the lamps lit around it.",
       obj({"id": ID,
            "history": {"type": "boolean",
                        "description": "Include the last 24 hours where there are any (default "
-                                      "true; one request to the city's API, cached)."}},
+                                      "true; one request to the city's API, cached)."},
+           "at": {"type": "string",
+                  "description": "A past moment to read it at, as city_clock in <context> gives "
+                                 "it (local time, 2026-11-21T21:00); left out, now. Devices, "
+                                 "spots and roads read the twin's memory then."}},
           ["id"]))
 def h_get_entity(ctx: ToolContext, a: dict) -> dict:
+    when = moment_of(ctx, a.get("at"))
     entity = lookup(ctx, a["id"])
+    if when is not None:
+        entity = entity_at(ctx, entity, when)
+    if entity["kind"] in DETAIL_RESOLVERS:
+        entity = DETAIL_RESOLVERS[entity["kind"]](entities_of(ctx), entity, when)
     out = for_model(entity)
     feats = layer_features(entity)
     if feats:
@@ -62,7 +102,10 @@ def h_get_entity(ctx: ToolContext, a: dict) -> dict:
             count=1 + sum(1 for r in entity["relations"] if r.get("id") and r.get("lon") is not None))
     # A kind with its own series (a road segment's speeds from the memory) has one too.
     if a.get("history", True) and (entity.get("has_series") or entity["kind"] in SERIES_RESOLVERS):
-        s = entities_of(ctx).series(entity["id"])
+        end = None
+        if when is not None and ctx.city is not None:  # the 24 hours around it, as the inspector shows
+            end = min(ctx.city.now(), when.replace(minute=0, second=0, microsecond=0) + timedelta(hours=12))
+        s = entities_of(ctx).series(entity["id"], end=end)
         if s:
             out["series_24h"] = {"what": s["label"], "metric": s["metric"], "unit": s["unit"],
                                  "from": s["from"], "to": s["to"], "points": len(s["points"]),

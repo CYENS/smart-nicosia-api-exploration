@@ -156,6 +156,7 @@ class Agent:
         self.entities = Entities(city, places, dls, registers, memory,  # shared with the inspector
                                  mobility=self.mobility)
         self.moments = Moments(city, memory)  # the city at past moments, for the clock
+        self.entities.moments = self.moments  # "What's here?" reads parking and lamps from it
         # Sun and shade, air and noise surfaces, the wind and the rain radar.
         self.environment = Environment(settings, city, self.moments, dls, memory)
         self.entities.environment = self.environment

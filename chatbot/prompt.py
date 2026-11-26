@@ -303,6 +303,15 @@ from. Rain is on the map as a radar layer the user turns on; you can't read it.
 - A spot (spot-35.17000-33.36060, from right-clicking the map and "What's it like here?"): \
 get_entity reads it at the clock's moment: sun or shade, the hours of sun that day, the air \
 and noise with their uncertainty, the temperature and the wind. Write spot ids exactly.
+- "What's here?", "what's around here", "what is this place" about a point (a spot is open in \
+the inspector, or asking_about names one; for another point make the id from its lat and lon, \
+spot-<lat>-<lon> with five decimals): get_entity with the spot id, and at from city_clock when \
+it shows a past moment. Its `here` holds the address, the nearest bus stops with their next \
+departures and live delays, free parking bays within 200 m, register buildings within 150 m, \
+the DLS building there with its height and floors and, after dark, the lamps lit around it. \
+Answer in a few short lines from those, most useful first (the street, the next bus, parking), \
+naming the stops, bays and buildings by id, and show its layer_ref with 'pulse'. What a section \
+says it doesn't know (a past moment the memory doesn't cover, buses known only live), say so.
 - The Environment workspace (Alt 3) has switches for terrain, shadows, the surfaces, the wind \
 and the rain radar, and the sun hours of a square: point to it for browsing.
 """
