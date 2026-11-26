@@ -37,6 +37,7 @@ export const TOOL_LABELS: Record<string, string> = {
   locate_web_places: "Putting the web results on the map",
   list_incidents: "Reading the incident inbox", explain_incident: "Looking at what happened around it",
   create_watch: "Preparing the watch",
+  sun_and_shade: "Reading the sun and shade", environment_surface: "Drawing the environment surface",
 }
 
 export function toolLabel(name: string) {

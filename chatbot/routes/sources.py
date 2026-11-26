@@ -119,6 +119,18 @@ def _overture(agent) -> dict:
     return status("live", ov.checked_at, note, release=ov.release)
 
 
+def _radar(agent) -> dict:
+    env = getattr(agent, "environment", None)
+    hit = env.radar_status() if env is not None else None
+    if hit is None:
+        return status("waiting", note="read while the rain radar is on the map")
+    at, out = hit
+    if not out.get("known"):
+        return status("unavailable", at, out.get("reason"))
+    newest = out["frames"][-1]["time"] / 1000
+    return status("live", at, f"newest frame {_iso(newest)[11:16]}" if newest else None)
+
+
 PROBES: dict[str, Callable] = {
     "smart_nicosia": lambda a: _cached("city"),
     "open_meteo": lambda a: _cached("weather"),
@@ -128,6 +140,7 @@ PROBES: dict[str, Callable] = {
     "registers": _registers,
     "twin_memory": _memory,
     "overture": _overture,
+    "rainviewer": _radar,
 }
 
 

@@ -41,6 +41,12 @@ npm run build                     # writes chatbot/static (committed, see below)
 - `chatbot/mobility/` is live mobility: the bus timetables and live feed, departures and
   trips, and road speeds against free flow ([docs/live-mobility.md](docs/live-mobility.md)). One
   `Mobility` on the Agent shares each feed's fetch between pages, tools and the inspector.
+- `chatbot/environment/` is the environment twin: the sun's path, shade and sun hours from the
+  DLS 3D buildings (`shade.py`), air, noise and temperature surfaces with their uncertainty
+  (`surfaces.py`), the Open-Meteo grids and the wind, the RainViewer radar, and the `spot` kind
+  (`spot-<lat>-<lon>`, five decimals) for "What's it like here?". One `Environment` on the Agent;
+  the page side is `lib/environment/` and `components/environment/` (its Layers sheet group and
+  Outside card section are in `rows.tsx`).
 - `collector/interpret.py` is the one place that turns raw readings into meaning (a lamp is on
   only if it reported in the last 70 minutes, and so on). Reuse it; never reinterpret elsewhere.
 - `chatbot/web/src/lib/map/engine.ts` draws everything on the map; `lib/chat.ts` handles the

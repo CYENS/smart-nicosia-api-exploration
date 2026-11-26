@@ -338,6 +338,9 @@
 }
 .me-btn:hover { background: #ffffff; }
 
+/* The wind's particles ride over the map, under every panel; the map still takes the pointer. */
+.wind-canvas { position: absolute; inset: 0; pointer-events: none; }
+
 /* Map callouts the assistant places. The box sits inside MapLibre's marker element (which is
    absolutely positioned and moved with `transform`), so its own position and animation are
    free to use; `relative` anchors the arrow below. */

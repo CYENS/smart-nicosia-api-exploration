@@ -517,8 +517,11 @@ def ctx_of(city, memory, w, emitted=None):
                        watcher=w)
 
 
-def test_the_watch_tools_come_last_in_the_tool_order():
-    assert [t["name"] for t in TOOL_DEFS][-3:] == ["list_incidents", "explain_incident", "create_watch"]
+def test_the_watch_tools_keep_their_place_in_the_tool_order():
+    # Later features append their tools after these; test_entities pins the whole order.
+    names = [t["name"] for t in TOOL_DEFS]
+    i = names.index("list_incidents")
+    assert names[i:i + 3] == ["list_incidents", "explain_incident", "create_watch"]
 
 
 def test_list_and_explain_incidents(city, memory):

@@ -28,6 +28,7 @@ import { startCredits } from "@/lib/map/credits"
 import { initMap, setInsets } from "@/lib/map/engine"
 import "@/lib/mobility" // buses, stops and road speeds: their workspace, kinds, layers and commands
 import "@/lib/watch" // the incident inbox, its Layers row, marks on the clock, toasts from the live stream
+import "@/lib/environment" // sun, shade, terrain, air, noise and weather: workspace, spot, layers
 import { useWorkspace, useWorkspaceSide } from "@/lib/registries/workspaces"
 
 // The open workspace's own panels, over the map (Live has none of its own), and its side panel

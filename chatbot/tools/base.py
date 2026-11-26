@@ -22,6 +22,7 @@ from chatbot.store import SessionStore
 
 if TYPE_CHECKING:
     from chatbot.entities import Entities
+    from chatbot.environment.service import Environment
     from chatbot.mobility import Mobility
     from chatbot.moments import Moments
     from chatbot.watch import Watcher
@@ -69,6 +70,8 @@ class ToolContext:
     mobility: Mobility | None = None  # buses, stops and road speeds (chatbot/mobility)
     web_places: WebPlaces | None = None  # places found on the web, placed (chatbot/webplaces.py)
     watcher: Watcher | None = None  # incidents and watches (chatbot/watch)
+    # Sun and shade, air and noise surfaces and the weather (chatbot/environment).
+    environment: Environment | None = None
 
 
 # -- schema helpers -----------------------------------------------------------------------------

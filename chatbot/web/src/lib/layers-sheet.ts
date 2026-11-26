@@ -40,8 +40,19 @@ export function openLayers(group?: string, from?: Element | null) {
   useLayout.setState(phone ? { layersOpen: true, chatOpen: false } : { layersOpen: true })
 }
 
-export function closeLayers() {
+// `handOff`: the sheet closes because something else takes the keyboard (a workspace's panel
+// focuses its own title), so it doesn't take it back to its opener.
+let handedOff = false
+
+export function closeLayers(handOff = false) {
+  handedOff = handOff
   useLayout.setState({ layersOpen: false })
+}
+
+export function layersHandedOff() {
+  const h = handedOff
+  handedOff = false
+  return h
 }
 
 // The inspector and the Layers sheet share the right column: opening one closes the other.
