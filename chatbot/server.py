@@ -65,6 +65,7 @@ async def lifespan(app: FastAPI):
     app.state.agent = agent
     if memory.recorder is not None:
         memory.recorder.start()
+    agent.watcher.start()
     if settings.collect:
         start_collector(memory)
     log.info("twin's memory: %s (recording %s, full collection %s)", memory.path,
@@ -75,6 +76,7 @@ async def lifespan(app: FastAPI):
     # The registers refresh daily; the first build (parcels, then 3D heights) takes ~2 minutes.
     threading.Thread(target=registers.refresh_if_needed, daemon=True).start()
     yield
+    agent.watcher.stop()
     if memory.recorder is not None:
         memory.recorder.stop()
 
