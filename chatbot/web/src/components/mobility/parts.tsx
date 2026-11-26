@@ -1,8 +1,48 @@
-/* Small pieces the mobility panels share: a line's number in its colour, a road's speed against
-   its free flow, and the road speeds legend. */
+/* Small pieces the mobility panels share: lists of rows you can arrow through, a line's number
+   in its colour, a road's speed against its free flow, and the road speeds legend. */
+import type { ReactNode } from "react"
+
+import { Item, ItemGroup } from "@/components/ui/item"
 import { ROAD_BANDS, ROAD_COLORS } from "@/lib/mobility/map"
 import { useMapUi } from "@/lib/map/engine"
+import { useRovingList } from "@/lib/roving"
 import { cn } from "@/lib/utils"
+
+// A list of rows that each open something: Tab enters on one row, the arrow keys move between
+// them, Home and End jump, Enter opens.
+export function RowList({ label, children, className }: { label: string; children: ReactNode; className?: string }) {
+  const { ref, onKeyDown, onFocus } = useRovingList<HTMLDivElement>()
+  return (
+    <ItemGroup ref={ref} aria-label={label} onKeyDown={onKeyDown} onFocus={onFocus} className={cn("-mx-1.5 w-auto gap-0.5", className)}>
+      {children}
+    </ItemGroup>
+  )
+}
+
+// One row: a shadcn Item rendered as a button, with hover, pressed and focus states that read on
+// the console, and sodium when it is the current one (a bus's next stop).
+export function Row({ rowKey, onSelect, current, label, className, children }: {
+  rowKey: string; onSelect: () => void; current?: boolean; label?: string; className?: string; children: ReactNode
+}) {
+  return (
+    <div role="listitem">
+      <Item
+        size="xs"
+        data-row=""
+        data-key={rowKey}
+        aria-current={current ? "step" : undefined}
+        className={cn(
+          "cursor-pointer gap-2.5 px-1.5 py-1.5 text-left hover:bg-accent/60 active:bg-accent",
+          "aria-[current=step]:border-sodium/35 aria-[current=step]:bg-sodium/10",
+          className,
+        )}
+        render={<button type="button" aria-label={label} onClick={onSelect} />}
+      >
+        {children}
+      </Item>
+    </div>
+  )
+}
 
 // A line's number on its own colour, as on the bus. The colour carries identity, the number
 // says it.

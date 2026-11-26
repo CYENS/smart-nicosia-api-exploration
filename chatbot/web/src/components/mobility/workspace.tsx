@@ -3,9 +3,9 @@
    and road speeds on the map. It takes the map panel's place on the right (a sheet on a phone);
    the inspector still opens over it. */
 import { BusFrontIcon, CctvIcon, MessageSquareTextIcon, RouteIcon, XIcon } from "lucide-react"
-import { useEffect } from "react"
+import { useEffect, useRef } from "react"
 
-import { LinePill, SpeedMeter, useRoadColors } from "@/components/mobility/parts"
+import { LinePill, Row, RowList, SpeedMeter, useRoadColors } from "@/components/mobility/parts"
 import { MobilitySwitches } from "@/components/mobility/switches"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
@@ -46,8 +46,6 @@ function Rows({ n = 4 }: { n?: number }) {
   )
 }
 
-const rowClass = "flex w-full items-center gap-2.5 rounded-md px-1.5 py-1.5 text-left outline-none hover:bg-accent/50 focus-visible:ring-3 focus-visible:ring-ring/50"
-
 function Buses() {
   const summary = useMobility((s) => s.summary)
   const status = useMobility((s) => s.summaryStatus)
@@ -72,10 +70,10 @@ function Buses() {
       {lines.length === 0 ? (
         <p className="text-[13px] text-muted-foreground">No buses are running just now. Night lines are few; the first buses leave before 06:00.</p>
       ) : (
-        <ul className="-mx-1.5 flex flex-col" aria-label="Buses on the road per line">
+        <RowList label="Buses on the road per line">
           {lines.slice(0, 8).map((l) => (
-            <li key={l.id}>
-              <button type="button" className={rowClass} onClick={() => inspect({ id: l.id }, { fly: true, focus: true })}>
+            <Row key={l.id} rowKey={l.id} onSelect={() => inspect({ id: l.id }, { fly: true, focus: true })}
+              label={`Line ${l.line}, ${l.name ?? l.operator}: ${l.buses} on the road, ${l.late ? `${l.late} late` : "on time"}`}>
                 <LinePill line={l.line} color={l.color} />
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-[13px]">{l.name ?? l.operator}</span>
@@ -87,10 +85,9 @@ function Buses() {
                   <span className="font-readout text-[14px] font-semibold tabular-nums">{l.buses}</span>
                   <span className="font-condensed text-[11.5px] text-muted-foreground">{l.late ? `${l.late} late` : "on time"}</span>
                 </span>
-              </button>
-            </li>
+            </Row>
           ))}
-        </ul>
+        </RowList>
       )}
     </div>
   )
@@ -108,11 +105,11 @@ function Roads() {
   const rows = r.slowest ?? []
   if (!rows.length) return <p className="text-[13px] text-muted-foreground">No road has a reading in the last 30 minutes.</p>
   return (
-    <ul className="-mx-1.5 flex flex-col" aria-label="The slowest roads">
+    <RowList label="The slowest roads">
       {rows.map((x) => (
-        <li key={x.id}>
-          <button type="button" className={cn(rowClass, "flex-col items-stretch gap-1.5")} onClick={() => inspect({ id: x.id }, { fly: true, focus: true })}>
-            <span className="flex items-baseline gap-2">
+        <Row key={x.id} rowKey={x.id} className="flex-col flex-nowrap items-stretch gap-1.5" onSelect={() => inspect({ id: x.id }, { fly: true, focus: true })}
+          label={`${x.name}: ${x.speed_kmh !== null ? Math.round(x.speed_kmh) : "no reading"} of ${x.free_flow_kmh ? Math.round(x.free_flow_kmh) : "unknown"} km/h free flow, ${x.state_label}`}>
+            <span className="flex w-full items-baseline gap-2">
               <span className="size-2 shrink-0 translate-y-[-1px] rounded-full" style={{ background: colors[x.state] }} aria-hidden="true" />
               <span className="min-w-0 flex-1 truncate text-[13px]">{x.name}</span>
               <span className="shrink-0 font-readout text-[13.5px] tabular-nums">
@@ -120,10 +117,9 @@ function Roads() {
               </span>
             </span>
             <SpeedMeter speed={x.speed_kmh} free={x.free_flow_kmh} usual={x.usual_kmh} state={x.state} label={`${x.name}: speed against free flow`} />
-          </button>
-        </li>
+        </Row>
       ))}
-    </ul>
+    </RowList>
   )
 }
 
@@ -134,30 +130,40 @@ function Cameras() {
   if (status !== "ready" && cams === undefined) return <Rows n={3} />
   if (!cams?.length) return <p className="text-[13px] text-muted-foreground">The cameras' counts for today aren't in yet. They come from the city's video analytics.</p>
   return (
-    <ul className="-mx-1.5 flex flex-col" aria-label="Busiest counting cameras today">
+    <RowList label="Busiest counting cameras today">
       {cams.slice(0, 5).map((c) => (
-        <li key={c.camera}>
-          <button type="button" className={rowClass}
-            onClick={() => inspect({ id: c.camera, at: c.lon !== null && c.lat !== null ? [c.lon, c.lat] : undefined }, { fly: true, focus: true })}>
+        <Row key={c.camera} rowKey={c.camera}
+            onSelect={() => inspect({ id: c.camera, at: c.lon !== null && c.lat !== null ? [c.lon, c.lat] : undefined }, { fly: true, focus: true })}>
             <span className="min-w-0 flex-1 truncate text-[13px]">{c.camera}</span>
             <span className="shrink-0 font-readout text-[13.5px] tabular-nums">
               {(c.people ?? 0).toLocaleString("en-GB")} <span className="text-muted-foreground">people, {(c.car ?? 0).toLocaleString("en-GB")} cars</span>
             </span>
-          </button>
-        </li>
+        </Row>
       ))}
-    </ul>
+    </RowList>
   )
+}
+
+// Back to Live, with the keyboard handed to the rail's Mobility button it came from (or the map).
+function leave() {
+  const inside = document.activeElement?.closest("[data-workspace]")
+  openWorkspace("live")
+  if (!inside) return
+  const back = document.querySelector<HTMLElement>('nav[aria-label="Workspaces"] [data-workspace-id="mobility"]')
+  ;(back ?? document.querySelector<HTMLElement>(".maplibregl-canvas"))?.focus({ preventScroll: true })
 }
 
 export function MobilityPanel() {
   const g = useGeometry()
   const busy = useChat((s) => s.busy)
   const clockAt = useClock((s) => s.at)
+  const title = useRef<HTMLHeadingElement>(null)
   useEffect(() => watchSummary(), [])
+  // Opened from the rail or a shortcut: the keyboard comes into the panel, at its title.
+  useEffect(() => { title.current?.focus({ preventScroll: true }) }, [])
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && !typing(e) && !g.inspecting && document.activeElement?.closest("[data-workspace]")) openWorkspace("live")
+      if (e.key === "Escape" && !typing(e) && !g.inspecting && document.activeElement?.closest("[data-workspace]")) leave()
     }
     window.addEventListener("keydown", onKey)
     return () => window.removeEventListener("keydown", onKey)
@@ -173,11 +179,11 @@ export function MobilityPanel() {
       <div className="flex h-14 shrink-0 items-center gap-3 border-b border-line pr-2 pl-4">
         <BusFrontIcon className="size-[18px] text-sodium" aria-hidden="true" />
         <div className="min-w-0 flex-1 leading-tight">
-          <h2 id="mobility-title" className="text-[14.5px] font-semibold">Moving now</h2>
+          <h2 ref={title} tabIndex={-1} id="mobility-title" className="text-[14.5px] font-semibold outline-none">Moving now</h2>
           <p className="truncate text-[12.5px] text-muted-foreground">Buses, roads and counts across the city</p>
         </div>
         <Tooltip>
-          <TooltipTrigger render={<Button variant="ghost" size="icon-sm" aria-label="Back to Live" onClick={() => openWorkspace("live")} />}>
+          <TooltipTrigger render={<Button variant="ghost" size="icon-sm" aria-label="Back to Live" onClick={leave} />}>
             <XIcon />
           </TooltipTrigger>
           <TooltipContent>Back to Live <Kbd>Alt 1</Kbd></TooltipContent>

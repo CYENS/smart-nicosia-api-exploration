@@ -5,9 +5,9 @@ import { ChevronRightIcon, ClockIcon, RadioTowerIcon } from "lucide-react"
 import { useEffect, useState } from "react"
 
 import { Sparkline } from "@/components/inspector/sparkline"
-import { LinePill, SpeedMeter } from "@/components/mobility/parts"
+import { LinePill, Row, RowList, SpeedMeter } from "@/components/mobility/parts"
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty"
-import { Item, ItemContent, ItemGroup, ItemTitle } from "@/components/ui/item"
+import { ItemContent, ItemTitle } from "@/components/ui/item"
 import { Skeleton } from "@/components/ui/skeleton"
 import { fetchSeries, type Entity, type Series } from "@/lib/entities"
 import { inspect, useInspector } from "@/lib/inspector"
@@ -77,32 +77,27 @@ function BusSection({ entity }: SectionProps) {
       )}
       <Section title={live?.waiting ? `Waiting to leave at ${live.waiting}` : "Next stops"} live>
         {stops.length ? (
-          <ol className="relative flex flex-col">
+          <RowList label="Next stops">
             {stops.map((s, i) => {
               const late = s.expected && s.expected !== s.scheduled
               return (
-                <li key={`${s.id}:${i}`} className="relative">
-                  <span className={cn("absolute top-0 left-[7px] w-[2px] bg-line", i === 0 ? "top-3" : "", i === stops.length - 1 ? "h-3" : "bottom-0")} aria-hidden="true" />
-                  <button
-                    type="button"
-                    onClick={() => inspect({ id: s.id, at: [s.lon, s.lat] }, { fly: true, focus: true })}
-                    className="group relative flex w-full items-center gap-3 rounded-md py-1.5 pr-1 pl-0 text-left outline-none hover:bg-accent/50 focus-visible:ring-3 focus-visible:ring-ring/50"
-                  >
-                    <span
-                      className={cn("relative z-[1] size-4 shrink-0 rounded-full border-2 border-console", i === 0 ? "bg-sodium" : "bg-muted-foreground")}
-                      style={i === 0 && live?.color ? { background: live.color } : undefined}
-                      aria-hidden="true"
-                    />
-                    <span className="min-w-0 flex-1 truncate text-[13.5px]">{s.name}</span>
-                    <span className="shrink-0 text-right font-readout text-[14px] tabular-nums">
-                      {late ? <><span className="text-sodium">{s.expected}</span> <s className="text-[12px] text-muted-foreground">{s.scheduled}</s></> : s.scheduled}
-                    </span>
-                    <ChevronRightIcon className="size-3.5 shrink-0 text-muted-foreground opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100" aria-hidden="true" />
-                  </button>
-                </li>
+                <Row key={`${s.id}:${i}`} rowKey={`${s.id}:${i}`} current={i === 0}
+                  onSelect={() => inspect({ id: s.id, at: [s.lon, s.lat] }, { fly: true, focus: true })}
+                  label={`${i === 0 ? "Next stop" : "Then"} ${s.name}, ${late ? `expected ${s.expected}, due ${s.scheduled}` : s.scheduled}`}>
+                  <span
+                    className={cn("size-3 shrink-0 rounded-full border-2 border-console", i === 0 ? "bg-sodium" : "bg-muted-foreground")}
+                    style={i === 0 && live?.color ? { background: live.color } : undefined}
+                    aria-hidden="true"
+                  />
+                  <span className="min-w-0 flex-1 truncate text-[13.5px]">{s.name}</span>
+                  <span className="shrink-0 text-right font-readout text-[14px] tabular-nums">
+                    {late ? <><span className="text-sodium">{s.expected}</span> <s className="text-[12px] text-muted-foreground">{s.scheduled}</s></> : s.scheduled}
+                  </span>
+                  <ChevronRightIcon className="size-3.5 shrink-0 text-muted-foreground" aria-hidden="true" />
+                </Row>
               )
             })}
-          </ol>
+          </RowList>
         ) : (
           <p className="text-[13px] text-muted-foreground">Its trip isn't in the timetable, so its stops aren't known. Its line and position are live.</p>
         )}
@@ -126,14 +121,11 @@ function StopSection({ entity }: SectionProps) {
   return (
     <Section title="Next departures" live>
       {deps.length ? (
-        <ul className="-mx-1 flex flex-col">
+        <RowList label="Next departures">
           {deps.map((d, i) => (
-            <li key={`${d.line_id}:${d.scheduled}:${i}`}>
-              <button
-                type="button"
-                onClick={() => (d.bus ? inspect({ id: d.bus }, { fly: true, focus: true }) : inspect({ id: d.line_id }, { focus: true }))}
-                className="flex w-full items-center gap-2.5 rounded-md px-1 py-1.5 text-left outline-none hover:bg-accent/50 focus-visible:ring-3 focus-visible:ring-ring/50"
-              >
+            <Row key={`${d.line_id}:${d.scheduled}:${i}`} rowKey={`${d.line_id}:${d.scheduled}:${i}`}
+              onSelect={() => (d.bus ? inspect({ id: d.bus }, { fly: true, focus: true }) : inspect({ id: d.line_id }, { focus: true }))}
+              label={`Line ${d.line} to ${d.headsign}, ${d.in_min === 0 ? "now" : `in ${d.in_min} minutes`}, ${d.realtime ? `expected ${d.expected}, live` : `${d.scheduled}, timetable`}`}>
                 <LinePill line={d.line} color={d.color} textColor={d.text_color} />
                 <span className="min-w-0 flex-1 truncate text-[13.5px]">{d.headsign}</span>
                 <span className="flex shrink-0 flex-col items-end leading-tight">
@@ -144,10 +136,9 @@ function StopSection({ entity }: SectionProps) {
                     {d.realtime ? <>{d.expected}{d.expected !== d.scheduled && <s className="ml-1">{d.scheduled}</s>}</> : `${d.scheduled}, timetable`}
                   </span>
                 </span>
-              </button>
-            </li>
+            </Row>
           ))}
-        </ul>
+        </RowList>
       ) : (
         <Empty className="border border-dashed border-line py-5">
           <EmptyHeader>
@@ -222,17 +213,17 @@ function LineSection({ entity }: SectionProps) {
         <span className="text-[13.5px] text-muted-foreground">{running.length ? `${running.length} running` : "None running now"}</span>
       </div>
       {running.length > 0 && (
-        <ItemGroup className="-mx-2.5 w-auto gap-0.5">
+        <RowList label="Buses on the road now">
           {running.map((r) => (
-            <Item key={r.id} size="xs" role="listitem" className="cursor-pointer text-left hover:bg-accent/60"
-              render={<button type="button" onClick={() => inspect({ id: r.id, at: [r.lon, r.lat] }, { fly: true, focus: true })} />}>
+            <Row key={r.id} rowKey={r.id} onSelect={() => inspect({ id: r.id, at: [r.lon, r.lat] }, { fly: true, focus: true })}>
               <ItemContent className="min-w-0">
                 <ItemTitle className="line-clamp-1 w-full">{r.name}</ItemTitle>
                 <span className="text-[12.5px] text-muted-foreground">{r.detail}</span>
               </ItemContent>
-            </Item>
+              <ChevronRightIcon className="size-3.5 shrink-0 text-muted-foreground" aria-hidden="true" />
+            </Row>
           ))}
-        </ItemGroup>
+        </RowList>
       )}
     </Section>
   )
