@@ -1013,9 +1013,12 @@ def build_web_place(ents: Entities, eid: str, near) -> dict | None:
                           "detail": f"{b['properties']['h']} m"})
     relations += nearest_stop(ents, w["lat"], w["lon"])
     relations += ents.nearest_devices(w["lat"], w["lon"], max_m=400)
-    sources = [{"name": re.sub(r"^www\.", "", urlsplit(u).netloc), "detail": "web search result",
-                "url": u, "as_of": f"{found:%Y-%m-%d}"} for u in w.get("sources") or []]
-    sources.append({"name": "OpenStreetMap" if w.get("osm_id") else "Nominatim and Photon",
+    sources = [{"source": "web_search", "name": re.sub(r"^www\.", "", urlsplit(u).netloc),
+                "detail": "web search result", "url": u, "as_of": f"{found:%Y-%m-%d}"}
+               for u in w.get("sources") or []]
+    osm = bool(w.get("osm_id"))
+    sources.append({"source": "openstreetmap" if osm else "geocoding",
+                    "name": "OpenStreetMap" if osm else "Nominatim and Photon",
                     "detail": "where it stands on the map", "url": None, "as_of": f"{found:%Y-%m-%d}"})
     return new_entity(
         w["id"], "web_place", w["name"],

@@ -141,6 +141,7 @@ def test_the_tool_draws_them_lists_what_it_could_not_place_and_the_twin_knows_th
     layer = ctx.store.layers[res["layer_ref"]]
     assert layer["meta"]["title"] == "Singing lessons" and layer["meta"]["count"] == 2
     assert set(layer["meta"]["legend"]) == {"from the web", "on its street", "you"}
+    assert layer["meta"]["sources"] == ["web_search", "geocoding", "openstreetmap"]
     you = layer["features"][-1]["properties"]  # the distances are from here; the camera fits it in
     assert (you["id"], len(layer["features"])) == ("you", 3)
     singing = next(f["properties"] for f in layer["features"] if f["properties"]["label"].startswith("The Art"))
@@ -160,7 +161,8 @@ def test_the_tool_draws_them_lists_what_it_could_not_place_and_the_twin_knows_th
     assert labels["Phone"] == "+357 99 475795" and labels["Website"] == "https://artofsinging.example"
     assert labels["On the map"] == ("On its street, Γιαννάκη Ταλιώτη, not at the door: the map "
                                     "knows the street but not the number")
-    assert e["sources"][0]["url"] == "https://example.com/singing-teachers"
+    assert [(s["source"], s["url"]) for s in e["sources"]] == [
+        ("web_search", "https://example.com/singing-teachers"), ("geocoding", None)]
     lyceum = Entities(None, places, web_places=web).get(res["places"][0]["id"])
     assert {"relation": "place", "label": "On OpenStreetMap", "id": "n55", "kind": "place",
             "name": "Music Lyceum"} in lyceum["relations"]
