@@ -26,7 +26,7 @@ from chatbot.city import CityData
 from chatbot.dls import DLS
 from chatbot.entities import Entities
 from chatbot.eoa import Registry
-from chatbot.followups import TagFilter
+from chatbot.followups import TagFilter, merge_actions
 from chatbot.geo import Places
 from chatbot.memory import Memory
 from chatbot.mobility import Mobility
@@ -220,6 +220,7 @@ class Agent:
             {"type": "text", "text": format_context(context, self.city.now()) + text}]})
 
         json_retries = 0
+        offered: list[str] = []  # actions the tools asked the page to offer (share_location...)
         for _ in range(self.settings.max_steps):
             try:
                 final, follow_ups = await self._stream(conv, emit)
@@ -246,8 +247,13 @@ class Agent:
             if not tool_uses:
                 if final.stop_reason == "max_tokens":
                     emit({"type": "error", "message": "The answer was cut off (max_tokens)."})
-                elif follow_ups:  # only a finished answer offers what to ask next
-                    emit({"type": "follow_ups", **follow_ups})
+                else:  # only a finished answer offers what to ask and do next
+                    out = {k: v for k, v in follow_ups.items() if k != "do"}
+                    # The tools' actions come whether or not the model remembered its <do> tag.
+                    if do := merge_actions(offered, follow_ups.get("do")):
+                        out["do"] = do
+                    if out:
+                        emit({"type": "follow_ups", **out})
                 return
             if final.stop_reason == "max_tokens":
                 # A truncated tool input parses as a valid partial object; never run it.
@@ -257,7 +263,8 @@ class Agent:
                     for b in tool_uses]})
                 emit({"type": "error", "message": "The answer was cut off (max_tokens)."})
                 return
-            results = await asyncio.gather(*(self._run_tool(tool_ctx, b, emit) for b in tool_uses))
+            results = await asyncio.gather(*(self._run_tool(tool_ctx, b, emit, offered)
+                                             for b in tool_uses))
             conv.messages.append({"role": "user", "content": list(results)})
         emit({"type": "error", "message": f"Stopped after {self.settings.max_steps} steps."})
 
@@ -307,11 +314,12 @@ class Agent:
             text_out(tags.flush())
             return await stream.get_final_message(), tags.found
 
-    async def _run_tool(self, ctx: ToolContext, block, emit: Emit) -> dict:
+    async def _run_tool(self, ctx: ToolContext, block, emit: Emit, offered: list[str]) -> dict:
         result, is_error = await asyncio.to_thread(run_tool, ctx, block.name, block.input)
         summary = result.pop("_summary", None)
+        offered += result.pop("_actions", None) or []
         emit({"type": "tool_end", "id": block.id, "name": block.name, "ok": not is_error,
-              "summary": result.get("error", "")[:160] if is_error else (summary or "")})
+              "summary": (summary or result.get("error", "")[:160]) if is_error else (summary or "")})
         return {"type": "tool_result", "tool_use_id": block.id, "is_error": is_error,
                 "content": json.dumps(result, ensure_ascii=False, default=str)}
 
