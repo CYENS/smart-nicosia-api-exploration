@@ -31,6 +31,7 @@ from chatbot.routing import Router
 from chatbot.settings import TIMEZONE, Settings
 from chatbot.store import SessionStore
 from chatbot.tools import TOOL_DEFS, WEB_SEARCH, ToolContext, run_tool
+from chatbot.watch import Watcher
 
 log = logging.getLogger(__name__)
 TZ = ZoneInfo(TIMEZONE)
@@ -154,6 +155,8 @@ class Agent:
         self.entities = Entities(city, places, dls, registers, memory,  # shared with the inspector
                                  mobility=self.mobility)
         self.moments = Moments(city, memory)  # the city at past moments, for the clock
+        self.watcher = Watcher(city, memory)  # alerts, incidents and watches
+        self.entities.watcher = self.watcher  # incidents open by their id (INC-12)
         self.tools = TOOL_DEFS + ([WEB_SEARCH] if settings.web_search else [])
         self.conversations: dict[str, Conversation] = {}
 
@@ -183,7 +186,7 @@ class Agent:
                                emit_threadsafe, conv.id, self.dls, self.registers,
                                user_location(context), memory=self.memory,
                                entities=self.entities, moments=self.moments,
-                               mobility=self.mobility)
+                               mobility=self.mobility, watcher=self.watcher)
         conv.messages.append({"role": "user", "content": [
             {"type": "text", "text": format_context(context, self.city.now()) + text}]})
 
