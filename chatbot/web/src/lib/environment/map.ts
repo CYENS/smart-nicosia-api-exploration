@@ -182,6 +182,7 @@ export function setRelief(exaggeration: number) {
 // -- shadows of the 3D city ----------------------------------------------------------------------
 
 const shadowCanvas = document.createElement("canvas")
+const inkCanvas = document.createElement("canvas") // the shadows drawn sharp, before softening
 let shadowQueued = false
 
 export function shadowsSoon() {
@@ -250,8 +251,10 @@ function drawShadows() {
   const scale = Math.min(512 * 2 ** map.getZoom(), 2048 / (x1 - x0), 2048 / (y1 - y0))
   const W = Math.max(1, Math.ceil((x1 - x0) * scale)), H = Math.max(1, Math.ceil((y1 - y0) * scale))
   if (shadowCanvas.width !== W || shadowCanvas.height !== H) { shadowCanvas.width = W; shadowCanvas.height = H }
-  const ctx = shadowCanvas.getContext("2d")!
-  ctx.clearRect(0, 0, W, H)
+  if (inkCanvas.width !== W || inkCanvas.height !== H) { inkCanvas.width = W; inkCanvas.height = H }
+  const ink = inkCanvas.getContext("2d")!
+  ink.clearRect(0, 0, W, H)
+  ink.fillStyle = SHADOW_INK[base()]
   // Away from the sun, per metre of height.
   const away = ((sky.sun.bearing + 180) * Math.PI) / 180
   const reach = 1 / Math.tan((sky.sun.altitude * Math.PI) / 180)
@@ -259,7 +262,6 @@ function drawShadows() {
   const dxPerM = Math.sin(away) * reach * perM
   const dyPerM = -Math.cos(away) * reach * perM
   const pad = (MAX_SHADOW_M / 111_000) * 1.3
-  ctx.beginPath()
   for (const f of city.features) {
     const h = Number(f.properties?.h) || 0
     if (h <= 0) continue
@@ -272,18 +274,24 @@ function drawShadows() {
       for (const [lo, la] of ring) pts.push((mx(lo) - x0) * scale, (my(la) - y0) * scale)
       if (pts.length > 2 && pts[0] === pts[pts.length - 2] && pts[1] === pts[pts.length - 1]) pts.length -= 2
       const k = pts.length / 2
-      addLoop(ctx, pts)
-      addLoop(ctx, pts.map((v, i) => v + (i % 2 ? oy : ox)))
+      // One building's shadow at a time: one huge path of every building took the canvas
+      // tens of seconds to fill. The ink is opaque, so where shadows overlap they merge.
+      ink.beginPath()
+      addLoop(ink, pts)
+      addLoop(ink, pts.map((v, i) => v + (i % 2 ? oy : ox)))
       for (let i = 0; i < k; i++) {
         const j = (i + 1) % k
         const ax = pts[2 * i], ay = pts[2 * i + 1], bx = pts[2 * j], by = pts[2 * j + 1]
-        addLoop(ctx, [ax, ay, bx, by, bx + ox, by + oy, ax + ox, ay + oy])
+        addLoop(ink, [ax, ay, bx, by, bx + ox, by + oy, ax + ox, ay + oy])
       }
+      ink.fill("nonzero")
     }
   }
-  ctx.fillStyle = SHADOW_INK[base()]
+  // Softened once, as a whole.
+  const ctx = shadowCanvas.getContext("2d")!
+  ctx.clearRect(0, 0, W, H)
   ctx.filter = `blur(${Math.max(0.6, Math.min(2.5, 0.8 * perM)).toFixed(2)}px)`
-  ctx.fill("nonzero")
+  ctx.drawImage(inkCanvas, 0, 0)
   ctx.filter = "none"
   canvasSource(map, SHADOW_SRC, shadowCanvas, [[w, n], [e, n], [e, s], [w, s]])
   if (!map.getLayer(SHADOWS)) {
