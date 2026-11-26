@@ -32,6 +32,18 @@ class ToolError(Exception):
     """A problem the model can fix (bad name, nothing found). Sent back with is_error."""
 
 
+class LocationNotShared(ToolError):
+    """The tool needs the user's position and they haven't shared it. Only the user can fix
+    this, so the page offers them the actions that share it (run_tool adds them)."""
+
+    ACTIONS = ("share_location", "pick_on_map")
+
+    def __init__(self, what: str = "the user hasn't shared a location") -> None:
+        super().__init__(f"{what}. The page now offers them buttons to share it or to pick it on "
+                         "the map, and asks again by itself once it is shared: say so in one "
+                         "short line, and don't explain how to share it")
+
+
 @dataclass
 class ToolContext:
     settings: Settings
@@ -114,8 +126,7 @@ ME = {norm(w) for w in ("me", "my location", "my position", "here", "where i am"
 def my_location(ctx: ToolContext) -> dict:
     loc = ctx.user_location
     if not loc:
-        raise ToolError("the user hasn't shared a location: ask them to press the locate button "
-                        "(top left of the map) or right-click the map and choose 'I'm here'")
+        raise LocationNotShared()
     return {"name": "your location", "lat": loc["lat"], "lon": loc["lon"]}
 
 

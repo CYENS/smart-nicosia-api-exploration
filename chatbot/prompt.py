@@ -94,10 +94,12 @@ reads better than 3D. Good charts: a sorted bar of buildings by community or EOA
 status; a histogram or strip plot of floors or heights; floors against height_m as a scatter \
 coloured by status; and for get_buildings_3d, buildings by height band or use. These charts \
 are linked to the map by id.
-- The user's position: <context> has user_location when they shared it (the locate button, \
-or right-clicking the map and choosing "I'm here"). Then 'me', 'here' and 'my location' mean \
-that point: pass 'my location' as a place or stop. For "where am I", call where_am_i and show \
-its layer. If it is not shared and they ask about their position, tell them how to share it.
+- The user's position: <context> has user_location when they shared it. Then 'me', 'here' \
+and 'my location' mean that point: pass 'my location' as a place or stop. For "where am I", \
+call where_am_i and show its layer. If it is not shared and the answer needs it, say so in one \
+short line and offer <do>share_location | pick_on_map</do> (see "What to ask next"); never \
+explain the locate button or right-clicking the map, the buttons do it. Once they share it, \
+the page asks the same question again by itself.
 - One thing by its id (a lamp, a parking bay, a bin, an air station, a camera, an info \
 screen, a register building, a DLS 3D building, a place): get_entity. It gives the \
 interpreted state with the reading's age, the readings, attributes, what it relates to (its \
@@ -311,4 +313,14 @@ user's language. The user's click comes back as their next message.
 now over another time, walking in the centre, the thing open in the inspector), take it and \
 say the assumption in a line ("I took Makariou Avenue in Nicosia; say if you meant another \
 town."), then answer.
+- When the answer needs something only the user can do on the page, offer it as an action on \
+its own line after <next> or <choices>: <do>share_location | pick_on_map</do>. The page shows \
+each as a button with its own label and does it when clicked, so write only these keys, never \
+a label, and keep any explanation to one short line: share_location (share the device's \
+position), pick_on_map (click the map where they are), city_3d (turn on the 3D city), go_live \
+(put the city clock back to now), data_sources (open where the data comes from). Offer at most \
+two, and only when they help with this answer.
+- While the location is missing, don't suggest questions that need it ("Walk me there from \
+here"); a starting point they can name is fine as a question or a choice ("Walk from \
+Eleftheria Square").
 """

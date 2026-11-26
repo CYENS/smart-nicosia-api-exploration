@@ -5,6 +5,7 @@
    layers. */
 import { create } from "zustand"
 
+import { ACTIONS, knownActions } from "@/lib/actions"
 import type { ChartPayload } from "@/lib/charts"
 import { applyClockCommand, clockContext } from "@/lib/clock"
 import type { EntityRef } from "@/lib/entities"
@@ -64,6 +65,7 @@ export type Turn = {
   run?: string // the server's id for this run of it: Stop names it
   next?: string[] // suggested next questions, written by the model with the answer
   choices?: string[] // the options, when the answer is a clarifying question
+  actions?: string[] // what the page can do for it (lib/actions.ts): share the location...
   layers: string[] // the map layers it drew, to take off the map when it is replaced
 }
 
@@ -133,7 +135,7 @@ function handleEvent(turnId: string, ev: any) {
       updateTurn(turnId, (t) => ({ ...t, index: ev.index }))
       break
     case "follow_ups":
-      updateTurn(turnId, (t) => ({ ...t, next: ev.next, choices: ev.choices }))
+      updateTurn(turnId, (t) => ({ ...t, next: ev.next, choices: ev.choices, actions: knownActions(ev.do) }))
       break
     case "text":
       updateTurn(turnId, (t) => withLastPart(t, "text", () => ({ kind: "text", text: "" }), (p) => ({ ...p, text: p.text + ev.text })))
@@ -295,6 +297,33 @@ export function stop() {
 // Ask the latest question again, in place of its answer.
 export function retry(turn: Turn) {
   return send(turn.question, { subject: turn.subject, replace: turn })
+}
+
+// An action chip. When it gave the turn what it was missing (the location), the turn's question
+// is asked again in its place, so the answer just appears and the history stays clean. When it
+// fails, the turn says why and offers what to do instead.
+export async function runAction(turnId: string, key: string, opts: { opener?: HTMLElement | null; keyboard?: boolean } = {}) {
+  const action = ACTIONS[key]
+  if (!action) return
+  const outcome = await action.run(opts.opener ?? null)
+  const { turns, busy } = useChat.getState()
+  const turn = turns.find((t) => t.id === turnId)
+  if (!turn) return
+  if (outcome === "continue") {
+    if (busy || turns[turns.length - 1] !== turn) return // they asked something else meanwhile
+    void retry(turn)
+    if (opts.keyboard) focusComposer()
+  } else if (outcome === "cancelled") {
+    if (opts.opener?.isConnected) opts.opener.focus()
+  } else if (outcome !== "done") {
+    note(turnId, outcome.failed, false)
+    updateTurn(turnId, (t) => ({
+      ...t,
+      actions: [...outcome.offer, ...(t.actions ?? []).filter((k) => k !== key && !outcome.offer.includes(k))],
+    }))
+    // The chip that failed is gone: the keyboard goes to what replaced it.
+    if (opts.keyboard) requestAnimationFrame(() => document.querySelector<HTMLElement>(`[data-action="${outcome.offer[0]}"]`)?.focus())
+  }
 }
 
 // Ask a changed question in place of the latest one.

@@ -12,7 +12,8 @@ import pytest
 
 from chatbot import agent as agent_mod
 from chatbot.agent import Agent
-from chatbot.followups import TagFilter, parse_items
+from chatbot.followups import ACTIONS, TagFilter, merge_actions, parse_items
+from chatbot.prompt import SYSTEM_PROMPT
 from chatbot.routes import chat as chat_routes
 from chatbot.settings import Settings
 
@@ -382,3 +383,64 @@ def test_closing_the_stream_stops_the_turn():
 
     asyncio.run(go())
     assert conv.messages == [] and conv.turns == [] and not conv.runs
+
+
+# -- actions: <do> and the ones the server offers itself ----------------------------------------
+
+
+def test_do_holds_known_action_keys_only():
+    shown, found = run_filter(["Share your spot and I'll plan it.\n<next>Walk from Eleftheria Square</next>\n",
+                               "<do>share_location | Pick on map | open_settings | share_location</do>"])
+    assert shown == "Share your spot and I'll plan it.\n\n"
+    assert found == {"next": ["Walk from Eleftheria Square"], "do": ["share_location", "pick_on_map"]}
+    assert parse_items("city_3d, go_live ,data_sources, `rm -rf`", 3, ACTIONS) == ["city_3d", "go_live", "data_sources"]
+    assert run_filter(["<do>delete_everything</do>"]) == ("", {})  # nothing left: no tag at all
+
+
+def test_do_comes_out_however_the_deltas_split_it():
+    text = "Which one?\n<choices>From here | From Eleftheria Square</choices>\n<do>share_location|pick_on_map</do>"
+    for cut in range(len(text) + 1):
+        shown, found = run_filter([text[:cut], text[cut:]])
+        assert shown == "Which one?\n\n", cut
+        assert found == {"choices": ["From here", "From Eleftheria Square"], "do": ["share_location", "pick_on_map"]}
+
+
+def test_every_action_is_in_the_prompt_and_merging_keeps_order():
+    for key in ACTIONS:
+        assert key in SYSTEM_PROMPT
+    assert "right-click" not in SYSTEM_PROMPT.replace("right-clicking the map, the buttons do it", "")
+    assert merge_actions(["share_location", "pick_on_map"], ["go_live", "share_location", "nope"]) == \
+        ["share_location", "pick_on_map", "go_live"]
+
+
+def test_a_tool_that_needs_the_location_makes_the_server_offer_it():
+    # The model calls where_am_i with no location shared, then forgets the <do> tag.
+    ask = final([block("tool_use", id="t1", name="where_am_i", input={})], "tool_use")
+    reply = final([block("text", text="Your location isn't shared yet.\n<next>Walk from Eleftheria Square</next>")])
+    fake, agent, conv = make_agent([ask, reply])
+    events = []
+    asyncio.run(turn(agent, conv, "where am I?", events))
+    end = next(e for e in events if e["type"] == "tool_end")
+    assert end["ok"] is False and end["summary"] == "Your location isn't shared yet"
+    result = json.loads(conv.messages[2]["content"][0]["content"])
+    assert "_actions" not in result and "share it" in result["error"] and "right-click" not in result["error"]
+    assert next(e for e in events if e["type"] == "follow_ups") == {
+        "type": "follow_ups", "next": ["Walk from Eleftheria Square"], "do": ["share_location", "pick_on_map"]}
+
+
+def test_the_server_offers_location_even_with_no_tags_at_all():
+    ask = final([block("tool_use", id="t1", name="plan_transit", input={"to_place": "the studio"})], "tool_use")
+    reply = final([block("text", text="I need your starting point.")])
+    _, agent, conv = make_agent([ask, reply])
+    agent.mobility.require_timetable = lambda: None  # no feed needed to know there's no origin
+    events = []
+    asyncio.run(turn(agent, conv, "bus to the studio", events))
+    fu = [e for e in events if e["type"] == "follow_ups"]
+    assert fu == [{"type": "follow_ups", "do": ["share_location", "pick_on_map"]}]
+
+
+def test_no_actions_without_a_reason():
+    _, agent, conv = make_agent([answer("Lamp YL1015 is on.\n<next>How was it at 19:00?</next>")])
+    events = []
+    asyncio.run(turn(agent, conv, "is YL1015 on?", events))
+    assert next(e for e in events if e["type"] == "follow_ups") == {"type": "follow_ups", "next": ["How was it at 19:00?"]}

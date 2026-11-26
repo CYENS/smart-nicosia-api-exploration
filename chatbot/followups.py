@@ -1,8 +1,10 @@
 """Follow-ups the model writes at the end of an answer, taken out of the text as it streams.
 
 The system prompt asks for `<next>q1 | q2 | q3</next>` (suggested next questions) after a final
-answer, and `<choices>a | b</choices>` (the options) after a clarifying question. They cost no
-extra call: the model writes them in the same response. TagFilter sits on the text deltas and
+answer, `<choices>a | b</choices>` (the options) after a clarifying question, and
+`<do>share_location | pick_on_map</do>` (actions only the user can do on the page, by key: the
+page owns each one's label, icon and behaviour). They cost no extra call: the model writes them
+in the same response. TagFilter sits on the text deltas and
 holds back anything that could still become one of these tags, so the raw tag never reaches the
 page, even when it arrives split across deltas. The history keeps the text unchanged.
 """
@@ -11,21 +13,38 @@ from __future__ import annotations
 
 import re
 
-TAGS = ("next", "choices")
-MAX_ITEMS = {"next": 3, "choices": 5}
+TAGS = ("next", "choices", "do")
+MAX_ITEMS = {"next": 3, "choices": 5, "do": 3}
 MAX_CHARS = 80  # a chip longer than this is not a chip
 MAX_TAG = 800  # an "opening tag" with no close this far on is just text
-_OPEN = re.compile(r"<(next|choices)>")
+_OPEN = re.compile(r"<(next|choices|do)>")
+
+# What the page can do when the user clicks an action chip (chatbot/web/src/lib/actions.ts has
+# the label, icon and behaviour of each). The prompt lists the same keys; anything else is dropped.
+ACTIONS = ("share_location", "pick_on_map", "city_3d", "go_live", "data_sources")
 
 
-def parse_items(body: str, limit: int) -> list[str]:
-    """`a | b | c` (or one per line) as up to `limit` short, distinct, non-empty items."""
+def parse_items(body: str, limit: int, allowed: tuple[str, ...] | None = None) -> list[str]:
+    """`a | b | c` (or one per line) as up to `limit` short, distinct, non-empty items. With
+    `allowed`, items are keys ("Share location" reads as share_location) and others are dropped."""
     out: list[str] = []
-    for raw in re.split(r"[|\n]", body):
-        item = re.sub(r"\s+", " ", raw).strip().lstrip("-*•").strip().strip('"').strip()
+    for raw in re.split(r"[|\n,]" if allowed else r"[|\n]", body):
+        item = re.sub(r"\s+", " ", raw).strip().lstrip("-*•").strip().strip('"`').strip()
+        if allowed is not None:
+            item = re.sub(r"[\s-]+", "_", item.lower())
+            if item not in allowed:
+                continue
         if item and len(item) <= MAX_CHARS and item.lower() not in (o.lower() for o in out):
             out.append(item)
     return out[:limit]
+
+
+def merge_actions(*lists: list[str] | None) -> list[str]:
+    """Actions from several places (the server's own, then the model's), each once, in order."""
+    out: list[str] = []
+    for items in lists:
+        out += [a for a in items or () if a in ACTIONS and a not in out]
+    return out[:MAX_ITEMS["do"]]
 
 
 class TagFilter:
@@ -36,7 +55,7 @@ class TagFilter:
         self.found: dict[str, list[str]] = {}
 
     def _take(self, name: str, body: str) -> None:
-        items = parse_items(body, MAX_ITEMS[name])
+        items = parse_items(body, MAX_ITEMS[name], ACTIONS if name == "do" else None)
         if items:
             self.found[name] = items
 
