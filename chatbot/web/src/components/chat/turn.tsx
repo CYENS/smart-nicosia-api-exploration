@@ -11,9 +11,10 @@ import { Trace, seconds } from "@/components/chat/trace"
 import { WallsMark } from "@/components/walls-mark"
 import { Bubble, BubbleContent } from "@/components/ui/bubble"
 import { Button } from "@/components/ui/button"
+import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupText, InputGroupTextarea } from "@/components/ui/input-group"
+import { Kbd } from "@/components/ui/kbd"
 import { Marker, MarkerContent, MarkerIcon } from "@/components/ui/marker"
 import { Message, MessageContent, MessageFooter } from "@/components/ui/message"
-import { Textarea } from "@/components/ui/textarea"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { answerText, edit, focusComposer, focusStage, retry, send, useStage, type Part, type Turn } from "@/lib/chat"
 import { ID_IN_TEXT, kindMeta, kindOfId } from "@/lib/entities"
@@ -273,7 +274,7 @@ function FollowUps({ items, choices }: { items: string[]; choices: boolean }) {
 }
 
 // The question as asked, and on the latest turn a way to change it: Edit turns the bubble into a
-// field (Enter asks it, Shift+Enter adds a line, Esc puts it back).
+// field like the composer's (Enter asks it, Shift+Enter adds a line, Esc puts it back).
 function Question({ turn, editable }: { turn: Turn; editable: boolean }) {
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(turn.question)
@@ -307,22 +308,28 @@ function Question({ turn, editable }: { turn: Turn; editable: boolean }) {
   if (open) {
     return (
       <Message align="end">
-        <form className="flex w-full flex-col gap-2" onSubmit={(e) => { e.preventDefault(); submit() }}>
-          <Textarea
-            ref={area}
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) { e.preventDefault(); submit() }
-              if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); cancel() }
-            }}
-            aria-label="Edit your question"
-            className="max-h-48 min-h-11 bg-night/70 text-[14.5px] dark:bg-night/70"
-          />
-          <div className="flex justify-end gap-1.5">
-            <Button type="button" variant="ghost" size="sm" onClick={cancel}>Cancel</Button>
-            <Button type="submit" size="sm" disabled={!draft.trim()}>Ask</Button>
-          </div>
+        <form className="w-full" onSubmit={(e) => { e.preventDefault(); submit() }}>
+          <InputGroup className="rounded-xl bg-night/70 dark:bg-night/70">
+            <InputGroupTextarea
+              ref={area}
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) { e.preventDefault(); submit() }
+                if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); cancel() }
+              }}
+              rows={1}
+              aria-label="Edit your question"
+              className="max-h-48 min-h-11 px-3.5 pt-3 text-[14.5px]"
+            />
+            <InputGroupAddon align="block-end" className="pb-2">
+              <InputGroupText className="text-[12px] max-md:hidden">
+                <Kbd>Enter</Kbd> asks, <Kbd>Esc</Kbd> cancels
+              </InputGroupText>
+              <InputGroupButton variant="ghost" size="sm" className="ml-auto" onClick={cancel}>Cancel</InputGroupButton>
+              <InputGroupButton type="submit" variant="default" size="sm" disabled={!draft.trim()}>Ask</InputGroupButton>
+            </InputGroupAddon>
+          </InputGroup>
         </form>
       </Message>
     )
