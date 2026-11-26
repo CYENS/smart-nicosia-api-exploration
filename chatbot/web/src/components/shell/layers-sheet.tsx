@@ -21,7 +21,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { useClock } from "@/lib/clock"
 import { useGeometry } from "@/lib/geometry"
-import { closeLayers, layersOpener, setLayersGroup, useLayersSheet } from "@/lib/layers-sheet"
+import { closeLayers, layersHandedOff, layersOpener, setLayersGroup, useLayersSheet } from "@/lib/layers-sheet"
 import { GAP, PHONE_GAP, STRIP_H, useLayout } from "@/lib/layout"
 import type { Basemap } from "@/lib/map/basemap"
 import { skyAt } from "@/lib/map/sky"
@@ -183,7 +183,7 @@ function Workspaces() {
               data-key={w.id}
               aria-current={w.id === active ? "page" : undefined}
               className="cursor-pointer gap-3 px-1.5 py-2 text-left hover:bg-accent/60 active:bg-accent aria-[current=page]:border-sodium/35 aria-[current=page]:bg-sodium/10"
-              render={<button type="button" onClick={() => { closeLayers(); openWorkspace(w.id) }} />}
+              render={<button type="button" onClick={() => { closeLayers(true); openWorkspace(w.id) }} />}
             >
               <ItemMedia className="text-muted-foreground [&_svg]:size-[18px]"><w.icon /></ItemMedia>
               <ItemContent className="gap-0.5">
@@ -348,7 +348,7 @@ export function LayersSheet() {
         showCloseButton={false}
         // The keyboard goes to the sheet's title, so a screen reader starts there, and Tab goes on in.
         initialFocus={() => document.getElementById("layers-title")}
-        finalFocus={() => layersOpener() ?? document.querySelector<HTMLElement>("[data-layers-button]") ?? true}
+        finalFocus={() => (layersHandedOff() ? false : layersOpener() ?? document.querySelector<HTMLElement>("[data-layers-button]") ?? true)}
         className="panel-float z-30 gap-0 overflow-hidden rounded-xl border bg-console p-0 motion-reduce:transition-none"
         style={style}
       >

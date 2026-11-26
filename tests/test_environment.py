@@ -456,3 +456,17 @@ def test_two_close_stations_keep_their_own_readings():
     mid = f.at((market[0] + hall[0]) / 2, (market[1] + hall[1]) / 2)["value"]
     assert 9.9 < mid < 27.7
     assert f.grid()["max"] > 24  # the market's cell, on the map too
+
+
+def test_a_drive_is_not_read_for_shade(shade, monkeypatch):
+    from chatbot import context
+    monkeypatch.setattr(context, "speed", lambda city, weeks: {"rows": []})
+    env, _ = make_env(city=FakeCity(now=AFTERNOON - timedelta(minutes=10)), shade=shade)
+    ctx = ctx_for(env, StubRouter([SUNNY, SHADY]))
+    a, b = at_m(-40, -40), at_m(40, -40)
+    res, err = run_tool(ctx, "plan_route", {"stops": [{"lat": a[0], "lon": a[1]}, {"lat": b[0], "lon": b[1]}],
+                                            "mode": "drive", "prefer": ["shade"]})
+    assert not err, res
+    assert res["shade"] == {"note": "shade is read for walking and cycling, not driving"}
+    states = {f["properties"]["state"] for f in ctx.store.layers[res["layer_ref"]]["features"]}
+    assert "in shade" not in states and "in sun" not in states

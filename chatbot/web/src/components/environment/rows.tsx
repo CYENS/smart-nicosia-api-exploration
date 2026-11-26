@@ -103,7 +103,7 @@ function SunHoursKey() {
   return (
     <div className="flex flex-col gap-2">
       <SunHoursLegend />
-      <Button variant="ghost" size="sm" className="-ml-2 self-start" onClick={() => { closeLayers(); openWorkspace("environment") }}>
+      <Button variant="ghost" size="sm" className="-ml-2 self-start" onClick={() => { closeLayers(true); openWorkspace("environment") }}>
         Pick a square or a date in Environment
       </Button>
     </div>
@@ -209,7 +209,9 @@ registerSystemLayer({
 // -- the Outside card's section --------------------------------------------------------------
 
 function useWindReadout(at: number | null): Wind | null {
-  const hour = at === null ? "now" : new Date(at).toISOString().slice(0, 13)
+  const now = useClock((s) => s.now)
+  // Live, a new hour of the model is read when it comes.
+  const hour = new Date(at ?? now).toISOString().slice(0, 13)
   const [wind, setWind] = useState<{ hour: string; data: Wind | null } | null>(null)
   useEffect(() => {
     let live = true

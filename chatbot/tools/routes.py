@@ -111,7 +111,9 @@ def h_plan_route(ctx: ToolContext, a: dict) -> dict:
             usual, route = route, safer
     start = _hhmm(a.get("start_time"), local_now(ctx))
     shade = None
-    if "shade" in prefer:
+    if "shade" in prefer and mode == "drive":
+        shade = {"note": "shade is read for walking and cycling, not driving"}
+    elif "shade" in prefer:
         route, shade = shaded_choice(ctx, options or [route], start, len(path), mode)
     passed = passed_by(route["coordinates"], records)
     usual_passed = passed_by(usual["coordinates"], records) if usual else []

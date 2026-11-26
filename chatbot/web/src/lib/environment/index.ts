@@ -50,7 +50,7 @@ registerActiveSources(() => {
 registerSearchProvider({
   id: "environment-commands",
   heading: "Commands",
-  order: 22,
+  order: 14, // before the workspaces: "terrain" shows the terrain rather than opening Environment
   search: (q) => {
     const { terrain, shadows, wind } = useEnvironment.getState()
     const items: (SearchItem & { words: string })[] = [

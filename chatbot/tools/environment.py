@@ -121,7 +121,7 @@ def h_sun_and_shade(ctx: ToolContext, a: dict) -> dict:
         at = datetime.combine(day, _hhmm(a["time"]), TZ)
         grid = env.shade_grid(lat, lon, radius, at)
         area = env.shade.area(lat, lon, radius)
-        mask = area.shade(at)
+        mask = area.shade(at)  # kept on the area: shade_grid has just worked it out
         res |= {"mode": "moment", "time": at.strftime("%H:%M"),
                 "sun_up": grid["sun_up"], "shade_pct": grid["shade_pct"],
                 "sun_now": grid["sun"]}

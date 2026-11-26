@@ -303,9 +303,13 @@ function drawShadows() {
   map.setLayoutProperty(SHADOWS, "visibility", "visible")
 }
 
+// Whether the shadows turned the 3D city on, so turning them off puts it back as it was.
+let cityForShadows = false
+
 export function setShadowsOn(on: boolean) {
   patch("shadows", { on })
-  if (on && !cityBuildings().on) setCity3d(true)
+  if (on && !cityBuildings().on) { cityForShadows = true; setCity3d(true) }
+  if (!on && cityForShadows) { cityForShadows = false; if (cityBuildings().on) setCity3d(false) }
   const map = getMap()
   if (on && map && map.getZoom() < 15.5) {
     map.easeTo({ zoom: 16.2, pitch: Math.max(map.getPitch(), 50), duration: reducedMotion() ? 0 : 900 })
@@ -731,7 +735,8 @@ function loadWind(force = false) {
   const { on, answers } = env().wind
   if (!on && !answers) { wind.set(null); return }
   const at = useClock.getState().at
-  const hour = at === null ? "live" : new Date(at).toISOString().slice(0, 13)
+  // Live, the wind is read again each hour of the model.
+  const hour = at === null ? `live ${new Date().toISOString().slice(0, 13)}` : new Date(at).toISOString().slice(0, 13)
   if (!force && hour === windHour && env().wind.data) { wind.set(env().wind.data); return }
   windHour = hour
   windAbort?.abort()
@@ -1005,5 +1010,6 @@ export function startEnvironmentMap() {
     if (env().rain.on) syncRadar() // a new frame every 10 minutes
     if (env().surface.metric) loadSurface()
     if (env().shadows.on) shadowsSoon() // the sun moves on
+    loadWind() // a new hour of the model, once it comes
   }, RADAR_REFRESH_MS)
 }
