@@ -42,6 +42,34 @@ export function resolveClick(features: MapGeoJSONFeature[], at: [number, number]
   return null
 }
 
+// -- empty map --------------------------------------------------------------------------------
+// What a click with nothing under the pointer does, a long press on touch, and "What's here?"
+// in the right-click menu. `how` says which: a plain click may close what is open instead (as
+// in Google Maps), a press or the menu always asks about the point. The first handler (by
+// priority) that returns true takes it; "What's here?" (lib/here.ts) is the default, and a
+// workspace that places things by clicking (a square to measure) registers above it.
+
+export type EmptyHow = "click" | "press" | "menu" | "keyboard"
+
+export type EmptyClickHandler = {
+  id: string
+  priority: number // higher first
+  handle: (at: [number, number], how: EmptyHow) => boolean
+}
+
+const emptyHandlers: EmptyClickHandler[] = []
+
+export function registerEmptyClickHandler(h: EmptyClickHandler) {
+  const i = emptyHandlers.findIndex((x) => x.id === h.id)
+  if (i >= 0) emptyHandlers.splice(i, 1)
+  emptyHandlers.push(h)
+  emptyHandlers.sort((a, b) => b.priority - a.priority)
+}
+
+export function handleEmptyClick(at: [number, number], how: EmptyHow) {
+  return emptyHandlers.some((h) => h.handle(at, how))
+}
+
 // -- the built-in handlers ------------------------------------------------------------------------
 
 const LOCAL_KIND: [RegExp, string][] = [

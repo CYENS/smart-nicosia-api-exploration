@@ -173,6 +173,7 @@ class Agent:
         self.entities = Entities(city, places, dls, registers, memory,  # shared with the inspector
                                  mobility=self.mobility, web_places=self.web_places)
         self.moments = Moments(city, memory)  # the city at past moments, for the clock
+        self.entities.moments = self.moments  # "What's here?" reads parking and lamps from it
         self.watcher = Watcher(city, memory)  # alerts, incidents and watches
         self.entities.watcher = self.watcher  # incidents open by their id (INC-12)
         # Sun and shade, air and noise surfaces, the wind and the rain radar.

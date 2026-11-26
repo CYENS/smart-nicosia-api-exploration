@@ -1,0 +1,35 @@
+{
+ "place_id": 210184471,
+ "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+ "osm_type": "node",
+ "osm_id": 6213640486,
+ "lat": "35.1718663",
+ "lon": "33.3619460",
+ "category": "amenity",
+ "type": "restaurant",
+ "place_rank": 30,
+ "importance": 7.090485999842859e-05,
+ "addresstype": "amenity",
+ "name": "Aladdin Lahmajoun",
+ "display_name": "Aladdin Lahmajoun, Onasagorou, Faneromeni, Nicosia, Faneromeni, Nicosia Muncipality, Nicosia District, Cyprus, 1011, Cyprus",
+ "address": {
+  "amenity": "Aladdin Lahmajoun",
+  "road": "Onasagorou",
+  "neighbourhood": "Faneromeni",
+  "city": "Nicosia",
+  "municipality": "Faneromeni",
+  "county": "Nicosia Muncipality",
+  "state_district": "Nicosia District",
+  "ISO3166-2-lvl5": "CY-01",
+  "state": "Cyprus",
+  "postcode": "1011",
+  "country": "Cyprus",
+  "country_code": "cy"
+ },
+ "boundingbox": [
+  "35.1718163",
+  "35.1719163",
+  "33.3618960",
+  "33.3619960"
+ ]
+}
