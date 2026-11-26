@@ -19,7 +19,7 @@ import {
 } from "@/lib/clock"
 import { closeInspector, inspect, useInspector } from "@/lib/inspector"
 import { getCamera, jumpToCamera, onCameraMoved, type Camera } from "@/lib/map/engine"
-import { leaveView, useView, viewFrom, viewLink } from "@/lib/view"
+import { VIEW_MAX_PITCH, VIEW_MIN_PITCH, leaveView, useView, viewFrom, viewLink } from "@/lib/view"
 
 export type ClockLink = { at: number | null; range: [number, number] | null; compare: Compare | null }
 export type ViewLink = { lat: number; lon: number; height: number; yaw: number; pitch: number; name: string | null }
@@ -73,7 +73,7 @@ export function parseHash(hash: string): Link {
   if (vw) {
     const [lat, lon, height, yaw, pitch] = vw.slice(1, 6).map(Number)
     if (Math.abs(lat) <= 90 && Math.abs(lon) <= 180 && height >= 0 && height <= 300) {
-      view = { lat, lon, height, yaw: ((yaw % 360) + 360) % 360, pitch: Math.max(50, Math.min(85, pitch)), name: vw[6]?.trim() || null }
+      view = { lat, lon, height, yaw: ((yaw % 360) + 360) % 360, pitch: Math.max(VIEW_MIN_PITCH, Math.min(VIEW_MAX_PITCH, pitch)), name: vw[6]?.trim() || null }
     }
   }
   return { camera, entity, clock, view }

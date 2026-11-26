@@ -485,12 +485,14 @@ function applySky() {
   // stays in sight (and its lights at night).
   const sky = viewFocus ? { ...skyFor(shown), "fog-ground-blend": 0.94, "horizon-fog-blend": shown.dark ? 0.25 : 0.4 } : skyFor(shown)
   try { map.setSky(sky) } catch { /* a style without sky support */ }
+  syncViewLights()
   syncNightLights()
 }
 
 export function setNightLights(on: boolean) {
   setUi({ nightLights: on })
   syncNightLights()
+  if (styleReady) syncViewLights()
 }
 
 // Street lights glow from dusk to dawn: the city's own lamps (live from /api/lamps, or as they
@@ -2187,6 +2189,25 @@ export function setViewFocus(f: ViewFocus | null) {
     applySky()
     if (CITY.on) refreshCity()
   })
+}
+
+// The city's lights from afar: looking out after dark, a small warm point at every bend of every
+// street, round and the same few pixels at any distance, so the streets km away still read as
+// lights (the glow along them is too thin at that angle). Only in a view, only at night.
+const VIEW_LIGHTS = "view::lights"
+function syncViewLights() {
+  const want = !!viewFocus && shown.dark && useMapUi.getState().nightLights
+  if (!want) { if (map.getLayer(VIEW_LIGHTS)) map.removeLayer(VIEW_LIGHTS); return }
+  if (map.getLayer(VIEW_LIGHTS) || !map.getSource(BASE_SOURCE)) return
+  map.addLayer({
+    id: VIEW_LIGHTS, type: "circle", source: BASE_SOURCE, "source-layer": "transportation", minzoom: 11,
+    filter: ["match", ["get", "class"], ["primary", "secondary", "tertiary", "minor", "trunk", "service"], true, false],
+    paint: {
+      "circle-radius": ["match", ["get", "class"], ["primary", "trunk", "secondary"], 1.7, 1.2],
+      "circle-color": "#ffcf8a", "circle-blur": 0.55, "circle-opacity": 0.85,
+      "circle-pitch-alignment": "viewport", "circle-pitch-scale": "viewport",
+    },
+  }, firstLabelLayer())
 }
 
 // The DLS buildings in a view: stone by day, as they look, rather than coloured by height.

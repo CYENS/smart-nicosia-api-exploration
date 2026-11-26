@@ -63,6 +63,7 @@ export function ViewCard() {
   const loading = useView((s) => s.loading)
   const error = useView((s) => s.error)
   const clockAt = useClock((s) => s.at)
+  const clockNote = useView((s) => s.clockNote)
   const g = useGeometry()
   const box = useRef<HTMLElement>(null)
   const title = useRef<HTMLHeadingElement>(null)
@@ -100,7 +101,7 @@ export function ViewCard() {
   const when = at === null
     ? (sky.dark ? "Now, live" : null)
     : `${fmtMoment(at)}, as the twin's memory has it`
-  const held = spec?.at && spec.when && !spec.when.startsWith("now") ? spec.when : null
+  const held = clockNote ?? (spec?.at && spec.when && !spec.when.startsWith("now") ? spec.when : null)
   const marks = spec?.landmarks ?? []
   const target = spec?.toward
   const inSight = marks.filter((m) => m.visible).map((m, i) => (i ? m.title.replace(/^The /, "the ") : m.title))

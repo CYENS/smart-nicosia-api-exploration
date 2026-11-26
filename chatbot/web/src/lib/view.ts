@@ -54,11 +54,12 @@ type ViewState = {
   loading: boolean // a view on its way from /api/view
   error: string | null
   facts: string[] // what /api/view said about it (for a link or "View from here")
+  clockNote: string | null // the moment asked for that the twin's memory doesn't reach
 }
 
 export const useView = create<ViewState>(() => ({
   open: false, spec: null, yaw: 0, pitch: 84, arriving: false, turning: false, tour: [], index: 0,
-  loading: false, error: null, facts: [],
+  loading: false, error: null, facts: [], clockNote: null,
 }))
 const set = useView.setState
 const get = useView.getState
@@ -384,9 +385,18 @@ export function enterView(spec: ViewSpec, opts: { fly?: boolean } = {}) {
   set({ open: true, spec, tour, index, error: null, loading: false, facts: wasOpen ? get().facts : [] })
   setViewFocus({ lon: spec.lon, lat: spec.lat, radiusM: DLS_RADIUS_M, hide: buildingNumber(spec.building_id) })
   setCity3d(true)
+  set({ clockNote: null })
   if (spec.at) { // a night view in daylight: the city as it was then
     const t = fromWall(spec.at)
-    if (Number.isFinite(t) && saved) { saved.clockSet = true; setAt(t) }
+    if (Number.isFinite(t) && saved) {
+      saved.clockSet = true
+      setAt(t)
+      // The clock goes back only as far as the memory: never show another moment as that one.
+      const got = useClock.getState().at
+      if (got === null || Math.abs(got - t) > 15 * 60e3) {
+        set({ clockNote: `The twin's memory doesn't reach back to ${spec.at.slice(11)} last night, so the map shows ${got === null ? "now" : "the earliest moment it holds"}.` })
+      }
+    }
   }
   clearLabels()
   const yaw = wrap(spec.bearing), pitch = clamp(spec.pitch ?? aimAt(spec), VIEW_MIN_PITCH, VIEW_MAX_PITCH)

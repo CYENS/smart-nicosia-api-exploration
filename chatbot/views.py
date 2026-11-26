@@ -48,6 +48,7 @@ MAX_HEIGHT_M = 300
 NIGHT_HOUR = 21
 STEP_M = 30.0  # line-of-sight samples, about one terrain pixel apart
 ROOF_CHECK_M = 1500  # buildings near the eye are checked against the line of sight
+AROUND_EYE_M = 600  # the DLS tiles fetched around the eye (the page draws the same ones)
 # Places whose name says the public can look out from up high (an observatory floor, a rooftop
 # bar, a terrace).
 LOOKOUT_NAME = re.compile(
@@ -515,6 +516,24 @@ def find_high(ctx: ToolContext, terrain: Terrain, near: tuple[float, float], rad
                              (CENTRE[0], CENTRE[1], centre_ground + CENTRE_TOP_M), skip,
                              roofs=False, part_of_target_m=CENTRE_AREA_M)
         c["score"] = _score(c["above_centre"], c["prom"], c["los"]["visible"], c["dist"])
+    # High ground in a built-up area: the houses around it can hide what the terrain leaves in
+    # sight. The DLS tile at each of the likeliest is fetched (once per area) and the line of
+    # sight checked again over its buildings, at eye level.
+    rows.sort(key=lambda c: -c["score"])
+    likely = [c for c in rows[:limit * 2] if c["kind"] == "high_ground" and c["los"]["visible"]]
+    if ctx.dls is not None and likely:
+        keys = list(dict.fromkeys(lonlat_to_tile(c["lon"], c["lat"]) for c in likely))
+        try:
+            ctx.dls.tiles(keys) if hasattr(ctx.dls, "tiles") else [ctx.dls.tile(*k) for k in keys]
+        except WebError as e:
+            log.info("DLS tiles for high places failed: %s", e)
+        for c in likely:
+            near = sight(ctx, terrain, (c["lat"], c["lon"], c["eye_m"]),
+                         (CENTRE[0], CENTRE[1], centre_ground + CENTRE_TOP_M),
+                         part_of_target_m=CENTRE_AREA_M)
+            if not near["visible"] and near["blocked_by"]["what"] != "ground":
+                c["eye_blocked"] = near
+                c["score"] = round(c["score"] - 30, 1)
     rows.sort(key=lambda c: -c["score"])
     return [_describe(ctx, c, rank) for rank, c in enumerate(rows[:limit], 1)]
 
@@ -545,6 +564,9 @@ def _describe(ctx: ToolContext, c: dict, rank: int) -> dict:
     how_high += f", {abs(above)} m {'above' if above >= 0 else 'below'} the centre"
     if c["dist"] < IN_CENTRE_M:
         sees = "in the centre itself, with the old town all around"
+    elif c.get("eye_blocked"):
+        sees = (f"the terrain leaves the centre in sight, but {hidden_by(c['eye_blocked'])} hides "
+                "it at eye level")
     elif c["los"]["visible"]:
         sees = "the centre is in sight over the terrain"
     else:
@@ -558,7 +580,8 @@ def _describe(ctx: ToolContext, c: dict, rank: int) -> dict:
         "above_centre_m": above, "above_surroundings_m": prom,
         "distance_to_centre_m": round(c["dist"]),
         "direction_to_centre": compass(bearing_deg(lat, lon, CENTRE[0], CENTRE[1])),
-        "centre_in_sight": bool(c["los"]["visible"]), "view": sees, "score": c["score"],
+        "centre_in_sight": bool(c["los"]["visible"]) and not c.get("eye_blocked"),
+        "view": sees, "score": c["score"],
         "lat": round(lat, 6), "lon": round(lon, 6),
     }
     if area:
@@ -727,6 +750,22 @@ def terrain_peak(terrain: Terrain, bbox: tuple[float, float, float, float],
     return terrain.peaks[bbox]
 
 
+def _load_around(ctx: ToolContext, lat: float, lon: float, radius_m: float = AROUND_EYE_M) -> None:
+    """Fetch the DLS tiles around the eye (once per area; the page draws these same tiles), so
+    the buildings next to it are counted, not only those someone happened to load before."""
+    if ctx.dls is None:
+        return
+    dlat = radius_m / 110574
+    dlon = radius_m / (111320 * math.cos(math.radians(lat)))
+    x0, y0 = lonlat_to_tile(lon - dlon, lat + dlat)
+    x1, y1 = lonlat_to_tile(lon + dlon, lat - dlat)
+    keys = [(x, y) for x in range(x0, x1 + 1) for y in range(y0, y1 + 1)]
+    try:
+        ctx.dls.tiles(keys) if hasattr(ctx.dls, "tiles") else [ctx.dls.tile(*k) for k in keys]
+    except WebError as e:  # the check falls back to what is cached, and says less
+        log.info("DLS tiles around a view failed: %s", e)
+
+
 def view(ctx: ToolContext, terrain: Terrain, frm: Spot, *, toward: Spot | None = None,
          bearing: float | None = None, height: str | float | None = None,
          when: When | None = None, with_landmarks: bool = True) -> dict:
@@ -735,6 +774,8 @@ def view(ctx: ToolContext, terrain: Terrain, frm: Spot, *, toward: Spot | None =
     Looks at `toward` (a place), along `bearing` (a compass direction), or at the city centre;
     from the centre itself, north across the old town to the mountains."""
     up, said, building = _eye_height(ctx, frm, height)
+    if with_landmarks:
+        _load_around(ctx, frm.lat, frm.lon)
     ground = terrain.elevation(frm.lat, frm.lon)
     eye_m = ground + up
     centre_ground = terrain.elevation(*CENTRE)
