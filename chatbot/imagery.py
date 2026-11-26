@@ -23,10 +23,12 @@ from __future__ import annotations
 import logging
 import math
 import socket
+import struct
 import threading
 import time
 import urllib.error
 import urllib.request
+import zlib
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
@@ -40,10 +42,17 @@ BASE = "https://eservices.dls.moi.gov.cy/arcgis/rest/services/BASEMAPS"
 # Where the twin shows the photos: greater Nicosia and the hills around it (lon/lat).
 COVER = (33.18, 35.04, 33.55, 35.27)
 R = 20037508.342789244  # half the Web Mercator world, in metres
-# A transparent 1x1 PNG, for a tile with no photo (outside the cover or past the photo's edge).
-EMPTY_PNG = bytes.fromhex(
-    "89504e470d0a1a0a0000000d4948445200000001000000010806000000"
-    "1f15c4890000000d49444154789c6300010000000500010d0a2db40000000049454e44ae426082")
+
+
+def _empty_png() -> bytes:
+    """A transparent 1x1 PNG, for a tile with no photo (outside the cover, or past its edge)."""
+    def chunk(kind: bytes, body: bytes) -> bytes:
+        return struct.pack(">I", len(body)) + kind + body + struct.pack(">I", zlib.crc32(kind + body))
+    return (b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", struct.pack(">IIBBBBB", 1, 1, 8, 6, 0, 0, 0))
+            + chunk(b"IDAT", zlib.compress(b"\x00\x00\x00\x00\x00")) + chunk(b"IEND", b""))
+
+
+EMPTY_PNG = _empty_png()
 
 
 @dataclass(frozen=True)

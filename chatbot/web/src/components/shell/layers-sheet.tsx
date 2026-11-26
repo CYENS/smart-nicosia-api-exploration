@@ -25,6 +25,7 @@ import { closeLayers, layersHandedOff, layersOpener, setLayersGroup, useLayersSh
 import { GAP, PHONE_GAP, STRIP_H, useLayout } from "@/lib/layout"
 import type { Basemap } from "@/lib/map/basemap"
 import { setGround, useGround, type Ground } from "@/lib/map/ground"
+import { setTreesOn, useTrees } from "@/lib/city3d/trees"
 import { skyAt } from "@/lib/map/sky"
 import {
   RAMP, REGISTERS_REF, flyRoute, fmt, forgetMyLocation, locateMe, nicosiaTime, removeLayer, setBasemapMode,
@@ -59,6 +60,8 @@ function MapSection() {
   const { pitch } = useCameraAngles()
   const ground = useGround((s) => s.ground)
   const groundLoading = useGround((s) => s.loading)
+  const trees = useTrees()
+  const cityOn = useMapUi((s) => s.city.on)
   return (
     <Section title="Map">
       <FieldGroup className="gap-4">
@@ -109,6 +112,20 @@ function MapSection() {
             <FieldDescription>Tilt the map so the buildings stand up</FieldDescription>
           </FieldContent>
           <Switch id="ls-3d" checked={pitch > 10} onCheckedChange={(on) => set3dView(on)} />
+        </Field>
+        <Field orientation="horizontal">
+          <FieldContent>
+            <FieldLabel htmlFor="ls-trees">Trees</FieldLabel>
+            <FieldDescription aria-live="polite">
+              {!trees.on
+                ? "Simple 3D trees from OpenStreetMap, with the 3D city"
+                : trees.status === "loading" ? "OpenStreetMap's trees are still loading"
+                  : trees.status === "unavailable" ? "OpenStreetMap's trees couldn't be read; try again later"
+                    : !cityOn ? "Shown with the 3D city (Buildings below)"
+                      : `${fmt(trees.mapped)} mapped and ${fmt(trees.estimated)} estimated in parks, woods and orchards`}
+            </FieldDescription>
+          </FieldContent>
+          <Switch id="ls-trees" checked={trees.on} onCheckedChange={(on) => setTreesOn(on)} />
         </Field>
       </FieldGroup>
     </Section>

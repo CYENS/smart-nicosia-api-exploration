@@ -9,6 +9,7 @@ import { create } from "zustand"
 import { BASE_SOURCE, BASE_SOURCE_URLS, BASEMAP_URLS, baseLayers, type Basemap } from "@/lib/map/basemap"
 import { addRoofs, attachRoofs, detachRoofs, hideRoofs, housesOf, prepareBuilding, setRoofLook } from "@/lib/city3d/city"
 import { CITY_HEIGHTS_DAY, CITY_HEIGHTS_NIGHT, rampFor, type Look } from "@/lib/city3d/look"
+import { attachTrees, detachTrees, loadTrees, setTreesNight } from "@/lib/city3d/trees"
 import { lightFor, nicosiaWallToDate, skyAt, skyFor, type Sky } from "@/lib/map/sky"
 import { kindOfId } from "@/lib/entities"
 import { clickableLayer, handleEmptyClick, resolveClick, type InspectTarget } from "@/lib/registries/map-clicks"
@@ -1294,6 +1295,7 @@ function paintCity() {
   // As it looks, walls are solid: the photo showing through them would tint them.
   if (map.getLayer("city3d::fill")) map.setPaintProperty("city3d::fill", "fill-extrusion-opacity", cityLook().real ? 1 : 0.92)
   setRoofLook(cityLook())
+  setTreesNight(cityLook().night)
 }
 export function setCityRealistic(on: boolean) {
   cityReal = on
@@ -1311,6 +1313,7 @@ function addCityLayer() {
   if (!map.getLayer("city3d::ghost")) map.addLayer({ id: "city3d::ghost", type: "fill-extrusion", source: CITY_SRC, minzoom: CITY_MIN_ZOOM - 0.5, filter: ["in", ["id"], ["literal", []]], paint: cityPaint(0.28) }, before)
   // The roofs over the walls, and under whatever the answers drew.
   attachRoofs(map, before)
+  attachTrees(map, before) // and the trees among them
   paintCity()
   setBaseBuildings(false)
   syncCityClaims()
@@ -1318,6 +1321,7 @@ function addCityLayer() {
 }
 
 function removeCityLayer() {
+  detachTrees(map)
   detachRoofs(map)
   for (const id of ["city3d::ghost", "city3d::fill"]) if (map.getLayer(id)) map.removeLayer(id)
   if (map.getSource(CITY_SRC)) map.removeSource(CITY_SRC)
@@ -1392,6 +1396,7 @@ function pumpCity() {
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`))))
       .then((fc: FC) => {
         CITY.tiles.add(key)
+        loadTrees(x, y)
         const add = fc.features.filter((f) => !CITY.ids.has(f.id!))
         for (const f of add) { CITY.ids.add(f.id!); CITY.features.push(f); prepareBuilding(f) }
         if (add.length) (map.getSource(CITY_SRC) as GeoJSONSource | undefined)?.updateData({ add: add as any })

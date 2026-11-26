@@ -26,6 +26,7 @@ from chatbot.city import CityData
 from chatbot.dls import DLS
 from chatbot.imagery import Imagery
 from chatbot.oldtown import OldTown
+from chatbot.trees import Trees
 from chatbot.entities import Entities
 from chatbot.environment import spot as _spot  # noqa: F401 - registers the spot kind
 from chatbot.environment.service import Environment
@@ -191,6 +192,7 @@ class Agent:
         self.imagery = Imagery(settings, throttle=dls.throttle if dls is not None else None)
         # The walled city's blocks split into the cadastre's houses, for the 3D city's tiles.
         self.oldtown = OldTown(dls) if dls is not None else None
+        self.trees = Trees(settings)  # OpenStreetMap's trees, read in the background (server.py)
         self.tools = TOOL_DEFS + ([WEB_SEARCH] if settings.web_search else [])
         self.conversations: dict[str, Conversation] = {}
 

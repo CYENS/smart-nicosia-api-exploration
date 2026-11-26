@@ -11,6 +11,7 @@ from fastapi import FastAPI
 from chatbot.imagery import EMPTY_PNG, PHOTOS, Imagery, in_cover, sniff, tile_mercator_bounds
 from chatbot.routes import imagery as imagery_routes
 from chatbot.settings import Settings
+from chatbot.terrain import decode_png
 from chatbot.web import WebError
 from conftest import FIXTURES
 
@@ -44,6 +45,8 @@ def test_the_photos_and_their_tiles():
     assert set(PHOTOS) == {"2019", "1993", "1963"}
     assert sniff(JPG_2019) == "image/jpeg" and sniff(EDGE_2019) == "image/png"
     assert sniff(b"<html>error</html>") is None and sniff(EMPTY_PNG) == "image/png"
+    w, h, ch, pixels = decode_png(EMPTY_PNG)  # a real image: a broken one fails in the browser
+    assert (w, h, ch) == (1, 1, 4) and pixels == b"\x00\x00\x00\x00"
     xmin, ymin, xmax, ymax = tile_mercator_bounds(Z, X, Y)
     assert round(xmax - xmin, 3) == round(ymax - ymin, 3) == 152.874  # a z18 tile is ~153 m
     assert in_cover(Z, X, Y) and not in_cover(Z, X + 3000, Y)  # Nicosia, then far out to sea
