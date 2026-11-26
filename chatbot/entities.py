@@ -1019,6 +1019,9 @@ def build_web_place(ents: Entities, eid: str, near) -> dict | None:
     if w.get("osm_id") and ents.places is not None and ents.places.by_id(w["osm_id"]):
         relations.append({"relation": "place", "label": "On OpenStreetMap", "id": w["osm_id"],
                           "kind": "place", "name": w.get("matched") or w["name"]})
+    if w.get("overture_id"):
+        relations.append({"relation": "place", "label": "In Overture Maps", "id": w["overture_id"],
+                          "kind": "overture_place", "name": w.get("matched") or w["name"]})
     b = ents.building_at(w["lat"], w["lon"]) if exact else None
     if b:
         relations.append({"relation": "building", "label": "In the DLS building", "id": f"B{b['id']}",
@@ -1029,9 +1032,9 @@ def build_web_place(ents: Entities, eid: str, near) -> dict | None:
     sources = [{"source": "web_search", "name": re.sub(r"^www\.", "", urlsplit(u).netloc),
                 "detail": "web search result", "url": u, "as_of": f"{found:%Y-%m-%d}"}
                for u in w.get("sources") or []]
-    osm = bool(w.get("osm_id"))
-    sources.append({"source": "openstreetmap" if osm else "geocoding",
-                    "name": "OpenStreetMap" if osm else "Nominatim and Photon",
+    osm, ov = bool(w.get("osm_id")), bool(w.get("overture_id"))
+    sources.append({"source": "openstreetmap" if osm else "overture" if ov else "geocoding",
+                    "name": "OpenStreetMap" if osm else "Overture Maps" if ov else "Nominatim and Photon",
                     "detail": "where it stands on the map", "url": None, "as_of": f"{found:%Y-%m-%d}"})
     return new_entity(
         w["id"], "web_place", w["name"],

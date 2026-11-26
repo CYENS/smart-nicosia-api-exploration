@@ -9,6 +9,7 @@ import {
   type EntityRef, type LocalThing, type Series,
 } from "@/lib/entities"
 import { flyToThing, onInspect, setSelection } from "@/lib/map/engine"
+import { routeFor } from "@/lib/registries/inspect-routes"
 import type { InspectTarget } from "@/lib/registries/map-clicks"
 
 type Status = "idle" | "loading" | "ready" | "missing" | "error"
@@ -93,6 +94,13 @@ function returnFocus(to: HTMLElement | null) {
 }
 
 export function inspect(target: InspectTarget, opts: InspectOptions = {}) {
+  // Some things open in a place of their own (an incident in the incident inbox).
+  const route = "id" in target ? routeFor(target.id) : null
+  if (route && "id" in target) {
+    if (useInspector.getState().open) closeInspector({ returnFocus: false })
+    route.open(target.id, opts)
+    return
+  }
   ctrl?.abort()
   const mine = (ctrl = new AbortController())
   rememberOpener(opts.opener)

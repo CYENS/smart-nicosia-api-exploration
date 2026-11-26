@@ -1,15 +1,17 @@
-"""Place tools: geocoding, points of interest from the OpenStreetMap index, and the places a web
-search found, put on the map."""
+"""Place tools: geocoding, places from the OpenStreetMap index and then Overture Maps', and the
+places a web search found, put on the map."""
 
 from __future__ import annotations
 
 import logging
+from collections import Counter
 
 from chatbot.geo import CATEGORIES, haversine_m
 from chatbot.store import STATE_COLORS, point
 from chatbot.tools.base import NEAR, ToolContext, ToolError, ToolSet, local_now, obj, resolve_point
 
 log = logging.getLogger(__name__)
+MAX_ON_MAP = 300  # places on one find_places layer
 TOOLS = ToolSet()
 tool = TOOLS.tool
 
@@ -26,13 +28,22 @@ def h_geocode(ctx: ToolContext, a: dict) -> dict:
 
 
 @tool("find_places",
-      "Points of interest from OpenStreetMap: museums, cafés, pharmacies, toilets, drinking "
-      "water, parks and more, by category, name and/or distance. Returns places with opening "
-      "hours where mapped (raw OSM opening_hours strings; judge them against the local time "
-      "in <context>) and a layer_ref.",
+      "Places in Nicosia from two indexes, searched in order: OpenStreetMap (museums, cafés, "
+      "pharmacies, toilets, drinking water, parks and more, with opening hours where mapped as "
+      "raw OSM opening_hours strings; judge them against the local time in <context>), then "
+      "Overture Maps (about 9,500 businesses and services OSM lacks, such as studios, schools, "
+      "clinics, clubs, shops and offices, each at its door with its address, phone and website, "
+      "and a confidence of high, good or fair). Search by category, by free text over the name, "
+      "kind and address, and/or by distance. Each place has an id that opens it in the inspector "
+      "and works as a place in plan_route and plan_transit (n123456 for OSM, ov-1a2b3c4d5e6f for "
+      "Overture). Returns places, a layer_ref and a data_ref.",
       obj({
           "category": {"type": "string", "enum": list(CATEGORIES)},
-          "query": {"type": "string", "description": "Name or part of a name."},
+          "query": {"type": "string",
+                    "description": "A name or part of one, or what the place is in a word or two "
+                                   "('dance school', 'yoga class', 'tailor', 'dentist'). Every "
+                                   "telling word must match its name, kind or address; school, "
+                                   "class, shop or club keeps only places of that kind."},
           **NEAR,
           "limit": {"type": "integer", "minimum": 1, "maximum": 50},
       }))
@@ -42,20 +53,35 @@ def h_find_places(ctx: ToolContext, a: dict) -> dict:
     center = resolve_point(ctx, a.get("near_place"), a.get("near_lat"), a.get("near_lon"))
     near = (center[0], center[1]) if center else None
     radius = (a.get("radius_m") or 1000) if near else None
-    places, source = ctx.places.find(a.get("category"), a.get("query"), near, radius, limit=200)
+    places, source = ctx.places.find(a.get("category"), a.get("query"), near, radius, limit=2000)
+    shown = places[:MAX_ON_MAP]
     feats = [point(p["lon"], p["lat"], {
         "id": p["id"], "label": p.get("name") or p["category"], "state": "place",
         "color": STATE_COLORS["place"],
-        "popup": "\n".join(x for x in (p.get("name"), p["category"].replace("_", " "),
-                                       p.get("opening_hours")) if x),
-    }) for p in places]
+        "popup": "\n".join(x for x in (p.get("name"), p.get("kind") or p["category"].replace("_", " "),
+                                       p.get("address"), p.get("opening_hours"),
+                                       "From Overture Maps" if p.get("from") == "Overture Maps"
+                                       else None) if x),
+    }) for p in shown]
     title = (a.get("category") or a.get("query") or "places").replace("_", " ")
+    by = Counter(p.get("from") or "photon" for p in places)
+    # Credit only the indexes this answer drew from.
+    sources = [s for s, used in (("openstreetmap", by["OpenStreetMap"]), ("overture", by["Overture Maps"]),
+                                 ("geocoding", by["photon"])) if used] or ["openstreetmap"]
     layer = ctx.store.add_layer(title, feats, geometry="point", title=title.capitalize(),
-                                legend={"place": STATE_COLORS["place"]})
+                                legend={"place": STATE_COLORS["place"]}, sources=sources)
+    rows = [{k: p[k] for k in ("id", "name", "kind", "category", "address", "distance_m", "from")
+             if p.get(k) is not None} for p in shown]
+    data = ctx.store.add_dataset(title, rows, title=title.capitalize(), link={"key": "id"},
+                                 sources=sources)
     limit = a.get("limit") or 15
-    return {"source": source, "matched": len(places), "places": places[:limit],
-            "layer_ref": layer, "local_time_now": local_now(ctx).strftime("%a %H:%M"),
-            "_summary": f"{len(places)} {title}"}
+    res = {"source": source, "matched": len(places), "matched_by_index": dict(by),
+           "places": places[:limit], "layer_ref": layer, "data_ref": data,
+           "local_time_now": local_now(ctx).strftime("%a %H:%M"),
+           "_summary": f"{len(places)} {title}"}
+    if len(places) > MAX_ON_MAP:
+        res["note"] = f"the map shows the first {MAX_ON_MAP}"
+    return res
 
 
 WEB_PLACE = obj({
