@@ -259,7 +259,7 @@ export function initMap(container: HTMLElement, camera?: Camera | null) {
         press = null
         emptyClick.quietUntil = performance.now() + 800
         if (pickDone) endPick({ lat: at[1], lon: at[0] }) // picking the user's spot, as a tap does
-        else handleEmptyClick(at, "press")
+        else if (!viewFocus) handleEmptyClick(at, "press") // in a view, as a right-click: quiet
       }, LONG_PRESS_MS),
     }
   })
