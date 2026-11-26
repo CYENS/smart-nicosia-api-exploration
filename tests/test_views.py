@@ -263,7 +263,7 @@ def test_high_places_are_ranked_by_view_and_named_plainly(world):
     layer = ctx.store.layers[res["layer_ref"]]
     data = ctx.store.datasets[res["data_ref"]]
     assert data["link"] == {"key": "id"} and {f["properties"]["id"] for f in layer["features"]} == set(order)
-    assert "terrain" in layer["meta"]["sources"] and "above_centre_m" in layer["meta"]["value_fields"]
+    assert "terrain_tiles" in layer["meta"]["sources"] and "above_centre_m" in layer["meta"]["value_fields"]
     popup = next(f for f in layer["features"] if f["properties"]["id"] == "n7021261387")["properties"]["popup"]
     assert 'Mapped as "End of new route"' in popup
 

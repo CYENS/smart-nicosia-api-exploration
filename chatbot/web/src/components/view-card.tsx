@@ -199,7 +199,7 @@ export function ViewCard() {
             )}
           </>
         )}
-        {spec && <FromSources ids={["terrain", "dls", "openfreemap", ...(sky.dark ? ["smart_nicosia"] : [])]} />}
+        {spec && <FromSources ids={["terrain_tiles", "dls", "openfreemap", ...(sky.dark ? ["smart_nicosia"] : [])]} />}
       </div>
 
       {spec && (

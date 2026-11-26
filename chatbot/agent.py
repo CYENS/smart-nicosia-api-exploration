@@ -25,6 +25,8 @@ import anthropic
 from chatbot.city import CityData
 from chatbot.dls import DLS
 from chatbot.entities import Entities
+from chatbot.environment import spot as _spot  # noqa: F401 - registers the spot kind
+from chatbot.environment.service import Environment
 from chatbot.eoa import Registry
 from chatbot.followups import TagFilter, merge_actions
 from chatbot.geo import Places
@@ -37,6 +39,7 @@ from chatbot.settings import TIMEZONE, Settings
 from chatbot.store import SessionStore
 from chatbot.terrain import Terrain
 from chatbot.tools import TOOL_DEFS, WEB_SEARCH, ToolContext, run_tool
+from chatbot.watch import Watcher
 from chatbot.webplaces import WebPlaces
 
 log = logging.getLogger(__name__)
@@ -175,6 +178,11 @@ class Agent:
         self.entities = Entities(city, places, dls, registers, memory,  # shared with the inspector
                                  mobility=self.mobility, web_places=self.web_places)
         self.moments = Moments(city, memory)  # the city at past moments, for the clock
+        self.watcher = Watcher(city, memory)  # alerts, incidents and watches
+        self.entities.watcher = self.watcher  # incidents open by their id (INC-12)
+        # Sun and shade, air and noise surfaces, the wind and the rain radar.
+        self.environment = Environment(settings, city, self.moments, dls, memory)
+        self.entities.environment = self.environment
         self.terrain = Terrain(settings)  # the ground's height, for views and lines of sight
         self.tools = TOOL_DEFS + ([WEB_SEARCH] if settings.web_search else [])
         self.conversations: dict[str, Conversation] = {}
@@ -222,6 +230,7 @@ class Agent:
                                user_location(context), memory=self.memory,
                                entities=self.entities, moments=self.moments,
                                mobility=self.mobility, web_places=self.web_places,
+                               watcher=self.watcher, environment=self.environment,
                                terrain=self.terrain)
         conv.messages.append({"role": "user", "content": [
             {"type": "text", "text": format_context(context, self.city.now()) + text}]})

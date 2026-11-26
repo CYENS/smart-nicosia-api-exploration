@@ -20,6 +20,7 @@ import { CompareSwipe } from "@/components/clock/compare-swipe"
 import { ViewCard } from "@/components/view-card"
 import "@/components/view-section" // "View from here" in the inspector
 import "@/components/topics/builtin" // Buses, Parking, Traffic and Outside
+import { Toaster } from "@/components/ui/sonner"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { startClock } from "@/lib/clock"
 import { parseHash, startDeepLinks } from "@/lib/deeplink"
@@ -28,6 +29,8 @@ import { useLayout } from "@/lib/layout"
 import { startCredits } from "@/lib/map/credits"
 import { initMap, setInsets } from "@/lib/map/engine"
 import "@/lib/mobility" // buses, stops and road speeds: their workspace, kinds, layers and commands
+import "@/lib/watch" // the incident inbox, its Layers row, marks on the clock, toasts from the live stream
+import "@/lib/environment" // sun, shade, terrain, air, noise and weather: workspace, spot, layers
 import { useWorkspace, useWorkspaceSide } from "@/lib/registries/workspaces"
 import { useView } from "@/lib/view"
 
@@ -100,6 +103,14 @@ export function App() {
         <Shortcuts />
         <SourcesPanel />
         <GlobalKeys />
+        {/* Toasts from the twin's watch: announced politely, Alt T puts the keyboard on them. */}
+        <Toaster
+          position="top-center"
+          offset={{ top: g.insets.top + 4 }} // the top of the open map, under the clock's console when it shows
+          mobileOffset={{ top: g.belowClock + 4, left: 8, right: 8 }}
+          containerAriaLabel="Notifications"
+          visibleToasts={4}
+        />
       </div>
     </TooltipProvider>
   )

@@ -336,6 +336,7 @@ function syncLabels() {
 
 type Saved = {
   camera: Camera | null; maxPitch: number; maxZoom: number; fov: number; clamped: boolean
+  terrain: maplibregl.TerrainSpecification | null // the Environment's own terrain, when it was on
   city: boolean; clockAt: number | null; clockSet: boolean; chatOpen: boolean
   handlers: Record<string, boolean>; focus: HTMLElement | null
 }
@@ -348,6 +349,7 @@ function saveAndPrepare() {
   saved = {
     camera: getCamera(), maxPitch: map.getMaxPitch(), maxZoom: map.getMaxZoom(),
     fov: map.getVerticalFieldOfView(), clamped: map.getCenterClampedToGround(),
+    terrain: map.getTerrain() ?? null,
     city: useMapUi.getState().city.on, clockAt: useClock.getState().at, clockSet: false,
     chatOpen: useLayout.getState().chatOpen,
     handlers: Object.fromEntries(HANDLERS.map((h) => [h, map[h].isEnabled()])),
@@ -429,9 +431,10 @@ export function leaveView(opts: { restoreCamera?: boolean } = {}) {
   onViewTakeover(null)
   set({ open: false, spec: null, arriving: false, turning: false, tour: [], index: 0, facts: [], loading: false })
   setViewFocus(null)
-  setTerrain(map, false)
   const sv = saved
   saved = null
+  setTerrain(map, false)
+  if (sv?.terrain) map.setTerrain(sv.terrain) // the Environment's terrain stays as it was
   if (!sv) return
   setCity3d(sv.city)
   map.setCenterClampedToGround(sv.clamped)

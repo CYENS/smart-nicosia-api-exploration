@@ -19,6 +19,7 @@
   --color-line: var(--line);
   --color-sodium: var(--sodium);
   --color-signal: var(--signal);
+  --color-amber: var(--amber);
 
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
@@ -75,6 +76,8 @@
   --line: rgb(138 160 190 / 0.16);
   --sodium: #ffae45;
   --signal: #ff5a4e;
+  /* A warning that is not yet an alarm (a medium-severity incident): amber, beside signal red. */
+  --amber: #f5a524;
 
   --background: var(--night);
   --foreground: #e4ebf4;
@@ -334,6 +337,9 @@
   cursor: pointer;
 }
 .me-btn:hover { background: #ffffff; }
+
+/* The wind's particles ride over the map, under every panel; the map still takes the pointer. */
+.wind-canvas { position: absolute; inset: 0; pointer-events: none; }
 
 /* Map callouts the assistant places. The box sits inside MapLibre's marker element (which is
    absolutely positioned and moved with `transform`), so its own position and animation are

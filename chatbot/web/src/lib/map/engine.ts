@@ -91,6 +91,7 @@ const CITY_RADIUS = 3 // tiles around the centre (each ~500 m), so pitched views
 
 export type LayerSummary = {
   ref: string; title: string; count: number; style: string
+  renderer: string | null // the feature drawing it its own way, which may give its own legend
   legend: Record<string, string>; stats: Stats | null; valueField: string | null
   street: { name: string; follows: string | null } | null // `follows`: the total its glow tracks
   sources: string[] // where its data comes from (lib/sources.ts)
@@ -1074,6 +1075,7 @@ function publishLayers() {
       const { spec, stats, data } = entry
       return {
         ref: spec.ref, title: spec.title, count: spec.count, style: spec.style,
+        renderer: entry.renderer?.id ?? null,
         legend: entry.legendNow ?? spec.legend ?? {}, stats, valueField: spec.value_field ?? null,
         street: data.street ? { name: data.street.name, follows: totalsOf(entry)?.field ?? null } : null,
         sources: spec.sources ?? [],
@@ -1268,6 +1270,7 @@ function pumpCity() {
         const add = fc.features.filter((f) => !CITY.ids.has(f.id!))
         for (const f of add) { CITY.ids.add(f.id!); CITY.features.push(f) }
         if (add.length) (map.getSource(CITY_SRC) as GeoJSONSource | undefined)?.updateData({ add: add as any })
+        if (add.length) cityChanged()
       })
       .catch(() => { /* leave it unloaded; the next move retries it */ })
       .finally(() => { CITY.inflight.delete(key); cityStatus(); pumpCity() })
@@ -1292,6 +1295,20 @@ function cityStatus() {
   if (cur.on !== CITY.on || cur.status !== status) setUi({ city: { on: CITY.on, status } })
 }
 
+// The DLS buildings loaded so far (each with its roof height `h`), and a call whenever more
+// arrive or the 3D city is switched: for what is drawn from them, like their shadows.
+export function cityBuildings(): { on: boolean; features: Feature[] } {
+  return { on: CITY.on, features: CITY.features }
+}
+const citySinks = new Set<() => void>()
+export function onCityChange(fn: () => void) {
+  citySinks.add(fn)
+  return () => { citySinks.delete(fn) }
+}
+function cityChanged() {
+  for (const fn of citySinks) fn()
+}
+
 export function setCity3d(on: boolean) {
   CITY.on = on
   cityStatus()
@@ -1306,6 +1323,7 @@ export function setCity3d(on: boolean) {
       removeCityLayer()
     }
     cityStatus()
+    cityChanged()
   })
 }
 
