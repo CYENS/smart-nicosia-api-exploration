@@ -114,8 +114,14 @@ STOP_WORDS = {"a", "an", "the", "of", "and", "in", "near", "for", "to", "at", "o
               "και", "του", "της", "των", "στο", "στη", "στην"}
 # Words that say little about what a place is ('dance schools', 'yoga classes'): they rank, and
 # are required only when the query has nothing else.
-GENERIC_WORDS = {"place", "shop", "store", "school", "studio", "centre", "center", "class",
-                 "lesson", "service", "academy", "club", "nicosia", "lefkosia", "cyprus"}
+# Kinds of place that narrow a search when some of its places are of that kind: 'dance
+# schools' keeps the studios and academies and leaves the dance clubs out.
+NARROWING = ({"school", "studio", "academy", "class", "lesson", "course", "teacher", "tutor",
+              "tuition", "workshop"},
+             {"shop", "store", "boutique"},
+             {"club", "nightclub", "disco"})
+GENERIC_WORDS = {"place", "centre", "center", "service", "nicosia", "lefkosia", "cyprus",
+                 *(w for group in NARROWING for w in group)}
 
 
 def _words(text: str | None) -> list[str]:
@@ -164,6 +170,23 @@ def text_score(query: str | None, names: list[str | None], other: list[str | Non
     else:
         return 0
     return base + sum(has(w, all_words, False) for w in generic)
+
+
+def narrow(query: str | None, items: list[dict], texts) -> list[dict]:
+    """The items of the kind the query's generic words ask for ('dance schools': the studios,
+    schools and academies), when there are any; else all of them. `texts(item)` gives what an
+    item is called and what it is."""
+    asked = {s for w in _words(query) for s in _stems(w)}
+    groups = [g for g in NARROWING if g & asked]
+    if not groups:
+        return items
+    wanted = set().union(*groups)
+
+    def fits(item: dict) -> bool:
+        return bool(wanted & {s for t in texts(item) for w in _words(t) for s in _stems(w)})
+
+    kept = [i for i in items if fits(i)]
+    return kept or items
 
 
 def in_bbox(lat: float, lon: float, bbox=NICOSIA_BBOX) -> bool:
@@ -310,6 +333,11 @@ class Places:
         if ov is not None:
             for s, conf, row in ov.find(category, query, skip=ov.twins(self._places)):
                 found.append((s, 1, conf, row))
+        if query:  # 'dance schools': the studios, not the clubs
+            keep = {id(i) for i in narrow(query, [t[3] for t in found], lambda i: (
+                i.get("name"), i.get("name_local"), i.get("kind"), i.get("category"),
+                i.get("cuisine")))}
+            found = [t for t in found if id(t[3]) in keep]
         exact = norm(query)
         out = []
         for s, idx, conf, item in found:

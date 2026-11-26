@@ -32,10 +32,11 @@ import logging
 import re
 import threading
 import time
+from difflib import SequenceMatcher
 from pathlib import Path
 from urllib.parse import urlsplit
 
-from chatbot.geo import Places, haversine_m, in_bbox, loose_match, norm
+from chatbot.geo import Places, haversine_m, in_bbox, loose, loose_match, norm
 from chatbot.settings import CACHE_DIR
 
 log = logging.getLogger(__name__)
@@ -209,6 +210,35 @@ def on_street(hit: dict, streets: list[str]) -> bool:
     return any(loose_match(s, text) for s in streets)
 
 
+# Words that say what kind of place it is rather than which: 'Ithaki Bar' and 'Ithaki Venue'
+# are one name.
+VENUE_WORDS = {loose(w) for w in ("the", "bar", "venue", "club", "cafe", "café", "restaurant",
+                                  "tavern", "taverna", "lounge", "pub", "studio", "school",
+                                  "nicosia", "lefkosia", "cyprus", "ltd", "and")}
+
+
+def name_words(name: str | None) -> set[str]:
+    return {w for w in re.split(r"[^0-9a-z]+", loose(name)) if len(w) >= 2} - VENUE_WORDS
+
+
+def names_agree(a: str | None, b: str | None) -> int:
+    """2 when two names are one ('DownTown Live' and 'Downtown Live', 'Ithaki Bar' and 'Ithaki
+    Venue'), 1 when one is a near spelling of the other ('S//P (SLIP)' and 'S//IP'), else 0."""
+    la, lb = loose(a), loose(b)
+    if not la or not lb:
+        return 0
+    if la == lb:
+        return 2
+    wa, wb = name_words(a), name_words(b)
+    if wa and wb and (wa <= wb or wb <= wa):
+        return 2
+    forms_a = {re.sub(r"[^0-9a-z]", "", la), *wa}
+    forms_b = {re.sub(r"[^0-9a-z]", "", lb), *wb}
+    near = max((SequenceMatcher(None, x, y).ratio() for x in forms_a for y in forms_b
+                if len(x) >= 3 and len(y) >= 3), default=0.0)
+    return 1 if near >= 0.8 else 0
+
+
 class WebPlaces:
     def __init__(self, places: Places, path: Path | None = None):
         self.places = places
@@ -325,38 +355,41 @@ class WebPlaces:
         return "its address isn't on the map of Nicosia"
 
     def _overture(self, name: str, address: str | None) -> dict | None:
-        """The Overture place the result names, at its door: its name matches loosely and its
-        address agrees, by the postcode or a street of it (both, best). A place in another
-        postcode is another place. A result with no address takes only a place called exactly
-        that, and only when Overture has one place of that name."""
+        """The Overture place the result names, at its door. Its address must agree first, by
+        the postcode or a street of it (a place in another postcode is another place), then its
+        name: the same telling words ('Ithaki Bar' is 'Ithaki Venue'), or, with both the
+        postcode and the street agreeing, a near spelling ('S//P (SLIP)' is 'S//IP'). A result
+        with no address takes only a name no other Overture place has."""
         ov = getattr(self.places, "overture", None)
         if ov is None or not ov.ready:
             return None
-        found = ov.named_loosely(name)
+        if not address:
+            same = ov.named(name)
+            return self._from_overture(same[0]) if len(same) == 1 else None
         code = address_postcode(address)
-        streets = address_streets(address) if address else []
+        streets = address_streets(address)
         best = None
-        for p in found:
+        for p in ov.all():
             pc = postcode_of({"postcode": p.get("postcode")})
             if code and pc and pc[:3] != code[:3]:
                 continue
-            agree = 2 * bool(code and pc == code) + any(loose_match(s, p.get("address"))
-                                                        for s in streets)
-            if address and not agree:
+            agree = 2 * bool(code and pc == code) + (bool(streets) and ov.on_street(p, streets))
+            if not agree:
                 continue
-            if not address and (len(found) > 1 or norm(p["name"]) != norm(name)):
-                continue
-            if best is None or (agree, p["confidence"]) > best[0]:
-                best = ((agree, p["confidence"]), p)
-        if best is None:
-            return None
-        p = best[1]
+            alike = names_agree(name, p["name"])
+            if alike == 2 or (alike == 1 and agree == 3):
+                rank = (alike, agree, p["confidence"])
+                if best is None or rank > best[0]:
+                    best = (rank, p)
+        return self._from_overture(best[1]) if best else None
+
+    @staticmethod
+    def _from_overture(p: dict) -> dict:
         where = ", ".join(x for x in (p.get("address"), p.get("postcode")) if x)
         return {"lat": p["lat"], "lon": p["lon"], "precision": "exact",
-                "located_by": "Overture Maps", "matched": clean(f"{p['name']}, {where}" if where
-                                                                else p["name"], 160),
-                "overture_id": p["id"],
-                **{k: p[k] for k in ("phone", "website") if p.get(k)}}
+                "located_by": "Overture Maps",
+                "matched": clean(f"{p['name']}, {where}" if where else p["name"], 160),
+                "overture_id": p["id"], **{k: p[k] for k in ("phone", "website") if p.get(k)}}
 
     def _street(self, query: str, streets: list[str], code: str | None,
                 address: str) -> tuple[dict | None, list[list[dict]]]:

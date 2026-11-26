@@ -41,8 +41,9 @@ def h_geocode(ctx: ToolContext, a: dict) -> dict:
           "category": {"type": "string", "enum": list(CATEGORIES)},
           "query": {"type": "string",
                     "description": "A name or part of one, or what the place is in a word or two "
-                                   "('dance', 'yoga', 'tailor', 'dentist'). Every telling word "
-                                   "must match its name, kind or address."},
+                                   "('dance school', 'yoga class', 'tailor', 'dentist'). Every "
+                                   "telling word must match its name, kind or address; school, "
+                                   "class, shop or club keeps only places of that kind."},
           **NEAR,
           "limit": {"type": "integer", "minimum": 1, "maximum": 50},
       }))

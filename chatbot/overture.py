@@ -18,7 +18,7 @@ What is kept (curate), from a look at release 2026-11-18.0 (17,801 rows in the b
   says little; a hand check of 0.6 to 0.7 still found mostly real, current places the twin lacks
   (Level Up Dance Academy 0.69, Caliente Dance Studio 0.67, Altius Performing Arts 0.61, a
   pharmacy), and below 0.6 more events, pages and repeats ("Santa Run", a "disco barda"). 0.6
-  keeps 10,516 rows before the rules below, 0.7 would keep 8,016.
+  keeps 10,516 rows before the rules below (9,560 after them), 0.7 would keep 8,016.
 - Open, or of unknown status: operating_status is empty for 99.5% of rows.
 - Not on a placeholder point. Some sources put a place they can't find at a town's centre: one
   point holds 448 places on 369 different streets. A point shared by 5 places or more on 3
@@ -26,8 +26,9 @@ What is kept (curate), from a look at release 2026-11-18.0 (17,801 rows in the b
 - One place per source record. Overture repeats about 700 Meta records under two ids, often
   kilometres apart (Froutaria Ithaki, at 28 Grigori Afxentiou, twice 700 m apart); the copy its
   source updated last stands.
-- One place per name within 50 m: the surest stays, taking the other's phone or website if it
-  lacks them.
+- One place per name within 50 m ('Θέατρο Πόλης ΟΠΑΠ' and 'Theatro Polis'): the surest stays,
+  taking the other's phone or website if it lacks them. A name inside another counts only for
+  places of one kind: 'Büyük Han 121', a shop, is not the han.
 - And against the OSM index, when a search runs: an Overture place with the name of an OSM
   place within 50 m is that place, and OSM wins (`twins`).
 
@@ -167,18 +168,34 @@ def point_of(geometry: object, bbox: dict | None = None) -> tuple[float, float] 
 # -- the quality rules -------------------------------------------------------------------------
 
 
+def skeleton(text: str | None) -> str:
+    """A name's consonants, for spellings that differ in their vowels: 'Emanuel Roidi' and
+    'Emmanouil Roidi' are both 'mnl rd' (Greek is made Latin first)."""
+    return re.sub(r"\s+", " ", re.sub(r"[aeiouy]", "", loose(text))).strip()
+
+
 def street_key(address: str | None) -> str:
     """An address without numbers or punctuation, to count the streets at one point."""
     return re.sub(r"[\d\W_]+", " ", norm(address)).strip()
 
 
-def same_name(a: str | None, b: str | None) -> bool:
-    """Whether two names name one place: equal once spelling is set aside, or one inside the
-    other ('Ithaki' and 'Ithaki Venue') when the shorter is long enough to mean something."""
+def same_name(a: str | None, b: str | None, alike: bool = True) -> bool:
+    """Whether two names (close together) name one place: equal once spelling is set aside, or
+    one inside the other ('Mikel' and 'Mikel Coffee Company') when the shorter is long enough to
+    mean something and the two are `alike`, of one kind: a han and the shop inside it share a
+    name ('Büyük Han', 'Büyük Han 121') and are two places."""
     la, lb = loose(a), loose(b)
-    if not la or not lb:
-        return False
-    return la == lb or (min(len(la), len(lb)) >= 5 and (la in lb or lb in la))
+    if not la or not lb or la == lb:
+        return bool(la and lb)
+    short, long_ = sorted((la, lb), key=len)
+    # Whole words only: 'W Cafe' is not 'LCW Cafe'.
+    return alike and len(short) >= 5 and re.search(rf"(^|\s){re.escape(short)}(\s|$)", long_) is not None
+
+
+def kinds_of(p: dict) -> set[str]:
+    """What a place is, to tell whether two places are alike: its kind and the twin's category
+    (an OSM place has the category only)."""
+    return {k for k in (p.get("kind"), p.get("category")) if k}
 
 
 def category_of(kind: str | None, hierarchy: Iterable[str] | None) -> str | None:
@@ -278,7 +295,8 @@ def curate(rows: list[dict]) -> tuple[list[dict], dict[str, int]]:
     ids: set[str] = set()
     for p in kept:
         p["id"] = short_id(p["gers"])
-        twin = next((q for q in _around(grid, p["lat"], p["lon"]) if same_name(p["name"], q["name"])
+        twin = next((q for q in _around(grid, p["lat"], p["lon"])
+                     if same_name(p["name"], q["name"], bool(kinds_of(p) & kinds_of(q)))
                      and haversine_m(p["lat"], p["lon"], q["lat"], q["lon"]) <= SAME_PLACE_M), None)
         if twin is not None:
             for k in ("phone", "website", "address", "postcode", "locality"):
@@ -340,7 +358,7 @@ class Overture:
         self._failed_at = 0.0
         self._places: list[dict] = []
         self._by_id: dict[str, dict] = {}
-        self._loose: list[tuple[str, str]] = []
+        self._addresses: dict[str, tuple[str, str]] = {}  # id -> (loose, skeleton) of its address
         self._busy = threading.Lock()
         self._twins: tuple[tuple, dict[str, str]] | None = None
         self.search_cache: tuple[tuple, list[dict]] | None = None  # Ctrl K's items, built once
@@ -360,8 +378,9 @@ class Overture:
         for p in places:
             p.setdefault("id", short_id(p["gers"]))
         by_id = {p["id"]: p for p in places}
-        keys = [(loose(p["name"]), loose(p["name"], eta="e")) for p in places]
-        self._places, self._by_id, self._loose = places, by_id, keys
+        addresses = {p["id"]: (loose(p.get("address")), skeleton(p.get("address")))
+                     for p in places}
+        self._places, self._by_id, self._addresses = places, by_id, addresses
         self.release, self.fetched_at, self.checked_at = release, fetched_at, checked_at
         self.dropped = dropped
 
@@ -450,7 +469,9 @@ class Overture:
         out = {}
         for p in self._places:
             for q in _around(grid, p["lat"], p["lon"]):
-                if (same_name(p["name"], q["name"]) or same_name(p["name"], q.get("name_local"))) \
+                alike = bool(kinds_of(p) & kinds_of(q))
+                if (same_name(p["name"], q["name"], alike)
+                        or same_name(p["name"], q.get("name_local"), alike)) \
                         and haversine_m(p["lat"], p["lon"], q["lat"], q["lon"]) <= SAME_PLACE_M:
                     out[p["id"]] = q["id"]
                     break
@@ -469,17 +490,16 @@ class Overture:
             return sorted(same, key=lambda p: haversine_m(near[0], near[1], p["lat"], p["lon"]))
         return sorted(same, key=lambda p: -p["confidence"])
 
-    def named_loosely(self, name: str) -> list[dict]:
-        """Places whose name holds `name` or is held by it, whatever the script or spelling."""
-        q = loose(name)
-        if not q:
-            return []
-        out = []
-        for p, (a, b) in zip(self._places, self._loose):
-            if q == a or q == b or (len(q) >= 3 and (q in a or q in b)) \
-                    or (len(a) >= 5 and a in q):
-                out.append(p)
-        return out
+    def on_street(self, p: dict, streets: list[str]) -> bool:
+        """Whether a place's address is on one of `streets`, whatever the script or the
+        spelling of its vowels ('Emanuel Roidi' is 'Emmanouil Roidi', 'Nikiforou Foka' is
+        'Νικηφόρου Φωκά')."""
+        addr, bones = self._addresses.get(p["id"]) or ("", "")
+        for s in streets:
+            ls, sk = loose(s), skeleton(s)
+            if (ls and ls in addr) or (len(sk.replace(" ", "")) >= 4 and sk in bones):
+                return True
+        return False
 
     def find(self, category: str | None = None, query: str | None = None,
              skip: dict | set | None = None) -> list[tuple[int, float, dict]]:
@@ -529,7 +549,7 @@ def build_overture_place(ents: E.Entities, eid: str, near) -> dict | None:
     attributes = [E.attr("Kind", kind), E.attr("Address", address), E.attr("Phone", p.get("phone")),
                   E.attr("Website", p.get("website")),
                   E.attr("Confidence", confidence_text(p["confidence"])),
-                  E.attr("Last confirmed by its source", p.get("updated")),
+                  E.attr("Updated by its source", p.get("updated")),
                   E.attr("Overture id", p["gers"])]
     relations = []
     osm_id = ov.twins(ents.places.all()).get(p["id"])

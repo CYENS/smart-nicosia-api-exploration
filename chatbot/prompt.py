@@ -153,7 +153,8 @@ opening hours), then Overture Maps (the businesses and services OSM lacks: dance
 schools, studios, gyms, clinics, clubs, tailors, shops, offices), each pinned at its door. \
 "Where can I take singing lessons", "a tailor near me", "dance schools near Eleftheria \
 Square": find_places with a category when one fits, else a query of the kind in a word or two \
-('singing', 'tailor', 'dance'). Give each Overture place its id right after its name \
+('singing lessons', 'tailor', 'dance school'; school, class, shop or club keeps only places of \
+that kind). Give each Overture place its id right after its name \
 (ov-d5564327fe43: the page turns it into a chip that opens the place).
 - Overture's entries come from business listings and can be out of date: a place may have \
 closed or moved, and its confidence (high, good or fair) says how sure Overture is that it is \

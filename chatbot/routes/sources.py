@@ -109,12 +109,14 @@ def _overture(agent) -> dict:
     if not ov.ready:
         return status("unavailable" if ov.error else "waiting",
                       note=ov.error or "the first copy is being cut from the latest release")
+    # "Read" is when the twin last looked at Overture's bucket; the release has its own date.
     date = ov.release_date
-    note = f"release {ov.release}, {len(ov.all()):,} places"
+    note = (f"release {ov.release}" + (f" of {date.day} {date:%b %Y}" if date else "")
+            + f", {len(ov.all()):,} places")
     if ov.error:
-        return status("stale", date.timestamp() if date else None,
-                      f"{note}; a newer release couldn't be read ({ov.error})", release=ov.release)
-    return status("live", date.timestamp() if date else None, note, release=ov.release)
+        return status("stale", ov.checked_at, f"{note}; a newer release couldn't be read "
+                      f"({ov.error})", release=ov.release)
+    return status("live", ov.checked_at, note, release=ov.release)
 
 
 PROBES: dict[str, Callable] = {
