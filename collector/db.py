@@ -3,6 +3,17 @@
 Connections are opened per job and closed straight away. DuckDB lets one process hold the file
 at a time, so this keeps `collector status` (and a backfill) able to get in between jobs.
 All timestamps are TIMESTAMPTZ.
+
+Sharing the file (see docs/twin-memory.md):
+
+- Between processes, DuckDB allows one writer or several readers, never both. Everybody keeps
+  connections short (open, work, close) and `connect` waits while another process holds the
+  file, so the collector, a backfill and the chatbot take turns.
+- Within one process, every connection to a file must use the same configuration, so a
+  read-only connection can't be open while a read-write one is. `GATE` makes the sessions of
+  one process take turns: readers together, one writer alone.
+- `coverage` records which stretches of time the store holds for each device type (or one
+  device), so a reader can tell "nothing happened" from "nobody was recording".
 """
 
 from __future__ import annotations
@@ -11,10 +22,11 @@ import json
 import logging
 import os
 import tempfile
+import threading
 import time
 from collections.abc import Iterable, Iterator, Sequence
 from contextlib import contextmanager
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import duckdb
@@ -51,8 +63,16 @@ CREATE TABLE IF NOT EXISTS telemetry (
     ts TIMESTAMPTZ NOT NULL,
     value VARCHAR,
     value_num DOUBLE,
-    source VARCHAR,                  -- latest | stream | backfill
+    source VARCHAR,                  -- latest | stream | backfill | chatbot
     PRIMARY KEY (device, key, ts)
+);
+CREATE TABLE IF NOT EXISTS coverage (
+    device_type VARCHAR NOT NULL,
+    device VARCHAR NOT NULL,         -- '' = every device of the type
+    source VARCHAR NOT NULL,         -- collector | backfill | chatbot
+    start_ts TIMESTAMPTZ NOT NULL,   -- readings are complete from here...
+    end_ts TIMESTAMPTZ NOT NULL,     -- ...to here (plus COVERAGE_GAP, see below)
+    PRIMARY KEY (device_type, device, source, start_ts)
 );
 CREATE TABLE IF NOT EXISTS state_changes (
     device VARCHAR NOT NULL,
@@ -177,6 +197,72 @@ def utcnow() -> datetime:
     return datetime.now(timezone.utc)
 
 
+def is_lock_error(e: BaseException) -> bool:
+    """Whether a DuckDB error means another process (or connection) holds the file."""
+    return isinstance(e, duckdb.IOException) and any(h in str(e).lower() for h in LOCK_HINTS)
+
+
+class GateTimeout(TimeoutError):
+    """The process's other sessions held the database for longer than the caller would wait."""
+
+
+class Gate:
+    """Readers together, one writer alone, within one process. Waiting writers go first, so a
+    stream of short reads can't keep a write out for ever."""
+
+    def __init__(self) -> None:
+        self._cond = threading.Condition()
+        self._readers = 0
+        self._writer = False
+        self._writers_waiting = 0
+
+    @contextmanager
+    def hold(self, *, write: bool, timeout: float | None = None) -> Iterator[None]:
+        deadline = None if timeout is None else time.monotonic() + timeout
+        with self._cond:
+            if write:
+                self._writers_waiting += 1
+            try:
+                while self._writer or (self._readers if write else self._writers_waiting):
+                    left = None if deadline is None else deadline - time.monotonic()
+                    if left is not None and left <= 0:
+                        raise GateTimeout("the database is busy in this process")
+                    self._cond.wait(left)
+            finally:
+                if write:
+                    self._writers_waiting -= 1
+            if write:
+                self._writer = True
+            else:
+                self._readers += 1
+        try:
+            yield
+        finally:
+            with self._cond:
+                if write:
+                    self._writer = False
+                else:
+                    self._readers -= 1
+                self._cond.notify_all()
+
+
+GATE = Gate()
+
+
+def open_waiting(open_fn, wait_s: float):
+    """Call open_fn() until it stops failing because another process holds the file."""
+    deadline = time.monotonic() + wait_s
+    delay = 0.1
+    while True:
+        try:
+            return open_fn()
+        except duckdb.IOException as e:
+            if not is_lock_error(e) or time.monotonic() > deadline:
+                raise
+            time.sleep(min(delay, max(0.0, deadline - time.monotonic())) or 0.01)
+            delay = min(delay * 2, 2.0)
+
+
 def connect(
     path: Path | str,
     *,
@@ -188,17 +274,7 @@ def connect(
     path = Path(path)
     if not read_only:
         path.parent.mkdir(parents=True, exist_ok=True)
-    deadline = time.monotonic() + wait_s
-    delay = 0.2
-    while True:
-        try:
-            con = duckdb.connect(str(path), read_only=read_only)
-            break
-        except duckdb.IOException as e:
-            if not any(h in str(e).lower() for h in LOCK_HINTS) or time.monotonic() > deadline:
-                raise
-            time.sleep(delay)
-            delay = min(delay * 2, 2.0)
+    con = open_waiting(lambda: duckdb.connect(str(path), read_only=read_only), wait_s)
     con.execute(f"SET TimeZone = '{timezone_name}'")
     if not read_only:
         con.execute(SCHEMA)
@@ -206,12 +282,88 @@ def connect(
 
 
 @contextmanager
-def session(path: Path | str, **kwargs) -> Iterator[duckdb.DuckDBPyConnection]:
-    con = connect(path, **kwargs)
-    try:
-        yield con
-    finally:
-        con.close()
+def session(
+    path: Path | str, *, gate_timeout: float | None = None, **kwargs
+) -> Iterator[duckdb.DuckDBPyConnection]:
+    """A short-lived connection, taking its turn with the process's other sessions (`GATE`)."""
+    with GATE.hold(write=not kwargs.get("read_only", False), timeout=gate_timeout):
+        con = connect(path, **kwargs)
+        try:
+            yield con
+        finally:
+            con.close()
+
+
+# -- coverage ----------------------------------------------------------------------------------
+
+# Two observations of a device type at most this far apart count as one unbroken stretch, and a
+# stretch is good for this long after its last observation: about one report interval.
+COVERAGE_GAP: dict[str, timedelta] = {
+    "Parking": timedelta(minutes=20),  # status changes come at any time
+    "Lighting": timedelta(minutes=65),  # lit lamps report at least hourly
+    "Wastebin": timedelta(minutes=65),
+    "smartsense": timedelta(minutes=65),
+    "InfoPoints": timedelta(minutes=65),
+    "Camera": timedelta(minutes=20),
+    "ParkingLot": timedelta(minutes=65),
+}
+DEFAULT_GAP = timedelta(minutes=30)
+
+# (device_type, device or '' for all, source, start_ms, end_ms)
+Span = tuple[str, str, str, int, int]
+
+
+def gap_ms(device_type: str) -> int:
+    return int(COVERAGE_GAP.get(device_type, DEFAULT_GAP).total_seconds() * 1000)
+
+
+def merge_spans(spans: Iterable[tuple[int, int]], gap: int) -> list[tuple[int, int]]:
+    """Merge (start, end) intervals that overlap or lie at most `gap` apart."""
+    out: list[list[int]] = []
+    for s, e in sorted((min(a, b), max(a, b)) for a, b in spans):
+        if out and s <= out[-1][1] + gap:
+            out[-1][1] = max(out[-1][1], e)
+        else:
+            out.append([s, e])
+    return [(s, e) for s, e in out]
+
+
+def add_coverage(con: duckdb.DuckDBPyConnection, spans: Iterable[Span]) -> int:
+    """Record stretches of complete readings, merged with the stored ones they touch."""
+    new: dict[tuple[str, str, str], list[tuple[int, int]]] = {}
+    for device_type, device, source, start, end in spans:
+        if start is None or end is None:
+            continue
+        new.setdefault((device_type, device or "", source), []).append((int(start), int(end)))
+    if not new:
+        return 0
+    keys = list(new)
+    existing = con.execute(  # the table holds merged stretches, so it stays small
+        """SELECT device_type, device, source, epoch_ms(start_ts), epoch_ms(end_ts)
+           FROM coverage WHERE list_contains(?, device_type) AND list_contains(?, source)""",
+        [sorted({k[0] for k in keys}), sorted({k[2] for k in keys})],
+    ).fetchall()
+    for t, d, s, a, b in existing:
+        if (t, d, s) in new:
+            new[(t, d, s)].append((a, b))
+    rows = [(t, d, s, a, b) for (t, d, s), items in new.items()
+            for a, b in merge_spans(items, gap_ms(t))]
+    bulk(
+        con,
+        {"device_type": "VARCHAR", "device": "VARCHAR", "source": "VARCHAR"},
+        keys,
+        """DELETE FROM coverage USING __SRC__ k
+           WHERE coverage.device_type = k.device_type AND coverage.device = k.device
+             AND coverage.source = k.source""",
+    )
+    return bulk(
+        con,
+        {"device_type": "VARCHAR", "device": "VARCHAR", "source": "VARCHAR", "s": "BIGINT",
+         "e": "BIGINT"},
+        rows,
+        """INSERT INTO coverage SELECT device_type, device, source, make_timestamptz(s * 1000),
+                  make_timestamptz(e * 1000) FROM __SRC__""",
+    )
 
 
 # -- bulk loading ------------------------------------------------------------------------------

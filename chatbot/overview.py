@@ -27,7 +27,10 @@ _lock = threading.Lock()
 _cache: dict[str, tuple[float, Any]] = {}
 
 
-def _cached(key: str, ttl_s: float, fn: Callable[[], Any]) -> Any:
+def cached(key: str, ttl_s: float, fn: Callable[[], Any],
+           keep: Callable[[Any], bool] | None = None) -> Any:
+    """fn()'s value, reused for ttl_s. A failure is logged and kept as None for ttl_s too, so
+    a broken source isn't asked again on every request."""
     with _lock:
         hit = _cache.get(key)
         if hit and time.time() - hit[0] < ttl_s:
@@ -35,17 +38,18 @@ def _cached(key: str, ttl_s: float, fn: Callable[[], Any]) -> Any:
     try:
         value = fn()
     except Exception as e:  # noqa: BLE001 - one failing source leaves the other readouts
-        log.warning("live strip: %s failed: %s", key, e)
+        log.warning("%s failed: %s", key, e)
         value = None
     with _lock:
-        _cache[key] = (time.time(), value)
+        if keep is None or keep(value):
+            _cache[key] = (time.time(), value)
     return value
 
 
 def live_strip(agent: Agent) -> dict:
     """Lamps lit, free parking, full bins, air quality, the weather and the registers. A source
     that fails is left out, so the page shows what it can."""
-    city = _cached("city", CITY_TTL_S, agent.city.overview) or {}
+    city = cached("city", CITY_TTL_S, agent.city.overview) or {}
     out: dict[str, Any] = {}
 
     def by_state(kind: str) -> tuple[dict, int] | None:
@@ -66,7 +70,7 @@ def live_strip(agent: Agent) -> dict:
         median = statistics.median(stations)
         out["air"] = {"caqi": round(median), "band": caqi_band(median), "stations": len(stations)}
 
-    sky = _cached("weather", WEATHER_TTL_S, lambda: weather(agent.settings))
+    sky = cached("weather", WEATHER_TTL_S, lambda: weather(agent.settings))
     if sky:
         now = sky["now"]
         out["weather"] = {"temp_c": now["temp_c"], "sky": now["sky"], "daylight": now["daylight"]}
@@ -78,7 +82,7 @@ def live_strip(agent: Agent) -> dict:
 
 def live_lamps(agent: Agent) -> dict:
     """Every smart street lamp and whether it is lit, for the map's night lighting."""
-    states = _cached("lamps", CITY_TTL_S, lambda: agent.city.states("Lighting")) or []
+    states = cached("lamps", CITY_TTL_S, lambda: agent.city.states("Lighting")) or []
     return {"type": "FeatureCollection", "features": [
         point(s.device.lon, s.device.lat, {"id": s.device.name, "label": s.label,
                                            "state": s.interp.state,

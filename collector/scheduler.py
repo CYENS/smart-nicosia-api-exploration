@@ -141,6 +141,7 @@ def run_job(cfg: Config, job: Job, client: Client, now: datetime) -> RunSummary:
         fetched = job.fetch(client, plan, ctx)
         with db.session(cfg.db_path, timezone_name=cfg.timezone) as con:
             stored = job.store(con, fetched, ctx)
+            db.add_coverage(con, job.coverage(fetched, ctx))
         rows, message = stored.rows, stored.message
         status = "partial" if fetched.errors else "ok"
         if fetched.errors:

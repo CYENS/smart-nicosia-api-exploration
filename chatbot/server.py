@@ -14,7 +14,7 @@ import time
 from contextlib import asynccontextmanager
 
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
@@ -25,11 +25,13 @@ from chatbot.city import CityData
 from chatbot.dls import DLS, TILE_ZOOM
 from chatbot.eoa import Registry, layer_features
 from chatbot.geo import Places
-from chatbot.overview import live_lamps, live_strip
+from chatbot.memory import Memory, Unavailable
+from chatbot.memory_tools import EntityNotFound, entity_history
+from chatbot.overview import cached, live_lamps, live_strip
 from chatbot.routing import Router
 from chatbot.settings import ROOT, STATIC_DIR, load_settings
 from chatbot.store import STATE_COLORS, legend_for
-from chatbot.tools import vega_lite_validator
+from chatbot.tools import ToolContext, ToolError, vega_lite_validator
 from chatbot.web import WebError
 
 log = logging.getLogger("chatbot")
@@ -56,13 +58,49 @@ async def lifespan(app: FastAPI):
     settings = load_settings()
     dls = DLS(settings)
     registers = Registry(settings, dls)
-    agent = Agent(settings, CityData(settings), Places(settings), Router(settings), dls=dls,
-                  registers=registers)
+    memory = Memory(settings.memory_path, record=settings.record)
+    agent = Agent(settings, CityData(settings, recorder=memory.recorder), Places(settings),
+                  Router(settings), dls=dls, registers=registers, memory=memory)
     app.state.agent = agent
+    if memory.recorder is not None:
+        memory.recorder.start()
+    if settings.collect:
+        start_collector(memory)
+    log.info("twin's memory: %s (recording %s, full collection %s)", memory.path,
+             "on" if memory.recorder else "off", "on" if settings.collect else "off")
     threading.Thread(target=_warm_up, args=(agent,), daemon=True).start()
     # The registers refresh daily; the first build (parcels, then 3D heights) takes ~2 minutes.
     threading.Thread(target=registers.refresh_if_needed, daemon=True).start()
     yield
+    if memory.recorder is not None:
+        memory.recorder.stop()
+
+
+def start_collector(memory: Memory) -> None:
+    """Run the full collector (collector/scheduler.py) in this process, with its own cadences
+    and request budget. A `collector run` elsewhere holds the run lock, and then this one
+    skips its passes rather than polling twice."""
+    from dataclasses import replace
+
+    from collector.config import load_config
+    from collector.scheduler import estimate_budget, run_pass
+
+    cfg = replace(load_config(), db_path=memory.path, log_file=None)
+    per_day = sum(b.requests_per_day for b in estimate_budget(cfg) if b.nokia)
+    log.info("full collection on: about %d city API requests a day (budget %d)", per_day,
+             cfg.daily_request_budget)
+    memory.collecting = True
+
+    def loop() -> None:
+        while True:
+            started = time.monotonic()
+            try:
+                run_pass(cfg)
+            except Exception:  # noqa: BLE001 - the next pass tries again
+                log.exception("collector pass failed")
+            time.sleep(max(1.0, 30.0 - (time.monotonic() - started)))
+
+    threading.Thread(target=loop, name="twin-collector", daemon=True).start()
 
 
 def password_ok(authorization: str | None, password: str) -> bool:
@@ -128,6 +166,47 @@ def health() -> dict:
         "registers_ready": agent.registers.ready,
         "registers_3d_linked": agent.registers.linked_3d,
     }
+
+
+@app.get("/api/health/data")
+def health_data() -> JSONResponse:
+    """How fresh and complete the twin's memory is, per source (cached for 30 s)."""
+    agent: Agent = app.state.agent
+    if agent.memory is None:
+        return JSONResponse({"store": {"status": "off"}})
+    body = cached("health_data", 30, lambda: agent.memory.health(agent.city.now()))
+    return JSONResponse(body or {"store": {"status": "error"}},
+                        headers={"Cache-Control": "max-age=30"})
+
+
+@app.get("/api/history/{entity_id}")
+def history_series(entity_id: str, hours: int = Query(24, ge=1, le=168),
+                   metric: str | None = Query(None, max_length=40)) -> JSONResponse:
+    """One device's metric over the last hours with its typical-day band, for the inspector's
+    sparkline: from the twin's memory, the city API filling what it lacks (cached for 2 min)."""
+    agent: Agent = app.state.agent
+    ctx = ToolContext(agent.settings, agent.city, agent.places, agent.router, None,
+                      lambda e: None, "", memory=agent.memory)
+
+    def build():
+        try:
+            return {"ok": entity_history(ctx, entity_id, hours, metric)}
+        except EntityNotFound:
+            return {"status": 404, "detail": f"no device named {entity_id!r}"}
+        except ValueError as e:
+            return {"status": 400, "detail": str(e)}
+        except (ToolError, Unavailable) as e:
+            return {"status": 503, "detail": str(e)}
+        except WebError as e:
+            return {"status": 502, "detail": str(e)}
+
+    out = cached(f"history:{entity_id.lower()}:{hours}:{metric}", 120, build,
+                 keep=lambda v: bool(v) and ("ok" in v or v.get("status") in (400, 404)))
+    if out is None:
+        raise HTTPException(502, "the history could not be read; try again in a minute")
+    if "ok" not in out:
+        raise HTTPException(out["status"], out["detail"])
+    return JSONResponse(out["ok"], headers={"Cache-Control": "max-age=120"})
 
 
 @app.get("/api/overview")

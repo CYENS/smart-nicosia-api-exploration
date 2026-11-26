@@ -32,9 +32,17 @@ It also has:
   base maps share their tiles and fonts, so changing from one to the other only swaps layers,
   once the new ones are ready to draw: nothing is downloaded and the map never goes blank.
 
-- **Time-lapses.** It can replay the last 3 days of lamps, parking, bins or air on the map,
-  with a time slider, play/pause and speed controls. A day of traffic replays too: every
-  camera's count hour by hour, as 3D columns with the number at their foot.
+- **Time-lapses.** It can replay lamps, parking, bins or air on the map, with a time slider,
+  play/pause and speed controls: the last 3 days from the city API, and up to a month from the
+  twin's memory. A day of traffic replays too: every camera's count hour by hour, as 3D
+  columns with the number at their foot.
+- **The twin's memory.** Weeks of readings in the collector's DuckDB file, filled by the
+  chatbot itself (whatever it fetches is kept, at no extra cost to the city API), by the
+  collector, or by `collector backfill`. Ask "how full is parking on Makariou on weekday
+  evenings compared with usual?" or "which bins were full most often this month?": the answer
+  comes from the store in about a second, as a line against the typical day, an hour by
+  weekday grid, a calendar or a ranking linked to the map. See
+  [docs/twin-memory.md](docs/twin-memory.md).
 - **The street in question.** Ask about one street's traffic (Ledras, Kyriakou Matsi) and the
   street itself is drawn on the map as a line of light, brighter and wider in its busier hours.
 - **Linked charts.** Hovering a bar or point in a chart highlights that device on the map, and
@@ -77,7 +85,8 @@ It also has:
 
 The map and the "no key" notice work without a key; questions need one. Optional settings
 are in `.env.example`: `CHATBOT_MODEL`, `CHATBOT_EFFORT` (default `medium`),
-`CHATBOT_WEB_SEARCH`.
+`CHATBOT_WEB_SEARCH`, and for the twin's memory `CHATBOT_RECORD` (default on),
+`CHATBOT_COLLECT` (run the full collector in the chatbot, default off) and `COLLECTOR_DB`.
 
 To host it (Docker and Caddy on a free Oracle Cloud VM, with HTTPS and a shared password set by
 `CHATBOT_PASSWORD`), see [deploy/README.md](deploy/README.md).
@@ -88,7 +97,10 @@ To host it (Docker and Caddy on a free Oracle Cloud VM, with HTTPS and a shared 
   in parallel and loops until Claude answers. History is append-only. The system prompt and
   tool list are fixed, so prompt caching works. Refused requests retry on a fallback model
   (`fallbacks: "default"`).
-- [chatbot/tools.py](chatbot/tools.py) defines 20 tools plus Claude's web search. Every input is
+- [chatbot/tools.py](chatbot/tools.py) defines 21 tools plus Claude's web search, and
+  registers the two over the twin's memory from [chatbot/memory_tools.py](chatbot/memory_tools.py):
+  `query_history` (a metric over hours, days and weeks, per device or all together, with the
+  typical day) and `run_sql` (one read-only SELECT over the collector's tables). Every input is
   validated against its JSON schema.
   - **Data tools** return compact JSON. They store big results (map GeoJSON, chart rows) in the
     session and pass Claude a `layer_ref` or `data_ref`.
@@ -116,10 +128,17 @@ To host it (Docker and Caddy on a free Oracle Cloud VM, with HTTPS and a shared 
     it in an iframe with `sandbox="allow-scripts"` (an opaque origin). Its CSP allows only the
     pinned library URLs and the page's two inline scripts (by hash), with `connect-src 'none'`.
     Runtime errors go back to Claude in the next turn's context.
-- [chatbot/history.py](chatbot/history.py) builds time-lapses. It reads past readings with
-  `getTelemetryRange`, one request per device, about 2 s for all 240 lamps. It then interprets
-  them at each frame with `collector/interpret.py`, so past frames follow the same rules as
-  live readings. It doesn't need the collector's database.
+- [chatbot/history.py](chatbot/history.py) is the one history reader. It reads past readings
+  from the twin's memory and fills real gaps in the last 72 hours with `getTelemetryRange`, one
+  request per device. It then interprets them at each frame with `collector/interpret.py`, so
+  past frames follow the same rules as live readings; moments the store holds nothing for are
+  unknown. It also turns frames into metrics, buckets and typical-day baselines.
+- [chatbot/memory.py](chatbot/memory.py) is the twin's memory: a recorder that writes what the
+  chatbot fetched into the collector's tables from a background thread, and the read-only
+  side (coverage, readings, traffic, speed, health, SQL). The chatbot and a separate collector
+  share the file by taking turns; see [docs/twin-memory.md](docs/twin-memory.md).
+  `/api/history/{id}` serves a device's series with its usual band, and `/api/health/data`
+  the freshness of every source.
 - [chatbot/city.py](chatbot/city.py) reads the Smart Nicosia API on demand, at most every 5
   minutes per device type. It interprets readings with the collector's `collector/interpret.py`,
   so a lamp is "on" only if it reported in the last 70 minutes.
@@ -480,7 +499,9 @@ Exact requests used for each sample payload:
 
 `collector/` polls the Smart Nicosia API (and the national Bluetooth travel-time feed) into a
 local DuckDB file, so the chatbot has weeks of history to work with. It is Phase 0 of the
-digital-twin plan (`docs/digital-twin-research.md`, sections 2, 7 and 8).
+digital-twin plan (`docs/digital-twin-research.md`, sections 2, 7 and 8). The chatbot reads and
+writes the same file (the twin's memory); the two take turns, so a collector can run next to it,
+or inside it with `CHATBOT_COLLECT=1`. See [docs/twin-memory.md](docs/twin-memory.md).
 
 ```bash
 uv sync
@@ -501,6 +522,7 @@ Data goes to `data/smart_nicosia.duckdb` and the log to `data/collector.log`. Co
 | `devices`, `attributes` | Inventory (740 devices) with street names, metadata, `lastActivityTime` |
 | `telemetry` | `(device, key, ts, value, value_num, source)`, deduplicated on `(device, key, ts)` |
 | `state_changes` | Parking occupied/free, lamp lit/dark, bin fill band, CAQI band, camera and screen state |
+| `coverage` | Stretches of time the store holds every reading for, per device type or device |
 | `events`, `alarms` | The city's alarm log (TENANT `toastDesc`) and `getAlarms` (`ACTIVE_UNACK`) |
 | `traffic_counts` | Daily counts per camera, counting line and object type; hourly city-wide counts |
 | `speeds` | City-wide average speed, 5-minute buckets |

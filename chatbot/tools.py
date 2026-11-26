@@ -23,10 +23,11 @@ from jsonschema.exceptions import best_match
 
 from collector.http import ApiError
 
-from chatbot import context, eoa, history
+from chatbot import context, eoa, history, memory_tools
 from chatbot.city import KINDS, CityData
 from chatbot.dls import DLS, area_m2, distance_to_path_m
 from chatbot.geo import CATEGORIES, Places, haversine_m, loose_match, norm
+from chatbot.memory import Memory
 from chatbot.routing import MAX_TOUR_STOPS, MODES, PREFERENCES, Router, best_order
 from chatbot.settings import CACHE_DIR, TIMEZONE, Settings
 from chatbot.store import STATE_COLORS, SessionStore, legend_for, point
@@ -47,6 +48,7 @@ POINT_STYLES = ["points", "pulse", "heatmap", "columns_3d"]
 STYLES_FOR = {"point": POINT_STYLES, "route": ["route"], "area": ["area"],
               "buildings": [*POINT_STYLES, "buildings_3d", "area"]}
 HISTORY_KINDS = ["street_light", "parking_sensor", "waste_bin", "air_station"]
+HISTORY_STEPS = [5, 10, 15, 30, 60, 120, 180, 240, 360]
 VISUAL_LIBRARIES = ["d3", "plot", "echarts", "three"]
 MAX_VISUAL_DATA_CHARS = 3_000_000
 STATUSES = ["dangerous", "needs_repair"]
@@ -80,6 +82,7 @@ class ToolContext:
     # The user's position from the page (device GPS or set on the map), if they shared it:
     # {"lat", "lon", "accuracy_m", "source"}.
     user_location: dict | None = None
+    memory: Memory | None = None  # the twin's memory (chatbot/memory.py), if it is on
 
 
 # -- schema helpers -----------------------------------------------------------------------------
@@ -138,22 +141,30 @@ TOOL_DEFS: list[dict] = [
                                       "map layer always holds every match."},
          }, ["kind"])),
     tool("get_history",
-         "Replay how devices changed over the last hours as a map time-lapse: street lights "
-         "switching on at dusk, parking filling up, bins filling, air and noise through the day. "
-         "Every frame interprets the past readings with the same rules as find_devices. Returns "
+         "Replay how devices changed over the last hours or days as a map time-lapse: street "
+         "lights switching on at dusk, parking filling up, bins filling, air and noise through "
+         "the day. Every frame interprets the past readings with the same rules as "
+         "find_devices. Up to 72 hours back the city API fills whatever the twin's memory "
+         "lacks; further back (up to 31 days, `until` for a past window) only the memory "
+         "answers, and moments it holds nothing for show as unknown. Returns "
          "a layer_ref (show it with show_on_map: 'points' coloured by state, or 'heatmap' / "
          "'columns_3d' with a value_field; a time slider with play appears on the map) and a "
          "data_ref with one row per frame: frame, time, label, a count per state, plus "
          "lit_power_kw (lights), occupancy_pct (parking), avg_level_pct (bins) or avg_caqi and "
          "avg_noise_db (air). A chart of that data_ref with x = time stays in sync with the "
-         "slider. Filter by street or near a place like find_devices.",
+         "slider. Filter by street or near a place like find_devices. source and "
+         "coverage_pct say where the readings came from and how complete they are.",
          obj({
              "kind": {"type": "string", "enum": HISTORY_KINDS},
-             "hours": {"type": "integer", "minimum": 1, "maximum": 72,
-                       "description": "How far back to replay (default 24)."},
-             "step_minutes": {"type": "integer", "enum": [5, 10, 15, 30, 60],
+             "hours": {"type": "integer", "minimum": 1, "maximum": 744,
+                       "description": "How long a window to replay (default 24)."},
+             "until": {"type": "string",
+                       "description": "End of the window, local time ('2026-11-21T23:00'); "
+                                      "default now."},
+             "step_minutes": {"type": "integer", "enum": HISTORY_STEPS,
                               "description": "Minutes between frames (default 15 up to 24 h, "
-                                             "30 up to 48 h, else 60)."},
+                                             "30 up to 48 h, 60 up to 8 days, then the "
+                                             "smallest step that keeps 200 frames or fewer)."},
              "street": {"type": "string", "description": "Street name to match."},
              **NEAR,
          }, ["kind"])),
@@ -431,6 +442,8 @@ TOOL_DEFS: list[dict] = [
          }, ["title", "code"])),
 ]
 
+TOOL_DEFS += memory_tools.TOOL_DEFS  # query_history, run_sql: the twin's memory
+
 WEB_SEARCH = {
     "type": "web_search_20260209", "name": "web_search", "max_uses": 3,
     # No "country": the API rejects "CY" as an unsupported country code for web search.
@@ -573,26 +586,42 @@ def h_find_devices(ctx: ToolContext, a: dict) -> dict:
     return result
 
 
+def history_step(hours: int) -> int:
+    for step in (15 if hours <= 24 else 30 if hours <= 48 else 60, *HISTORY_STEPS):
+        if step >= 15 and hours * 60 // step <= history.MAX_FRAMES:
+            return step
+    return HISTORY_STEPS[-1]
+
+
 def h_get_history(ctx: ToolContext, a: dict) -> dict:
     kind = a["kind"]
     device_type = KINDS[kind]
     hours = a.get("hours") or 24
-    step = a.get("step_minutes") or (15 if hours <= 24 else 30 if hours <= 48 else 60)
+    step = a.get("step_minutes") or history_step(hours)
     if hours * 60 // step > history.MAX_FRAMES:
         raise ToolError(f"{hours} h every {step} min is more than {history.MAX_FRAMES} frames; "
                         "use a larger step_minutes")
+    now = ctx.city.now()
+    end = now
+    if a.get("until"):
+        until = memory_tools.parse_local(a["until"], end=True)
+        if until > now + timedelta(minutes=1):
+            raise ToolError("until is in the future; leave it out to replay up to now")
+        end = min(until, now)
     states, center, _ = filter_by_place(ctx, ctx.city.states(device_type), a)
     states = [s for s in states if s.device.lat is not None]
     if not states:
         raise ToolError(f"no {kind.replace('_', ' ')}s match those filters")
-    now = ctx.city.now()
-    times = history.frame_times(now, hours, step)
-    start_ms = int((times[0] - history.LOOKBACK[device_type]).timestamp() * 1000)
-    records = ctx.city.history(device_type, [s.device.name for s in states],
-                               history.HISTORY_KEYS[device_type], start_ms,
-                               int(now.timestamp() * 1000))
-    states = [s for s in states if s.device.name in records]
-    frame_states, frame_values = history.replay(device_type, states, records, times)
+    times = history.frame_times(end, hours, step)
+    try:
+        rd = history.readings(ctx.city, ctx.memory, device_type, [s.device.name for s in states],
+                              history.HISTORY_KEYS[device_type], int(times[0].timestamp() * 1000),
+                              int(end.timestamp() * 1000),
+                              lookback_ms=int(history.LOOKBACK[device_type].total_seconds() * 1000))
+    except history.NoHistory as e:
+        raise ToolError(str(e)) from None
+    states = [s for s in states if s.device.name in rd.records or rd.covered.get(s.device.name)]
+    frame_states, frame_values = history.replay(device_type, states, rd.records, times, rd.covered)
     fields = [f for f, rows in frame_values.items()
               if any(v is not None for row in rows for v in row)]
     names = sorted({st for row in frame_states for st in row})
@@ -610,7 +639,9 @@ def h_get_history(ctx: ToolContext, a: dict) -> dict:
         "color": STATE_COLORS.get(last[j], STATE_COLORS["unknown"]),
         **{f: frame_values[f][-1][j] for f in fields if frame_values[f][-1][j] is not None},
     }) for j, s in enumerate(states)]
-    title = f"{kind.replace('_', ' ')}s, last {hours} h" + (f" near {center[2]}" if center else "")
+    window = (f"last {hours} h" if end is now else
+              f"{hours} h to {end.astimezone(TZ):%a %d %b %H:%M}")
+    title = f"{kind.replace('_', ' ')}s, {window}" + (f" near {center[2]}" if center else "")
     layer = ctx.store.add_layer(f"{kind}_history", features, geometry="point", title=title,
                                 legend=legend_for(names), value_fields=fields, frames=frames)
     rows = history.frame_rows(device_type, times, frame_states, frame_values)
@@ -622,8 +653,10 @@ def h_get_history(ctx: ToolContext, a: dict) -> dict:
         "kind": kind, "devices": len(states), "hours": hours, "step_minutes": step,
         "frames": len(times), "from": rows[0]["label"], "to": rows[-1]["label"],
         "value_fields": fields, "layer_ref": layer, "data_ref": data,
-        "rows_sampled": sampled,
-        "_summary": f"{len(states)} {kind.replace('_', ' ')}s × {len(times)} frames",
+        "rows_sampled": sampled, "source": rd.source, "coverage_pct": rd.coverage_pct(),
+        **({"notes": rd.notes} if rd.notes else {}),
+        "_summary": f"{len(states)} {kind.replace('_', ' ')}s × {len(times)} frames from "
+                    f"{rd.source}",
     }
 
 
@@ -1682,6 +1715,7 @@ HANDLERS: dict[str, Callable[[ToolContext, dict], dict]] = {
     "map_clear": h_map_clear,
     "show_chart": h_show_chart,
     "show_visual": h_show_visual,
+    **memory_tools.HANDLERS,
 }
 _LOWER = {name.lower(): name for name in HANDLERS}
 

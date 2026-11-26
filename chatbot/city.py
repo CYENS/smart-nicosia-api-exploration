@@ -3,6 +3,9 @@
 Every device type is refreshed on demand (at most every `snapshot_ttl_s`) with one
 getLatestTelemetry call per device, so a question about bins never touches the lamps. Device
 names and streets come from getLatestAttribute and are cached on disk for a day.
+
+Whatever is fetched is also handed to the twin's memory (`recorder`, see chatbot/memory.py),
+which writes it to the collector's database in the background.
 """
 
 from __future__ import annotations
@@ -42,6 +45,7 @@ TYPE_TO_KIND = {v: k for k, v in KINDS.items()}
 ATTRIBUTE_TYPES = {"Lighting", "Wastebin", "smartsense", "InfoPoints", "Camera"}
 
 DEVICES_TTL_S = 6 * 3600
+HISTORY_MAX_PAGES = 6  # getTelemetryRange pages per device for one history request
 ATTRIBUTES_TTL_S = 24 * 3600
 
 TZ = ZoneInfo(TIMEZONE)
@@ -154,8 +158,10 @@ def label_and_street(device: Device, attrs: dict) -> tuple[str, str | None]:
 class CityData:
     """Thread-safe, lazily refreshed view of the city's devices."""
 
-    def __init__(self, settings: Settings, client: Client | None = None, now=None):
+    def __init__(self, settings: Settings, client: Client | None = None, now=None,
+                 recorder=None):
         self.settings = settings
+        self.recorder = recorder  # chatbot.memory.Recorder, or None
         cfg = replace(Config(), request_delay_s=0.005, timeout_s=20.0, max_retries=1)
         self.client = client or Client(cfg)
         self._now = now or (lambda: datetime.now(timezone.utc))
@@ -178,6 +184,18 @@ class CityData:
     def now(self) -> datetime:
         return self._now()
 
+    def now_ms(self) -> int:
+        return int(self._now().timestamp() * 1000)
+
+    def record(self, what: str, *args, **kwargs) -> None:
+        """Hand what was fetched to the twin's memory. Never raises."""
+        if self.recorder is None:
+            return
+        try:
+            getattr(self.recorder, what)(*args, **kwargs)
+        except Exception as e:  # noqa: BLE001 - recording never breaks an answer
+            log.warning("recording %s failed: %s", what, e)
+
     def devices(self) -> list[Device]:
         with self._lock:
             if self._devices and time.time() - self._devices_at < DEVICES_TTL_S:
@@ -185,6 +203,7 @@ class CityData:
         payload = self.client.get_json(
             "getTenantDevices", entityType="TENANT", entityName="CYTA"
         )
+        self.record("inventory", payload)
         devices = [
             Device(d["name"], d["type"], d["lat"], d["lon"]) for d in parse.parse_devices(payload)
         ]
@@ -226,14 +245,16 @@ class CityData:
 
         def one(name: str):
             try:
-                return name, {r["key"]: r.get("value") for r in self.client.latest_attributes(name)}
+                return name, self.client.latest_attributes(name)
             except ApiError as e:
                 log.warning("attributes for %s failed: %s", name, e)
                 return name, None
 
-        for name, attrs in self._pool.map(one, names):
-            if attrs is not None:
-                self._attrs[name] = attrs
+        fetched = {name: records for name, records in self._pool.map(one, names)
+                   if records is not None}
+        self.record("attributes", fetched)
+        for name, records in fetched.items():
+            self._attrs[name] = {r["key"]: r.get("value") for r in records}
         self._attrs_at[device_type] = time.time()
         self._save_attr_cache()
         return {d.name: self._attrs.get(d.name, {}) for d in devices}
@@ -249,16 +270,19 @@ class CityData:
 
             def one(device: Device):
                 try:
-                    records = self.client.latest_telemetry(device.name, keys)
-                    return device.name, interpret.latest_from_records(records)
+                    return device.name, self.client.latest_telemetry(device.name, keys)
                 except ApiError as e:
                     log.warning("latest for %s failed: %s", device.name, e)
                     return device.name, None
 
             results = dict(self._pool.map(one, self.devices_of(device_type)))
-            latest = {k: v for k, v in results.items() if v is not None}
-            if results and not latest:
+            fetched = {k: v for k, v in results.items() if v is not None}
+            if results and not fetched:
                 raise ApiError("getLatestTelemetry", {}, f"every {device_type} request failed")
+            # A snapshot of the whole type, unless more than a few devices failed to answer.
+            self.record("snapshot", device_type, fetched, self.now_ms(),
+                        every_device=len(fetched) >= 0.95 * len(results))
+            latest = {k: interpret.latest_from_records(v) for k, v in fetched.items()}
             entry = (time.time(), latest)
             self._latest[device_type] = entry
             return entry
@@ -280,6 +304,13 @@ class CityData:
                 start_ms: int, end_ms: int) -> dict[str, list[dict]]:
         """Raw readings per device between two times (getTelemetryRange, paged), reused for
         `snapshot_ttl_s` so replaying the same time-lapse in another style costs nothing."""
+        return self.history_complete(device_type, names, keys, start_ms, end_ms)[0]
+
+    def history_complete(self, device_type: str, names: list[str], keys: tuple[str, ...],
+                         start_ms: int, end_ms: int
+                         ) -> tuple[dict[str, list[dict]], dict[str, int]]:
+        """history(), plus from when each device's readings are complete: start_ms, or later
+        when paging stopped at HISTORY_MAX_PAGES before reaching it."""
         cache_key = (device_type, tuple(sorted(names)), keys, start_ms // 60_000, end_ms // 60_000)
         with self._lock:
             cached = self._history.get(cache_key)
@@ -289,23 +320,30 @@ class CityData:
         def one(name: str):
             try:
                 records: list[dict] = []
+                pages = last = 0
                 for page in self.client.range_pages("DEVICE", name, keys, start_ms, end_ms,
-                                                    max_pages=6):
+                                                    max_pages=HISTORY_MAX_PAGES):
                     records.extend(page)
-                return name, records
+                    pages, last = pages + 1, len(page)
+                # Paging runs backwards from end_ms: cut short, it holds only the newest part.
+                cut = pages >= HISTORY_MAX_PAGES and last >= self.client.cfg.range_cap
+                complete_from = min(int(r["timestamp"]) for r in records) if cut else start_ms
+                return name, (records, complete_from)
             except ApiError as e:
                 log.warning("history for %s failed: %s", name, e)
                 return name, None
 
         results = dict(self._pool.map(one, names))
-        found = {k: v for k, v in results.items() if v is not None}
+        found = {k: v[0] for k, v in results.items() if v is not None}
         if names and not found:
             raise ApiError("getTelemetryRange", {}, f"every {device_type} history request failed")
+        complete = {k: v[1] for k, v in results.items() if v is not None}
+        self.record("readings", device_type, found, [(k, a, end_ms) for k, a in complete.items()])
         with self._lock:
             if len(self._history) >= 8:
                 self._history.pop(min(self._history, key=lambda k: self._history[k][0]))
-            self._history[cache_key] = (time.time(), found)
-        return found
+            self._history[cache_key] = (time.time(), (found, complete))
+        return found, complete
 
     def snapshot_age_s(self, device_type: str) -> float | None:
         cached = self._latest.get(device_type)
@@ -320,7 +358,11 @@ class CityData:
             raise KeyError(name)
         records = self.client.latest_telemetry(device.name, None)
         latest = interpret.latest_from_records(records)
-        attrs = {r["key"]: r.get("value") for r in self.client.latest_attributes(device.name)}
+        attr_records = self.client.latest_attributes(device.name)
+        self.record("snapshot", device.type, {device.name: records}, self.now_ms(),
+                    every_device=False)
+        self.record("attributes", {device.name: attr_records})
+        attrs = {r["key"]: r.get("value") for r in attr_records}
         label, street = label_and_street(device, attrs)
         state = DeviceState(device, label, street, interpret.interpret(device.type, latest, self.now()))
         return state, attrs
@@ -368,6 +410,7 @@ class CityData:
         feeds = parse.parse_analytics(self.client.get_json("analytics"))
         cams = {d.name: (d.lat, d.lon) for d in self.devices_of("Camera")}
         rows, _ = map_cameras(feeds, cams, read_camera_csv(ROOT / "data" / "camera_locations.csv"))
+        self.record("cameras", rows)
         with self._lock:
             self._cameras, self._cameras_at = rows, time.time()
         return rows

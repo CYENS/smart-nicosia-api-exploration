@@ -262,6 +262,7 @@ def _telemetry(cfg, opts, client, report, budget_left, log_fn):
 
     out: queue.Queue = queue.Queue()
     stop = threading.Event()
+    end_of = {name: end for name, _, end in work}
 
     def over_budget() -> bool:
         return stop.is_set() or budget_left() <= 0
@@ -315,6 +316,11 @@ def _telemetry(cfg, opts, client, report, budget_left, log_fn):
                        target_ms = excluded.target_ms, done = excluded.done,
                        updated_at = excluded.updated_at""",
             )
+            # The store now holds every reading from the oldest page (or --since, once a device
+            # is finished) up to where this run started paging back.
+            db.add_coverage(con, [
+                (types[d], d, "backfill", since_ms if finished.get(d) else oldest[d], end_of[d])
+                for d in touched if d in end_of and (finished.get(d) or d in oldest)])
         for pair, ms in db.tracked_pairs(buffer, types).items():
             affected[pair] = min(ms, affected.get(pair, ms))
         buffer = []

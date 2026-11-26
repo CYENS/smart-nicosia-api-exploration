@@ -14,11 +14,13 @@ COPY chatbot ./chatbot
 COPY data/camera_locations.csv data/eoa_registers_seed.json ./data/
 RUN uv sync --frozen --no-dev
 
-# The caches (3D tiles, registers, places index) go in a volume, owned by an unprivileged user.
+# The caches (3D tiles, registers, places index) and the twin's memory (its DuckDB file) go in
+# volumes, owned by an unprivileged user.
 RUN useradd --system chatbot \
-    && mkdir -p data/chatbot_cache && chown chatbot data/chatbot_cache
+    && mkdir -p data/chatbot_cache data/memory && chown chatbot data/chatbot_cache data/memory
 USER chatbot
-VOLUME /app/data/chatbot_cache
+VOLUME /app/data/chatbot_cache /app/data/memory
+ENV COLLECTOR_DB=/app/data/memory/smart_nicosia.duckdb
 
 # Listen on all interfaces inside the container; only Caddy can reach it.
 ENV CHATBOT_HOST=0.0.0.0 CHATBOT_PORT=8000

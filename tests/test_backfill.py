@@ -166,3 +166,16 @@ def test_events_and_speed(bf_cfg, bf_client, api):
 def test_concurrency_is_capped_at_two(bf_cfg, bf_client):
     with pytest.raises(ValueError):
         run_backfill(bf_cfg, opts(concurrency=3), client=bf_client)
+
+
+def test_backfill_records_coverage_per_device(bf_cfg, bf_client):
+    first = run_backfill(bf_cfg, opts(max_requests=2), client=bf_client, log_fn=lambda m: None)
+    assert first.stopped_by_budget
+    # Two pages of YP1 reach part of the way back: covered from its oldest page only.
+    partial = dict(q(bf_cfg, "SELECT device, epoch_ms(start_ts) FROM coverage"))
+    assert list(partial) == ["YP1"] and partial["YP1"] > ms(NOW - timedelta(days=2))
+    run_backfill(bf_cfg, opts(), client=bf_client, log_fn=lambda m: None)
+    # Finished devices are covered from --since to where the first run began paging back.
+    assert q(bf_cfg, "SELECT device, epoch_ms(start_ts), epoch_ms(end_ts) FROM coverage "
+                     "ORDER BY device") == [("YP1", ms(NOW - timedelta(days=2)), ms(NOW)),
+                                            ("YP2", ms(NOW - timedelta(days=2)), ms(NOW))]
