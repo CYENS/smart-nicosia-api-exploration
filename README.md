@@ -106,6 +106,9 @@ are in `.env.example`: `CHATBOT_MODEL`, `CHATBOT_EFFORT` (default `medium`),
 To host it (Docker and Caddy on a free Oracle Cloud VM, with HTTPS and a shared password set by
 `CHATBOT_PASSWORD`), see [deploy/README.md](deploy/README.md).
 
+To record the three minute showcase video of a running copy (captioned, on live data), see
+[tools/tour/README.md](tools/tour/README.md).
+
 ### How it works
 
 - [chatbot/agent.py](chatbot/agent.py) streams each turn from Claude. It runs the requested tools
