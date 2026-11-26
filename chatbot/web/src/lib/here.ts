@@ -12,7 +12,7 @@ import "@/components/inspector/here-sections"
 import { KINDS, registerPlaceholder, type Entity } from "@/lib/entities"
 import { closeInspector, inspect, useInspector } from "@/lib/inspector"
 import { searchOpenerElement } from "@/lib/layout"
-import { getCamera } from "@/lib/map/engine"
+import { getCamera, registerMapMenuItem } from "@/lib/map/engine"
 import { registerEmptyClickHandler } from "@/lib/registries/map-clicks"
 import { matches, registerSearchProvider, type SearchItem } from "@/lib/registries/search"
 
@@ -60,6 +60,13 @@ registerEmptyClickHandler({
     inspectSpot(at, how === "menu" ? { focus: true, opener: canvas } : {})
     return true
   },
+})
+
+// The map's right-click menu. It takes the spot's place there ("What's it like here?" opens the
+// same card, which reads out the sun, shade, air and weather under these sections).
+registerMapMenuItem({
+  id: "spot", label: "What's here?", order: 10, icon: MapPinIcon, opens: true,
+  run: (at) => inspectSpot([at.lng, at.lat], { focus: true, opener: document.querySelector<HTMLElement>(".maplibregl-canvas") }),
 })
 
 registerSearchProvider({

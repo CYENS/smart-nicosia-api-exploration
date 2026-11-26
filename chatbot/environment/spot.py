@@ -69,28 +69,9 @@ def build_spot(ents, eid: str, near, at: datetime | None = None) -> dict | None:
         state = "shade" if sun["shade"] else "sun"
     places = ents.places_within(lat, lon, 150, limit=1)
     name = f"Near {places[0]['name']}" if places else f"{lat:.5f}, {lon:.5f}"
-    readings = []
-    if sun.get("hours_today") is not None:
-        readings.append({"key": "sun_hours", "label": "Direct sun that day", "value": round(sun["hours_today"], 2),
-                         "unit": "h"})
-    readings.append({"key": "sun_altitude", "label": "Sun height", "value": sun["altitude_deg"], "unit": "°"})
-    temp = data.get("temperature")
-    if temp and temp.get("value") is not None:
-        readings.append({"key": "temperature_c", "label": "Temperature", "value": temp["value"], "unit": "°C"})
-    for a in data["air"]:
-        if a.get("value") is not None:
-            readings.append({"key": a["metric"], "label": a["label"], "value": a["value"], "unit": a["unit"]})
-    wind = data.get("wind")
-    if wind:
-        readings.append({"key": "wind_kmh", "label": "Wind", "value": wind["speed_kmh"], "unit": "km/h"})
-    times = sun.get("times") or {}
-    attributes = [
-        E.attr("Sunrise and sunset", f"{times['sunrise']} and {times['sunset']}"
-               if times.get("sunrise") else None),
-        E.attr("Sun from", f"{sun['from']}, {sun['bearing_deg']}°" if sun.get("up") else None),
-        E.attr("Wind from", f"{wind['from']}, {wind['from_deg']}°" if wind else None),
-        E.attr("On a roof", "yes, the readout is for the roof" if sun.get("on_roof") else None),
-    ]
+    # The inspector's own section reads out the sun, the air and the weather; the attributes
+    # only add what it doesn't.
+    attributes = [E.attr("On a roof", "yes, the readout is for the roof" if sun.get("on_roof") else None)]
     relations = []
     nearest = next((a["nearest"] for a in data["air"] if a.get("nearest")), None)
     if nearest:
@@ -106,7 +87,9 @@ def build_spot(ents, eid: str, near, at: datetime | None = None) -> dict | None:
         geometry=E.point_geom(lon, lat), center=[lon, lat],
         state={"value": state, "label": LABEL[state], "color": COLOR[state], "tone": TONE[state],
                "stale": False, "reason": None, "local": None, "as_of": data["at"], "age_s": None},
-        readings=readings, attributes=attributes, relations=relations,
+        # The readout is the inspector's own section (it reads `environment` whole); the model
+        # gets it through _for_model, so the generic readings stay empty.
+        readings=[], attributes=attributes, relations=relations,
         sources=[{"name": "DLS 3D buildings", "detail": "the shade cast by every building around, on flat ground",
                   "url": E.DLS_3D_URL},
                  {"name": "Smart Nicosia air stations", "detail": "the measured air and noise", "url": E.SMART_NICOSIA},

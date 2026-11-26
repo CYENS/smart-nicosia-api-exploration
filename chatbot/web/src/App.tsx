@@ -17,8 +17,11 @@ import { startClock } from "@/lib/clock"
 import { parseHash, startDeepLinks } from "@/lib/deeplink"
 import { useGeometry } from "@/lib/geometry"
 import { initMap, setInsets } from "@/lib/map/engine"
-import "@/lib/here" // "What's here?": any point of the map, its card, the click, press and Ctrl K
 import "@/lib/mobility" // buses, stops and road speeds: their workspace, kinds, layers and commands
+import "@/lib/environment" // sun, shade, terrain, air, noise and weather: workspace, spot, layers
+// After the environment: "What's here?" is the spot's menu item and icon, and its card holds the
+// environment's "What's it like here?" too.
+import "@/lib/here" // "What's here?": any point of the map, its card, the click, press and Ctrl K
 import { useWorkspace, useWorkspaceSide } from "@/lib/registries/workspaces"
 
 // The open workspace's own panels, over the map (Live today has none of its own), and its side

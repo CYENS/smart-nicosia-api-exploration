@@ -3,6 +3,7 @@
 import maplibregl, {
   type GeoJSONSource, type LayerSpecification, type Map as MlMap, type VectorTileSource,
 } from "maplibre-gl"
+import { LocateFixedIcon, type LucideIcon } from "lucide-react"
 import { create } from "zustand"
 
 import { BASE_SOURCE, BASE_SOURCE_URLS, BASEMAP_URLS, baseLayers, type Basemap } from "@/lib/map/basemap"
@@ -90,6 +91,7 @@ const CITY_RADIUS = 3 // tiles around the centre (each ~500 m), so pitched views
 
 export type LayerSummary = {
   ref: string; title: string; count: number; style: string
+  renderer: string | null // the feature drawing it its own way, which may give its own legend
   legend: Record<string, string>; stats: Stats | null; valueField: string | null
   street: { name: string; follows: string | null } | null // `follows`: the total its glow tracks
 }
@@ -255,6 +257,7 @@ export function initMap(container: HTMLElement, camera?: Camera | null) {
   map.on("touchmove", (e) => { if (press && Math.hypot(e.point.x - press.x, e.point.y - press.y) > 10) cancelPress() })
   map.on("touchend", cancelPress)
   map.on("touchcancel", cancelPress)
+  map.on("movestart", cancelPress)
   ;(window as any).__map = map // a hook for scripted demos and browser tests (e.g. map.project)
   ;(window as any).__twin = { state, clock } // and what the map draws, for the same
   map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), "bottom-right")
@@ -279,8 +282,7 @@ export function initMap(container: HTMLElement, camera?: Camera | null) {
       }
       return
     }
-    const box = map.getContainer().getBoundingClientRect()
-    setUi({ menu: { x: box.left + e.point.x, y: box.top + e.point.y, at: [e.lngLat.lng, e.lngLat.lat], n: performance.now() } })
+    openMapMenu(e.lngLat, e.point)
   })
   // A page opened in a hidden tab measures a 0-size container; keep the canvas in step.
   new ResizeObserver(() => map.resize()).observe(container)
@@ -665,6 +667,36 @@ export function resetView() {
 
 let geolocate: maplibregl.GeolocateControl
 let meMarker: maplibregl.Marker | null = null
+
+// What a right click on the map offers: "What's here?" (lib/here.ts), "I'm here", and what
+// features add. components/map-menu draws it as the page's menu at the point (arrows move,
+// Enter runs one, Esc closes it and gives the keyboard back to the map). A long press on touch
+// asks "What's here?" straight away (see initMap), and the card it opens has "I'm here" too.
+export type MapMenuItem = {
+  id: string; label: string; order: number; run: (at: { lng: number; lat: number }) => void
+  icon?: LucideIcon
+  opens?: boolean // opens something that takes the keyboard (the inspector): focus goes there
+}
+const menuItems: MapMenuItem[] = [
+  { id: "me", label: "I'm here", order: 90, icon: LocateFixedIcon, run: (at) => setMyLocation(at.lat, at.lng, NaN, "set on the map") },
+]
+export function registerMapMenuItem(item: MapMenuItem) {
+  const i = menuItems.findIndex((x) => x.id === item.id)
+  if (i >= 0) menuItems.splice(i, 1)
+  menuItems.push(item)
+  menuItems.sort((a, b) => a.order - b.order)
+}
+
+export function mapMenuItems() {
+  return [...menuItems]
+}
+
+// Open the menu at a point of the map (`point`: where on the map, in pixels, if known).
+export function openMapMenu(at: { lng: number; lat: number }, point?: { x: number; y: number }) {
+  const p = point ?? map.project([at.lng, at.lat])
+  const box = map.getContainer().getBoundingClientRect()
+  setUi({ menu: { x: box.left + p.x, y: box.top + p.y, at: [at.lng, at.lat], n: performance.now() } })
+}
 
 export function setMyLocation(lat: number, lon: number, accuracy: number, source: string) {
   const loc = { lat, lon, accuracy_m: Number.isFinite(accuracy) ? Math.round(accuracy) : null, source }
@@ -1064,6 +1096,7 @@ function publishLayers() {
       const { spec, stats, data } = entry
       return {
         ref: spec.ref, title: spec.title, count: spec.count, style: spec.style,
+        renderer: entry.renderer?.id ?? null,
         legend: entry.legendNow ?? spec.legend ?? {}, stats, valueField: spec.value_field ?? null,
         street: data.street ? { name: data.street.name, follows: totalsOf(entry)?.field ?? null } : null,
       }
@@ -1240,6 +1273,7 @@ function pumpCity() {
         const add = fc.features.filter((f) => !CITY.ids.has(f.id!))
         for (const f of add) { CITY.ids.add(f.id!); CITY.features.push(f) }
         if (add.length) (map.getSource(CITY_SRC) as GeoJSONSource | undefined)?.updateData({ add: add as any })
+        if (add.length) cityChanged()
       })
       .catch(() => { /* leave it unloaded; the next move retries it */ })
       .finally(() => { CITY.inflight.delete(key); cityStatus(); pumpCity() })
@@ -1264,6 +1298,20 @@ function cityStatus() {
   if (cur.on !== CITY.on || cur.status !== status) setUi({ city: { on: CITY.on, status } })
 }
 
+// The DLS buildings loaded so far (each with its roof height `h`), and a call whenever more
+// arrive or the 3D city is switched: for what is drawn from them, like their shadows.
+export function cityBuildings(): { on: boolean; features: Feature[] } {
+  return { on: CITY.on, features: CITY.features }
+}
+const citySinks = new Set<() => void>()
+export function onCityChange(fn: () => void) {
+  citySinks.add(fn)
+  return () => { citySinks.delete(fn) }
+}
+function cityChanged() {
+  for (const fn of citySinks) fn()
+}
+
 export function setCity3d(on: boolean) {
   CITY.on = on
   cityStatus()
@@ -1277,6 +1325,7 @@ export function setCity3d(on: boolean) {
       removeCityLayer()
     }
     cityStatus()
+    cityChanged()
   })
 }
 
