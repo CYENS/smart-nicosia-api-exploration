@@ -84,14 +84,18 @@ export function systemLayerOn(id: SystemLayerId) {
   return useSystemLayers.getState()[id].on
 }
 
-// A new chat (or the assistant clearing the map) takes every layer off: the switches follow.
+// A new chat (or the assistant clearing the map) leaves the map empty. These are the reader's own
+// switches, as the buses and the street lights are, so they come straight back. One taken off
+// while other layers stay (the assistant removing just that one) switches off.
 useMapUi.subscribe((s, prev) => {
   if (s.layers === prev.layers) return
   const refs = new Set(s.layers.map((l) => l.ref))
-  const before = new Set(prev.layers.map((l) => l.ref))
+  const gone = prev.layers.filter((l) => !refs.has(l.ref)).map((l) => l.ref)
   for (const id of Object.keys(URLS) as SystemLayerId[]) {
     const one = useSystemLayers.getState()[id]
-    if (one.on && before.has(refOf(id)) && !refs.has(refOf(id))) {
+    if (!one.on || !gone.includes(refOf(id))) continue
+    if (s.layers.length === 0) void load(id)
+    else {
       window.clearTimeout(timers[id])
       patch(id, { on: false, status: "idle" })
     }

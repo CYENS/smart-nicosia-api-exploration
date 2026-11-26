@@ -10,6 +10,8 @@ import type { LucideIcon } from "lucide-react"
 import type { ComponentType } from "react"
 import { create } from "zustand"
 
+import { useWorkspace } from "@/lib/registries/workspaces"
+
 export const MAX_CHIPS = 4
 
 export type TopicLink = { label: string; run: () => void }
@@ -72,3 +74,9 @@ export function activeTopic() {
   const { active, list } = useTopics.getState()
   return list.find((t) => t.id === active) ?? null
 }
+
+// Opening a workspace goes deeper than a topic: the topic lets go first, so the workspace finds
+// the map as the reader had it (and puts it back so when it closes).
+useWorkspace.subscribe((s, prev) => {
+  if (s.active !== prev.active && useTopics.getState().active) selectTopic(null)
+})
