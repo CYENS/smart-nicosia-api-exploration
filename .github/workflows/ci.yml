@@ -35,5 +35,6 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
       - run: npm run lint
+      - run: npm test
       # Build to a scratch folder: the committed chatbot/static is left alone.
       - run: npx vite build --outDir "$RUNNER_TEMP/page" --emptyOutDir
