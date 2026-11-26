@@ -1,13 +1,20 @@
-"""The inspector's endpoints: search everything, one entity, and its last 24 hours."""
+"""The inspector's endpoints: search everything, one entity, and its last 24 hours. With `?at=`
+(the city clock) an entity reads as it was at that moment, and its series covers the 24 hours
+around it."""
 
 from __future__ import annotations
+
+from datetime import datetime, timedelta
 
 from fastapi import APIRouter, HTTPException, Query, Request
 
 from collector.http import ApiError
 
-from chatbot.entities import EntityNotFound, public
+from chatbot.entities import HISTORY_KINDS, EntityNotFound, at_moment, public
+from chatbot.moments import frame_of, label
+from chatbot.overview import cached, moments_of
 from chatbot.routes import agent_of
+from chatbot.routes.live import AT, moment
 from chatbot.web import WebError
 
 router = APIRouter()
@@ -36,26 +43,54 @@ def _get(request: Request, eid: str, lat: float | None, lon: float | None):
         raise HTTPException(502, f"a data source didn't answer: {e}") from None
 
 
+def series_end(at: datetime, now: datetime) -> datetime:
+    """Where the 24 hours shown around a past moment end: 12 hours after it (on the hour, so
+    moving the clock within the hour keeps the same window), and never after now."""
+    return min(now, at.replace(minute=0, second=0, microsecond=0) + timedelta(hours=12))
+
+
+def _at(request: Request, entity: dict, when: datetime) -> dict:
+    """The entity at a past moment, cached per quarter hour (the memory doesn't change)."""
+    if entity["kind"] not in HISTORY_KINDS or "_device" not in entity:
+        return at_moment(entity, None, False, when, label(frame_of(when)))
+    moments = moments_of(agent_of(request))
+    key = f"entity_at:{entity['id'].lower()}:{int(frame_of(when).timestamp())}"
+    interp, known = cached(key, 600, lambda: moments.device_at(entity["_device"], when),
+                           keep=lambda v: v is not None) or (None, False)
+    if interp is None:
+        raise HTTPException(503, "the twin's memory could not be read; try again in a moment")
+    return at_moment(entity, interp, known, when, label(when))
+
+
 @router.get("/api/entities/{eid}")
 def entity(eid: str, request: Request, lat: float | None = None, lon: float | None = None,
-           series: bool = True) -> dict:
+           series: bool = True, at: str | None = AT) -> dict:
     """One entity. `lat`/`lon` say where it was clicked (it saves a lookup for a 3D building);
-    `series=false` leaves out the last 24 hours, which /series then fetches."""
-    out = public(_get(request, eid, lat, lon))
+    `series=false` leaves out the last 24 hours, which /series then fetches; `at` gives it as
+    it was at a past moment."""
+    when = moment(request, at)
+    record = _get(request, eid, lat, lon)
+    if when is not None:
+        record = _at(request, record, when)
+    out = public(record)
     if series:
-        out["series"] = _series(request, eid, lat, lon)
+        out["series"] = _series(request, eid, lat, lon, when)
     return out
 
 
 @router.get("/api/entities/{eid}/series")
 def entity_series(eid: str, request: Request, lat: float | None = None,
-                  lon: float | None = None) -> dict:
+                  lon: float | None = None, at: str | None = AT) -> dict:
+    when = moment(request, at)
     _get(request, eid, lat, lon)
-    return {"id": eid, "series": _series(request, eid, lat, lon)}
+    return {"id": eid, "series": _series(request, eid, lat, lon, when)}
 
 
-def _series(request: Request, eid: str, lat: float | None, lon: float | None) -> dict | None:
+def _series(request: Request, eid: str, lat: float | None, lon: float | None,
+            when: datetime | None = None) -> dict | None:
+    agent = agent_of(request)
+    end = series_end(when, agent.city.now()) if when is not None else None
     try:
-        return agent_of(request).entities.series(eid, _near(lat, lon))
+        return agent.entities.series(eid, _near(lat, lon), end)
     except (ApiError, WebError) as e:
         return {"error": f"the city's API didn't send the history: {e}"}

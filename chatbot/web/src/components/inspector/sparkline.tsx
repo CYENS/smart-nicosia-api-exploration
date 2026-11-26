@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type PointerEvent } from "react"
 
-import type { Series } from "@/lib/entities"
+import type { Band, Series } from "@/lib/entities"
 import { hoverTime, registerTimeChart, unregisterView } from "@/lib/map/engine"
 import { cn } from "@/lib/utils"
 
@@ -41,23 +41,34 @@ function timeOf(t: string, today: string) {
   return d === today ? hm : `${new Date(`${d}T12:00`).toLocaleDateString("en-GB", { weekday: "short" })} ${hm}`
 }
 
-// The last 24 hours of one reading: a line (or bars) in sodium with the states it went through
-// along the bottom, in the map's colours. Pointer or arrow keys read out any moment.
-export function Sparkline({ series, title }: { series: Series; title: string }) {
+// 24 hours of one reading: a line (or bars) in sodium with the states it went through along the
+// bottom, in the map's colours, over the usual for each hour (a grey band, when the twin's memory
+// has weeks of it). Pointer or arrow keys read out any moment; the city clock's moment is the
+// dashed cursor.
+export function Sparkline({ series, title, band = null, live = true }: { series: Series; title: string; band?: Band | null; live?: boolean }) {
   const [box, width] = useWidth()
   const pts = series.points
   const times = useMemo(() => pts.map((p) => Date.parse(p.t)), [pts])
   const shared = useSharedTime(times[0], times[times.length - 1])
   const [cursor, setCursor] = useState<number | null>(null)
+  // The usual at each of the series' moments.
+  const usual = useMemo(() => {
+    if (!band) return null
+    const by = new Map(band.points.map((b) => [b.t, b]))
+    const out = pts.map((p) => by.get(p.t) ?? null)
+    return out.some((u) => u && u.lo !== null && u.hi !== null) ? out : null
+  }, [band, pts])
 
   const strip = series.state_colors && Object.keys(series.state_colors).length > 0
   const statesOnly = series.draw === "states"
-  const plotH = statesOnly ? 0 : 56
+  // A bay's states get a small plot above them for how often it is usually occupied.
+  const plotH = statesOnly ? (usual ? 22 : 0) : 56
   const stripH = statesOnly ? 22 : strip ? 6 : 0
   const height = PAD.top + plotH + (stripH ? stripH + (plotH ? 4 : 0) : 0) + PAD.bottom
-  const vals = pts.map((p) => p.v).filter((v): v is number => typeof v === "number")
-  const lo = Math.min(0, ...vals, series.threshold?.value ?? Infinity)
-  const hi = Math.max(...vals, series.threshold?.value ?? -Infinity, lo + 1)
+  const vals = statesOnly ? [0, 100] : pts.map((p) => p.v).filter((v): v is number => typeof v === "number")
+  const bandVals = usual ? usual.flatMap((u) => (u ? [u.lo, u.hi] : [])).filter((v): v is number => typeof v === "number") : []
+  const lo = Math.min(0, ...vals, ...bandVals, series.threshold?.value ?? Infinity)
+  const hi = Math.max(...vals, ...bandVals, series.threshold?.value ?? -Infinity, lo + 1)
   const x0 = PAD.left, x1 = width - PAD.right
   const n = pts.length
   const xAt = (i: number) => x0 + (n <= 1 ? 0 : (i / (n - 1)) * (x1 - x0))
@@ -79,6 +90,23 @@ export function Sparkline({ series, title }: { series: Series; title: string }) 
     flush()
     return { d, area }
   }, [pts, width, lo, hi]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // The usual band (between the quartiles) and its median, in runs where it is known.
+  const typical = useMemo(() => {
+    if (!usual) return null
+    let area = "", mid = "", run: number[] = []
+    const flush = () => {
+      if (run.length > 1) {
+        area += `M${xAt(run[0])},${yAt(usual[run[0]]!.hi!)}` + run.slice(1).map((i) => `L${xAt(i)},${yAt(usual[i]!.hi!)}`).join("")
+          + [...run].reverse().map((i) => `L${xAt(i)},${yAt(usual[i]!.lo!)}`).join("") + "Z"
+        mid += run.map((i, k) => `${k ? "L" : "M"}${xAt(i)},${yAt(usual[i]!.mid ?? usual[i]!.lo!)}`).join("")
+      }
+      run = []
+    }
+    usual.forEach((u, i) => { if (u && u.lo !== null && u.hi !== null) run.push(i); else flush() })
+    flush()
+    return { area, mid }
+  }, [usual, width, lo, hi]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const at = cursor ?? (shared !== null ? nearest(times, shared) : null)
   const today = pts[n - 1].t.slice(0, 10)
@@ -136,6 +164,12 @@ export function Sparkline({ series, title }: { series: Series; title: string }) 
           onPointerLeave={() => move(null)}
           aria-hidden="true"
         >
+          {typical && (
+            <>
+              <path d={typical.area} style={{ fill: "var(--muted-foreground)" }} fillOpacity={0.22} />
+              <path d={typical.mid} fill="none" style={{ stroke: "var(--muted-foreground)" }} strokeOpacity={0.75} strokeWidth={1} strokeDasharray="3 2" />
+            </>
+          )}
           {!statesOnly && (
             <line x1={x0} x2={x1} y1={yAt(lo)} y2={yAt(lo)} style={{ stroke: "var(--line)" }} strokeWidth={1} />
           )}
@@ -174,8 +208,13 @@ export function Sparkline({ series, title }: { series: Series; title: string }) 
       <div className={cn("flex justify-between gap-2 font-readout text-[11.5px] text-muted-foreground")}>
         <span>{timeOf(series.from, today)}</span>
         <span>{summary}</span>
-        <span>now</span>
+        <span className={live ? "" : "text-foreground"}>{live ? "now" : timeOf(series.to, today)}</span>
       </div>
+      {usual && band && (
+        <p className="text-[12px] leading-snug text-muted-foreground">
+          {statesOnly ? "Grey: how often it is usually occupied at that hour" : "Grey band: the usual for that hour"} of that weekday, from {band.weeks} week{band.weeks === 1 ? "" : "s"} in the twin's memory.
+        </p>
+      )}
     </div>
   )
 }

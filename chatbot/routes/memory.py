@@ -8,6 +8,7 @@ from fastapi.responses import JSONResponse
 
 from chatbot.memory import Unavailable
 from chatbot.memory_tools import EntityNotFound, entity_history
+from chatbot.moments import OutOfRange, parse_at
 from chatbot.overview import cached
 from chatbot.routes import agent_of
 from chatbot.tools import ToolContext, ToolError
@@ -29,16 +30,22 @@ def health_data(request: Request) -> JSONResponse:
 
 @router.get("/api/history/{entity_id}")
 def history_series(entity_id: str, request: Request, hours: int = Query(24, ge=1, le=168),
-                   metric: str | None = Query(None, max_length=40)) -> JSONResponse:
-    """One device's metric over the last hours with its typical-day band, for the inspector's
-    sparkline: from the twin's memory, the city API filling what it lacks (cached for 2 min)."""
+                   metric: str | None = Query(None, max_length=40),
+                   until: str | None = Query(None, max_length=40)) -> JSONResponse:
+    """One device's metric over the last hours (up to `until`, epoch ms or local time, for the
+    city clock) with its typical-day band, for the inspector's sparkline: from the twin's memory,
+    the city API filling what it lacks (cached for 2 min)."""
     agent = agent_of(request)
+    try:
+        end = parse_at(until if isinstance(until, str) else None, agent.city.now())
+    except OutOfRange as e:
+        raise HTTPException(400, str(e)) from None
     ctx = ToolContext(agent.settings, agent.city, agent.places, agent.router, None,
                       lambda e: None, "", memory=agent.memory)
 
     def build():
         try:
-            return {"ok": entity_history(ctx, entity_id, hours, metric)}
+            return {"ok": entity_history(ctx, entity_id, hours, metric, end)}
         except EntityNotFound:
             return {"status": 404, "detail": f"no device named {entity_id!r}"}
         except ValueError as e:
@@ -48,7 +55,8 @@ def history_series(entity_id: str, request: Request, hours: int = Query(24, ge=1
         except WebError as e:
             return {"status": 502, "detail": str(e)}
 
-    out = cached(f"history:{entity_id.lower()}:{hours}:{metric}", 120, build,
+    stamp = int(end.timestamp()) // 900 if end else "now"
+    out = cached(f"history:{entity_id.lower()}:{hours}:{metric}:{stamp}", 120, build,
                  keep=lambda v: bool(v) and ("ok" in v or v.get("status") in (400, 404)))
     if out is None:
         raise HTTPException(502, "the history could not be read; try again in a minute")

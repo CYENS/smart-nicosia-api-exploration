@@ -35,7 +35,7 @@ export function ChatPanel() {
   const turns = useChat((s) => s.turns)
   const busy = useChat((s) => s.busy)
   const noKey = useCredentialsMissing()
-  const { desktop, chatW, rail, inspecting } = useGeometry()
+  const { desktop, chatW, rail, inspecting, belowClock } = useGeometry()
 
   if (!desktop && inspecting) return null // a phone shows one sheet: the inspector has it now
 
@@ -43,8 +43,8 @@ export function ChatPanel() {
     return (
       <Button
         variant="secondary"
-        className="panel-float absolute top-[64px] z-10 h-10 gap-2 rounded-xl px-3.5"
-        style={{ left: rail + 12 }}
+        className="panel-float absolute z-10 h-10 gap-2 rounded-xl px-3.5"
+        style={{ left: rail + 12, top: belowClock }}
         onClick={() => useLayout.setState({ chatOpen: true })}
       >
         {busy ? <WallsMark working className="size-4 text-sodium" /> : <MessageSquareTextIcon data-icon="inline-start" />}

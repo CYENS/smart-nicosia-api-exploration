@@ -6,6 +6,9 @@ export const RAIL_W = 48
 export const CHAT_W = 400
 export const LAYERS_W = 264
 export const INSPECTOR_W = 344
+// The city clock across the top of the map: the full console, or the compact pill.
+export const CLOCK_H = 86
+export const CLOCK_PILL_H = 40
 // From this width the map panel has a column of its own beside the stage.
 export const WIDE_PX = 1180
 

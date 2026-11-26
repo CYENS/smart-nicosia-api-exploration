@@ -24,6 +24,7 @@ from chatbot.entities import Entities
 from chatbot.eoa import Registry
 from chatbot.geo import Places
 from chatbot.memory import Memory
+from chatbot.moments import Moments
 from chatbot.prompt import SYSTEM_PROMPT
 from chatbot.routing import Router
 from chatbot.settings import TIMEZONE, Settings
@@ -76,6 +77,34 @@ def _entity_ref(value: object) -> str | None:
     return f"{eid} ({what})" if what else eid
 
 
+_WALL = re.compile(r"^\d{4}-\d\d-\d\dT\d\d:\d\d$")
+
+
+def city_clock(value: object) -> str | None:
+    """What the city clock shows, from the page ({"at", "range", "compare", "playing"}, local
+    wall times), as one line: "live", or "viewing Sat 2026-11-21 21:00 ...". None when the page
+    says nothing about it."""
+    if not isinstance(value, dict):
+        return None
+
+    def wall(v: object) -> str | None:
+        if not isinstance(v, str) or not _WALL.match(v):
+            return None
+        try:
+            return f"{datetime.fromisoformat(v):%a %Y-%m-%d %H:%M}"
+        except ValueError:
+            return None
+
+    at = wall(value.get("at"))
+    parts = [f"viewing {at} (the map, the strip and the inspector show this moment)" if at else "live"]
+    rng = value.get("range")
+    if isinstance(rng, list) and len(rng) == 2 and (a := wall(rng[0])) and (b := wall(rng[1])):
+        parts.append(f"{'playing' if value.get('playing') else 'paused on'} the range {a} to {b}")
+    if cmp := wall(value.get("compare")):
+        parts.append(f"comparing with {cmp} (a swipe across the map)")
+    return "; ".join(parts)
+
+
 def format_context(context: dict | None, now: datetime) -> str:
     lines = [f"local_time: {now.astimezone(TZ):%a %Y-%m-%d %H:%M} ({TIMEZONE})"]
     view = (context or {}).get("map_view") or {}
@@ -98,6 +127,8 @@ def format_context(context: dict | None, now: datetime) -> str:
         lines.append(f"inspector_open: {inspecting}")
     if subject := _entity_ref((context or {}).get("subject")):
         lines.append(f"asking_about: {subject}")
+    if clock := city_clock((context or {}).get("clock")):
+        lines.append(f"city_clock: {clock}")
     errors = (context or {}).get("visual_errors")
     if errors:
         lines.append("visual_errors: " + "; ".join(str(e)[:300] for e in errors[:3]))
@@ -117,6 +148,7 @@ class Agent:
         self.registers = registers
         self._client = client
         self.entities = Entities(city, places, dls, registers, memory)  # shared with the inspector
+        self.moments = Moments(city, memory)  # the city at past moments, for the clock
         self.tools = TOOL_DEFS + ([WEB_SEARCH] if settings.web_search else [])
         self.conversations: dict[str, Conversation] = {}
 
@@ -145,7 +177,7 @@ class Agent:
         tool_ctx = ToolContext(self.settings, self.city, self.places, self.router, conv.store,
                                emit_threadsafe, conv.id, self.dls, self.registers,
                                user_location(context), memory=self.memory,
-                               entities=self.entities)
+                               entities=self.entities, moments=self.moments)
         conv.messages.append({"role": "user", "content": [
             {"type": "text", "text": format_context(context, self.city.now()) + text}]})
 

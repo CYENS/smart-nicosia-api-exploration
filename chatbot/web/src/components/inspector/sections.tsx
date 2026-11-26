@@ -41,10 +41,11 @@ function headlineOf(e: Entity): Reading | null {
 }
 
 // The headline: one number, large, with its age, over the last 24 hours.
-function Headline({ entity, series, seriesStatus }: SectionProps) {
+function Headline({ entity, series, seriesStatus, band }: SectionProps) {
   const now = useNow()
   const r = headlineOf(entity)
-  const live = !!r?.as_of
+  const m = entity.moment?.applies ? entity.moment : null
+  const live = !!r?.as_of && !m
   const today = series?.totals_24h
   const counted = today && (today.people ?? today.total)
   return (
@@ -56,7 +57,7 @@ function Headline({ entity, series, seriesStatus }: SectionProps) {
             {r.unit && <span className="text-[17px] text-muted-foreground">{r.unit}</span>}
           </p>
           <p className="text-[13px] text-muted-foreground">
-            {r.label}{r.as_of ? `, reported ${ago(r.as_of, now)}` : ""}
+            {r.label}{m ? `, at ${m.label}` : r.as_of ? `, reported ${ago(r.as_of, now)}` : ""}
           </p>
         </div>
       )}
@@ -66,7 +67,10 @@ function Headline({ entity, series, seriesStatus }: SectionProps) {
           <p className="text-[13px] text-muted-foreground">{today?.people !== undefined ? "People counted in the last 24 hours" : "Counted in the last 24 hours"}</p>
         </div>
       )}
-      {!r && !counted && entity.state?.reason && entity.kind === "street_light" && (
+      {m && !m.known && (
+        <p className="text-[13.5px] leading-snug text-muted-foreground">The twin's memory holds nothing for {m.label}, so its state then is unknown. The line below shows what it does hold.</p>
+      )}
+      {!r && !counted && entity.state?.reason && entity.kind === "street_light" && !(m && !m.known) && (
         <p className="text-[13.5px] leading-snug text-muted-foreground">{capitalise(entity.state.reason)}.</p>
       )}
       {entity.has_series && seriesStatus === "loading" && (
@@ -76,7 +80,7 @@ function Headline({ entity, series, seriesStatus }: SectionProps) {
         </div>
       )}
       {series && !series.error && series.points?.length > 1 && (
-        <Sparkline series={series} title={`${series.label}, last 24 hours`} />
+        <Sparkline series={series} band={band} live={!entity.moment} title={entity.moment ? `${series.label}, 24 hours around ${entity.moment.label}` : `${series.label}, last 24 hours`} />
       )}
       {entity.has_series && (seriesStatus === "error" || series?.error) && (
         <p className="text-[12.5px] text-muted-foreground">The city's API didn't send the last 24 hours. The readings above are live.</p>

@@ -3,9 +3,10 @@
    open things through `inspect`. */
 import { create } from "zustand"
 
+import { toWall, useClock } from "@/lib/clock"
 import {
-  EntityError, cachedEntity, fetchEntity, fetchSeries, type Entity, type EntityRef, type LocalThing,
-  type Series,
+  EntityError, cachedEntity, fetchBand, fetchEntity, fetchSeries, type Band, type Entity, type EntityRef,
+  type LocalThing, type Series,
 } from "@/lib/entities"
 import { flyToThing, onInspect, setSelection } from "@/lib/map/engine"
 import type { InspectTarget } from "@/lib/registries/map-clicks"
@@ -22,6 +23,8 @@ type InspectorState = {
   error: string | null
   series: Series | null
   seriesStatus: "idle" | "loading" | "ready" | "error"
+  band: Band | null // the usual behind the sparkline
+  moment: string | null // the clock's moment the record is read at (null: now)
   recent: EntityRef[]
   focusAt: number // set when an opener wants the keyboard in the inspector
 }
@@ -39,7 +42,7 @@ function readRecent(): EntityRef[] {
 
 export const useInspector = create<InspectorState>(() => ({
   open: false, target: null, local: null, note: null, entity: null, status: "idle", error: null,
-  series: null, seriesStatus: "idle", recent: readRecent(), focusAt: 0,
+  series: null, seriesStatus: "idle", band: null, moment: null, recent: readRecent(), focusAt: 0,
 }))
 const set = useInspector.setState
 
@@ -97,20 +100,23 @@ export function inspect(target: InspectTarget, opts: InspectOptions = {}) {
     return
   }
   const { id, at, fallback, note } = target
-  const cached = cachedEntity(id)
+  const moment = clockMoment()
+  const cached = cachedEntity(id, moment)
   set({
     open: true, target: { id, at }, local: null, note: note ?? null, entity: cached, status: cached ? "ready" : "loading",
-    error: null, series: null, seriesStatus: "idle",
+    error: null, series: null, seriesStatus: "idle", band: null, moment,
   })
   if (cached) selectEntity(cached)
   else if (at) setSelection({ center: at })
   if (opts.fly && (cached?.center ?? at)) flyToThing((cached?.center ?? at)!, cached?.kind)
-  fetchEntity(id, at, mine.signal)
+  fetchEntity(id, at, mine.signal, moment)
     .then((entity) => {
       if (mine.signal.aborted) return
       set({ entity, status: "ready", target: { id: entity.id, at } })
       selectEntity(entity)
       remember(entity)
+      // The clock moved while it loaded: read it again at the clock's moment.
+      if (clockMoment() !== moment) followClock()
       if (opts.fly && !cached && !at && entity.center) flyToThing(entity.center, entity.kind)
       if (entity.has_series) loadSeries(entity, at, mine)
     })
@@ -121,12 +127,57 @@ export function inspect(target: InspectTarget, opts: InspectOptions = {}) {
     })
 }
 
-function loadSeries(entity: Entity, at: [number, number] | undefined, mine: AbortController) {
-  set({ seriesStatus: "loading" })
-  fetchSeries(entity.id, at, mine.signal)
-    .then((series) => { if (!mine.signal.aborted) set({ series, seriesStatus: series?.error ? "error" : "ready" }) })
+function loadSeries(entity: Entity, at: [number, number] | undefined, mine: AbortController, keep = false) {
+  const moment = useInspector.getState().moment
+  set(keep ? {} : { seriesStatus: "loading", band: null })
+  fetchSeries(entity.id, at, mine.signal, seriesMoment(moment))
+    .then((series) => {
+      if (mine.signal.aborted) return
+      set({ series, seriesStatus: series?.error ? "error" : "ready" })
+      // The usual behind it, from the twin's memory; the sparkline draws without it meanwhile.
+      if (series && !series.error && series.points?.length) {
+        fetchBand(entity, series, mine.signal)
+          .then((band) => { if (!mine.signal.aborted) set({ band }) })
+          .catch(() => { if (!mine.signal.aborted) set({ band: null }) })
+      }
+    })
     .catch((e: Error) => { if (!mine.signal.aborted && e.name !== "AbortError") set({ seriesStatus: "error" }) })
 }
+
+// The clock's moment as the API reads it, or null while it is live.
+function clockMoment() {
+  const at = useClock.getState().at
+  return at === null ? null : toWall(at)
+}
+
+// The 24 hours around a past moment end 12 hours after its hour (as the server works it out),
+// so moving the clock within the hour keeps the sparkline and only moves its cursor.
+function seriesMoment(moment: string | null) {
+  return moment ? `${moment.slice(0, 13)}:00` : null
+}
+
+// The open thing follows the clock: its record at the new moment, and its 24 hours when the
+// moment has moved to another hour.
+let followTimer: number | undefined
+function followClock() {
+  clearTimeout(followTimer)
+  followTimer = window.setTimeout(() => {
+    const s = useInspector.getState()
+    const moment = clockMoment()
+    if (!s.open || !s.entity || s.local || moment === s.moment) return
+    const sameHour = seriesMoment(moment) === seriesMoment(s.moment)
+    ctrl?.abort()
+    const mine = (ctrl = new AbortController())
+    const entity = s.entity
+    const at = s.target?.at
+    set({ moment })
+    fetchEntity(entity.id, at, mine.signal, moment)
+      .then((e) => { if (!mine.signal.aborted) set({ entity: e }) })
+      .catch(() => { /* the record stays as it was; the next move tries again */ })
+    if (entity.has_series && !sameHour) loadSeries(entity, at, mine, true)
+  }, 300)
+}
+useClock.subscribe((s, prev) => { if (s.at !== prev.at) followClock() })
 
 function showLocal(thing: LocalThing, opts: InspectOptions) {
   set({ open: true, target: null, local: thing, note: null, entity: null, status: "ready", error: null, series: null, seriesStatus: "idle" })
@@ -152,7 +203,7 @@ export function closeInspector(opts: { returnFocus?: boolean } = {}) {
   opener = null
   ctrl?.abort()
   ctrl = null
-  set({ open: false, target: null, local: null, note: null, entity: null, status: "idle", error: null, series: null, seriesStatus: "idle" })
+  set({ open: false, target: null, local: null, note: null, entity: null, status: "idle", error: null, series: null, seriesStatus: "idle", band: null })
   setSelection(null)
   if (opts.returnFocus !== false && inside) returnFocus(back)
 }

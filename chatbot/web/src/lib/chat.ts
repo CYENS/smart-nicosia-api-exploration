@@ -3,6 +3,7 @@
 import { create } from "zustand"
 
 import type { ChartPayload } from "@/lib/charts"
+import { applyClockCommand, clockContext } from "@/lib/clock"
 import type { EntityRef } from "@/lib/entities"
 import { closeInspector, inspectId, inspectingRef } from "@/lib/inspector"
 import { useLayout } from "@/lib/layout"
@@ -25,6 +26,7 @@ export const TOOL_LABELS: Record<string, string> = {
   get_entity: "Looking it up in the twin", open_inspector: "Opening it in the inspector",
   map_fly_to: "Moving the map", map_callouts: "Adding callouts", map_clear: "Clearing the map",
   show_chart: "Drawing a chart", show_visual: "Drawing a custom visual", web_search: "Searching the web",
+  set_city_time: "Setting the city clock",
 }
 
 export function toolLabel(name: string) {
@@ -154,6 +156,8 @@ function handleEvent(turnId: string, ev: any) {
         }
         useStage.setState((s) => ({ items: [...s.items, item], focusId: item.id, open: true }))
         updateTurn(turnId, (t) => ({ ...t, parts: [...t.parts, { kind: "stage", stageId: item.id, title: item.title, visual: item.kind }] }))
+      } else if (ev.action === "clock") {
+        applyClockCommand(ev)
       } else if (ev.action === "inspect") {
         inspectId(String(ev.id), { at: ev.at ?? undefined, fly: ev.fly !== false })
       } else {
@@ -189,7 +193,7 @@ export async function send(text: string, opts: { subject?: EntityRef | null } = 
   }
   useChat.setState((s) => ({ busy: true, turns: [...s.turns, turn] }))
   try {
-    const context = { ...mapContext(), inspecting: inspectingRef(), subject: subject ?? null }
+    const context = { ...mapContext(), clock: clockContext(), inspecting: inspectingRef(), subject: subject ?? null }
     const res = await fetch("/api/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },

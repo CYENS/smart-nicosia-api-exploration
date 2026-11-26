@@ -7,12 +7,19 @@ import { create } from "zustand"
 
 import { BASE_SOURCE, BASE_SOURCE_URLS, BASEMAP_URLS, baseLayers, type Basemap } from "@/lib/map/basemap"
 import { lightFor, nicosiaWallToDate, skyAt, skyFor, type Sky } from "@/lib/map/sky"
+import { kindOfId } from "@/lib/entities"
 import { clickableLayer, resolveClick, type InspectTarget } from "@/lib/registries/map-clicks"
 import { WALLS_RING } from "@/lib/walls"
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 type Feature = { type: "Feature"; id?: string | number; geometry: any; properties: Record<string, any> }
-type FC = { type: "FeatureCollection"; features: Feature[]; frames?: Frames; street?: Street; meta?: any }
+export type FC = { type: "FeatureCollection"; features: Feature[]; frames?: Frames; street?: Street; meta?: any }
+// Every device of a kind at one moment, from /api/clock/states.
+export type StatesAt = {
+  kind: string; at: string; label: string; known: boolean; coverage_pct: number; reason: string | null
+  colors: Record<string, string>
+  devices: Record<string, { s: string } & Record<string, number | string>>
+}
 type Frames = {
   times: string[]; iso: string[]; state_names: string[]; states: number[][]
   values: Record<string, (number | null)[][]>
@@ -30,6 +37,16 @@ type Entry = {
   spec: LayerSpec; data: FC; ids: string[]; stats: Stats | null; half?: number
   extruded?: boolean // has 3D footprints
   lamps?: boolean // street lights, which glow after dark
+  // How the layer follows the city clock: its features' properties as the answer drew them,
+  // the kinds of device it shows, its frames' moments, and what it shows on each side of a
+  // comparison (null: as drawn).
+  orig: Record<string, any>[]
+  kinds: string[]
+  times: number[] // frame moments (instants), for a time-lapse
+  a: Record<string, any>[] | null
+  b: Record<string, any>[] | null
+  legendNow?: Record<string, string>
+  frame?: number | null // the frame on show at the clock's moment (null: outside the replay)
 }
 type Stats = { min: number; max: number }
 
@@ -40,7 +57,6 @@ const FONT_REGULAR = ["Noto Sans Regular"]
 const FONT_BOLD = ["Noto Sans Bold"]
 const HOME = { center: [33.3615, 35.1725] as [number, number], zoom: 14.2, pitch: 45, bearing: -12 }
 export const REGISTERS_REF = "eoa_registers"
-const SPEEDS = [1, 2, 4]
 
 // The DLS 3D city stays dark slate and lightens only as it climbs: the skyline reads at a glance,
 // and the assistant's layers (red registers, blue routes) still stand out against it.
@@ -58,10 +74,8 @@ export type LayerSummary = {
   legend: Record<string, string>; stats: Stats | null; valueField: string | null
   street: { name: string; follows: string | null } | null // `follows`: the total its glow tracks
 }
-export type TimelapseUi = {
-  ref: string; title: string; frame: number; frames: number; time: string; playing: boolean; speed: number
-  reading: string | null // the frame's total, e.g. "2,716 people"
-}
+// What a time-lapse layer reads at the clock's moment, e.g. "2,716 people" (null outside it).
+export type ReplayUi = { ref: string; title: string; frame: number | null; frames: number; reading: string | null }
 type MapUi = {
   ready: boolean
   basemap: Basemap // the base map shown
@@ -72,7 +86,7 @@ type MapUi = {
   layers: LayerSummary[]
   city: { on: boolean; status: string }
   registers: { on: boolean; status: string }
-  timelapse: TimelapseUi | null
+  replays: Record<string, ReplayUi> // every time-lapse layer on the map, by ref
   me: { loc: MyLocation | null; error: string }
   flying: string | null // the route the camera is flying along
 }
@@ -87,7 +101,7 @@ export const useMapUi = create<MapUi>(() => ({
   layers: [],
   city: { on: false, status: "" },
   registers: { on: false, status: "" },
-  timelapse: null,
+  replays: {},
   me: { loc: null, error: "" },
   flying: null,
 }))
@@ -114,7 +128,6 @@ const state = {
   pulses: new Set<string>(),
   dashLayers: new Set<string>(),
   hl3d: new Set<string>(),
-  timelapse: null as null | { ref: string; frame: number; playing: boolean; speed: number; timer?: number },
   charts: [] as LinkedChart[],
   timeCharts: [] as TimeChart[],
   visuals: [] as Visual[],
@@ -177,6 +190,7 @@ export function initMap(container: HTMLElement, camera?: Camera | null) {
     if (target) for (const fn of inspectSinks) fn(target)
   })
   ;(window as any).__map = map // a hook for scripted demos and browser tests (e.g. map.project)
+  ;(window as any).__twin = { state, clock } // and what the map draws, for the same
   map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), "bottom-right")
   map.addControl(new maplibregl.ScaleControl({ unit: "metric" }), "bottom-left")
   geolocate = new maplibregl.GeolocateControl({
@@ -214,14 +228,17 @@ export function initMap(container: HTMLElement, camera?: Camera | null) {
   map.on("movestart", (e) => { if ((e as any).originalEvent) framed = null }) // the user took over
   map.on("moveend", refreshCity)
   map.on("zoomend", cityStatus)
-  showSky(new Date())
+  showSky(clock.at === null ? new Date() : new Date(clock.at))
   requestAnimationFrame(animate)
-  setInterval(() => { if (!state.timelapse && hoverMs === null) setTimeAll(nicosiaNowMs()) }, 30e3)
+  setInterval(() => { if (clock.at === null && hoverMs === null) setTimeAll(nicosiaNowMs()) }, 30e3)
   // The sky moves on: every minute the light, the sky and (at dusk and dawn) the base map follow.
   setInterval(() => {
     setUi({ skyNow: skyAt(new Date()) })
-    if (!state.timelapse) showSky(new Date())
+    if (clock.at === null) showSky(new Date())
   }, 60e3)
+  // A comparison is divided where the swipe is on screen: the camera moving moves the line
+  // through the city.
+  map.on("move", () => { if (clock.compare !== null) splitSoon() })
   window.addEventListener("message", onVisualMessage)
   return map
 }
@@ -430,11 +447,11 @@ export function setNightLights(on: boolean) {
   syncNightLights()
 }
 
-// Street lights glow from dusk to dawn: the city's own lamps (live from /api/lamps), any street
-// light layer the assistant draws (following a time-lapse frame by frame), and a faint warm
-// wash along the streets of the Night base map.
+// Street lights glow from dusk to dawn: the city's own lamps (live from /api/lamps, or as they
+// were at the clock's moment), any street light layer the assistant draws (following the clock),
+// and a faint warm wash along the streets of the Night base map.
 const nightLayers = new Set<string>()
-let lamps: FC | null = null
+let lamps: FC | null = null // live
 let lampsAt = 0
 
 function lampLayerOnMap() {
@@ -444,8 +461,10 @@ function lampLayerOnMap() {
 
 function syncNightLights() {
   if (!styleReady) return
-  const on = shown.dark && useMapUi.getState().nightLights
-  if (on && Date.now() - lampsAt > 5 * 60e3) loadLamps()
+  const lightsOn = useMapUi.getState().nightLights
+  // In a comparison the other moment may be the dark one.
+  const on = lightsOn && (shown.dark || (clock.compare !== null && skyAt(new Date(clock.compare)).dark))
+  if (on && clock.at === null && Date.now() - lampsAt > 5 * 60e3) loadLamps()
   const ambient = on && !lampLayerOnMap()
   for (const id of [...nightLayers, `${basePrefix}street-glow`]) {
     if (!map.getLayer(id)) continue
@@ -460,16 +479,44 @@ function loadLamps() {
     .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`))))
     .then((fc: FC) => {
       lamps = fc
-      const src = map.getSource("lamps") as GeoJSONSource | undefined
-      if (src) src.setData(fc as any)
+      if (map.getSource("lamps")) pushLamps()
       else addAmbientLamps()
     })
     .catch(() => { lampsAt = 0 }) // try again on the next minute
 }
 
+// The ambient lamps at the clock's moment (and, in a comparison, the other moment's left of the
+// swipe). A moment not read yet keeps what is on show until it comes.
+const lampsShown: { a: FC | null; b: FC | null } = { a: null, b: null }
+const NO_LAMPS: FC = { type: "FeatureCollection", features: [] }
+function lampsFor(t: number | null): FC | null {
+  return t === null ? lamps : clock.lamps.get(t) ?? null
+}
+
+// The lamps of a moment not read yet: none glow in daylight; after dark, what is on show stays
+// until the moment's own come.
+function lampsOr(t: number | null, shown: FC | null) {
+  const got = lampsFor(t)
+  if (got) return got
+  return t !== null && !skyAt(new Date(t)).dark ? NO_LAMPS : shown
+}
+
+function pushLamps() {
+  const src = map.getSource("lamps") as GeoJSONSource | undefined
+  const a = lampsOr(clock.at, lampsShown.a)
+  const b = clock.compare !== null ? lampsOr(clock.compare, lampsShown.b) : null
+  lampsShown.a = a
+  lampsShown.b = b
+  if (!src || !a) return
+  const features = b ? split(a.features, b.features) : a.features
+  src.setData({ type: "FeatureCollection", features } as any)
+}
+
 function addAmbientLamps() {
-  if (!lamps || map.getSource("lamps")) return
-  map.addSource("lamps", { type: "geojson", data: lamps as any })
+  const first = lampsFor(clock.at) ?? lamps
+  if (!first || map.getSource("lamps")) return
+  map.addSource("lamps", { type: "geojson", data: first as any })
+  lampsShown.a = first
   const ids: string[] = []
   addLampGlow("lamps", "lamps", ["==", ["get", "state"], "on"], ids, glowBelow())
   bindPopup("lamps-bulb") // a lamp's bulb opens it in the inspector
@@ -639,7 +686,7 @@ function addToMap(entry: Entry) {
   addStreet(entry) // first, so the layer's own features draw over it
 
   if (spec.style === "columns_3d") {
-    map.addSource(src, { type: "geojson", data: columnsData(entry) as any })
+    map.addSource(src, { type: "geojson", data: columnsData(entry, shownFeatures(entry)) as any })
     addLayerSafe({
       id: `${ref}::columns`, type: "fill-extrusion", source: src,
       paint: { "fill-extrusion-color": ["get", "_c"], "fill-extrusion-height": ["get", "_h"], "fill-extrusion-base": 0, "fill-extrusion-opacity": 0.9 },
@@ -650,7 +697,7 @@ function addToMap(entry: Entry) {
     return
   }
 
-  map.addSource(src, { type: "geojson", data: data as any })
+  map.addSource(src, { type: "geojson", data: { type: "FeatureCollection", features: shownFeatures(entry) } as any })
 
   if (spec.style === "buildings_3d") {
     // Real footprints at their DLS heights, plot outlines on the ground, and markers that
@@ -778,14 +825,14 @@ function frameStats(frames: Frames, field: string): Stats | null {
   return vals.length ? { min: Math.min(...vals), max: Math.max(...vals) } : null
 }
 
-function columnsData(entry: Entry) {
+function columnsData(entry: Entry, features: Feature[]) {
   const vf = entry.spec.value_field!
   const st = entry.stats || { min: 0, max: 1 }
   const span = st.max - st.min || 1
-  const all = entry.data.features.filter((f) => f.geometry?.type === "Point")
+  const all = features.filter((f) => f.geometry?.type === "Point")
   // Column width follows the layer's extent: 6 m in a street, up to 45 m city-wide. So does the
   // tallest column: about a fifth of the extent, so one street's columns stay in the picture.
-  const extent = extentMeters(all)
+  const extent = extentMeters(entry.data.features.filter((f) => f.geometry?.type === "Point"))
   entry.half ??= Math.max(6, Math.min(45, extent / 220))
   const half = entry.half
   const tallest = Math.min(half * 40, Math.max(50, extent * 0.22))
@@ -865,7 +912,7 @@ function addStreet(entry: Entry) {
   const src = `${ref}::street`
   const props = { id: "street", label: st.name, popup: `${st.name}\nThe street the layer's cameras stand along` }
   map.addSource(src, { type: "geojson", data: { type: "Feature", properties: props, geometry: { type: "LineString", coordinates: st.coordinates } } })
-  const glow = streetGlow(streetLevel(entry, timelapseFrameOf(ref)))
+  const glow = streetGlow(streetLevel(entry, entry.frame ?? null))
   const layout = { "line-join": "round", "line-cap": "round" } as const
   map.addLayer({
     id: `${ref}::street-glow`, type: "line", source: src, layout,
@@ -925,7 +972,7 @@ function publishLayers() {
       const { spec, stats, data } = entry
       return {
         ref: spec.ref, title: spec.title, count: spec.count, style: spec.style,
-        legend: spec.legend || {}, stats, valueField: spec.value_field ?? null,
+        legend: entry.legendNow ?? spec.legend ?? {}, stats, valueField: spec.value_field ?? null,
         street: data.street ? { name: data.street.name, follows: totalsOf(entry)?.field ?? null } : null,
       }
     }),
@@ -936,7 +983,8 @@ function publishLayers() {
 export function removeLayer(ref: string) {
   removeFromMap(ref)
   state.layers.delete(ref)
-  if (state.timelapse?.ref === ref) stopTimelapse()
+  clockSinks.gone(ref)
+  publishReplays()
   if (ref === REGISTERS_REF) setUi({ registers: { on: false, status: "" } })
   syncCityClaims()
   publishLayers()
@@ -944,10 +992,12 @@ export function removeLayer(ref: string) {
 }
 
 export function clearMap() {
-  for (const ref of [...state.layers.keys()]) removeFromMap(ref)
+  const refs = [...state.layers.keys()]
+  for (const ref of refs) removeFromMap(ref)
   state.layers.clear()
   setUi({ registers: { on: false, status: "" } })
-  stopTimelapse()
+  for (const ref of refs) clockSinks.gone(ref)
+  publishReplays()
   clearCallouts()
   syncCityClaims()
   publishLayers()
@@ -990,7 +1040,7 @@ export async function showLayer(spec: LayerSpec, prefetched: FC | null = null) {
     data = (await res.json()) as FC
   }
   if (state.layers.has(spec.ref)) removeFromMap(spec.ref)
-  const entry: Entry = { spec, data, ids: [], stats: null }
+  const entry = timedEntry(spec, data)
   state.layers.set(spec.ref, entry)
   const tilts = spec.style === "columns_3d" || spec.style === "buildings_3d"
   const pitch = tilts ? Math.max(55, map.getPitch()) : map.getPitch()
@@ -1006,7 +1056,11 @@ export async function showLayer(spec: LayerSpec, prefetched: FC | null = null) {
     } else if (spec.style === "buildings_3d" && map.getZoom() >= 15 && map.getPitch() < 45) map.easeTo({ pitch: 55, duration: 900 })
     publishLayers()
     syncHighlight()
-    if (fc.frames) startTimelapse(spec.ref)
+    // A time-lapse becomes a range on the city clock, which plays it; a layer of devices is
+    // read again at the clock's moment when that isn't now.
+    if (fc.frames) clockSinks.range(spec.ref, spec.title, fc.frames.iso)
+    else if (entry.kinds.length && (clock.at !== null || clock.compare !== null)) clockSinks.reload()
+    publishReplays()
   })
 }
 
@@ -1161,36 +1215,80 @@ export async function showRegisters(on: boolean) {
 }
 
 // ---------------------------------------------------------------------------------------------
-// Time-lapse: a layer with `frames` replays per-frame states and values on its features.
+// The city clock: every layer and the lamps follow one moment. lib/clock.ts owns the moment and
+// reads the city at it from the server; here it is drawn. A time-lapse layer shows its frame
+// nearest the moment; a layer of devices shows the states the twin's memory holds for that
+// moment (the answer's own drawing while the clock is live); in a comparison, whatever lies left
+// of the swipe shows the other moment.
 
-function publishTimelapse() {
-  const tl = state.timelapse
-  const entry = tl && state.layers.get(tl.ref)
-  if (!tl || !entry) { setUi({ timelapse: null }); return }
-  const fr = entry.data.frames!
-  const total = totalsOf(entry)
-  setUi({
-    timelapse: {
-      ref: tl.ref, title: entry.spec.title, frame: tl.frame, frames: fr.times.length,
-      time: fr.times[tl.frame], playing: tl.playing, speed: tl.speed,
-      reading: total ? `${fmt(total.values[tl.frame] ?? 0)} ${total.field.replace(/_/g, " ")}` : null,
-    },
-  })
+const CLOCK_KINDS = new Set(["street_light", "parking_sensor", "waste_bin", "air_station"])
+// Readings a device layer carries that belong to its moment (the rest, like names, stay).
+const VALUE_KEYS = new Set(["power_w", "lit", "occupied", "level_pct", "temperature_c", "caqi", "noise_db", "pm2_5", "pm10", "no2", "o3"])
+const UNKNOWN = "#a3a3a3"
+
+const clock = {
+  at: null as number | null, // the moment (an instant); null: live
+  compare: null as number | null, // the other moment, in a comparison
+  lamps: new Map<number, FC>(), // the ambient lamps, per moment
+  states: new Map<string, StatesAt>(), // every device of a kind, per "kind@moment"
+  swipe: 0.5, // where the swipe divides the open map, 0 to 1
 }
 
-function applyFrame(k: number) {
-  const tl = state.timelapse
-  const entry = tl && state.layers.get(tl.ref)
-  if (!tl || !entry) return
+// What lib/clock.ts does when the map needs it. It registers these (it imports this module, so
+// this module never imports it back).
+export const clockSinks = {
+  range: (ref: string, title: string, iso: string[]): void => { void ref; void title; void iso },
+  gone: (ref: string): void => { void ref },
+  reload: (): void => {},
+  covers: (t: number): boolean => { void t; return false }, // a range on the clock holds t
+  seek: (t: number): void => { void t }, // pause and move the clock to t
+}
+export function onClock(s: Partial<typeof clockSinks>) {
+  Object.assign(clockSinks, s)
+}
+
+function timedEntry(spec: LayerSpec, data: FC): Entry {
+  const orig = data.features.map((f) => ({ ...f.properties }))
+  const counts = new Map<string, number>()
+  let points = 0
+  for (const f of data.features) {
+    if (f.geometry?.type !== "Point") continue
+    points++
+    const k = kindOfId(String(f.properties?.id ?? ""))
+    if (k && CLOCK_KINDS.has(k)) counts.set(k, (counts.get(k) ?? 0) + 1)
+  }
+  // The kinds the layer is about (a lamp's layer with its nearest bay counts the bay too).
+  const kinds = [...counts].filter(([, n]) => n > 0 && points > 0).map(([k]) => k)
+  const times = data.frames ? data.frames.iso.map((s) => nicosiaWallToDate(s).getTime()) : []
+  const entry: Entry = { spec, data, ids: [], stats: null, orig, kinds, times, a: null, b: null }
+  entry.a = propsAt(entry, clock.at, "a")
+  entry.b = clock.compare !== null ? propsAt(entry, clock.compare, "b") : null
+  entry.legendNow = legendOf(entry)
+  return entry
+}
+
+function nearestFrame(entry: Entry, t: number): number | null {
+  const ts = entry.times
+  if (!ts.length) return null
+  const step = ts.length > 1 ? ts[1] - ts[0] : 3600e3
+  if (t < ts[0] - step / 2 || t > ts[ts.length - 1] + step / 2) return null
+  let lo = 0, hi = ts.length - 1
+  while (hi - lo > 1) {
+    const mid = (lo + hi) >> 1
+    if (ts[mid] <= t) lo = mid
+    else hi = mid
+  }
+  return Math.abs(ts[hi] - t) < Math.abs(ts[lo] - t) ? hi : lo
+}
+
+function frameProps(entry: Entry, k: number) {
   const fr = entry.data.frames!
-  k = Math.max(0, Math.min(fr.times.length - 1, Math.round(k)))
-  tl.frame = k
   const legend = entry.spec.legend || {}
-  entry.data.features.forEach((f, j) => {
-    const p = f.properties
+  return entry.orig.map((o, j) => {
+    const p = { ...o }
     const st = fr.state_names[fr.states[k][j]]
     p.state = st
-    p.color = legend[st] || "#a3a3a3"
+    p.color = legend[st] || UNKNOWN
     const parts: string[] = []
     for (const [field, rows] of Object.entries(fr.values)) {
       const v = rows[k][j]
@@ -1198,70 +1296,229 @@ function applyFrame(k: number) {
       else { p[field] = v; parts.push(`${field.replace(/_/g, " ")} ${fmt(v)}`) }
     }
     p.popup = `${p.name || p.label}\n${st.replace(/_/g, " ")}${parts.length ? `, ${parts.join(", ")}` : ""}\n${fr.times[k]}`
+    return p
   })
-  const src = map.getSource(`${tl.ref}::src`) as GeoJSONSource | undefined
-  if (src) src.setData((entry.spec.style === "columns_3d" ? columnsData(entry) : entry.data) as any)
-  syncStreet(entry, k)
-  for (const c of state.charts) if (c.link.key === "frame" && c.link.layer === tl.ref) setChartHighlight(c, k)
-  if (hoverMs === null) setTimeAll(frameMs(entry, k))
-  for (const v of state.visuals) postToVisual(v, k, "frame")
-  showSky(nicosiaWallToDate(fr.iso[k])) // the sun, the moon and the lamps of that moment
-  publishTimelapse()
 }
 
-function startTimelapse(ref: string) {
-  stopTimelapse()
-  state.timelapse = { ref, frame: 0, playing: false, speed: 1 }
-  applyFrame(0)
-  playTimelapse()
-}
-
-export function stopTimelapse() {
-  if (!state.timelapse) return
-  clearTimeout(state.timelapse.timer)
-  const entry = state.layers.get(state.timelapse.ref)
-  state.timelapse = null
-  if (entry) syncStreet(entry, null)
-  publishTimelapse()
-  setTimeAll(nicosiaNowMs()) // back to the "now" line
-  showSky(new Date()) // and back to tonight's (or today's) sky
-}
-
-export function playTimelapse() {
-  const tl = state.timelapse
-  if (!tl) return
-  const last = state.layers.get(tl.ref)!.data.frames!.times.length - 1
-  if (tl.frame >= last) applyFrame(0)
-  tl.playing = true
-  const step = () => {
-    if (!tl.playing || state.timelapse !== tl) return
-    if (tl.frame >= last) { pauseTimelapse(); return }
-    applyFrame(tl.frame + 1)
-    tl.timer = window.setTimeout(step, 650 / tl.speed)
+// The layer's devices as the memory holds them at t; null until that moment has been read.
+function statesProps(entry: Entry, t: number) {
+  const maps = new Map<string, StatesAt>()
+  for (const k of entry.kinds) {
+    const st = clock.states.get(`${k}@${t}`)
+    if (!st) return null
+    maps.set(k, st)
   }
-  clearTimeout(tl.timer)
-  tl.timer = window.setTimeout(step, 650 / tl.speed)
-  publishTimelapse()
+  const when = clockLabel(t)
+  return entry.orig.map((o) => {
+    const kind = kindOfId(String(o.id ?? ""))
+    const st = kind ? maps.get(kind) : undefined
+    if (!st || o._kind === "footprint") return o // not a device the clock knows: as drawn
+    const p: Record<string, any> = {}
+    for (const [k, v] of Object.entries(o)) if (!VALUE_KEYS.has(k)) p[k] = v
+    const rec = st.devices[String(o.id)]
+    const s = rec?.s ?? "unknown"
+    p.state = s
+    p.color = entry.spec.legend?.[s] ?? st.colors[s] ?? UNKNOWN
+    const parts: string[] = []
+    if (rec) {
+      for (const [k, v] of Object.entries(rec)) {
+        if (k !== "s" && typeof v === "number") { p[k] = v; if (k !== "lit" && k !== "occupied") parts.push(`${k.replace(/_/g, " ")} ${fmt(v)}`) }
+      }
+    }
+    const what = s === "unknown" ? "no record in the twin's memory" : s.replace(/_/g, " ")
+    p.popup = `${o.name || o.label}\n${what}${parts.length ? `, ${parts.join(", ")}` : ""}\n${when}`
+    return p
+  })
 }
 
-export function pauseTimelapse() {
-  const tl = state.timelapse
-  if (!tl) return
-  tl.playing = false
-  clearTimeout(tl.timer)
-  publishTimelapse()
+// A replay of things the memory has no moments for (traffic cameras) outside its frames: their
+// counts are unknown there, so they carry none.
+function blankProps(entry: Entry) {
+  const fields = Object.keys(entry.data.frames?.values ?? {})
+  return entry.orig.map((o) => {
+    const p = { ...o }
+    for (const f of fields) delete p[f]
+    p.popup = `${o.name || o.label}\nNo count at this moment: the replay covers ${entry.data.frames!.times[0]} to ${entry.data.frames!.times.at(-1)}`
+    return p
+  })
 }
 
-export function seekFrame(k: number) {
-  pauseTimelapse()
-  applyFrame(k)
+function propsAt(entry: Entry, t: number | null, side: "a" | "b") {
+  if (t === null) {
+    if (side === "a") entry.frame = null
+    return null // live: as the answer drew it
+  }
+  const k = nearestFrame(entry, t)
+  if (side === "a") entry.frame = k
+  if (k !== null) return frameProps(entry, k)
+  if (entry.kinds.length) return statesProps(entry, t) ?? (side === "a" ? entry.a : entry.b)
+  if (entry.times.length) return blankProps(entry)
+  return null
 }
 
-export function cycleSpeed() {
-  const tl = state.timelapse
-  if (!tl) return
-  tl.speed = SPEEDS[(SPEEDS.indexOf(tl.speed) + 1) % SPEEDS.length]
-  publishTimelapse()
+function legendOf(entry: Entry) {
+  const base = entry.spec.legend || {}
+  if (!entry.a && !entry.b) return base
+  const out: Record<string, string> = { ...base }
+  for (const props of [entry.a, entry.b]) for (const p of props ?? []) if (p.state && !(p.state in out) && p.color) out[p.state] = p.color
+  return out
+}
+
+function featuresWith(entry: Entry, props: Record<string, any>[] | null): Feature[] {
+  return entry.data.features.map((f, j) => ({ type: "Feature", geometry: f.geometry, properties: props ? props[j] : entry.orig[j] }))
+}
+
+function shownFeatures(entry: Entry): Feature[] {
+  const a = featuresWith(entry, entry.a)
+  if (clock.compare === null || !entry.b) return a
+  return split(a, featuresWith(entry, entry.b))
+}
+
+// Where the swipe is on the canvas, in px: a share of the part of the map the panels leave open.
+function swipeX() {
+  const p = map.getPadding()
+  const w = map.getCanvas().clientWidth
+  const left = p.left ?? 0, right = p.right ?? 0
+  return left + clock.swipe * Math.max(1, w - left - right)
+}
+
+function anchorOf(f: Feature): [number, number] | null {
+  const g = f.geometry
+  if (!g) return null
+  if (g.type === "Point") return g.coordinates
+  const pts = coordsOf(g, [])
+  return pts.length ? (pts[0] as [number, number]) : null
+}
+
+// A comparison: what stands right of the swipe at `a`'s moment, what stands left of it at `b`'s.
+function split(a: Feature[], b: Feature[]): Feature[] {
+  const x = swipeX()
+  const left = (f: Feature) => {
+    const c = anchorOf(f)
+    return c ? map.project(c).x < x : false
+  }
+  return [...a.filter((f) => !left(f)), ...b.filter(left)]
+}
+
+function pushData(entry: Entry) {
+  const src = map.getSource(`${entry.spec.ref}::src`) as GeoJSONSource | undefined
+  if (!src) return
+  const features = shownFeatures(entry)
+  src.setData((entry.spec.style === "columns_3d" ? columnsData(entry, features) : { type: "FeatureCollection", features }) as any)
+}
+
+function newestReplay(): Entry | null {
+  let out: Entry | null = null
+  for (const e of state.layers.values()) if (e.times.length) out = e
+  return out
+}
+
+function publishReplays() {
+  const replays: Record<string, ReplayUi> = {}
+  for (const e of state.layers.values()) {
+    if (!e.times.length) continue
+    const total = totalsOf(e)
+    const k = e.frame ?? null
+    replays[e.spec.ref] = {
+      ref: e.spec.ref, title: e.spec.title, frame: k, frames: e.times.length,
+      reading: total && k !== null ? `${fmt(total.values[k] ?? 0)} ${total.field.replace(/_/g, " ")}` : null,
+    }
+  }
+  setUi({ replays })
+}
+
+function renderClock() {
+  let legends = false
+  for (const entry of state.layers.values()) {
+    if (!entry.kinds.length && !entry.times.length) continue
+    entry.a = propsAt(entry, clock.at, "a")
+    entry.b = clock.compare !== null ? propsAt(entry, clock.compare, "b") : null
+    const legend = legendOf(entry)
+    if (JSON.stringify(legend) !== JSON.stringify(entry.legendNow)) { entry.legendNow = legend; legends = true }
+    if (styleReady) {
+      pushData(entry)
+      syncStreet(entry, entry.frame ?? null)
+    }
+  }
+  if (styleReady) pushLamps()
+  for (const c of state.charts) {
+    if (c.link.key !== "frame") continue
+    const e = (c.link.layer && state.layers.get(c.link.layer)) || newestReplay()
+    setChartHighlight(c, e?.frame ?? null)
+  }
+  const replay = newestReplay()
+  if (replay) for (const v of state.visuals) postToVisual(v, replay.frame ?? null, "frame")
+  publishReplays()
+  if (legends) publishLayers()
+}
+
+let renderQueued = false
+function renderSoon() {
+  if (renderQueued) return
+  renderQueued = true
+  requestAnimationFrame(() => { renderQueued = false; renderClock() })
+}
+
+let splitQueued = false
+function splitSoon() {
+  if (splitQueued || !styleReady) return
+  splitQueued = true
+  requestAnimationFrame(() => {
+    splitQueued = false
+    for (const e of state.layers.values()) if (e.b) pushData(e)
+    pushLamps()
+  })
+}
+
+// The clock moved (or a comparison started or ended): the sky, the lamps, every layer and every
+// chart's time line follow.
+export function setClockView(at: number | null, compare: number | null) {
+  const moved = at !== clock.at
+  clock.at = at
+  clock.compare = compare
+  if (!map) return
+  if (moved) showSky(at === null ? new Date() : new Date(at))
+  else syncNightLights()
+  renderClock()
+  // The clock moved: every chart's line goes to its moment, whatever a pointer last hovered.
+  hoverMs = null
+  setTimeAll(currentTimeMs())
+}
+
+// The lamps and the devices of a kind as they were at moment t, read by lib/clock.ts.
+export function putLamps(t: number, fc: FC) {
+  clock.lamps.set(t, fc)
+  if (clock.lamps.size > 64) clock.lamps.delete(clock.lamps.keys().next().value as number)
+  if (map && styleReady && (t === clock.at || t === clock.compare)) {
+    if (map.getSource("lamps")) pushLamps()
+    else addAmbientLamps()
+  }
+}
+
+export function putStates(t: number, kind: string, st: StatesAt) {
+  clock.states.set(`${kind}@${t}`, st)
+  if (clock.states.size > 256) clock.states.delete(clock.states.keys().next().value as string)
+  if (map && (t === clock.at || t === clock.compare)) renderSoon()
+}
+
+// The kinds of device the layers on the map need read at moment t (a time-lapse covering t has
+// its own frames).
+export function clockKinds(t: number) {
+  const out = new Set<string>()
+  for (const e of state.layers.values()) {
+    if (e.kinds.length && nearestFrame(e, t) === null) for (const k of e.kinds) out.add(k)
+  }
+  return [...out]
+}
+
+export function setSwipeAt(share: number) {
+  clock.swipe = share
+  splitSoon()
+}
+
+// The moment's label in a feature's popup.
+function clockLabel(t: number) {
+  return new Date(t).toLocaleString("en-GB", { timeZone: "Asia/Nicosia", weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -1324,10 +1581,11 @@ function postToVisual(v: Visual, value: unknown, kind: string) {
 
 export function linkHover(key: string, value: unknown, origin: unknown) {
   if (key === "frame") {
-    if (state.timelapse && value !== null && value !== undefined && Number.isFinite(Number(value))) {
-      pauseTimelapse()
-      applyFrame(Number(value))
-    }
+    if (value === null || value === undefined || !Number.isFinite(Number(value))) return
+    const ref = (origin as LinkedChart | null)?.link?.layer
+    const entry = (ref && state.layers.get(ref)) || newestReplay()
+    const t = entry?.times[Number(value)]
+    if (t !== undefined) clockSinks.seek(t)
     return
   }
   const v = (value ?? null) as string | number | null
@@ -1346,8 +1604,8 @@ export function linkHover(key: string, value: unknown, origin: unknown) {
 export function registerChart(view: any, link: ChartLink) {
   const c = { view, link }
   state.charts.push(c)
-  const tl = state.timelapse
-  if (link.key === "frame" && tl && tl.ref === link.layer) setChartHighlight(c, tl.frame)
+  const replay = link.key === "frame" ? (link.layer && state.layers.get(link.layer)) || newestReplay() : null
+  if (replay && replay.frame !== null && replay.frame !== undefined) setChartHighlight(c, replay.frame)
   else if (link.key !== "frame" && hlValue !== null) setChartHighlight(c, hlValue)
   return c
 }
@@ -1372,10 +1630,6 @@ export function unregisterVisual(v: Visual) {
   state.visuals = state.visuals.filter((x) => x !== v)
 }
 
-export function timelapseFrameOf(layer: string) {
-  return state.timelapse?.ref === layer ? state.timelapse.frame : null
-}
-
 function onVisualMessage(e: MessageEvent) {
   const v = state.visuals.find((x) => x.iframe.contentWindow === e.source)
   const m = e.data
@@ -1388,7 +1642,8 @@ function onVisualMessage(e: MessageEvent) {
     if (!state.visualErrors.includes(`${v.title}: ${text}`)) state.visualErrors.push(`${v.title}: ${text}`)
   } else if (m.type === "ready") {
     // A visual that just (re)loaded learns what is highlighted right now.
-    if (state.timelapse) postToVisual(v, state.timelapse.frame, "frame")
+    const replay = newestReplay()
+    if (replay && replay.frame !== null && replay.frame !== undefined) postToVisual(v, replay.frame, "frame")
     if (hlValue !== null) postToVisual(v, hlValue, "id")
   } else if (m.type === "highlight") {
     const val = m.value
@@ -1399,23 +1654,29 @@ function onVisualMessage(e: MessageEvent) {
 }
 
 // ---------------------------------------------------------------------------------------------
-// Time sync: every chart over real time has a "now" rule at its `_t` param. While a time-lapse
-// plays, `_t` is the frame's moment; otherwise it is now, moved on every 30 seconds. Times are
-// Nicosia wall-clock strings read as browser-local, the same way Vega reads the data.
+// Time sync: every chart over real time has a rule at its `_t` param: the city clock's moment
+// (now, moved on every 30 seconds, while it is live). Times are Nicosia wall-clock strings read
+// as browser-local, the same way Vega reads the data.
 
-export function nicosiaNowMs() {
-  const s = new Date().toLocaleString("sv-SE", { timeZone: "Asia/Nicosia", hour12: false })
-  return Date.parse(s.replace(" ", "T")) // "2026-10-20 14:05:33" -> local
+// An instant as Nicosia wall time read as local ms ("2026-10-20 14:05" -> local).
+function wallOf(t: number) {
+  const s = new Date(t).toLocaleString("sv-SE", { timeZone: "Asia/Nicosia", hour12: false })
+  return Date.parse(s.replace(" ", "T"))
 }
 
-function frameMs(entry: Entry, k: number) {
-  return Date.parse(entry.data.frames!.iso[k])
+// The other way: a chart's moment (wall time as local ms) as an instant.
+function instantOf(ms: number) {
+  const d = new Date(ms)
+  const two = (n: number) => String(n).padStart(2, "0")
+  return nicosiaWallToDate(`${d.getFullYear()}-${two(d.getMonth() + 1)}-${two(d.getDate())}T${two(d.getHours())}:${two(d.getMinutes())}`).getTime()
+}
+
+export function nicosiaNowMs() {
+  return wallOf(Date.now())
 }
 
 function currentTimeMs() {
-  const tl = state.timelapse
-  const entry = tl && state.layers.get(tl.ref)
-  return tl && entry ? frameMs(entry, tl.frame) : nicosiaNowMs()
+  return clock.at === null ? nicosiaNowMs() : wallOf(clock.at)
 }
 
 function setChartTime(tc: TimeChart, ms: number) {
@@ -1429,34 +1690,19 @@ function setTimeAll(ms: number) {
   for (const tc of state.timeCharts) setChartTime(tc, ms)
 }
 
-// Jump the time-lapse to the frame nearest a moment, if the moment is within it (and say so).
-export function seekTimelapse(ms: number) {
-  const tl = state.timelapse
-  const entry = tl && state.layers.get(tl.ref)
-  if (!tl || !entry) return false
-  const n = entry.data.frames!.iso.length
-  let best = 0
-  for (let k = 1; k < n; k++) if (Math.abs(frameMs(entry, k) - ms) < Math.abs(frameMs(entry, best) - ms)) best = k
-  const step = n > 1 ? frameMs(entry, 1) - frameMs(entry, 0) : Infinity
-  if (Math.abs(frameMs(entry, best) - ms) > step) return false
-  if (tl.playing) pauseTimelapse() // the pointer has the clock now
-  if (best !== tl.frame) applyFrame(best)
-  return true
-}
-
-// The moment under the pointer in a chart over time (null: the pointer left). A time-lapse that
-// covers the moment jumps to it, and every chart's line goes with it. Otherwise the charts'
-// line follows the pointer itself, and goes back to now when the pointer leaves.
+// The moment under the pointer in a chart over time (null: the pointer left). When a range on
+// the city clock holds it, the clock goes there (and the map, the strip and every chart with
+// it). Otherwise only the charts' line follows the pointer, and goes back to the clock's moment
+// when the pointer leaves.
 let hoverMs: number | null = null
 export function hoverTime(ms: number | null) {
-  if (ms !== null && seekTimelapse(ms)) ms = null
+  if (ms !== null) {
+    const t = instantOf(ms)
+    if (clockSinks.covers(t)) { clockSinks.seek(t); ms = null }
+  }
   if (ms === hoverMs) return
   hoverMs = ms
   setTimeAll(ms ?? currentTimeMs())
-}
-
-export function hasTimelapse() {
-  return state.timelapse !== null
 }
 
 // ---------------------------------------------------------------------------------------------

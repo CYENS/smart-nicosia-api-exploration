@@ -14,6 +14,11 @@ export function Shortcuts() {
     [<Kbd key="esc">Esc</Kbd>, "Close the inspector, or the menu that is open"],
     [<Kbd key="f">F</Kbd>, "Fly to the thing in the inspector"],
     [<><Kbd>←</Kbd> <Kbd>→</Kbd></>, "Read the 24-hour sparkline moment by moment, once it has the focus"],
+    [<Kbd key="t">T</Kbd>, "Put the keyboard on the city clock"],
+    [<><Kbd>←</Kbd> <Kbd>→</Kbd></>, "On the clock: a quarter hour back or on (with Shift, an hour; Page Up and Page Down, a day)"],
+    [<><Kbd>Home</Kbd> <Kbd>L</Kbd></>, "Back to live"],
+    [<Kbd key="space">Space</Kbd>, "On the clock: play or pause"],
+    [<><Kbd>[</Kbd> <Kbd>]</Kbd></>, "On the clock: the previous or next alarm, dusk, dawn or moment an answer pointed to"],
     ...workspaces.filter((w) => w.key).map((w): [React.ReactNode, string] => [<Kbd key={w.id}>Alt {w.key}</Kbd>, `Open ${w.description.split(":")[0]}`]),
     [<Kbd key="?">?</Kbd>, "Show these shortcuts"],
   ]

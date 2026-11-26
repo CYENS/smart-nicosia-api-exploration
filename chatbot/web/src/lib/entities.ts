@@ -41,7 +41,13 @@ export type Entity = {
   geometry: GeoJSON.Geometry | null; center: [number, number] | null; footprints: Footprint[]
   state: EntityState | null; readings: Reading[]; attributes: Attribute[]; relations: Relation[]
   sources: Source[]; as_of: string | null; has_series: boolean
+  // Set when the entity is read at a past moment of the city clock.
+  moment?: { at: string; label: string; known: boolean; applies: boolean }
 }
+
+// The usual for each moment of a series (#9's typical day: the median and quartiles for that
+// hour of that weekday over the stored weeks), from /api/history/{id}.
+export type Band = { points: { t: string; mid: number | null; lo: number | null; hi: number | null }[]; weeks: number; scale: number }
 
 // What a chip, a search result or the composer knows about a thing before it is fetched.
 export type EntityRef = { id: string; kind?: EntityKind | string; name?: string }
@@ -128,26 +134,49 @@ async function getJson(url: string, signal?: AbortSignal) {
   return res.json()
 }
 
-export function cachedEntity(id: string) {
-  const hit = cache.get(id.toLowerCase())
-  return hit && Date.now() - hit.at < TTL_MS ? hit.entity : null
+// `moment` is a past moment of the city clock as Nicosia wall time ("2026-11-21T21:00"); left
+// out, the thing as it is now.
+export function cachedEntity(id: string, moment?: string | null) {
+  const hit = cache.get(`${id.toLowerCase()}@${moment ?? ""}`)
+  return hit && Date.now() - hit.at < TTL_MS * (moment ? 10 : 1) ? hit.entity : null
 }
 
-export async function fetchEntity(id: string, at?: [number, number] | null, signal?: AbortSignal): Promise<Entity> {
-  const hit = cachedEntity(id)
+export async function fetchEntity(id: string, at?: [number, number] | null, signal?: AbortSignal, moment?: string | null): Promise<Entity> {
+  const hit = cachedEntity(id, moment)
   if (hit) return hit
-  const entity = (await getJson(`/api/entities/${encodeURIComponent(id)}${query(at, { series: "false" })}`, signal)) as Entity
-  cache.set(id.toLowerCase(), { at: Date.now(), entity })
-  cache.set(entity.id.toLowerCase(), { at: Date.now(), entity })
+  const extra: Record<string, string> = { series: "false", ...(moment ? { at: moment } : {}) }
+  const entity = (await getJson(`/api/entities/${encodeURIComponent(id)}${query(at, extra)}`, signal)) as Entity
+  for (const key of new Set([id.toLowerCase(), entity.id.toLowerCase()])) cache.set(`${key}@${moment ?? ""}`, { at: Date.now(), entity })
   return entity
 }
 
-export async function fetchSeries(id: string, at?: [number, number] | null, signal?: AbortSignal): Promise<Series | null> {
-  const hit = seriesCache.get(id.toLowerCase())
+export async function fetchSeries(id: string, at?: [number, number] | null, signal?: AbortSignal, moment?: string | null): Promise<Series | null> {
+  const key = `${id.toLowerCase()}@${moment ?? ""}`
+  const hit = seriesCache.get(key)
   if (hit && Date.now() - hit.at < TTL_MS * 5) return hit.series
-  const body = await getJson(`/api/entities/${encodeURIComponent(id)}/series${query(at)}`, signal)
-  seriesCache.set(id.toLowerCase(), { at: Date.now(), series: body.series })
+  const body = await getJson(`/api/entities/${encodeURIComponent(id)}/series${query(at, moment ? { at: moment } : {})}`, signal)
+  seriesCache.set(key, { at: Date.now(), series: body.series })
   return body.series as Series | null
+}
+
+// The metric of /api/history that matches each kind's sparkline, and how to scale it to the
+// sparkline's unit (a lamp's power in kW to W).
+const BAND_METRIC: Record<string, [string, number]> = {
+  street_light: ["power_kw", 1000], waste_bin: ["fill_pct", 1], air_station: ["caqi", 1], parking_sensor: ["occupancy_pct", 1],
+}
+
+export async function fetchBand(entity: Entity, series: Series, signal?: AbortSignal): Promise<Band | null> {
+  const metric = BAND_METRIC[entity.kind]
+  if (!metric) return null
+  const [name, scale] = metric
+  const p = new URLSearchParams({ hours: "24", metric: name, until: series.to })
+  const body = await getJson(`/api/history/${encodeURIComponent(entity.id)}?${p}`, signal)
+  if (!body.baseline || !Array.isArray(body.points)) return null
+  const k = (v: unknown) => (typeof v === "number" ? v * scale : null)
+  return {
+    points: body.points.map((x: { time: string; usual?: number; usual_low?: number; usual_high?: number }) => ({ t: x.time, mid: k(x.usual), lo: k(x.usual_low), hi: k(x.usual_high) })),
+    weeks: body.baseline.weeks, scale,
+  }
 }
 
 export type SearchResult = {

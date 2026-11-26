@@ -21,6 +21,7 @@ from chatbot.store import SessionStore
 
 if TYPE_CHECKING:
     from chatbot.entities import Entities
+    from chatbot.moments import Moments
 
 TZ = ZoneInfo(TIMEZONE)
 
@@ -47,6 +48,8 @@ class ToolContext:
     # The entity model with its caches, shared with the inspector's endpoints. Built from the
     # fields above when a caller doesn't pass one.
     entities: Entities | None = None
+    # The city at past moments (chatbot/moments.py), shared with the city clock's endpoints.
+    moments: Moments | None = None
 
 
 # -- schema helpers -----------------------------------------------------------------------------
