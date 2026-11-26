@@ -3,17 +3,21 @@
 from __future__ import annotations
 
 import json
+import logging
 from collections import defaultdict
 from datetime import date, datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
 from collector import parse
+from collector.http import ApiError
 
 from chatbot.city import CityData
 from chatbot.settings import NICOSIA_CENTER, TIMEZONE, Settings
 from chatbot.web import get_json
 
+log = logging.getLogger(__name__)
 TZ = ZoneInfo(TIMEZONE)
+HOUR_FMT = "%Y-%m-%dT%H:%M"  # a local hour as a chart and a time-lapse frame both read it
 OBJECT_TYPES = {0: "people", 1: "bike", 2: "car", 3: "motorcycle", 4: "bus", 5: "truck"}
 WEATHER_CODES = {
     0: "clear sky", 1: "mainly clear", 2: "partly cloudy", 3: "overcast", 45: "fog",
@@ -94,15 +98,58 @@ def _period_bounds(period: str, now: datetime) -> tuple[datetime, datetime, list
     return midnight - timedelta(days=days - 1), local, [first + timedelta(i) for i in range(days)]
 
 
+def cameras_matching(city: CityData, camera: str | None) -> list[dict]:
+    """The traffic cameras whose name contains `camera`; every camera without one."""
+    cams = city.traffic_cameras()
+    if not camera:
+        return cams
+    q = camera.lower()
+    return [c for c in cams if q in (c["name"] or "").lower()
+            or q in (c.get("stream_name") or "").lower()]
+
+
+def traffic_camera_hours(city: CityData, period: str, camera: str | None) -> list[dict]:
+    """Each camera's counts hour by hour over one local day ('today' or 'yesterday'), for
+    replaying the day on the map: [{"camera", "lat", "lon", "hours": {"2026-10-19T13:00":
+    {"people": 12, "car": 3, "total": 15}}}]. One small request per camera, in parallel.
+    Analytics that share a camera's name are one camera and are summed; cameras that counted
+    nothing that day, or whose request failed, are left out."""
+    start, end, days = _period_bounds(period, city.now())
+
+    def one(cam: dict):
+        try:
+            payload = city.client.get_json(
+                "getTrafficReports", group_by="hour", start_date=_ms(start), end_date=_ms(end),
+                va_ids=json.dumps([cam["analytics_id"]], separators=(",", ":")))
+        except ApiError as e:
+            log.warning("hourly traffic for %s failed: %s", cam.get("name"), e)
+            return cam, []
+        return cam, parse.parse_traffic_buckets(payload, TZ, day=days[0])
+
+    merged: dict[str, dict] = {}
+    for cam, rows in city.each(one, cameras_matching(city, camera)):
+        if not rows:
+            continue
+        m = merged.setdefault(cam["name"] or str(cam["analytics_id"]), {
+            "camera": cam["name"] or str(cam["analytics_id"]), "lat": None, "lon": None,
+            "hours": defaultdict(lambda: defaultdict(int))})
+        if m["lat"] is None:
+            m["lat"], m["lon"] = cam.get("lat"), cam.get("lon")
+        for r in rows:
+            counts = m["hours"][r.bucket_start.strftime(HOUR_FMT)]
+            counts[OBJECT_TYPES.get(r.object_type, str(r.object_type))] += r.total or 0
+            counts["total"] += r.total or 0
+    return [{**m, "hours": {h: dict(c) for h, c in sorted(m["hours"].items())}}
+            for m in merged.values()]
+
+
 def traffic(city: CityData, period: str, group_by: str, camera: str | None) -> dict:
     """Counts of people, bikes, cars, motorcycles, buses and trucks from the video analytics."""
     start, end, days = _period_bounds(period, city.now())
     cams = city.traffic_cameras()
     chosen = []
     if camera:
-        q = camera.lower()
-        chosen = [c for c in cams if q in (c["name"] or "").lower()
-                  or q in (c.get("stream_name") or "").lower()]
+        chosen = cameras_matching(city, camera)
         if not chosen:
             return {"error": f"no camera matches {camera!r}",
                     "cameras": sorted({c["name"] for c in cams})}
@@ -134,7 +181,7 @@ def traffic(city: CityData, period: str, group_by: str, camera: str | None) -> d
             label = "hour"
             note = None
             # A real local timestamp, so charts get a time axis that can sync with a time-lapse.
-            key = lambda r: r.bucket_start.strftime("%Y-%m-%dT%H:%M")  # noqa: E731
+            key = lambda r: r.bucket_start.strftime(HOUR_FMT)  # noqa: E731
         else:
             payload = city.client.get_json("getTrafficReports", group_by="hour", **params)
             rows = parse.parse_traffic_buckets(payload, TZ, day=days[-1])

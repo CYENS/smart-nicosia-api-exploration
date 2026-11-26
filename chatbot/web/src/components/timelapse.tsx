@@ -31,7 +31,10 @@ export function TimelapsePlayer() {
         <div className="flex min-w-0 flex-1 flex-col gap-1.5">
           <div className="flex items-baseline justify-between gap-3">
             <span className="truncate text-[12.5px] text-muted-foreground">{tl.title}</span>
-            <span className="shrink-0 font-readout text-[22px] leading-none font-semibold text-sodium" aria-live="off">{tl.time}</span>
+            <span className="flex shrink-0 items-baseline gap-3" aria-live="off">
+              {tl.reading && <span className="font-readout text-[15px] leading-none font-medium text-foreground">{tl.reading}</span>}
+              <span className="font-readout text-[22px] leading-none font-semibold text-sodium">{tl.time}</span>
+            </span>
           </div>
           <Slider
             aria-label="Time"

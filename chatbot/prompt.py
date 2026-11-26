@@ -63,6 +63,17 @@ show its layer on the map: a time slider plays it. Pair it with a show_chart of 
 over time (x = time, type temporal). Every chart with a temporal x axis (speed, traffic by \
 hour, weather) shows a dashed line that follows the slider, so they can be watched together; \
 without a time-lapse the line marks now.
+- How busy a street or the city gets through one day (get_traffic by hour_of_day, today or \
+yesterday): the result has a layer_ref that replays every camera hour by hour. Always show \
+it with show_on_map ('columns_3d', value_field people or the vehicle type asked about) next \
+to the chart of its data_ref over hour (type temporal, the field as it is, without a \
+timeUnit). The two move together: hovering the chart \
+takes the map to that hour, the columns rise and fall with each camera's count, and with a \
+camera filter along one street (Ledras, Kyriakou Matsi) that street is drawn on the map and \
+glows with the hour's total. Chart one plain series (no colour split) to get a dot and a \
+value on the line at the hovered hour. To compare the cameras themselves, chart \
+by_camera_data_ref coloured by camera; it is linked to the cameras on the map. Tell the user \
+they can hover the chart.
 - For visuals Vega-Lite can't do well (radial clocks, sankeys, network graphs, calendars, 3D, \
 animation), write JavaScript with show_visual, reading every number from DATA or LAYERS. If \
 <context> lists visual_errors, fix the code and draw it again.

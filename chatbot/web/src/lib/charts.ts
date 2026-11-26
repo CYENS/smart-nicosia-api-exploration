@@ -3,7 +3,7 @@
 import type { Result } from "vega-embed"
 
 import {
-  linkHover, registerChart, registerTimeChart, seekTimelapse, unregisterView, SODIUM,
+  hoverTime, linkHover, registerChart, registerTimeChart, unregisterView, SODIUM,
   type ChartLink,
 } from "@/lib/map/engine"
 
@@ -18,11 +18,14 @@ const DOMAIN = "rgba(138,160,190,0.34)"
 // Series colours tuned for the night console: sodium leads, the rest stay clear of it.
 export const CATEGORICAL = ["#ffae45", "#6cb4ff", "#6fdcbf", "#ff8a7a", "#c49bff", "#f2d06b", "#5fd0ef", "#ff9ccb", "#a8b5c7", "#7fd18a"]
 
-function config(height: number) {
+// Room above the plot for a scrubber's flag (the time and value at the moment on show).
+const FLAG_ROOM = 18
+
+function config(height: number, flag: boolean) {
   return {
     background: null,
     font: SANS,
-    padding: { left: 2, right: 8, top: 6, bottom: 2 },
+    padding: { left: 2, right: 8, top: 6 + (flag ? FLAG_ROOM : 0), bottom: 2 },
     view: { stroke: null, continuousHeight: height },
     axis: {
       labelColor: MUTED, labelFont: CONDENSED, labelFontSize: 12, labelPadding: 4,
@@ -106,15 +109,25 @@ function wireTimeChart(view: any, spec: any, field: string) {
   if (!Number.isFinite(step)) step = 3600e3
   // The last row covers one step (an hourly bucket, a day), so the rule may sit inside it.
   registerTimeChart(view, times[0], times[times.length - 1] + step)
-  if (!xEncodingOf(spec).timeUnit) { // a timeUnit axis (e.g. hour of day) has no single moment
+  // A time unit without the date (e.g. hour of day) has no single moment.
+  const unit = xEncodingOf(spec).timeUnit
+  if (!unit || /^yearmonthdate/.test(String(unit.unit ?? unit))) {
+    // The pointer picks the row nearest to it: the map's time-lapse jumps to that moment, and
+    // the chart's own line, dot and flag land exactly on the row.
     view.addEventListener("pointermove", (event: MouseEvent) => {
       const x = pointerX(view, event), scale = xScale(view)
-      if (x !== null && typeof scale?.invert === "function") seekTimelapse(+scale.invert(x))
+      if (x === null || typeof scale?.invert !== "function") return
+      const want = +scale.invert(x)
+      hoverTime(times.reduce((best: number, t: number) => (Math.abs(t - want) < Math.abs(best - want) ? t : best), times[0]))
     })
+    view.container()?.addEventListener("mouseleave", () => hoverTime(null))
   }
 }
 
-export type ChartPayload = { title: string; spec: any; link?: ChartLink | null; time_field?: string | null }
+export type ChartPayload = {
+  title: string; spec: any; link?: ChartLink | null; time_field?: string | null
+  scrub?: boolean // has a flag above the plot at the moment on show
+}
 
 // Draw a chart into `el`; returns a function that takes it down again.
 export async function drawChart(el: HTMLElement, chart: ChartPayload, height: number): Promise<() => void> {
@@ -122,7 +135,7 @@ export async function drawChart(el: HTMLElement, chart: ChartPayload, height: nu
   const res: Result = await embed(el, chart.spec, {
     actions: { export: true, source: false, compiled: false, editor: false },
     renderer: "svg",
-    config: config(height) as any,
+    config: config(height - (chart.scrub ? FLAG_ROOM : 0), Boolean(chart.scrub)) as any,
     tooltip: { theme: "dark" },
   })
   const view = res.view

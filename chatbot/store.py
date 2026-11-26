@@ -41,10 +41,13 @@ class SessionStore:
     def add_layer(self, hint: str, features: list[dict], *, geometry: str,
                   title: str, legend: dict[str, str] | None = None,
                   value_fields: list[str] | None = None, frames: dict | None = None,
-                  count: int | None = None) -> str:
-        """`frames` makes a time-lapse layer: per-frame states and values for each feature.
+                  count: int | None = None, street: dict | None = None) -> str:
+        """`frames` makes a time-lapse layer: per-frame states and values for each feature
+        (and, optionally, `totals` per value field for the layer as a whole).
         `count` is what the legend counts, when that isn't one per feature (a building layer
-        has a marker, a plot and footprints for each building)."""
+        has a marker, a plot and footprints for each building).
+        `street` ({"name", "coordinates": [[lon, lat], ...]}) is the street the layer is
+        about: the map highlights it under the features."""
         ref = self._ref("L", hint)
         self.layers[ref] = {
             "type": "FeatureCollection",
@@ -56,6 +59,8 @@ class SessionStore:
         }
         if frames:
             self.layers[ref]["frames"] = frames
+        if street:
+            self.layers[ref]["street"] = street
         return ref
 
     def add_dataset(self, hint: str, rows: list[dict], *, title: str,

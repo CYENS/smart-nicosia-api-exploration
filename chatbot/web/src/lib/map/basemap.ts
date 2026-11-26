@@ -114,13 +114,23 @@ function recolour(layer: LayerSpecification): LayerSpecification {
   return { ...layer, paint } as LayerSpecification
 }
 
-export function transformStyle(basemap: Basemap) {
-  return (_prev: StyleSpecification | undefined, next: StyleSpecification): StyleSpecification => {
-    if (basemap !== "night") return next
-    const layers = next.layers.map(recolour)
-    // The 3D buildings go under the first label, so street names stay on top.
-    const firstLabel = layers.findIndex((l) => l.type === "symbol")
-    layers.splice(firstLabel < 0 ? layers.length : firstLabel, 0, STREET_GLOW, BASE_3D)
-    return { ...next, layers }
-  }
+// The vector tiles both base maps draw. They share their sprite and fonts too, so changing from
+// one to the other only changes layers: nothing is downloaded again.
+export const BASE_SOURCE = "openmaptiles"
+
+// Where the tiles are: two addresses with the same data, in the order to try them. On 25 Nov 2026
+// EasyPrivacy, a filter list of uBlock Origin, Brave and other content blockers, blocked
+// tiles.openfreemap.org/planet on every site (easylist/easylist#26522), and OpenFreeMap added
+// /backup_planet for maps to use meanwhile. The published styles name one or the other, and
+// browsers keep a style for a day, so the address in it can be the blocked one: it isn't used.
+export const BASE_SOURCE_URLS = ["https://tiles.openfreemap.org/backup_planet", "https://tiles.openfreemap.org/planet"]
+
+// A base map's layers: Day as published, Night recoloured.
+export function baseLayers(basemap: Basemap, style: StyleSpecification): LayerSpecification[] {
+  if (basemap !== "night") return style.layers
+  const layers = style.layers.map(recolour)
+  // The 3D buildings go under the first label, so street names stay on top.
+  const firstLabel = layers.findIndex((l) => l.type === "symbol")
+  layers.splice(firstLabel < 0 ? layers.length : firstLabel, 0, STREET_GLOW, BASE_3D)
+  return layers
 }

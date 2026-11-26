@@ -55,28 +55,48 @@ function LayerRow({ title, count, onRemove, removeLabel, children }: {
   )
 }
 
+// The street a layer is about, drawn as a line of light on the map.
+function StreetKey({ street }: { street: NonNullable<LayerSummary["street"]> }) {
+  return (
+    <p className="flex items-center gap-2 text-[12.5px] leading-snug text-muted-foreground">
+      <span className="h-[3px] w-5 shrink-0 rounded-full bg-sodium shadow-[0_0_6px_1px] shadow-sodium/60" aria-hidden="true" />
+      <span>
+        {street.name}
+        {street.follows ? `, brighter in busier hours (${street.follows.replace(/_/g, " ")})` : ", the street these stand along"}
+      </span>
+    </p>
+  )
+}
+
 function Keys({ layer }: { layer: LayerSummary }) {
+  const street = layer.street && <StreetKey street={layer.street} />
   if ((layer.style === "columns_3d" || layer.style === "heatmap") && layer.stats) {
     return (
-      <Ramp
-        colors={layer.style === "heatmap" ? HEAT : RAMP}
-        from={fmt(layer.stats.min)}
-        to={fmt(layer.stats.max)}
-        what={(layer.valueField ?? "").replace(/_/g, " ")}
-      />
+      <>
+        <Ramp
+          colors={layer.style === "heatmap" ? HEAT : RAMP}
+          from={fmt(layer.stats.min)}
+          to={fmt(layer.stats.max)}
+          what={(layer.valueField ?? "").replace(/_/g, " ")}
+        />
+        {street}
+      </>
     )
   }
   const keys = Object.entries(layer.legend)
-  if (!keys.length) return null
+  if (!keys.length) return street || null
   return (
-    <ul className="flex flex-wrap gap-x-3 gap-y-1 text-[12.5px] text-muted-foreground">
-      {keys.map(([k, c]) => (
-        <li key={k} className="flex items-center gap-1.5">
-          <span className="size-2.5 rounded-full" style={{ background: c }} aria-hidden="true" />
-          {k.replace(/_/g, " ")}
-        </li>
-      ))}
-    </ul>
+    <>
+      <ul className="flex flex-wrap gap-x-3 gap-y-1 text-[12.5px] text-muted-foreground">
+        {keys.map(([k, c]) => (
+          <li key={k} className="flex items-center gap-1.5">
+            <span className="size-2.5 rounded-full" style={{ background: c }} aria-hidden="true" />
+            {k.replace(/_/g, " ")}
+          </li>
+        ))}
+      </ul>
+      {street}
+    </>
   )
 }
 

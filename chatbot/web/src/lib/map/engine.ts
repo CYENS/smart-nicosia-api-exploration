@@ -1,19 +1,25 @@
 /* The map: MapLibre plus everything the assistant draws on it. Ported from the original
    app.js; React reads what it needs through `useMapUi`, and everything else stays imperative. */
-import maplibregl, { type GeoJSONSource, type LayerSpecification, type Map as MlMap } from "maplibre-gl"
+import maplibregl, {
+  type GeoJSONSource, type LayerSpecification, type Map as MlMap, type VectorTileSource,
+} from "maplibre-gl"
 import { create } from "zustand"
 
-import { BASEMAP_URLS, transformStyle, type Basemap } from "@/lib/map/basemap"
+import { BASE_SOURCE, BASE_SOURCE_URLS, BASEMAP_URLS, baseLayers, type Basemap } from "@/lib/map/basemap"
 import { lightFor, nicosiaWallToDate, skyAt, skyFor, type Sky } from "@/lib/map/sky"
 import { WALLS_RING } from "@/lib/walls"
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 type Feature = { type: "Feature"; id?: string | number; geometry: any; properties: Record<string, any> }
-type FC = { type: "FeatureCollection"; features: Feature[]; frames?: Frames; meta?: any }
+type FC = { type: "FeatureCollection"; features: Feature[]; frames?: Frames; street?: Street; meta?: any }
 type Frames = {
   times: string[]; iso: string[]; state_names: string[]; states: number[][]
   values: Record<string, (number | null)[][]>
+  totals?: Record<string, number[]> // the layer as a whole in each frame, by value field
+  total_field?: string // the total to read out when the layer shows no value field
 }
+// The street a layer is about (the one its cameras stand along), as a line to highlight.
+type Street = { name: string; coordinates: number[][] }
 export type LayerSpec = {
   ref: string; url?: string; style: string; title: string; count: number
   legend?: Record<string, string>; value_field?: string | null; fit?: boolean; labels?: boolean
@@ -49,14 +55,17 @@ const CITY_RADIUS = 3 // tiles around the centre (each ~500 m), so pitched views
 export type LayerSummary = {
   ref: string; title: string; count: number; style: string
   legend: Record<string, string>; stats: Stats | null; valueField: string | null
+  street: { name: string; follows: string | null } | null // `follows`: the total its glow tracks
 }
 export type TimelapseUi = {
   ref: string; title: string; frame: number; frames: number; time: string; playing: boolean; speed: number
+  reading: string | null // the frame's total, e.g. "2,716 people"
 }
 type MapUi = {
   ready: boolean
   basemap: Basemap // the base map shown
   basemapMode: "auto" | Basemap // auto follows the sun
+  baseProblem: boolean // the base map's tiles don't come, from either address
   skyNow: Sky // the real sky right now, for the strip and the map panel
   nightLights: boolean // street lights glow after dark
   layers: LayerSummary[]
@@ -71,6 +80,7 @@ export const useMapUi = create<MapUi>(() => ({
   ready: false,
   basemap: "night",
   basemapMode: "auto",
+  baseProblem: false,
   skyNow: skyAt(new Date()),
   nightLights: true,
   layers: [],
@@ -181,13 +191,17 @@ export function initMap(container: HTMLElement) {
     for (const entry of state.layers.values()) addToMap(entry)
     syncHighlight()
     applySky()
+    if (baseWanted !== baseShown) swapBasemap() // the sky moved on while the style loaded
   })
+  map.on("error", retryBase)
+  map.on("sourcedata", baseTileCame)
   map.on("load", () => setUi({ ready: true }))
+  map.on("movestart", (e) => { if ((e as any).originalEvent) framed = null }) // the user took over
   map.on("moveend", refreshCity)
   map.on("zoomend", cityStatus)
   showSky(new Date())
   requestAnimationFrame(animate)
-  setInterval(() => { if (!state.timelapse) setTimeAll(nicosiaNowMs()) }, 30e3)
+  setInterval(() => { if (!state.timelapse && hoverMs === null) setTimeAll(nicosiaNowMs()) }, 30e3)
   // The sky moves on: every minute the light, the sky and (at dusk and dawn) the base map follow.
   setInterval(() => {
     setUi({ skyNow: skyAt(new Date()) })
@@ -197,14 +211,176 @@ export function initMap(container: HTMLElement) {
   return map
 }
 
-let styleShown: Basemap | null = null
+// The base map. The first one loads as a style; after that, Night and Day change places by their
+// layers alone. The tiles, the fonts and everything drawn on top stay as they are, so a
+// time-lapse can cross dawn and dusk as often as it likes without the map ever going blank, and
+// with no request that could fail and leave it so.
 
-function loadBasemap(b: Basemap) {
-  styleReady = false
-  styleShown = b
+let baseShown: Basemap | null = null // the one on the map
+let baseWanted: Basemap | null = null // the one the sky (or the switch in the map panel) asks for
+const baseStyles: Partial<Record<Basemap, Promise<LayerSpecification[]>>> = {}
+
+// Each showing of a base map names its layers anew ("night.3/water"). The layers of both can then
+// be on the map while one takes over from the other, and a name never comes back: MapLibre keeps
+// a removed layer's label buffers with the tiles, and takes them up again, half-made, for a new
+// layer of the same name.
+let basePrefix = "" // of the one on the map
+let baseShowings = 0
+const newPrefix = (b: Basemap) => `${b}.${++baseShowings}/`
+const named = (layers: LayerSpecification[], prefix: string) => layers.map((l) => ({ ...l, id: prefix + l.id }))
+const isBase = (id: string) => /^(night|day)\.\d+\//.test(id)
+
+function firstBasemap(b: Basemap) {
+  baseShown = b
   setUi({ basemap: b })
-  // A full reload, not a diff: the style.load handler redraws everything on top.
-  map.setStyle(BASEMAP_URLS[b], { diff: false, transformStyle: transformStyle(b) })
+  map.setStyle(BASEMAP_URLS[b], {
+    diff: false,
+    transformStyle: (_prev, next) => {
+      const layers = baseLayers(b, next)
+      baseStyles[b] = Promise.resolve(layers)
+      basePrefix = newPrefix(b)
+      const tiles = { type: "vector" as const, url: BASE_SOURCE_URLS[baseUrl] }
+      return { ...next, sources: { ...next.sources, [BASE_SOURCE]: tiles }, layers: named(layers, basePrefix) }
+    },
+  })
+  // Have the other one at hand before it is needed.
+  map.once("idle", () => { baseLayersOf(b === "night" ? "day" : "night").catch(() => {}) })
+}
+
+function baseLayersOf(b: Basemap) {
+  return (baseStyles[b] ??= fetch(BASEMAP_URLS[b])
+    .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`))))
+    .then((style) => baseLayers(b, style))
+    .catch((e) => { delete baseStyles[b]; throw e }))
+}
+
+// Wait for the clock to settle, so scrubbing back and forth over dawn doesn't change the map at
+// every pass.
+const BASE_SETTLE_MS = 150
+let baseTimer: number | undefined
+function wantBasemap(b: Basemap) {
+  if (b === baseWanted) return
+  baseWanted = b
+  if (!baseShown) { firstBasemap(b); return }
+  clearTimeout(baseTimer)
+  baseTimer = window.setTimeout(swapBasemap, BASE_SETTLE_MS)
+}
+
+let baseSwap = 0
+async function swapBasemap() {
+  const swap = ++baseSwap // a newer swap takes over from one still waiting
+  const to = baseWanted
+  if (!styleReady || !to) return // style.load comes back here
+  for (const id of map.getLayersOrder()) if (isBase(id) && !id.startsWith(basePrefix)) map.removeLayer(id) // what an unfinished swap left
+  if (to === baseShown) return
+  let layers: LayerSpecification[]
+  try {
+    layers = await baseLayersOf(to)
+  } catch { // keep the base map there is, and try again
+    if (swap === baseSwap) baseTimer = window.setTimeout(swapBasemap, 5000)
+    return
+  }
+  await baseTilesReady() // with an unfinished swap's layers, so they aren't taken for this one's
+  if (swap !== baseSwap) return
+  // The new layers go in under the opaque ground of the base map on show, which stays until the
+  // tiles are ready to draw them.
+  const ground = map.getLayersOrder()[0]
+  const prefix = newPrefix(to)
+  for (const l of named(layers, prefix)) {
+    const hide = l.type === "fill-extrusion" && CITY.on // the 3D city stands in for them
+    map.addLayer((hide ? { ...l, layout: { ...l.layout, visibility: "none" } } : l) as LayerSpecification, ground)
+  }
+  await nextFrame() // MapLibre takes up the new layers, and starts on the tiles, with its next frame
+  await baseTilesReady()
+  if (swap !== baseSwap || to !== baseWanted) return // the next swap, due any moment, clears up
+  for (const id of map.getLayersOrder()) if (id.startsWith(basePrefix)) map.removeLayer(id)
+  baseShown = to
+  basePrefix = prefix
+  setUi({ basemap: to })
+  placeOnBase()
+  applyTheme()
+  applySky()
+}
+
+// Until every tile in view is prepared with the layers there are. Both waits end by themselves,
+// for a page in the background (which draws no frames) or tiles that don't come.
+async function baseTilesReady() {
+  const until = performance.now() + 4000
+  while (!map.isSourceLoaded(BASE_SOURCE) && performance.now() < until) await new Promise((r) => setTimeout(r, 30))
+}
+
+function nextFrame() {
+  return new Promise<unknown>((done) => { map.once("render", done); setTimeout(done, 1000) })
+}
+
+// The walls run under the base map's labels, and light lies on the ground under its buildings.
+function placeOnBase() {
+  const order = map.getLayersOrder()
+  const label = firstBaseLayer("symbol")
+  if (label) for (const id of ["landmark-walls-glow", "landmark-walls"]) if (map.getLayer(id)) map.moveLayer(id, label)
+  const buildings = glowBelow()
+  if (buildings) for (const id of order) if (/(^|::)lamps-(pool|bulb)$|::street-glow$/.test(id)) map.moveLayer(id, buildings)
+}
+
+function firstBaseLayer(type: string) {
+  return map.getLayersOrder().find((id) => id.startsWith(basePrefix) && map.getLayer(id)?.type === type)
+}
+
+// Paint that differs between the two base maps: both values are kept while a layer is on the
+// map, so a change of base map repaints it in place.
+type Themed = Record<string, Record<Basemap, any>>
+const themed = new Map<string, Themed>()
+const STROKE: Record<Basemap, string> = { night: NIGHT, day: "#ffffff" }
+
+function forBase(id: string, paint: Themed): any {
+  themed.set(id, paint)
+  const b = useMapUi.getState().basemap
+  return Object.fromEntries(Object.entries(paint).map(([k, v]) => [k, v[b]]))
+}
+
+function applyTheme() {
+  const b = useMapUi.getState().basemap
+  for (const [id, paint] of themed) {
+    if (!map.getLayer(id)) { themed.delete(id); continue }
+    for (const [k, v] of Object.entries(paint)) map.setPaintProperty(id, k, v[b])
+  }
+}
+
+// MapLibre doesn't try again when the style or the list of tiles fails to load, which would
+// leave the map blank until the page is reloaded. Here the tiles' other address is tried at once,
+// then both in turn; and when neither has brought a tile, the map says so (`baseProblem`).
+let baseUrl = 0 // which of BASE_SOURCE_URLS is in use
+let baseTries = 0 // failures since a tile last came
+let tileFailures = 0 // of single tiles, at the address in use
+let baseRetry: number | undefined
+
+function retryBase(e: any) {
+  console.error(e.error ?? e)
+  const styleFailed = !styleReady
+  const listFailed = e.sourceId === BASE_SOURCE && !e.tile
+  // Tiles that never reach the server, one after the other, are an address that is blocked.
+  const tileFailed = e.sourceId === BASE_SOURCE && e.tile && !e.error?.status
+  if (tileFailed) tileFailures++
+  if (!(styleFailed || listFailed || tileFailures >= 4) || baseRetry) return
+  baseTries++
+  if (baseTries >= BASE_SOURCE_URLS.length) setUi({ baseProblem: true })
+  baseRetry = window.setTimeout(() => {
+    baseRetry = undefined
+    if (!styleReady && baseShown) {
+      map.setStyle(null as any) // a style that failed would hold up the next one
+      firstBasemap(baseShown)
+    } else if (styleReady) {
+      baseUrl = (baseUrl + 1) % BASE_SOURCE_URLS.length
+      tileFailures = 0
+      ;(map.getSource(BASE_SOURCE) as VectorTileSource | undefined)?.setUrl(BASE_SOURCE_URLS[baseUrl])
+    }
+  }, styleReady && baseTries === 1 ? 0 : 4000)
+}
+
+function baseTileCame(e: any) {
+  if (e.sourceId !== BASE_SOURCE || e.tile?.state !== "loaded") return
+  baseTries = tileFailures = 0
+  if (useMapUi.getState().baseProblem) setUi({ baseProblem: false })
 }
 
 // Auto shows Night from civil dusk to civil dawn and Day otherwise; Night and Day stay put.
@@ -223,8 +399,8 @@ function showSky(at: Date) {
   shown = skyAt(at)
   const mode = useMapUi.getState().basemapMode
   const want: Basemap = mode === "auto" ? (shown.dark ? "night" : "day") : mode
-  if (want !== styleShown) loadBasemap(want) // applySky runs once it has loaded
-  else applySky()
+  applySky()
+  wantBasemap(want)
 }
 
 function applySky() {
@@ -242,7 +418,7 @@ export function setNightLights(on: boolean) {
 // Street lights glow from dusk to dawn: the city's own lamps (live from /api/lamps), any street
 // light layer the assistant draws (following a time-lapse frame by frame), and a faint warm
 // wash along the streets of the Night base map.
-const nightLayers = new Set<string>(["street-glow"])
+const nightLayers = new Set<string>()
 let lamps: FC | null = null
 let lampsAt = 0
 
@@ -256,7 +432,7 @@ function syncNightLights() {
   const on = shown.dark && useMapUi.getState().nightLights
   if (on && Date.now() - lampsAt > 5 * 60e3) loadLamps()
   const ambient = on && !lampLayerOnMap()
-  for (const id of nightLayers) {
+  for (const id of [...nightLayers, `${basePrefix}street-glow`]) {
     if (!map.getLayer(id)) continue
     const visible = id.startsWith("lamps-") ? ambient : on
     map.setLayoutProperty(id, "visibility", visible ? "visible" : "none")
@@ -284,9 +460,10 @@ function addAmbientLamps() {
   syncNightLights()
 }
 
-// Light pools under the 3D buildings, so it shows in the streets between them.
+// Light pools under the 3D buildings (the DLS city, or either base map's own), so it shows in
+// the streets between them.
 function glowBelow() {
-  return ["city3d::fill", "base-3d"].find((id) => map.getLayer(id))
+  return map.getLayer("city3d::fill") ? "city3d::fill" : firstBaseLayer("fill-extrusion")
 }
 
 function addLampGlow(prefix: string, src: string, lit: any, ids: string[], before?: string) {
@@ -318,13 +495,22 @@ function addLampGlow(prefix: string, src: string, lit: any, ids: string[], befor
   for (const id of [`${prefix}-pool`, `${prefix}-bulb`]) { ids.push(id); nightLayers.add(id) }
 }
 
+// The last fit to a layer stays in force until the user moves the map, the assistant flies it
+// elsewhere or the layer goes. So when a panel opens over the map (the time-lapse clock as the
+// layer lands, the stage with its chart a moment later) the layer is framed again in what is
+// left, instead of the fit being cut short or the layer ending up behind the panel.
+let framed: { ref: string; fit: () => void } | null = null
+
 // The space the floating panels cover, so the camera centres on the open part of the map.
 export function setInsets(padding: { top: number; right: number; bottom: number; left: number }) {
   if (!map) return
-  map.setPadding(padding)
+  const again = framed
+  map.setPadding(padding) // stops any camera move in flight
+  again?.fit()
 }
 
 export function resetView() {
+  framed = null
   map.flyTo({ ...HOME, essential: true })
 }
 
@@ -364,16 +550,21 @@ function addWalls() {
     type: "geojson",
     data: { type: "Feature", properties: {}, geometry: { type: "LineString", coordinates: WALLS_RING } },
   })
-  const night = useMapUi.getState().basemap === "night"
-  const before = map.getStyle().layers.find((l) => l.type === "symbol")?.id
+  const before = firstBaseLayer("symbol")
   map.addLayer({
     id: "landmark-walls-glow", type: "line", source: "landmark-walls",
-    paint: { "line-color": SODIUM, "line-opacity": night ? 0.07 : 0.12, "line-width": ["interpolate", ["linear"], ["zoom"], 12, 5, 17, 18], "line-blur": 4 },
+    paint: {
+      "line-color": SODIUM, "line-width": ["interpolate", ["linear"], ["zoom"], 12, 5, 17, 18], "line-blur": 4,
+      ...forBase("landmark-walls-glow", { "line-opacity": { night: 0.07, day: 0.12 } }),
+    },
   }, before)
   map.addLayer({
     id: "landmark-walls", type: "line", source: "landmark-walls",
     layout: { "line-join": "round" },
-    paint: { "line-color": night ? SODIUM : "#b8741a", "line-opacity": night ? 0.42 : 0.6, "line-width": ["interpolate", ["linear"], ["zoom"], 12, 0.8, 17, 2.4] },
+    paint: {
+      "line-width": ["interpolate", ["linear"], ["zoom"], 12, 0.8, 17, 2.4],
+      ...forBase("landmark-walls", { "line-color": { night: SODIUM, day: "#b8741a" }, "line-opacity": { night: 0.42, day: 0.6 } }),
+    },
   }, before)
 }
 
@@ -401,10 +592,6 @@ function squareAround([lon, lat]: number[], meters: number) {
   const dLat = meters / 111320
   const dLon = meters / (111320 * Math.cos((lat * Math.PI) / 180))
   return [[[lon - dLon, lat - dLat], [lon + dLon, lat - dLat], [lon + dLon, lat + dLat], [lon - dLon, lat + dLat], [lon - dLon, lat - dLat]]]
-}
-
-function strokeColor() {
-  return useMapUi.getState().basemap === "night" ? NIGHT : "#ffffff"
 }
 
 const boundPopups = new Set<string>() // map.on handlers outlive style changes, so bind once per id
@@ -435,9 +622,9 @@ function addToMap(entry: Entry) {
   if (map.getSource(src)) removeFromMap(ref)
   const points: any = ["==", ["geometry-type"], "Point"]
   const vf = spec.value_field ?? undefined
-  const stroke = strokeColor()
   // A time-lapse keeps one scale across all frames, so heights and heat compare over time.
   entry.stats = vf ? (data.frames ? frameStats(data.frames, vf) : numericStats(data.features, vf)) : null
+  addStreet(entry) // first, so the layer's own features draw over it
 
   if (spec.style === "columns_3d") {
     map.addSource(src, { type: "geojson", data: columnsData(entry) as any })
@@ -446,6 +633,7 @@ function addToMap(entry: Entry) {
       paint: { "fill-extrusion-color": ["get", "_c"], "fill-extrusion-height": ["get", "_h"], "fill-extrusion-base": 0, "fill-extrusion-opacity": 0.9 },
     }, entry.ids)
     bindPopup(`${ref}::columns`)
+    if (spec.labels) addColumnReadings(entry, src, vf!)
     if (spec.fit === false && map.getPitch() < 45) map.easeTo({ pitch: 55, duration: 900 })
     return
   }
@@ -461,7 +649,7 @@ function addToMap(entry: Entry) {
       paint: {
         "circle-color": ["get", "color"],
         "circle-radius": ["interpolate", ["linear"], ["zoom"], 8, 2.2, 12, 3.6, 15, 5, 17, 3.5],
-        "circle-stroke-color": stroke, "circle-stroke-width": 1.1,
+        ...forBase(`${ref}::circle`, { "circle-stroke-color": STROKE }), "circle-stroke-width": 1.1,
         "circle-opacity": ["interpolate", ["linear"], ["zoom"], 15.5, 0.95, 17.5, 0.25],
         "circle-stroke-opacity": ["interpolate", ["linear"], ["zoom"], 15.5, 1, 17.5, 0.25],
       },
@@ -494,7 +682,7 @@ function addToMap(entry: Entry) {
       paint: {
         "circle-radius": ["interpolate", ["linear"], ["zoom"], 14.5, 2.5, 16, 3.5, 18, 5],
         "circle-color": ["get", "color"], "circle-opacity": dotsIn,
-        "circle-stroke-color": stroke, "circle-stroke-width": 1, "circle-stroke-opacity": dotsIn,
+        ...forBase(`${ref}::dots`, { "circle-stroke-color": STROKE }), "circle-stroke-width": 1, "circle-stroke-opacity": dotsIn,
       },
     }, entry.ids)
     bindPopup(`${ref}::dots`)
@@ -513,7 +701,7 @@ function addToMap(entry: Entry) {
     const lines: any = ["==", ["geometry-type"], "LineString"]
     // A route avoiding dangerous buildings comes with the usual route: thinner, grey, still.
     const alt: any = ["==", ["get", "state"], "usual route"]
-    addLayerSafe({ id: `${ref}::casing`, type: "line", source: src, filter: lines, layout: { "line-join": "round", "line-cap": "round" }, paint: { "line-color": stroke, "line-width": ["case", alt, 6.5, 10], "line-opacity": 0.85 } }, entry.ids)
+    addLayerSafe({ id: `${ref}::casing`, type: "line", source: src, filter: lines, layout: { "line-join": "round", "line-cap": "round" }, paint: { ...forBase(`${ref}::casing`, { "line-color": STROKE }), "line-width": ["case", alt, 6.5, 10], "line-opacity": 0.85 } }, entry.ids)
     addLayerSafe({ id: `${ref}::line`, type: "line", source: src, filter: lines, layout: { "line-join": "round", "line-cap": "round" }, paint: { "line-color": ["get", "color"], "line-width": ["case", alt, 3.5, 5.5] } }, entry.ids)
     addLayerSafe({ id: `${ref}::dash`, type: "line", source: src, filter: ["all", lines, ["!", alt]], layout: { "line-join": "round", "line-cap": "round" }, paint: { "line-color": "#ffffff", "line-width": 2.5, "line-dasharray": [0, 4, 3] } }, entry.ids)
     state.dashLayers.add(`${ref}::dash`)
@@ -544,7 +732,7 @@ function addToMap(entry: Entry) {
     paint: {
       "circle-color": ["get", "color"],
       "circle-radius": ["interpolate", ["linear"], ["zoom"], 11, pulse ? 5 : 3, 14, pulse ? 8 : 5.5, 17, pulse ? 12 : 9],
-      "circle-stroke-color": stroke, "circle-stroke-width": 1.6, "circle-opacity": 0.95,
+      ...forBase(`${ref}::circle`, { "circle-stroke-color": STROKE }), "circle-stroke-width": 1.6, "circle-opacity": 0.95,
     },
   }, entry.ids)
   bindPopup(`${ref}::circle`)
@@ -582,37 +770,131 @@ function columnsData(entry: Entry) {
   const vf = entry.spec.value_field!
   const st = entry.stats || { min: 0, max: 1 }
   const span = st.max - st.min || 1
-  const pts = entry.data.features.filter((f) => f.geometry?.type === "Point")
-  // Column width follows the layer's extent: 6 m in a street, up to 45 m city-wide.
-  entry.half ??= Math.max(6, Math.min(45, extentMeters(pts) / 220))
+  const all = entry.data.features.filter((f) => f.geometry?.type === "Point")
+  // Column width follows the layer's extent: 6 m in a street, up to 45 m city-wide. So does the
+  // tallest column: about a fifth of the extent, so one street's columns stay in the picture.
+  const extent = extentMeters(all)
+  entry.half ??= Math.max(6, Math.min(45, extent / 220))
   const half = entry.half
+  const tallest = Math.min(half * 40, Math.max(50, extent * 0.22))
+  // A feature with no reading (a camera that doesn't count this, a silent sensor) has no column.
+  const pts = all.filter((f) => f.properties[vf] != null && Number.isFinite(Number(f.properties[vf])))
   return {
     type: "FeatureCollection",
     features: pts.map((f) => {
-      const v = Number(f.properties[vf])
-      const t = Number.isFinite(v) ? (v - st.min) / span : 0
+      const t = (Number(f.properties[vf]) - st.min) / span
       return {
         type: "Feature",
         geometry: { type: "Polygon", coordinates: squareAround(f.geometry.coordinates, half) },
-        properties: { ...f.properties, _h: Number.isFinite(v) ? half * 2 + t * half * 40 : 0, _c: rampColor(t) },
+        properties: { ...f.properties, _h: half * 2 + t * tallest, _c: rampColor(t) },
       }
     }),
   }
 }
 
-function addLabels(entry: Entry, src: string, filter: any, offset: number) {
-  const night = useMapUi.getState().basemap === "night"
+// What each 3D column stands for, at its foot: the reading (it changes as a time-lapse plays),
+// always shown, and under it the feature's name where there is room for it.
+function addColumnReadings(entry: Entry, src: string, field: string) {
+  const names = `${entry.spec.ref}::names`
+  const readings = `${entry.spec.ref}::readings`
   addLayerSafe({
-    id: `${entry.spec.ref}::labels`, type: "symbol", source: src, filter,
+    id: names, type: "symbol", source: src,
+    layout: {
+      "text-field": ["get", "label"], "text-font": FONT_REGULAR, "text-size": 11, "text-anchor": "top",
+      "text-offset": [0, 2], "text-max-width": 10, "text-line-height": 1.15,
+    },
+    paint: { "text-halo-width": 1.8, ...forBase(names, { "text-color": { night: "#c3cedb", day: "#1f2937" }, "text-halo-color": STROKE }) },
+  }, entry.ids)
+  addLayerSafe({
+    id: readings, type: "symbol", source: src,
+    layout: {
+      "text-field": ["number-format", ["get", field], { "max-fraction-digits": 1 }], "text-font": FONT_BOLD,
+      "text-size": 15, "text-anchor": "top", "text-offset": [0, 0.35], "text-allow-overlap": true, "text-ignore-placement": true,
+    },
+    paint: { "text-halo-width": 1.8, ...forBase(readings, { "text-color": { night: SODIUM, day: "#a85a00" }, "text-halo-color": STROKE }) },
+  }, entry.ids)
+}
+
+// ---------------------------------------------------------------------------------------------
+// The street a layer is about: a sodium line under the layer's features. In a time-lapse with
+// totals it glows with each frame's share of the busiest one, so a quiet hour is a thin thread
+// and the peak a wide band of light. The glow pools on the ground, under the 3D buildings; the
+// line itself runs over them, so the street reads from any angle.
+
+// The totals a time-lapse reads out: those of the value field on show, else its headline one.
+function totalsOf(entry: Entry) {
+  const fr = entry.data.frames
+  const field = fr?.totals && [entry.spec.value_field, fr.total_field].find((f) => f && fr.totals![f])
+  return field ? { field, values: fr!.totals![field] } : null
+}
+
+function streetLevel(entry: Entry, frame: number | null) {
+  const t = totalsOf(entry)
+  if (!t || frame === null) return 1
+  const max = Math.max(...t.values)
+  return max > 0 ? Math.max(0, Math.min(1, (t.values[frame] ?? 0) / max)) : 0
+}
+
+function streetGlow(level: number) {
+  const s = 0.4 + 0.6 * level
+  const c = 0.65 + 0.95 * level
+  return {
+    width: ["interpolate", ["exponential", 1.6], ["zoom"], 12, 6 * s, 15, 18 * s, 17, 44 * s, 19, 90 * s] as any,
+    opacity: 0.3 + 0.4 * level,
+    line: ["interpolate", ["linear"], ["zoom"], 12, 1.5 * c, 15, 2.8 * c, 17, 4.6 * c, 19, 7 * c] as any,
+    lineOpacity: 0.72 + 0.28 * level,
+  }
+}
+
+function addStreet(entry: Entry) {
+  const st = entry.data.street
+  if (!st || !(st.coordinates?.length >= 2)) return
+  const ref = entry.spec.ref
+  const src = `${ref}::street`
+  map.addSource(src, { type: "geojson", data: { type: "Feature", properties: {}, geometry: { type: "LineString", coordinates: st.coordinates } } })
+  const glow = streetGlow(streetLevel(entry, timelapseFrameOf(ref)))
+  const layout = { "line-join": "round", "line-cap": "round" } as const
+  map.addLayer({
+    id: `${ref}::street-glow`, type: "line", source: src, layout,
+    paint: {
+      ...forBase(`${ref}::street-glow`, { "line-color": { night: SODIUM, day: "#f08c00" } }),
+      "line-width": glow.width, "line-opacity": glow.opacity,
+      "line-blur": ["interpolate", ["linear"], ["zoom"], 12, 3, 15, 7, 17, 14, 19, 26],
+    },
+  }, glowBelow())
+  map.addLayer({
+    id: `${ref}::street-line`, type: "line", source: src, layout,
+    paint: {
+      ...forBase(`${ref}::street-line`, { "line-color": { night: "#ffd9a3", day: "#b45f00" } }),
+      "line-width": glow.line, "line-opacity": glow.lineOpacity,
+    },
+  })
+  entry.ids.push(`${ref}::street-glow`, `${ref}::street-line`)
+}
+
+// The street follows the time-lapse (`frame` null: no time-lapse, full glow).
+function syncStreet(entry: Entry, frame: number | null) {
+  const ref = entry.spec.ref
+  if (!styleReady || !map.getLayer(`${ref}::street-glow`)) return
+  const glow = streetGlow(streetLevel(entry, frame))
+  map.setPaintProperty(`${ref}::street-glow`, "line-width", glow.width)
+  map.setPaintProperty(`${ref}::street-glow`, "line-opacity", glow.opacity)
+  map.setPaintProperty(`${ref}::street-line`, "line-width", glow.line)
+  map.setPaintProperty(`${ref}::street-line`, "line-opacity", glow.lineOpacity)
+}
+
+function addLabels(entry: Entry, src: string, filter: any, offset: number) {
+  const id = `${entry.spec.ref}::labels`
+  addLayerSafe({
+    id, type: "symbol", source: src, filter,
     layout: { "text-field": ["get", "label"], "text-font": FONT_REGULAR, "text-size": 11.5, "text-offset": [0, offset], "text-anchor": "top", "text-max-width": 12 },
-    paint: night
-      ? { "text-color": "#e4ebf4", "text-halo-color": NIGHT, "text-halo-width": 1.6 }
-      : { "text-color": "#1f2937", "text-halo-color": "#ffffff", "text-halo-width": 1.6 },
+    paint: { "text-halo-width": 1.6, ...forBase(id, { "text-color": { night: "#e4ebf4", day: "#1f2937" }, "text-halo-color": STROKE }) },
   }, entry.ids)
 }
 
 function removeFromMap(ref: string) {
   if (flight?.ref === ref) stopFlight()
+  if (framed?.ref === ref) framed = null
   const entry = state.layers.get(ref)
   for (const id of entry?.ids || []) {
     if (map.getLayer(id)) map.removeLayer(id)
@@ -621,15 +903,19 @@ function removeFromMap(ref: string) {
     state.hl3d.delete(id)
     nightLayers.delete(id)
   }
-  if (map.getSource(`${ref}::src`)) map.removeSource(`${ref}::src`)
+  for (const src of [`${ref}::src`, `${ref}::street`]) if (map.getSource(src)) map.removeSource(src)
 }
 
 function publishLayers() {
   setUi({
-    layers: [...state.layers.values()].map(({ spec, stats }) => ({
-      ref: spec.ref, title: spec.title, count: spec.count, style: spec.style,
-      legend: spec.legend || {}, stats, valueField: spec.value_field ?? null,
-    })),
+    layers: [...state.layers.values()].map((entry) => {
+      const { spec, stats, data } = entry
+      return {
+        ref: spec.ref, title: spec.title, count: spec.count, style: spec.style,
+        legend: spec.legend || {}, stats, valueField: spec.value_field ?? null,
+        street: data.street ? { name: data.street.name, follows: totalsOf(entry)?.field ?? null } : null,
+      }
+    }),
   })
   syncNightLights() // the city's own lamps make way for a street light layer
 }
@@ -675,6 +961,7 @@ function extentMeters(features: Feature[]) {
 function fitTo(data: FC, pitch = map.getPitch()) {
   const pts: number[][] = []
   data.features.forEach((f) => coordsOf(f.geometry, pts))
+  if (data.street) pts.push(...data.street.coordinates)
   if (!pts.length) return
   if (pts.length === 1) { map.flyTo({ center: pts[0] as [number, number], zoom: 16.5, pitch, essential: true }); return }
   const b = new maplibregl.LngLatBounds(pts[0] as [number, number], pts[0] as [number, number])
@@ -700,8 +987,10 @@ export async function showLayer(spec: LayerSpec, prefetched: FC | null = null) {
     addToMap(entry)
     // A camera move asked for alongside this layer (tools run in parallel, so just before it)
     // or after it, while it loaded, wins over fitting to it.
-    if (spec.fit !== false && !(state.flownAt > askedAt - 3000)) fitTo(fc, pitch)
-    else if (spec.style === "buildings_3d" && map.getZoom() >= 15 && map.getPitch() < 45) map.easeTo({ pitch: 55, duration: 900 })
+    if (spec.fit !== false && !(state.flownAt > askedAt - 3000)) {
+      framed = { ref: spec.ref, fit: () => fitTo(fc, pitch) }
+      framed.fit()
+    } else if (spec.style === "buildings_3d" && map.getZoom() >= 15 && map.getPitch() < 45) map.easeTo({ pitch: 55, duration: 900 })
     publishLayers()
     syncHighlight()
     if (fc.frames) startTimelapse(spec.ref)
@@ -714,9 +1003,10 @@ export async function showLayer(spec: LayerSpec, prefetched: FC | null = null) {
 // that a 'buildings_3d' layer redraws are hidden here (no z-fighting); an old-town block that
 // only holds a register plot turns into a translucent ghost, so the plot shows inside it.
 
-function cityPaint(opacity: number): any {
+function cityPaint(id: string, opacity: number): any {
+  const byHeight = (heights: unknown[]) => ["interpolate", ["linear"], ["get", "h"], ...heights]
   return {
-    "fill-extrusion-color": ["interpolate", ["linear"], ["get", "h"], ...cityHeights()],
+    ...forBase(id, { "fill-extrusion-color": { night: byHeight(CITY_HEIGHTS_NIGHT), day: byHeight(CITY_HEIGHTS_DAY) } }),
     "fill-extrusion-height": ["get", "h"], "fill-extrusion-base": 0, "fill-extrusion-opacity": opacity,
   }
 }
@@ -725,10 +1015,11 @@ function addCityLayer() {
   if (!map.getSource(CITY_SRC)) {
     map.addSource(CITY_SRC, { type: "geojson", data: { type: "FeatureCollection", features: CITY.features } as any })
   }
-  // Below any layer the assistant drew, so its buildings and markers stay on top.
-  const before = map.getStyle().layers.find((l) => l.id.includes("::") && !l.id.startsWith("city3d::"))?.id
-  if (!map.getLayer("city3d::fill")) map.addLayer({ id: "city3d::fill", type: "fill-extrusion", source: CITY_SRC, minzoom: CITY_MIN_ZOOM - 0.5, paint: cityPaint(0.92) }, before)
-  if (!map.getLayer("city3d::ghost")) map.addLayer({ id: "city3d::ghost", type: "fill-extrusion", source: CITY_SRC, minzoom: CITY_MIN_ZOOM - 0.5, filter: ["in", ["id"], ["literal", []]], paint: cityPaint(0.28) }, before)
+  // Below any layer the assistant drew, so its buildings and markers stay on top (but over a
+  // street's glow, which lies on the ground).
+  const before = map.getStyle().layers.find((l) => l.id.includes("::") && !l.id.startsWith("city3d::") && !l.id.endsWith("::street-glow"))?.id
+  if (!map.getLayer("city3d::fill")) map.addLayer({ id: "city3d::fill", type: "fill-extrusion", source: CITY_SRC, minzoom: CITY_MIN_ZOOM - 0.5, paint: cityPaint("city3d::fill", 0.92) }, before)
+  if (!map.getLayer("city3d::ghost")) map.addLayer({ id: "city3d::ghost", type: "fill-extrusion", source: CITY_SRC, minzoom: CITY_MIN_ZOOM - 0.5, filter: ["in", ["id"], ["literal", []]], paint: cityPaint("city3d::ghost", 0.28) }, before)
   setBaseBuildings(false)
   syncCityClaims()
   bindCityPopup()
@@ -874,10 +1165,12 @@ function publishTimelapse() {
   const entry = tl && state.layers.get(tl.ref)
   if (!tl || !entry) { setUi({ timelapse: null }); return }
   const fr = entry.data.frames!
+  const total = totalsOf(entry)
   setUi({
     timelapse: {
       ref: tl.ref, title: entry.spec.title, frame: tl.frame, frames: fr.times.length,
       time: fr.times[tl.frame], playing: tl.playing, speed: tl.speed,
+      reading: total ? `${fmt(total.values[tl.frame] ?? 0)} ${total.field.replace(/_/g, " ")}` : null,
     },
   })
 }
@@ -905,8 +1198,9 @@ function applyFrame(k: number) {
   })
   const src = map.getSource(`${tl.ref}::src`) as GeoJSONSource | undefined
   if (src) src.setData((entry.spec.style === "columns_3d" ? columnsData(entry) : entry.data) as any)
+  syncStreet(entry, k)
   for (const c of state.charts) if (c.link.key === "frame" && c.link.layer === tl.ref) setChartHighlight(c, k)
-  setTimeAll(frameMs(entry, k))
+  if (hoverMs === null) setTimeAll(frameMs(entry, k))
   for (const v of state.visuals) postToVisual(v, k, "frame")
   showSky(nicosiaWallToDate(fr.iso[k])) // the sun, the moon and the lamps of that moment
   publishTimelapse()
@@ -922,7 +1216,9 @@ function startTimelapse(ref: string) {
 export function stopTimelapse() {
   if (!state.timelapse) return
   clearTimeout(state.timelapse.timer)
+  const entry = state.layers.get(state.timelapse.ref)
   state.timelapse = null
+  if (entry) syncStreet(entry, null)
   publishTimelapse()
   setTimeAll(nicosiaNowMs()) // back to the "now" line
   showSky(new Date()) // and back to tonight's (or today's) sky
@@ -1130,17 +1426,30 @@ function setTimeAll(ms: number) {
   for (const tc of state.timeCharts) setChartTime(tc, ms)
 }
 
-// Jump the time-lapse to the frame nearest a moment, if the moment is within it.
+// Jump the time-lapse to the frame nearest a moment, if the moment is within it (and say so).
 export function seekTimelapse(ms: number) {
   const tl = state.timelapse
   const entry = tl && state.layers.get(tl.ref)
-  if (!tl || !entry) return
+  if (!tl || !entry) return false
   const n = entry.data.frames!.iso.length
   let best = 0
   for (let k = 1; k < n; k++) if (Math.abs(frameMs(entry, k) - ms) < Math.abs(frameMs(entry, best) - ms)) best = k
   const step = n > 1 ? frameMs(entry, 1) - frameMs(entry, 0) : Infinity
-  if (Math.abs(frameMs(entry, best) - ms) > step) return
-  if (best !== tl.frame) { pauseTimelapse(); applyFrame(best) }
+  if (Math.abs(frameMs(entry, best) - ms) > step) return false
+  if (tl.playing) pauseTimelapse() // the pointer has the clock now
+  if (best !== tl.frame) applyFrame(best)
+  return true
+}
+
+// The moment under the pointer in a chart over time (null: the pointer left). A time-lapse that
+// covers the moment jumps to it, and every chart's line goes with it. Otherwise the charts'
+// line follows the pointer itself, and goes back to now when the pointer leaves.
+let hoverMs: number | null = null
+export function hoverTime(ms: number | null) {
+  if (ms !== null && seekTimelapse(ms)) ms = null
+  if (ms === hoverMs) return
+  hoverMs = ms
+  setTimeAll(ms ?? currentTimeMs())
 }
 
 export function hasTimelapse() {
@@ -1228,6 +1537,7 @@ export function stopFlight() {
 
 export function flyRoute(ref: string) {
   stopFlight()
+  framed = null
   const entry = state.layers.get(ref)
   const path = entry ? routePath(entry) : []
   if (path.length < 2) return
@@ -1315,6 +1625,7 @@ export function applyMapUi(ev: any, onError: (text: string) => void) {
       break
     case "fly_to": {
       state.flownAt = performance.now()
+      framed = null
       const opts: any = { essential: true, duration: 2200 }
       if (ev.center) opts.center = ev.center
       for (const k of ["zoom", "pitch", "bearing"]) if (ev[k] !== undefined) opts[k] = ev[k]
