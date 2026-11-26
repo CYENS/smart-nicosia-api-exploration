@@ -91,6 +91,46 @@
         "process.env.CHATBOT_URL = 'http://127.0.0.1:8120'; process.argv.push('vite', '--port', '5220', '--strictPort'); process.chdir('chatbot/web'); import('./chatbot/web/node_modules/vite/bin/vite.js')"
       ],
       "port": 5220
+    },
+    {
+      "name": "lane-c-api",
+      "runtimeExecutable": "uv",
+      "runtimeArgs": [
+        "run",
+        "python",
+        "-c",
+        "import os; os.environ['CHATBOT_PORT'] = '8130'; from chatbot.server import main; main()"
+      ],
+      "port": 8130
+    },
+    {
+      "name": "lane-c-web",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "-e",
+        "process.env.CHATBOT_URL = 'http://127.0.0.1:8130'; process.argv.push('vite', '--port', '5230', '--strictPort'); process.chdir('chatbot/web'); import('./chatbot/web/node_modules/vite/bin/vite.js')"
+      ],
+      "port": 5230
+    },
+    {
+      "name": "lane-d-api",
+      "runtimeExecutable": "uv",
+      "runtimeArgs": [
+        "run",
+        "python",
+        "-c",
+        "import os; os.environ['CHATBOT_PORT'] = '8140'; from chatbot.server import main; main()"
+      ],
+      "port": 8140
+    },
+    {
+      "name": "lane-d-web",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "-e",
+        "process.env.CHATBOT_URL = 'http://127.0.0.1:8140'; process.argv.push('vite', '--port', '5240', '--strictPort'); process.chdir('chatbot/web'); import('./chatbot/web/node_modules/vite/bin/vite.js')"
+      ],
+      "port": 5240
     }
   ]
 }
