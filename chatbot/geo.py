@@ -292,7 +292,7 @@ class Places:
         if exact:
             return [{"name": p["name"], "lat": p["lat"], "lon": p["lon"],
                      "kind": p["category"], "source": "places index"} for p in exact[:limit]]
-        key = norm(text)
+        key = f"{norm(text)}|{limit}"
         if key in self._geocode_cache:
             return self._geocode_cache[key]
         results = self._nominatim_search(text, limit)
@@ -300,6 +300,16 @@ class Places:
             results = self._photon_search(text, limit)
         self._geocode_cache[key] = results
         return results
+
+    def every_match(self, text: str, limit: int = 8) -> list[dict]:
+        """What Nominatim and Photon both answer for `text` inside Nicosia, for telling streets of
+        the same name apart: each geocoder knows some streets only by their Greek name, so
+        either alone can miss the right one."""
+        key = f"all:{norm(text)}|{limit}"
+        if key not in self._geocode_cache:
+            self._geocode_cache[key] = (self._nominatim_search(text, limit)
+                                        + self._photon_search(text, limit))
+        return self._geocode_cache[key]
 
     def reverse(self, lat: float, lon: float) -> dict | None:
         """The address at a point (Nominatim reverse), or None if it can't be looked up."""
@@ -329,7 +339,7 @@ class Places:
         lon_min, lat_min, lon_max, lat_max = NICOSIA_BBOX
         params = {"q": cleaned, "format": "jsonv2", "limit": limit, "countrycodes": "cy",
                   "viewbox": f"{lon_min},{lat_max},{lon_max},{lat_min}", "bounded": 1,
-                  "accept-language": "en"}
+                  "addressdetails": 1, "accept-language": "en"}
         self._nominatim.wait()
         try:
             data = get_json(f"{self.s.nominatim_url}/search", user_agent=self.s.user_agent,
@@ -339,7 +349,8 @@ class Places:
             return []
         return [{"name": d.get("name") or d.get("display_name", "").split(",")[0],
                  "address": d.get("display_name"), "lat": float(d["lat"]), "lon": float(d["lon"]),
-                 "kind": d.get("type"), "class": d.get("category"), "source": "Nominatim"}
+                 "kind": d.get("type"), "class": d.get("category"),
+                 "postcode": (d.get("address") or {}).get("postcode"), "source": "Nominatim"}
                 for d in data]
 
     def _photon_search(self, text: str, limit: int) -> list[dict]:
@@ -354,7 +365,11 @@ class Places:
         for f in data.get("features", []):
             lon, lat = f["geometry"]["coordinates"]
             pr = f.get("properties", {})
+            where = [pr.get(k) for k in ("name", "street", "district", "locality", "city",
+                                         "county", "postcode")]
             out.append({"name": pr.get("name"), "lat": lat, "lon": lon,
                         "kind": pr.get("osm_value"), "class": pr.get("osm_key"),
-                        "street": pr.get("street"), "source": "Photon"})
+                        "street": pr.get("street"), "postcode": pr.get("postcode"),
+                        "address": ", ".join(dict.fromkeys(str(w) for w in where if w)) or None,
+                        "source": "Photon"})
         return out

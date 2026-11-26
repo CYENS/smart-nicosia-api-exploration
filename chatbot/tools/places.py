@@ -61,7 +61,10 @@ def h_find_places(ctx: ToolContext, a: dict) -> dict:
 WEB_PLACE = obj({
     "name": {"type": "string", "minLength": 2, "maxLength": 120},
     "address": {"type": "string", "maxLength": 200,
-                "description": "As the result gives it, e.g. 'Yiannaki Talioti 7, Strovolos'."},
+                "description": "As the result gives it, with its postcode and area when it "
+                               "gives them: 'Nikiforou Foka 33, 1016 Nicosia', 'Yiannaki "
+                               "Talioti 7, Strovolos'. Nicosia has several streets of one "
+                               "name, and the postcode tells them apart."},
     "phone": {"type": "string", "maxLength": 40},
     "website": {"type": "string", "maxLength": 300},
     "source_url": {"type": "string", "maxLength": 500,
@@ -108,7 +111,9 @@ def h_locate_web_places(ctx: ToolContext, a: dict) -> dict:
                  "places": [row for row, _ in placed], "not_placed": missing}
     if missing:
         res["hint"] = ("list the places not placed without an id; for one with no address, a "
-                       "web_search for its address may let it be placed")
+                       "web_search for its address may let it be placed; for one whose street "
+                       "name Nicosia has more than once, pass it again with the postcode the "
+                       "page gives")
     if not placed:
         res["_summary"] = f"none of {len(a['places'])} found on the map"
         return res

@@ -11,9 +11,15 @@ A place is placed, most trusted first:
   the door (the map draws it paler and the answer says so);
 - otherwise it is not placed. A neighbourhood or a town is not a position.
 
-Lookups go through Places.geocode (Nominatim throttled to 1 request a second, then Photon,
-cached), at most three per place, and every place placed is kept on disk, so asking about it
-again costs no request at all.
+Greater Nicosia has several streets of one name (three Nikiforou Foka: by Famagusta Gate, in
+Pallouriotissa and in Latsia), and a geocoder may know the right one only by its Greek name. So
+the street is looked up in Nominatim and Photon both, a hit in another postcode than the
+address's is another place, and when streets of that name stand apart and nothing in the
+address tells them apart, the place is not placed rather than put on the first one.
+
+Lookups go through Places (Nominatim throttled to 1 request a second, then Photon, cached),
+about five per new place, and every place placed is kept on disk, so asking about it again costs
+no request at all.
 """
 
 from __future__ import annotations
@@ -35,6 +41,11 @@ log = logging.getLogger(__name__)
 WEB_ID = re.compile(r"^web-[0-9a-f]{8}$")
 KEEP = 1000  # places kept on disk, the most recently found
 NAME_NEAR_STREET_M = 1500  # a name match counts only this close to its address's street
+SAME_STREET_M = 1000  # pieces of a street name closer than this are one street; farther, namesakes
+# Bumped when placing changes, so a place kept from before is placed again when it's next found
+# (version 1 put Ithaki on the Nikiforou Foka in Pallouriotissa, not the one by Famagusta Gate).
+PLACER = 2
+POSTCODE = re.compile(r"(?<![\d.])(\d{4})(?![\d.])")  # Cyprus: four digits, 1000 to 9999
 
 AREA_TYPES = {"suburb", "neighbourhood", "quarter", "city", "town", "village", "hamlet",
               "city_block", "locality", "municipality", "county", "state", "region", "country",
@@ -123,6 +134,68 @@ def address_streets(address: str) -> list[str]:
     return parts[:-1] if len(parts) > 1 else parts  # the last part is the town or the area
 
 
+def address_postcode(address: str | None) -> str | None:
+    """The postcode an address gives: 'Nikiforou Foka 33, 1016 Nicosia' -> '1016'."""
+    found = POSTCODE.findall(address or "")
+    return found[-1] if found else None
+
+
+def address_areas(address: str) -> list[str]:
+    """The places an address names after its street ('Emanuel Roidi 2, Strovolos, Nicosia 1095'
+    -> ['Strovolos']), to choose between streets of the same name."""
+    out = []
+    for part in address.split(",")[1:]:
+        if UNIT_PART.search(part) or COUNTRY.search(part):
+            continue
+        part = re.sub(r"\s+", " ", NUMBER.sub(" ", part)).strip(" .-")
+        if len(part) >= 3 and norm(part) not in TOWNS:
+            out.append(part)
+    return out
+
+
+def postcode_of(hit: dict) -> str | None:
+    """A geocoder hit's postcode: its own field, else the last one in its address."""
+    if hit.get("postcode"):
+        m = POSTCODE.search(str(hit["postcode"]))
+        return m.group(1) if m else None
+    found = POSTCODE.findall(hit.get("address") or "")
+    return found[-1] if found else None
+
+
+def by_postcode(hits: list[dict], code: str | None) -> list[dict]:
+    """The hits that can be at the address's postcode, best first: the same postcode, then a
+    neighbouring one (the same first three digits: the next block of one avenue). Hits that don't
+    say their postcode count only when none does say it right. A hit in another postcode is
+    another place."""
+    if not code:
+        return hits
+    same = [h for h in hits if postcode_of(h) == code]
+    near = [h for h in hits if (p := postcode_of(h)) and p != code and p[:3] == code[:3]]
+    return same + near or [h for h in hits if postcode_of(h) is None]
+
+
+def streets_apart(hits: list[dict]) -> list[list[dict]]:
+    """Street hits grouped into streets: pieces within SAME_STREET_M of each other are one."""
+    groups: list[list[dict]] = []
+    for h in hits:
+        for g in groups:
+            if any(haversine_m(h["lat"], h["lon"], x["lat"], x["lon"]) <= SAME_STREET_M for x in g):
+                g.append(h)
+                break
+        else:
+            groups.append([h])
+    return groups
+
+
+def where_is(street: list[dict]) -> str:
+    """A street among its namesakes, for a person: its postcode, else its neighbourhood."""
+    for h in street:
+        if code := postcode_of(h):
+            return f"postcode {code}"
+    parts = [p.strip() for p in (street[0].get("address") or "").split(",")[1:] if p.strip()]
+    return parts[0] if parts else f"{street[0]['lat']:.4f}, {street[0]['lon']:.4f}"
+
+
 def on_street(hit: dict, streets: list[str]) -> bool:
     """Whether a geocoder's answer stands on one of the address's streets (a fuzzy geocoder
     happily answers 'Talioti 7' with number 7 of another street)."""
@@ -176,12 +249,18 @@ class WebPlaces:
         source = clean_url(item.get("source_url"))
         with self._lock:
             known = self._items.get(wid)
-        if known is None:
+        if known is None or known.get("placer") != PLACER:
             spot = self._find(name, address)
             if isinstance(spot, str):
+                if known is not None:  # placed by an older, wrong rule: forget that pin
+                    with self._lock:
+                        self._items.pop(wid, None)
+                        self._save()
                 return None, spot
-            known = {"id": wid, "name": name, "address": address, **spot, "sources": [],
-                     "topics": []}
+            kept = {k: v for k, v in (known or {}).items()
+                    if k in ("sources", "topics", "phone", "website", "note")}
+            known = {"sources": [], "topics": [], **kept, "id": wid, "name": name,
+                     "address": address, **spot, "placer": PLACER}
         place = {**known, **{k: v for k, v in fields.items() if v}, "found_at": time.time()}
         if source and source not in place["sources"]:
             place["sources"] = [*place["sources"], source][-3:]
@@ -201,30 +280,61 @@ class WebPlaces:
                 p = hits[0]
                 return {"lat": p["lat"], "lon": p["lon"], "precision": "exact",
                         "located_by": "OpenStreetMap", "matched": p.get("name"), "osm_id": p["id"]}
-        street = None
+        code = address_postcode(address)
+        street, namesakes, streets = None, [], []
         if address:
             streets = address_streets(address)
             other = respell(address)
             tries = [address, other, street_only(other), street_only(address)]
             for text in list(dict.fromkeys(x for x in tries if x))[:3]:
-                hits = [h for h in self.places.geocode(text) if on_street(h, streets)]
+                hits = by_postcode([h for h in self.places.geocode(text) if on_street(h, streets)],
+                                   code)
                 hit, prec = self._best(hits)
                 if prec == "exact":
                     return self._spot(hit, "exact", "its address")
                 if hit:
-                    street = hit  # the street is known; a shorter address won't find the door
-                    break
-        hits = [h for h in self.places.geocode(name)
-                if loose_match(name, h.get("name")) or loose_match(h.get("name"), name)]
+                    break  # the street is known; a shorter address won't find the door
+            if streets:
+                street, namesakes = self._street(street_only(other) or street_only(address)
+                                                 or address, streets, code, address)
+        hits = by_postcode([h for h in self.places.geocode(name)
+                            if loose_match(name, h.get("name")) or loose_match(h.get("name"), name)],
+                           code)
         hit, prec = self._best(hits)
-        if prec == "exact" and (street is None or haversine_m(
-                street["lat"], street["lon"], hit["lat"], hit["lon"]) <= NAME_NEAR_STREET_M):
+        # A name match counts near the address's street, or near one of its namesakes (which it
+        # then tells apart); with no street found at all, its name is the best we have.
+        anchors = [street] if street else [g[0] for g in namesakes]
+        if prec == "exact" and (not anchors or any(haversine_m(
+                a["lat"], a["lon"], hit["lat"], hit["lon"]) <= NAME_NEAR_STREET_M for a in anchors)):
             return self._spot(hit, "exact", "its name")
         if street is not None:
             return self._spot(street, "street", "its street")
+        if namesakes:
+            return (f"Nicosia has {len(namesakes)} streets called {streets[0]} "
+                    f"({', '.join(where_is(g) for g in namesakes)}) and the result doesn't say "
+                    "which: pass its postcode if the page gives one")
         if not address:
             return "no address in the result, and its name isn't on the map"
+        if code:
+            return f"no street called {streets[0] if streets else address} in postcode {code}"
         return "its address isn't on the map of Nicosia"
+
+    def _street(self, query: str, streets: list[str], code: str | None,
+                address: str) -> tuple[dict | None, list[list[dict]]]:
+        """The address's street, from every street of that name both geocoders know inside
+        Nicosia, as (the street, []), or (None, the streets of that name) when they stand apart
+        and neither the postcode nor an area in the address tells which."""
+        hits = [h for h in self.places.every_match(query)
+                if in_bbox(h["lat"], h["lon"]) and precision_of(h) == "street"
+                and on_street(h, streets)]
+        groups = streets_apart(by_postcode(hits, code))
+        if len(groups) <= 1:
+            return (groups[0][0] if groups else None), []
+        areas = address_areas(address)
+        fit = [g for g in groups if any(loose_match(a, h.get("address")) for a in areas for h in g)]
+        if len(fit) == 1:
+            return fit[0][0], []
+        return None, groups
 
     @staticmethod
     def _best(hits: list[dict]) -> tuple[dict | None, str | None]:
