@@ -445,3 +445,14 @@ def test_the_endpoints_answer_and_refuse_plainly(request_for, shade):
     with pytest.raises(HTTPException) as e:
         env_routes.sun_hours(req, lat=LAT, lon=LON, radius_m=60, day="June")
     assert e.value.status_code == 400
+
+
+def test_two_close_stations_keep_their_own_readings():
+    # A market and the town hall, 750 m apart, read very differently: neither is averaged away.
+    market, hall = (35.1682, 33.3713), (35.1732, 33.3659)
+    f = Field(METRICS["pm2_5"], [Station("m", "Market", *market, 27.7), Station("h", "Town hall", *hall, 9.9)], air_model(12.0))
+    assert f.at(*market)["value"] == pytest.approx(27.7, abs=0.3) and f.at(*market)["confidence"] > 0.99
+    assert f.at(*hall)["value"] == pytest.approx(9.9, abs=0.3)
+    mid = f.at((market[0] + hall[0]) / 2, (market[1] + hall[1]) / 2)["value"]
+    assert 9.9 < mid < 27.7
+    assert f.grid()["max"] > 24  # the market's cell, on the map too

@@ -4,12 +4,16 @@ Seven Smart Nicosia stations measure the air and the noise; a regional model (CA
 Open-Meteo, about 10 km cells) knows the air and the temperature everywhere, coarsely. A
 surface lays one over the other:
 
-    estimate(x) = model(x) + sum_i w_i(x) * (station_i - model(station_i)) / (w0 + sum_i w_i(x))
-    w_i(x) = exp(-d_i(x)^2 / (2 L^2))
+    estimate(x) = model(x) + c(x) * r(x)
+    r(x) = sum_i v_i(x) * (station_i - model(station_i)) / sum_i v_i(x),  v_i = 1 / (d_i^2 + e^2)
+    c(x) = 1 - prod_i (1 - g_i(x)),  g_i = exp(-d_i^2 / (2 L^2))
 
-so near a station the estimate is what the station measures, and far from every station it
-falls back to the model (or, for what the model doesn't know, to the stations' median). The
-confidence c(x) = sum w / (w0 + sum w) is 1 at a station and 0 far away; the page draws it as
+r is the stations' miss from the model, spread between them by inverse distance, so at a
+station it is that station's own miss and between two stations it runs from one to the other
+(two stations a few hundred metres apart can read very differently: a market and a quiet
+street). c, the confidence, is 1 at a station and falls to 0 beyond the metric's reach L, so
+at a station the estimate is what the station measures and far from every station it is the
+model (or, for what the model doesn't know, the stations' median). The page draws c as
 opacity, so the map fades where the estimate is only the model, and the uncertainty is
 sqrt(sensor^2 + (1 - c) * spread^2): the sensors' own error at a station, and away from them
 the model's miss (how far it is from today's stations) or the stations' spread on top, so a
@@ -34,7 +38,7 @@ from chatbot.environment.weather import AIR_LATS, AIR_LONS, AIR_VARS, ModelGrids
 # The surface's extent: Greater Nicosia (south), lon_min, lat_min, lon_max, lat_max.
 BBOX = (33.29, 35.115, 33.44, 35.215)
 NX, NY = 90, 72  # about 150 m cells
-PRIOR = 0.18  # w0: how firmly the background holds against a station (in station weights)
+NUGGET_M = 30.0  # e: within this of a station, its own reading holds
 FADE_BELOW = 0.06  # stations-only surfaces are not drawn where the confidence is below this
 
 
@@ -149,22 +153,24 @@ class Field:
         """The estimate at a point with its uncertainty, how sure it is, and the nearest
         station."""
         x, y = self._xy(lat, lon)
-        wsum = 0.0
+        vsum = 0.0
         acc = 0.0
+        apart = 1.0  # prod (1 - g_i)
         nearest = None
         for s in self.stations:
             sx, sy = self._xy(s.lat, s.lon)
             d = math.hypot(x - sx, y - sy)
-            w = math.exp(-d * d / (2 * self.metric.reach_m ** 2))
-            wsum += w
-            acc += w * (s.value - (s.model if s.model is not None else s.value))
+            v = 1 / (d * d + NUGGET_M ** 2)
+            vsum += v
+            acc += v * (s.value - (s.model if s.model is not None else s.value))
+            apart *= 1 - math.exp(-d * d / (2 * self.metric.reach_m ** 2))
             if nearest is None or d < nearest[1]:
                 nearest = (s, d)
         bg = self.background(lat, lon)
         if bg is None:
             return {"value": None, "uncertainty": None, "confidence": 0.0, "nearest": None}
-        value = bg + (acc / (PRIOR + wsum) if wsum else 0.0)
-        conf = wsum / (PRIOR + wsum) if wsum else 0.0
+        conf = 1 - apart if self.stations else 0.0
+        value = bg + (conf * acc / vsum if vsum else 0.0)
         sensor = max(self.metric.floor, self.metric.sensor * abs(value))
         sigma = math.sqrt(sensor ** 2 + (1 - conf) * self.spread ** 2)
         return {"value": value, "uncertainty": sigma, "confidence": conf,
@@ -181,19 +187,22 @@ class Field:
         kx = 111320 * math.cos(math.radians((BBOX[1] + BBOX[3]) / 2))
         X = (LON - BBOX[0]) * kx
         Y = (LAT - BBOX[1]) * 110574
-        wsum = np.zeros_like(X)
+        vsum = np.zeros_like(X)
         acc = np.zeros_like(X)
+        apart = np.ones_like(X)
         for s in self.stations:
             sx, sy = self._xy(s.lat, s.lon)
-            w = np.exp(-((X - sx) ** 2 + (Y - sy) ** 2) / (2 * self.metric.reach_m ** 2))
-            wsum += w
-            acc += w * (s.value - (s.model if s.model is not None else s.value))
+            d2 = (X - sx) ** 2 + (Y - sy) ** 2
+            v = 1 / (d2 + NUGGET_M ** 2)
+            vsum += v
+            acc += v * (s.value - (s.model if s.model is not None else s.value))
+            apart *= 1 - np.exp(-d2 / (2 * self.metric.reach_m ** 2))
         if self.has_model:
             bg = np.array([[_nan(self.background(la, lo)) for lo in lonc] for la in latc])
         else:
             bg = np.full_like(X, self.median if self.median is not None else np.nan)
-        value = bg + np.where(wsum > 0, acc / (PRIOR + wsum), 0.0)
-        conf = np.where(wsum > 0, wsum / (PRIOR + wsum), 0.0)
+        conf = 1 - apart if self.stations else np.zeros_like(X)
+        value = bg + np.where(vsum > 0, conf * acc / np.where(vsum > 0, vsum, 1), 0.0)
         if not self.has_model:  # stations only: nothing between them
             conf = np.where(conf < FADE_BELOW, 0.0, conf)
         d = self.metric.decimals

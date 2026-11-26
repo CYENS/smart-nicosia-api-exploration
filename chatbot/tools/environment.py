@@ -168,11 +168,17 @@ def _at(ctx: ToolContext, text: str | None) -> datetime | None:
         raise ToolError(str(e)) from None
 
 
+# Places worth naming a spot of the city by: not a bench, a cash machine or a bike stand.
+LANDMARKS = {"park", "place_of_worship", "hospital", "monument", "museum", "theatre", "attraction",
+             "historic_site", "gallery", "hotel", "bus_station", "viewpoint", "supermarket"}
+
+
 def _place_near(ctx: ToolContext, lat: float, lon: float, stations: list[dict]) -> str | None:
     if ctx.entities is not None:
-        near = ctx.entities.places_within(lat, lon, 400, limit=1)
-        if near:
-            return f"near {near[0]['name']}"
+        near = ctx.entities.places_within(lat, lon, 400, limit=40)
+        named = next((p for p in near if p.get("detail", "").replace(" ", "_") in LANDMARKS), None)
+        if named:
+            return f"near {named['name']}"
     if stations:
         s = min(stations, key=lambda s: (s["lat"] - lat) ** 2 + (s["lon"] - lon) ** 2)
         return f"near the {s['name']} station"

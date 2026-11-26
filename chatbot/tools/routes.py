@@ -17,6 +17,7 @@ from chatbot.store import STATE_COLORS, point
 from chatbot.tools.base import (ToolContext, ToolError, ToolSet, local_now, obj, resolve_place,
                                 resolve_point)
 from chatbot.tools.buildings import STATUSES
+from chatbot.tools.environment import SHADE_COLORS as ENV_SHADE_COLORS
 from chatbot.web import WebError
 
 log = logging.getLogger(__name__)
@@ -267,7 +268,7 @@ def h_reachable_area(ctx: ToolContext, a: dict) -> dict:
             "_summary": f"{', '.join(map(str, a['minutes']))} min by {a['mode']}"}
 
 
-SHADE_COLORS = {"in shade": "#3d8bff", "in sun": "#f5b700"}
+SHADE_COLORS = ENV_SHADE_COLORS  # one blue and one amber for shade and sun, as on the shade map
 SHADE_MAX_EXTRA = 1.35  # a shadier way may take this much longer than the quickest (plus a minute)
 SHADE_METHOD = ("the shadows of the DLS 3D buildings at the moment the walker passes each point "
                 "(every 8 m, at the route's own pace); trees, awnings and arcades are not in it")
