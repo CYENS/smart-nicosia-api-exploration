@@ -13,24 +13,25 @@ let shown: string | null = null
 
 const escape = (s: string) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!)
 
-function credits(ids: string[]): string[] {
+// One string, not one per credit: MapLibre sorts separate credits by length, and these read in
+// the order the map draws them, with "Data sources" last.
+function credits(ids: string[]): string {
   const list = useSources.getState().list
   const out: string[] = []
   for (const id of ids) {
     const s = list.find((x) => x.id === id)
-    if (s?.credit) out.push(`<a href="#" data-source="${escape(s.id)}" title="Where this comes from">${escape(s.credit)}</a>`)
+    if (s?.credit) out.push(`<a href="#" data-source="${escape(s.id)}">${escape(s.credit)}</a>`)
   }
   out.push(`<a href="#" data-source="" class="credits-all">Data sources</a>`)
-  return out
+  return out.join(" | ")
 }
 
 function sync() {
   const map = getMap()
   if (!map) return
   const next = credits(activeSourceIds())
-  const key = next.join("|")
-  if (key === shown) return
-  shown = key
+  if (next === shown) return
+  shown = next
   // Swapping the control is MapLibre's public way to change custom credits. Keep it as the
   // reader left it: closed stays closed.
   const wasOpen = !control || control._container?.classList.contains("maplibregl-compact-show")

@@ -152,6 +152,7 @@ export function SourcesPanel() {
   const { open, focus, opener, list, groups, status } = useSources()
   const active = useActiveSourceIds()
   const focusRow = useRef<HTMLLIElement | null>(null)
+  const listBox = useRef<HTMLDivElement | null>(null)
   const back = useMemo(() => ({ current: opener }), [opener])
 
   // Fresh while it is open: the feeds' times move on.
@@ -169,7 +170,7 @@ export function SourcesPanel() {
     <Dialog open={open} onOpenChange={(o) => { if (!o) closeSources() }}>
       <DialogContent
         className="flex max-h-[min(720px,calc(100dvh-32px))] flex-col gap-0 p-0 sm:max-w-xl"
-        initialFocus={focus ? focusRow : undefined}
+        initialFocus={focus ? focusRow : listBox}
         finalFocus={opener ? back : undefined}
       >
         <DialogHeader className="border-b border-line px-5 pt-5 pb-4">
@@ -179,7 +180,15 @@ export function SourcesPanel() {
             feed the twin has read lately.
           </DialogDescription>
         </DialogHeader>
-        <div className="min-h-0 overflow-y-auto px-2 py-3">
+        {/* The list is the first stop: the arrow and page keys scroll it, and no link's tooltip
+            opens by itself. */}
+        <div
+          ref={listBox}
+          tabIndex={0}
+          role="region"
+          aria-label="Sources"
+          className="min-h-0 overflow-y-auto px-2 py-3 outline-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-inset"
+        >
           {status === "error" && !list.length ? (
             <p className="px-3 text-[13.5px] text-muted-foreground" role="alert">
               The list of sources didn't load. Check the connection to the twin's server, then open this again.

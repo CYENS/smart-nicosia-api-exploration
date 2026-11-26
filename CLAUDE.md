@@ -60,6 +60,10 @@ npm run build                     # writes chatbot/static (committed, see below)
   and a `data_ref`, a map style that shows it well, and lines in the system prompt on which
   visual fits which question. Map switches are a fallback for browsing without a key.
 - **Every number comes from a tool.** Charts are filled from a `data_ref` by the server.
+- **Say where it comes from.** Every new data source gets an entry in `chatbot/sources.py`
+  (publisher, licence, link, what it gives, a short map credit, and a freshness probe in
+  `chatbot/routes/sources.py` if it is a live feed), and every tool that reads it lists it in
+  `TOOL_SOURCES`, so its layers, charts and the data sources panel name it.
 - **Linking.** Rows that carry an `id` (device, building, entity) link charts to the map;
   temporal x axes follow the time line. Keep new datasets linkable.
 - **Be gentle with public services.** Cache (in `data/chatbot_cache/`), throttle, send the

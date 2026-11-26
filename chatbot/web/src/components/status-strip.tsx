@@ -75,6 +75,7 @@ const READOUT_SOURCES: Record<string, string[]> = {
   lights: ["smart_nicosia"], parking: ["smart_nicosia"], bins: ["smart_nicosia"], air: ["smart_nicosia"],
   weather: ["open_meteo"], registers: ["registers"], buses: ["bus_live"], roads: ["road_speeds"],
 }
+const REPLAYED = new Set(["lights", "parking", "bins", "air", "roads"])
 
 function fromLine(ids: string[], list: Parameters<typeof shortName>[1]) {
   const names = ids.map((id) => shortName(id, list))
@@ -88,7 +89,9 @@ function Readout({ id, hidden, label, question, note, loading, past, children }:
   const busy = useChat((s) => s.busy)
   const sources = useSources((s) => s.list)
   const from = READOUT_SOURCES[id]
-  const fromIds = from && past && id !== "buses" && id !== "registers" ? [...from, "twin_memory"] : from
+  // At a past moment the sensors and roads replay from the memory; weather is Open-Meteo's
+  // modelled hour, and buses and registers have no past.
+  const fromIds = from && past && REPLAYED.has(id) ? [...from, "twin_memory"] : from
   return (
     <Tooltip>
       <TooltipTrigger
@@ -108,10 +111,10 @@ function Readout({ id, hidden, label, question, note, loading, past, children }:
           <span className="font-readout text-[19px] leading-none font-semibold">{children}</span>
         )}
       </TooltipTrigger>
-      <TooltipContent side="bottom">
-        {note && <span className="block">{note.replace(/^./, (c) => c.toUpperCase())}.</span>}
-        {question}
-        {fromIds && <span className="mt-1 block text-muted-foreground">{fromLine(fromIds, sources)}</span>}
+      <TooltipContent side="bottom" className="flex-col items-start gap-0.5">
+        {note && <span>{note.replace(/^./, (c) => c.toUpperCase())}.</span>}
+        <span>{question}</span>
+        {fromIds && <span className="text-background/70">{fromLine(fromIds, sources)}</span>}
       </TooltipContent>
     </Tooltip>
   )

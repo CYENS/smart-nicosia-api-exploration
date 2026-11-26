@@ -58,6 +58,7 @@ export function App() {
     "--inset-left": `${left}px`,
     "--inset-right": `${right}px`,
     "--inset-bottom": `${bottom}px`,
+    "--rail": `${g.rail}px`,
   } as CSSProperties
 
   return (

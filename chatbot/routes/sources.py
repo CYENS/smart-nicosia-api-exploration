@@ -57,7 +57,7 @@ def _timetable(agent) -> dict:
     mob = getattr(agent, "mobility", None)
     if mob is None:
         return status(None)
-    tt = mob.timetable()
+    tt = mob.source.current  # never starts a load
     if tt is None:
         return status("unavailable" if mob.source.error else "waiting", note=mob.source.error)
     operators = [f["operator"] for f in tt.feeds if f.get("operator")]

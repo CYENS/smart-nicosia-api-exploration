@@ -70,11 +70,13 @@ class SessionStore:
         return ref
 
     def add_dataset(self, hint: str, rows: list[dict], *, title: str,
-                    link: dict | None = None) -> str:
+                    link: dict | None = None, sources: list[str] | None = None) -> str:
         """`link` names the field that ties a row to the map: {"key": "id"} matches feature ids,
-        {"key": "frame", "layer": ref} matches a time-lapse frame. Charts use it for highlights."""
+        {"key": "frame", "layer": ref} matches a time-lapse frame. Charts use it for highlights.
+        `sources` as for add_layer."""
         ref = self._ref("D", hint)
-        self.datasets[ref] = {"title": title, "rows": rows, "link": link}
+        self.datasets[ref] = {"title": title, "rows": rows, "link": link,
+                              "sources": data_sources.known(data_sources.current() if sources is None else sources)}
         return ref
 
 
