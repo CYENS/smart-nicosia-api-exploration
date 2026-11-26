@@ -3,7 +3,6 @@ import { useEffect, useRef } from "react"
 
 import { Button } from "@/components/ui/button"
 import { useGeometry } from "@/lib/geometry"
-import { GAP, STRIP_H } from "@/lib/layout"
 import { endPick, useMapUi } from "@/lib/map/engine"
 
 // While the user picks their spot on the map ("Pick my spot on the map"): what to do, the map's
@@ -31,7 +30,7 @@ export function PickHint() {
   return (
     <div
       className="pointer-events-none absolute z-20 flex justify-center px-3"
-      style={{ top: STRIP_H + GAP + g.clockH + 8, left: g.left, right: g.topRight }}
+      style={{ top: g.insets.top + 8, left: g.left, right: g.topRight }}
     >
       <div
         role="status"
