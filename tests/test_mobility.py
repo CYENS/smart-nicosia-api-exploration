@@ -249,6 +249,7 @@ def test_a_failing_feed_keeps_its_last_copy_then_says_so(tt):
     clock["t"] = NOW + timedelta(seconds=40)
     stale = fleet.snapshot()
     assert stale.status == "stale" and len(stale.vehicles) == 29 and "timed out" in stale.error
+    assert stale.fetched_at == NOW.timestamp()  # says when its buses were really seen
     clock["t"] = NOW + timedelta(minutes=10)
     gone = fleet.snapshot()
     assert gone.status == "unavailable" and not gone.vehicles
@@ -581,6 +582,8 @@ def test_the_strip_and_the_workspace_summary(app_agent, monkeypatch):
     agent.settings = Settings()
     agent.registers = SimpleNamespace(ready=False)
     monkeypatch.setattr(overview, "weather", lambda s: None)
+    assert "buses" not in overview.live_strip(agent)  # the strip never waits for the feeds
+    agent.mobility.summary()  # what the background refresh does
     strip = overview.live_strip(agent)
     assert strip["buses"]["running"] >= 20 and strip["buses"]["lines"] == 6
     summary = json.loads(mobility_routes.mobility(REQUEST).body)

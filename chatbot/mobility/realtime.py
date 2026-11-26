@@ -47,6 +47,7 @@ class Snapshot:
     updates: dict[tuple, list[tuple[int, str, int | None, int | None]]] = field(default_factory=dict)
     error: str | None = None
     stale: bool = False
+    retry_at: float = 0.0  # when to ask the feed again (epoch seconds)
 
     @property
     def status(self) -> str:
@@ -84,11 +85,11 @@ class Fleet:
     def snapshot(self) -> Snapshot:
         now = self.now().timestamp()
         snap = self._snap
-        if snap and now - snap.fetched_at < self.ttl_s:
+        if snap and now < snap.retry_at:
             return snap
         with self._lock:  # one fetch at a time; the others take its result
             snap = self._snap
-            if snap and now - snap.fetched_at < self.ttl_s:
+            if snap and now < snap.retry_at:
                 return snap
             self._snap = self._refresh(snap)
             return self._snap
@@ -103,9 +104,9 @@ class Fleet:
             reason = str(e)[:200]
             log.warning("bus feed failed: %s", reason)
             if previous and previous.vehicles and now - previous.fetched_at < KEEP_S:
-                return Snapshot(now - self.ttl_s + 10, previous.feed_time, previous.vehicles,
-                                previous.updates, reason, stale=True)
-            return Snapshot(now - self.ttl_s + 15, None, [], {}, reason)
+                return Snapshot(previous.fetched_at, previous.feed_time, previous.vehicles,
+                                previous.updates, reason, stale=True, retry_at=now + 10)
+            return Snapshot(now, None, [], {}, reason, retry_at=now + 15)
         updates: dict[tuple, list] = {}
         for e in msg.entity:
             if e.HasField("trip_update"):
@@ -133,7 +134,8 @@ class Fleet:
             if bus:
                 vehicles.append(bus)
         header = msg.header.timestamp or None
-        return Snapshot(now, float(header) if header else None, vehicles, updates)
+        return Snapshot(now, float(header) if header else None, vehicles, updates,
+                        retry_at=now + self.ttl_s)
 
     def _bus(self, tt: Timetable | None, v, updates: dict, now: float) -> dict | None:
         vid = (v.vehicle.id or v.vehicle.label or "").strip()
@@ -201,7 +203,9 @@ class Fleet:
         if along is not None and stops_along is not None and along >= stops_along[-1] - 40:
             bus["finished"] = True  # at its last stop: done, not late
             return bus
-        delay, source = self._delay(trip, pos, updates.get(_key(v.trip)), stops_along, along, base, now)
+        stop_id = tt.stops[trip.stops[pos]].id if pos < len(trip.stops) else None
+        delay, source = self._delay(trip, pos, updates.get(_key(v.trip)), stops_along, along, base,
+                                    now, stop_id)
         bus["delay_s"], bus["delay_source"] = delay, source
         nxt = []
         for i in range(pos, min(len(trip.stops), pos + NEXT_STOPS)):
@@ -219,15 +223,12 @@ class Fleet:
 
     @staticmethod
     def _delay(trip: Trip, pos: int, rows, stops_along, along, base: datetime,
-               now: float) -> tuple[int | None, str | None]:
+               now: float, stop_id: str | None = None) -> tuple[int | None, str | None]:
         """Seconds late (negative: early) at the next stop. The feed's own figure when it is
         believable; else where the bus is against the timetable."""
-        if rows:
-            seq_rows = [r for r in rows if r[0] <= pos] or rows[:1]
-            r = seq_rows[-1]
-            d = r[3] if r[0] == 0 and r[3] is not None else (r[2] if r[2] is not None else r[3])
-            if d is not None and DELAY_MIN_S <= d <= DELAY_MAX_S and not (pos == 0 and d < 0):
-                return int(d), "feed"
+        d = feed_delay(rows, pos, stop_id)
+        if d is not None:
+            return d, "feed"
         if along is None or stops_along is None or not len(trip.stops):
             return None, None
         if pos == 0:  # not left its first stop yet: late only once its departure has passed
@@ -241,6 +242,19 @@ class Fleet:
         due = base.timestamp() + t0 + frac * (t1 - t0)
         d = now - due
         return (int(d), "timetable") if DELAY_MIN_S <= d <= DELAY_MAX_S else (None, None)
+
+
+def feed_delay(rows, pos: int, stop_id: str | None) -> int | None:
+    """The feed's delay at a stop of a trip: its own update (by stop id), else the last update
+    before it (by sequence: a delay holds until the next one). None when it isn't believable."""
+    if not rows:
+        return None
+    own = [r for r in rows if stop_id and r[1] == stop_id]
+    r = own[0] if own else ([x for x in rows if x[0] <= pos] or rows[:1])[-1]
+    d = r[3] if pos == 0 and r[3] is not None else (r[2] if r[2] is not None else r[3])
+    if d is None or not DELAY_MIN_S <= d <= DELAY_MAX_S or (pos == 0 and d < 0):
+        return None
+    return int(d)
 
 
 def delay_text(s: int | None) -> str | None:

@@ -15,6 +15,8 @@ from __future__ import annotations
 
 import logging
 import socket
+import threading
+import time
 import urllib.error
 import urllib.request
 import urllib.parse
@@ -61,6 +63,9 @@ class Mobility:
         self.roads = Roads(lambda url: self.fetch(url).decode("utf-8"), memory=memory,
                            router=router, now=self.now, cache_dir=cache_dir)
         self.memory = memory
+        self._summary: tuple[float, dict] | None = None
+        self._summary_running = False
+        self.search_cache: dict = {}  # chatbot/mobility/entities.py keeps its search items here
 
     # -- the timetable ---------------------------------------------------------------------
 
@@ -114,7 +119,27 @@ class Mobility:
 
     # -- summary for the strip and the Mobility workspace -------------------------------------
 
+    def summary_nowait(self, max_age_s: float = 30.0) -> dict | None:
+        """The last summary, refreshed in the background when older than max_age_s: for the
+        strip, which must never wait for a feed (or for the timetable's first load)."""
+        hit = self._summary
+        if (hit is None or time.time() - hit[0] > max_age_s) and not self._summary_running:
+            self._summary_running = True
+
+            def run() -> None:
+                try:
+                    self.summary()
+                finally:
+                    self._summary_running = False
+            threading.Thread(target=run, daemon=True, name="mobility-summary").start()
+        return hit[1] if hit else None
+
     def summary(self) -> dict:
+        out = self._summarise()
+        self._summary = (time.time(), out)
+        return out
+
+    def _summarise(self) -> dict:
         out: dict = {}
         try:
             snap = self.snapshot()

@@ -95,7 +95,7 @@ def live_strip(agent: Agent) -> dict:
         out["registers"] = {"buildings": len(agent.registers.records())}
 
     mob = getattr(agent, "mobility", None)
-    moving = cached("mobility_summary", 30, mob.summary) if mob is not None else None
+    moving = mob.summary_nowait() if mob is not None else None  # never waits for a feed
     buses = (moving or {}).get("buses") or {}
     if buses.get("status") in ("live", "stale"):
         out["buses"] = {"running": buses["running"], "lines": buses.get("lines"), "late": buses.get("late")}

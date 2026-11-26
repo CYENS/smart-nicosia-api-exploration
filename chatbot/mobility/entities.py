@@ -368,18 +368,16 @@ def road_series(ents, entity: dict, end: datetime | None = None) -> dict | None:
 
 # -- search ----------------------------------------------------------------------------------
 
-_index: dict[str, tuple[float, int, list[dict]]] = {}
-
-
 def search_items(ents) -> list[dict]:
     m = _mobility(ents)
     if m is None:
         return []
+    _index = m.search_cache  # per Mobility: (built at, the timetable it came from, items)
     tt = m.timetable()
     items: list[dict] = []
     if tt is not None:
         hit = _index.get("bus")
-        if hit is None or hit[1] != id(tt):
+        if hit is None or hit[1] is not tt:
             built = []
             for s in tt.stops:
                 lines = tt.lines_at(s)
@@ -400,7 +398,7 @@ def search_items(ents) -> list[dict]:
                 short = ln.short.lower()
                 item["_aliases"] = {short, f"line {short}", f"bus {short}", f"λεωφορειο {short}"}
                 built.append(item)
-            _index["bus"] = hit = (time.time(), id(tt), built)
+            _index["bus"] = hit = (time.time(), tt, built)
         items += hit[2]
     hit = _index.get("roads")
     if hit is None or time.time() - hit[0] > 3600:
@@ -412,7 +410,7 @@ def search_items(ents) -> list[dict]:
                               ", ".join(x for x in (s.road, "road speed") if x), s.middle[1], s.middle[0],
                               [s.name, s.road, s.from_name, s.to_name, "road speed traffic"])
                  for s in segs]
-        _index["roads"] = hit = (time.time(), 0, built)
+        _index["roads"] = hit = (time.time(), None, built)
     items += hit[2]
     return items
 

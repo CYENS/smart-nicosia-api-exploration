@@ -14,7 +14,6 @@ from chatbot.mobility.gtfs import simplify
 from chatbot.mobility.roads import LEGEND, parse_moment, segment_feature
 from chatbot.overview import cached
 from chatbot.routes import agent_of
-from chatbot.web import WebError
 
 router = APIRouter()
 
@@ -113,9 +112,6 @@ def mobility(request: Request) -> JSONResponse:
         return [{k: r.get(k) for k in ("camera", "lat", "lon", "people", "car", "bus", "bike", "total")}
                 for r in rows[:6]]
 
-    try:
-        body = {**body, "cameras": cached("mobility_cameras", 600, cams)}
-    except WebError:
-        body = {**body, "cameras": None}
+    body = {**body, "cameras": cached("mobility_cameras", 600, cams)}  # None if they failed
     body["as_of"] = datetime.now(timezone.utc).isoformat()
     return JSONResponse(body, headers={"Cache-Control": "max-age=30"})

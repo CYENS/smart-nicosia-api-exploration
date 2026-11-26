@@ -225,6 +225,7 @@ class Roads:
         self._measured: tuple[float, dict[str, tuple[float, int]]] | None = None
         self._reference: dict[str, dict] | None = None
         self._reference_running = False
+        self._usual: dict[tuple, tuple[float, dict]] = {}
         self.error: str | None = None
 
     # -- the inventory ---------------------------------------------------------------------
@@ -378,6 +379,17 @@ class Roads:
         if self.memory is None or not nap_ids:
             return {}
         local = at.astimezone(TZ)
+        key = (local.strftime("%Y-%m-%d %H"), tuple(nap_ids))
+        hit = self._usual.get(key)
+        if hit and time.time() - hit[0] < 600:
+            return hit[1]
+        out = self._usual_from_memory(nap_ids, local)
+        if len(self._usual) > 64:
+            self._usual.clear()
+        self._usual[key] = (time.time(), out)
+        return out
+
+    def _usual_from_memory(self, nap_ids: list[str], local: datetime) -> dict[str, tuple[float, int]]:
         start = local - timedelta(weeks=USUAL_WEEKS)
         today = local.replace(hour=0, minute=0, second=0, microsecond=0)
         try:

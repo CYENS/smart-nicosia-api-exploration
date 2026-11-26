@@ -339,8 +339,13 @@ def trip_features(ctx: ToolContext, tt, option: dict, origin, dest) -> tuple[lis
     line, minutes = _walk(ctx, here, (dest[0], dest[1]))
     feats.append(_line(line, "walk", WALK_COLOR, f"walk {max(1, round(minutes))} min"))
     if first_walk_min is not None and rides:  # leave in time for Valhalla's walk, a minute spare
-        dep = datetime.strptime(rides[0]["departs"], "%H:%M")
-        option["leave"] = (dep - timedelta(minutes=round(first_walk_min) + 1)).strftime("%H:%M")
+        leave = option["_leave"].replace(second=0, microsecond=0)
+        dep = leave.replace(hour=int(rides[0]["departs"][:2]), minute=int(rides[0]["departs"][3:]))
+        if dep < leave - timedelta(hours=12):  # the bus leaves after midnight
+            dep += timedelta(days=1)
+        leave = dep - timedelta(minutes=round(first_walk_min) + 1)
+        option["leave"] = leave.strftime("%H:%M")
+        option["minutes"] = round((option["_arrive"] - leave).total_seconds() / 60)
     pts.insert(0, (f"Start: {origin[2]}", origin[0], origin[1], f"leave {option['leave']}", None))
     pts.append((f"End: {dest[2]}", dest[0], dest[1], f"arrive {option['arrive']}", None))
     for n, (label, lat, lon, when, sid) in enumerate(pts, start=1):

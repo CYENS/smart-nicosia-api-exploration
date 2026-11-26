@@ -17,7 +17,7 @@ from datetime import datetime, timedelta
 
 from chatbot.geo import loose, norm
 from chatbot.mobility.gtfs import M_PER_DEG_LAT, TZ, Stop, Timetable, Trip, m_per_deg_lon
-from chatbot.mobility.realtime import DELAY_MAX_S, DELAY_MIN_S, Snapshot
+from chatbot.mobility.realtime import Snapshot, feed_delay
 
 WALK_MPS = 1.25
 DETOUR = 1.3
@@ -84,7 +84,8 @@ def _start_text(sec: int) -> str:
     return f"{sec // 3600:02d}:{sec % 3600 // 60:02d}:{sec % 60:02d}"
 
 
-def realtime_for(trip: Trip, day, pos: int, live: dict, snap: Snapshot | None) -> dict:
+def realtime_for(trip: Trip, day, pos: int, live: dict, snap: Snapshot | None,
+                 stop_id: str | None = None) -> dict:
     """{bus, delay_s, source, passed} for this trip at stop position `pos`."""
     key = (trip.route_id, trip.direction, _start_text(trip.start), day.strftime("%Y%m%d"))
     bus = live.get(key)
@@ -98,13 +99,9 @@ def realtime_for(trip: Trip, day, pos: int, live: dict, snap: Snapshot | None) -
         if bus.get("delay_s") is not None:
             out["delay_s"], out["source"] = bus["delay_s"], bus["delay_source"]
             return out
-    rows = (snap.updates if snap else {}).get(key[:3])
-    if rows:
-        before = [r for r in rows if r[0] <= pos] or rows[:1]
-        r = before[-1]
-        d = r[3] if pos == 0 and r[3] is not None else (r[2] if r[2] is not None else r[3])
-        if d is not None and DELAY_MIN_S <= d <= DELAY_MAX_S and not (pos == 0 and d < 0):
-            out["delay_s"], out["source"] = int(d), "feed"
+    d = feed_delay((snap.updates if snap else {}).get(key[:3]), pos, stop_id)
+    if d is not None:
+        out["delay_s"], out["source"] = d, "feed"
     return out
 
 
@@ -118,7 +115,7 @@ def departures(tt: Timetable, stops: list[Stop], start: datetime, minutes: float
     for when, trip, pos in tt.departures([s.idx for s in stops], start - timedelta(minutes=10),
                                          minutes + 10, lines):
         day = (when - timedelta(seconds=trip.dep[pos])).date()
-        rt = realtime_for(trip, day, pos, live, snap)
+        rt = realtime_for(trip, day, pos, live, snap, tt.stops[trip.stops[pos]].id)
         if rt.get("passed"):
             continue
         expected = when + timedelta(seconds=rt["delay_s"]) if "delay_s" in rt else None
@@ -219,7 +216,7 @@ def plan(tt: Timetable, origin: tuple[float, float], dest: tuple[float, float], 
             seen_lines[key] += 1
             day = (when - timedelta(seconds=trip.dep[pos])).date()
             base = _base(tt, day)
-            rt = realtime_for(trip, day, pos, live, snap)
+            rt = realtime_for(trip, day, pos, live, snap, o.id)
             if rt.get("passed"):
                 continue
             # Direct: the best place to get off this trip.
@@ -282,7 +279,7 @@ def describe(tt: Timetable, rides: list[Ride], w_first: float, w_rest: float,
     for i, r in enumerate(rides):
         line = tt.lines[r.trip.line_id]
         a, b = tt.stops[r.trip.stops[r.board]], tt.stops[r.trip.stops[r.alight]]
-        rt = realtime_for(r.trip, r.day, r.board, live, snap)
+        rt = realtime_for(r.trip, r.day, r.board, live, snap, a.id)
         leg = {"mode": "bus", "line": line.short, "line_id": line.id, "operator": line.operator,
                "color": line.color, "headsign": r.trip.headsign,
                "from": a.name, "from_id": f"stop-{a.id}", "to": b.name, "to_id": f"stop-{b.id}",
