@@ -1,15 +1,17 @@
 /* The inspector's built-in sections, registered by kind and order. */
-import { ChevronRightIcon, ExternalLinkIcon, LandPlotIcon, SearchIcon } from "lucide-react"
+import { ChevronRightIcon, ExternalLinkIcon, InfoIcon, LandPlotIcon, SearchIcon } from "lucide-react"
 
 import { Sparkline } from "@/components/inspector/sparkline"
 import { Item, ItemActions, ItemContent, ItemDescription, ItemGroup, ItemMedia, ItemTitle } from "@/components/ui/item"
 import { Marker, MarkerContent } from "@/components/ui/marker"
 import { Skeleton } from "@/components/ui/skeleton"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { ago, clockTime, kindMeta, metres, type Entity, type Reading, type Relation } from "@/lib/entities"
 import { useNow } from "@/lib/hooks"
 import { inspect } from "@/lib/inspector"
 import { openSearch } from "@/lib/layout"
 import { registerInspectorSection, type SectionProps } from "@/lib/registries/inspector-sections"
+import { openSources } from "@/lib/sources"
 import { cn } from "@/lib/utils"
 
 function Section({ title, children, className }: { title: string; children: React.ReactNode; className?: string }) {
@@ -235,6 +237,23 @@ function Sources({ entity }: SectionProps) {
             ) : <span className="text-foreground">{s.name}</span>}
             {s.detail && <span>, {s.detail}</span>}
             {s.as_of && <span>, as of {s.as_of.length > 10 ? clockTime(s.as_of) : s.as_of}</span>}
+            {s.source && (
+              <Tooltip>
+                <TooltipTrigger
+                  render={
+                    <button
+                      type="button"
+                      aria-label={`About ${s.name}: publisher, licence and freshness`}
+                      className="ml-1 inline-flex translate-y-[2px] rounded-sm text-muted-foreground outline-none hover:text-sodium focus-visible:text-sodium focus-visible:ring-2 focus-visible:ring-ring/60"
+                      onClick={(e) => openSources(s.source!, e.currentTarget)}
+                    />
+                  }
+                >
+                  <InfoIcon className="size-3.5" aria-hidden="true" />
+                </TooltipTrigger>
+                <TooltipContent>Publisher, licence and how fresh it is</TooltipContent>
+              </Tooltip>
+            )}
           </li>
         ))}
       </ul>

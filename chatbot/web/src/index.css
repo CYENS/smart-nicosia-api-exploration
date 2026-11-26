@@ -253,6 +253,17 @@
 .map-root .maplibregl-ctrl-bottom-left { left: var(--inset-left); bottom: var(--inset-bottom); }
 .map-root .maplibregl-ctrl-bottom-right { right: var(--inset-right); bottom: var(--inset-bottom); }
 .map-root .maplibregl-ctrl-top-right { right: var(--inset-right); }
+/* The scale sits beside the credits' (i), in one row at the foot of the bottom-right corner. */
+.map-root .maplibregl-ctrl-bottom-right { display: flex; flex-direction: row-reverse; align-items: flex-end; }
+.map-root .maplibregl-ctrl-bottom-right > .maplibregl-ctrl-scale { margin-bottom: 14px; }
+/* "Locate me" drives MapLibre's geolocate control; its own button stays hidden (the map's
+   controls under the now line have one). */
+.map-root .maplibregl-ctrl-group:has(.maplibregl-ctrl-geolocate) { display: none; }
+@media (prefers-reduced-motion: reduce) {
+  .map-root .maplibregl-ctrl-bottom-left,
+  .map-root .maplibregl-ctrl-bottom-right,
+  .map-root .maplibregl-ctrl-top-right { transition: none; }
+}
 .maplibregl-ctrl-group {
   background: var(--console) !important;
   border: 1px solid var(--line);
@@ -267,6 +278,14 @@
   font-size: 11px;
 }
 .maplibregl-ctrl-attrib a { color: var(--muted-foreground); }
+.maplibregl-ctrl-attrib a:hover, .maplibregl-ctrl-attrib a:focus-visible { color: var(--foreground); }
+/* With the sources of what is drawn, the credits can run long: they wrap inside the panels
+   rather than slide under the conversation. */
+.map-root .maplibregl-ctrl-attrib {
+  /* The map fills the page; the control adds 36 px of padding and 10 px margins outside its
+     max-width, and the scale beside it about 90 px. */
+  max-width: calc(100vw - var(--inset-left) - var(--inset-right) - 160px);
+}
 .maplibregl-ctrl-attrib-button { filter: invert(0.85); }
 .maplibregl-ctrl-scale {
   background: rgb(14 24 40 / 0.7);

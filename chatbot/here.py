@@ -76,22 +76,23 @@ TTL_FAILED_S = 10
 SECTION_TIMEOUT_S = 15  # sections() gives up waiting on one after this (the model's call)
 
 SMART_NICOSIA = "https://nokia.smartnicosia.eu/api-docs"
+# Each names its entry in chatbot/sources.py by `id` (the reading rules are not a source).
 SRC = {
-    "geocoding": {"name": "Nominatim (OpenStreetMap)", "detail": "the address at the point",
+    "geocoding": {"id": "geocoding", "name": "Nominatim (OpenStreetMap)", "detail": "the address at the point",
                   "url": "https://nominatim.org"},
-    "places": {"name": "OpenStreetMap", "detail": "the places index",
+    "places": {"id": "openstreetmap", "name": "OpenStreetMap", "detail": "the places index",
                "url": "https://www.openstreetmap.org/copyright"},
-    "timetable": {"name": "Bus timetables (GTFS)", "detail": "stops and departures",
+    "timetable": {"id": "bus_timetable", "name": "Bus timetables (GTFS)", "detail": "stops and departures",
                   "url": "https://traffic4cyprus.org.cy/dataset/publictransportstatic"},
-    "bus_live": {"name": "Live bus positions (GTFS-RT)", "detail": "the live delays",
+    "bus_live": {"id": "bus_live", "name": "Live bus positions (GTFS-RT)", "detail": "the live delays",
                  "url": "https://traffic4cyprus.org.cy/dataset/publictransportrealtime_gtfs_rt"},
-    "smart_nicosia": {"name": "Smart Nicosia platform", "detail": "the last snapshot",
+    "smart_nicosia": {"id": "smart_nicosia", "name": "Smart Nicosia platform", "detail": "the last snapshot",
                       "url": SMART_NICOSIA},
-    "memory": {"name": "The twin's memory", "detail": "readings as they arrived"},
+    "memory": {"id": "twin_memory", "name": "The twin's memory", "detail": "readings as they arrived"},
     "rules": {"name": "The twin's reading rules", "detail": "collector/interpret.py"},
-    "registers": {"name": "Dangerous-building registers (ΕΟΑ)",
+    "registers": {"id": "registers", "name": "Dangerous-building registers (ΕΟΑ)",
                   "url": "https://ndlgo.org.cy/en/hazardousbldslist/"},
-    "dls": {"name": "DLS 3D buildings (INSPIRE)", "url": "https://eservices.dls.moi.gov.cy/inspire/"},
+    "dls": {"id": "dls", "name": "DLS 3D buildings (INSPIRE)", "url": "https://eservices.dls.moi.gov.cy/inspire/"},
 }
 
 
@@ -616,3 +617,8 @@ def relations(secs: list[dict]) -> list[dict]:
                         "distance_m": r.get("distance_m"), "lon": r["lon"], "lat": r["lat"],
                         **({"state": r["state"], "color": r.get("color")} if r.get("state") else {})})
     return out
+
+
+def source_ids(secs: list[dict]) -> list[str]:
+    """The ids in chatbot/sources.py of what the sections read, once each, in order."""
+    return list(dict.fromkeys(x["id"] for s in secs for x in s["sources"] if x.get("id")))

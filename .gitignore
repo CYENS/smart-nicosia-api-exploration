@@ -18,3 +18,6 @@ data/chatbot_cache/
 
 # Claude Code desktop worktrees (launch.json is shared)
 .claude/worktrees/
+
+# Showcase video recordings (tools/tour)
+data/tour/

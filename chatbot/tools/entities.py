@@ -19,14 +19,15 @@ ID = {"type": "string",
       "description": "The thing's id as the tools give it: a device (YL1015 street light, YP974 "
                      "parking bay, YW1394 bin, an air station's or camera's name), a register "
                      "building (NIC-409, LIM-12, LAR-120, FAM-15B-3), a DLS 3D building (B255563), "
-                     "an OpenStreetMap place (n219329628) or a spot, any point of the map "
-                     "(spot-35.17000-33.36060: latitude and longitude, five decimals)."}
+                     "an OpenStreetMap place (n219329628), a place found on the web "
+                     "(web-1a2b3c4d) or a spot, any point of the map (spot-35.17000-33.36060: "
+                     "latitude and longitude, five decimals)."}
 
 
 def entities_of(ctx: ToolContext) -> Entities:
     if ctx.entities is None:
         ctx.entities = Entities(ctx.city, ctx.places, ctx.dls, ctx.registers, ctx.memory,
-                                mobility=ctx.mobility)
+                                mobility=ctx.mobility, web_places=ctx.web_places)
     return ctx.entities
 
 
@@ -99,7 +100,9 @@ def h_get_entity(ctx: ToolContext, a: dict) -> dict:
             geometry="buildings" if entity.get("footprints") else "point",
             title=entity["name"], legend=legend_for(states),
             value_fields=[r["key"] for r in entity["readings"] if isinstance(r["value"], (int, float))],
-            count=1 + sum(1 for r in entity["relations"] if r.get("id") and r.get("lon") is not None))
+            count=1 + sum(1 for r in entity["relations"] if r.get("id") and r.get("lon") is not None),
+            # A kind that knows what it read says so (a spot: chatbot/sources.py ids).
+            sources=entity.get("_source_ids"))
     # A kind with its own series (a road segment's speeds from the memory) has one too.
     if a.get("history", True) and (entity.get("has_series") or entity["kind"] in SERIES_RESOLVERS):
         end = None

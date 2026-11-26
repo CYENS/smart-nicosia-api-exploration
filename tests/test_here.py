@@ -336,6 +336,8 @@ def test_get_entity_on_a_spot_answers_from_the_same_sections(tmp_path, monkeypat
     layer = ctx.store.layers[out["layer_ref"]]
     assert {"NIC-1", "B1"} <= {f["properties"]["id"] for f in layer["features"]}
     assert "DLS 3D buildings (INSPIRE)" in " ".join(out["sources"])
+    # The layer names its sources by their chatbot/sources.py ids, for the map's credits.
+    assert {"dls", "registers", "open_meteo"} <= set(layer["meta"]["sources"])
     # At a past moment of the clock (city_clock in <context>), parking reads the twin's memory.
     sid = spot_id(*NEAR_YPA)
     then, err = run_tool(ctx, "get_entity", {"id": sid, "at": "2026-11-20T20:00"})

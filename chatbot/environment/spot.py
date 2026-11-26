@@ -142,6 +142,8 @@ def spot_details(ents, entity: dict, at: datetime | None) -> dict:
     names = {x["name"] for x in entity["sources"]}
     e["sources"] = entity["sources"] + [x for s in secs for x in s["sources"]
                                         if x["name"] not in names and not names.add(x["name"])]
+    # For the layer get_entity draws: the environment's readout and what the sections read.
+    e["_source_ids"] = list(dict.fromkeys(["dls", "smart_nicosia", "open_meteo", *here.source_ids(secs)]))
     return e
 
 
