@@ -69,21 +69,23 @@ const base = (): Basemap => useMapUi.getState().basemap
 const moment = () => useClock.getState().at ?? Date.now()
 const env = useEnvironment.getState
 
-function baseLayerOfType(map: MlMap, type: string) {
-  return map.getLayersOrder().find((id) => /^(night|day)\.\d+\//.test(id) && map.getLayer(id)?.type === type)
+// The base map's first street layer: the hillshade goes just under it, over the land and the
+// water (which would hide it), under the streets and the labels.
+function firstStreetLayer(map: MlMap) {
+  return map.getLayersOrder().find((id) => /^(night|day)\.\d+\/(tunnel|road|bridge|highway|aeroway_runway|building)/.test(id))
 }
 
 // -- where the layers sit ----------------------------------------------------------------------
 
 const answerRasters = new Set<string>() // answer layers' grids, drawn under the labels
 
-// Hillshade above the ground and under the roads; the rasters (surfaces, sun hours, shadows,
+// Hillshade above the land and the water and under the streets; the rasters (surfaces, sun hours, shadows,
 // radar) above the roads and under the labels, in that order. Run again whenever the base map
 // changes, since its layers are replaced.
 function place() {
   const map = getMap()
   if (!map) return
-  const roads = baseLayerOfType(map, "line")
+  const roads = firstStreetLayer(map)
   if (map.getLayer(HILL) && roads) map.moveLayer(HILL, roads)
   const label = firstLabelLayer()
   if (!label) return
@@ -153,7 +155,7 @@ function syncTerrain() {
           "hillshade-illumination-anchor": "map",
           "hillshade-illumination-direction": lightFrom(),
         },
-      } as LayerSpecification, baseLayerOfType(map, "line"))
+      } as LayerSpecification, firstStreetLayer(map))
     }
     map.setTerrain({ source: DEM_SRC, exaggeration })
   } else {
