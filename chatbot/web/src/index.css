@@ -86,9 +86,13 @@
   --primary-foreground: #0e1828;
   --secondary: var(--raised);
   --secondary-foreground: #e4ebf4;
-  --muted: #192840;
+  /* Hover, pressed and expanded states are a lift of light over whatever is under them, so they
+     show the same on the night, console and popover surfaces (an opaque step went darker than
+     the popover and vanished). Muted is the light lift (hover, quiet fills), accent the firm
+     one (pressed, expanded). Selected rows and pressed toggles use sodium instead. */
+  --muted: rgb(150 172 206 / 0.13);
   --muted-foreground: #8798b0;
-  --accent: #22344f;
+  --accent: rgb(150 172 206 / 0.21);
   --accent-foreground: #e4ebf4;
   --destructive: var(--signal);
   --border: var(--line);
