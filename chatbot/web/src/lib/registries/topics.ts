@@ -17,7 +17,7 @@ export type TopicLink = { label: string; run: () => void }
 export type Topic = {
   id: string
   label: string // the chip, one word
-  title?: string // the card's heading (defaults to the label)
+  title?: string // the card's heading (by default the label and "now", or "then" in the past)
   icon: LucideIcon
   order: number
   description: string // for Ctrl K and the chip's tooltip

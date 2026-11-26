@@ -5,7 +5,7 @@
    beside it: the right column on a desktop, a bottom sheet on a phone. Esc or the close button
    gives the keyboard back to whatever opened it. */
 import { MoonIcon, NavigationIcon, SquareIcon, SunIcon, SunMoonIcon, XIcon, LocateFixedIcon } from "lucide-react"
-import { useMemo, type ReactNode } from "react"
+import { useMemo, type KeyboardEvent, type ReactNode } from "react"
 
 import { useCameraAngles, set3dView } from "@/components/shell/map-controls"
 import { FromSources } from "@/components/sources/from-sources"
@@ -29,6 +29,7 @@ import {
   RAMP, REGISTERS_REF, flyRoute, fmt, forgetMyLocation, locateMe, nicosiaTime, removeLayer, setBasemapMode,
   stopFlight, useMapUi, type LayerSummary,
 } from "@/lib/map/engine"
+import { cap } from "@/lib/readouts"
 import { useLayerRegistry, type SystemLayer } from "@/lib/registries/layers"
 import { openWorkspace, useWorkspace } from "@/lib/registries/workspaces"
 import { useRovingList } from "@/lib/roving"
@@ -116,6 +117,19 @@ function OnCount({ layers }: { layers: SystemLayer[] }) {
   return <span className="ml-auto pr-2 font-condensed text-[13px] font-normal text-sodium">{n} on</span>
 }
 
+// WAI-ARIA's optional accordion keys: Up and Down move between the group headers, Home and End
+// to the first and last (Tab still goes through each open group's switches).
+function headerKeys(e: KeyboardEvent<HTMLDivElement>) {
+  const t = e.target as HTMLElement
+  if (t.dataset.slot !== "accordion-trigger" || !["ArrowDown", "ArrowUp", "Home", "End"].includes(e.key)) return
+  const all = [...e.currentTarget.querySelectorAll<HTMLElement>("[data-slot=accordion-trigger]")]
+  const i = all.indexOf(t)
+  const n = all.length
+  const next = e.key === "Home" ? 0 : e.key === "End" ? n - 1 : (i + (e.key === "ArrowDown" ? 1 : -1) + n) % n
+  e.preventDefault()
+  all[next]?.focus()
+}
+
 function CitySystems() {
   const groups = useLayerRegistry((s) => s.groups)
   const layers = useLayerRegistry((s) => s.layers)
@@ -125,6 +139,7 @@ function CitySystems() {
       <Accordion
         value={open ? [open] : []}
         onValueChange={(v) => setLayersGroup((v[0] as string | undefined) ?? null)}
+        onKeyDown={headerKeys}
         className="-mx-1 rounded-lg border border-line"
       >
         {groups.map((g) => {
@@ -170,7 +185,7 @@ function Workspaces() {
               <ItemMedia className="text-muted-foreground [&_svg]:size-[18px]"><w.icon /></ItemMedia>
               <ItemContent className="gap-0.5">
                 <ItemTitle className="text-[14px]">{w.label}</ItemTitle>
-                <ItemDescription className="text-[12.5px]">{w.description.split(": ").slice(1).join(": ") || w.description}</ItemDescription>
+                <ItemDescription className="text-[12.5px]">{cap(w.description.split(": ").slice(1).join(": ") || w.description)}</ItemDescription>
               </ItemContent>
               {w.key && <Kbd className="max-md:hidden">Alt {w.key}</Kbd>}
             </Item>
@@ -324,13 +339,14 @@ export function LayersSheet() {
         side={g.desktop ? "right" : "bottom"}
         showOverlay={false}
         showCloseButton={false}
-        initialFocus={false}
+        // The keyboard goes to the sheet's title, so a screen reader starts there, and Tab goes on in.
+        initialFocus={() => document.getElementById("layers-title")}
         finalFocus={() => layersOpener() ?? document.querySelector<HTMLElement>("[data-layers-button]") ?? true}
         className="panel-float z-30 gap-0 overflow-hidden rounded-xl border bg-console p-0 motion-reduce:transition-none"
         style={style}
       >
         <div className="flex h-12 shrink-0 items-center justify-between border-b border-line pr-2 pl-4">
-          <SheetTitle className="text-[14px] font-semibold">Layers</SheetTitle>
+          <SheetTitle id="layers-title" tabIndex={-1} className="text-[14px] font-semibold outline-none">Layers</SheetTitle>
           <SheetDescription className="sr-only">The base map, the city's systems, what answers drew and your position</SheetDescription>
           <Tooltip>
             <TooltipTrigger render={<SheetClose render={<Button variant="ghost" size="icon-sm" aria-label="Close the layers" />} />}>

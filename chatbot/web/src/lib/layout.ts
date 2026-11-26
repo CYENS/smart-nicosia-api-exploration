@@ -31,6 +31,7 @@ type Layout = {
   questionsOpen: boolean // the search menu (Ctrl K)
   searchSeed: string // what the search menu opens with
   shortcutsOpen: boolean
+  cardH: number // the open topic card's height, measured (a phone's bottom sheet)
 }
 
 const desktopNow = () => typeof window === "undefined" || window.innerWidth >= 768
@@ -43,6 +44,7 @@ export const useLayout = create<Layout>(() => ({
   questionsOpen: false,
   searchSeed: "",
   shortcutsOpen: false,
+  cardH: 0,
 }))
 
 // What had the keyboard before the search menu opened: a result that opens the inspector hands

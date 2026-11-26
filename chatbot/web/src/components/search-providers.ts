@@ -15,6 +15,7 @@ import {
 } from "@/lib/map/engine"
 import { QUESTION_GROUPS } from "@/lib/questions"
 import { closeLayers, openLayers } from "@/lib/layers-sheet"
+import { cap } from "@/lib/readouts"
 import { openSources } from "@/lib/sources"
 import { matches, registerSearchProvider, type SearchItem } from "@/lib/registries/search"
 import { selectTopic, useTopics } from "@/lib/registries/topics"
@@ -134,7 +135,7 @@ registerSearchProvider({
       .filter((w) => w.id !== active && matches(q, w.label, w.description, "workspace view"))
       .map((w): SearchItem => ({
         key: `ws:${w.id}`, icon: w.icon, title: w.id === "live" ? "Back to Live" : `Open ${w.label}`,
-        detail: w.description.split(": ").slice(1).join(": ") || w.description,
+        detail: cap(w.description.split(": ").slice(1).join(": ") || w.description),
         run: () => openWorkspace(w.id),
       }))
   },

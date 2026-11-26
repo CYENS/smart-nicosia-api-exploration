@@ -95,7 +95,7 @@ function BusesLegend() {
 }
 
 registerTopic({
-  id: "buses", label: "Buses", title: "Buses now", icon: BusFrontIcon, order: 0,
+  id: "buses", label: "Buses", icon: BusFrontIcon, order: 0,
   description: "Live buses on the map, coloured by line",
   sources: ["bus_live", "bus_timetable"],
   show: () => {
@@ -136,7 +136,7 @@ function ParkingLegend() {
 }
 
 registerTopic({
-  id: "parking", label: "Parking", title: "Parking now", icon: CarFrontIcon, order: 10,
+  id: "parking", label: "Parking", icon: CarFrontIcon, order: 10,
   description: "Every parking bay with a sensor, free or taken",
   sources: ["smart_nicosia"],
   show: () => {
@@ -174,7 +174,8 @@ function TrafficSummary() {
   const by = summary?.by_state ?? {}
   const slow = (by.slow ?? 0) + (by.very_slow ?? 0)
   const busy = by.busy ?? 0
-  const worst = strip?.slowest_road
+  const worst = strip?.slowest_road ?? (summary?.slowest?.[0]?.speed_kmh != null
+    ? { name: summary.slowest[0].road ?? summary.slowest[0].name, speed_kmh: summary.slowest[0].speed_kmh } : null)
   const lead = !summary ? "Road speeds against each road's free flow."
     : slow === 0 ? (busy ? "Busy on a few roads, slow on none." : "Moving freely on the measured roads.")
       : `Slow on ${fmtCount(slow)} of ${fmtCount(roads.measured)} road segments.`
@@ -183,7 +184,7 @@ function TrafficSummary() {
 }
 
 registerTopic({
-  id: "traffic", label: "Traffic", title: "Traffic now", icon: GaugeIcon, order: 20,
+  id: "traffic", label: "Traffic", icon: GaugeIcon, order: 20,
   description: "Main roads coloured by speed against their free flow",
   sources: ["road_speeds"],
   show: () => {
@@ -225,7 +226,7 @@ function OutsideLegend() {
 }
 
 registerTopic({
-  id: "outside", label: "Outside", title: "Outside now", icon: SunIcon, order: 30,
+  id: "outside", label: "Outside", icon: SunIcon, order: 30,
   description: "The weather, the air at the stations and when it gets dark",
   sources: ["open_meteo", "smart_nicosia"],
   show: () => {

@@ -93,7 +93,8 @@ export function useGeometry() {
   const phoneSheet = !desktop && (inspecting || wsSide || layersOpen)
   const cardShown = topic && (desktop ? !stage.expanded : !(chatOpen || phoneSheet))
   const chatBottom = !desktop && (chatOpen || phoneSheet) ? (phoneSheet ? sheetH : Math.round(vh * 0.56)) + PHONE_GAP : 0
-  const cardBottom = !desktop && cardShown ? Math.round(vh * 0.34) : 0
+  const cardH = useLayout((s) => s.cardH)
+  const cardBottom = !desktop && cardShown ? (cardH || Math.round(vh * 0.34)) + PHONE_GAP : 0
   // The topic card sits over the stage (or its button) at the bottom left of the open map.
   const cardOffset = desktop ? (stage.open && !stage.expanded ? stageH + GAP : stage.any && !stage.open ? ROW_H + GAP : 0) : 0
   const bottomInset = Math.max(chatBottom, cardBottom, stage.open && !stage.expanded && desktop ? stageH + GAP : 0)
