@@ -9,6 +9,7 @@ from datetime import datetime, timedelta
 from collector.http import ApiError
 
 from chatbot import context, eoa
+from chatbot import sources as data_sources
 from chatbot.dls import distance_to_path_m
 from chatbot.geo import haversine_m
 from chatbot.routing import MAX_TOUR_STOPS, MODES, PREFERENCES, best_order
@@ -172,8 +173,10 @@ def h_plan_route(ctx: ToolContext, a: dict) -> dict:
     if shade and shade.get("stretches"):
         legend = {**SHADE_COLORS, **({"other ways": STATE_COLORS["usual route"]} if shade["others"] else {}),
                   **{k: v for k, v in legend.items() if k not in ("route", "usual route")}}
+    # A walk read for its shade draws on the DLS buildings too.
     layer = ctx.store.add_layer(f"route_{mode}", feats, geometry="route",
-                                title=f"{mode.capitalize()} route", legend=legend)
+                                title=f"{mode.capitalize()} route", legend=legend,
+                                sources=data_sources.current() + (["dls"] if shade and shade.get("stretches") else []))
     visit_min = sum(s["minutes_here"] for s in stops[1:])
     res = {
         "mode": mode, "prefer": prefer, "optimized": bool(seconds),

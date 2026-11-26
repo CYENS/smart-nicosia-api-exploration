@@ -30,6 +30,7 @@ import {
   stopFlight, useMapUi, type LayerSummary,
 } from "@/lib/map/engine"
 import { cap } from "@/lib/readouts"
+import { layerKeyFor } from "@/lib/registries/layer-keys"
 import { useLayerRegistry, type SystemLayer } from "@/lib/registries/layers"
 import { openWorkspace, useWorkspace } from "@/lib/registries/workspaces"
 import { useRovingList } from "@/lib/roving"
@@ -93,9 +94,11 @@ function MapSection() {
 
 // -- City systems -------------------------------------------------------------------------------
 
-function SystemRow({ layer }: { layer: SystemLayer }) {
+// One row: its switch, its live summary and, while it is on, its legend. The open workspace's
+// panel lists its own group's rows too (the environment's), with its own id prefix.
+export function SystemRow({ layer, idPrefix = "ls" }: { layer: SystemLayer; idPrefix?: string }) {
   const on = layer.useOn()
-  const id = `ls-${layer.id}`
+  const id = `${idPrefix}-${layer.id}`
   return (
     <div className="flex flex-col gap-2">
       <Field orientation="horizontal">
@@ -264,7 +267,10 @@ function OnTheMap() {
         </p>
       ) : (
         <ul className="flex flex-col gap-4">
-          {layers.map((l) => (
+          {layers.map((l) => {
+            // A layer drawn its own way (an environment answer's grid) brings its own legend.
+            const Own = layerKeyFor(l.renderer)
+            return (
             <li key={l.ref} className="flex flex-col gap-2">
               <div className="flex items-start gap-2">
                 <span className="min-w-0 flex-1 text-[13.5px] leading-snug font-medium">
@@ -278,7 +284,7 @@ function OnTheMap() {
                   <TooltipContent>Remove this layer</TooltipContent>
                 </Tooltip>
               </div>
-              <Keys layer={l} />
+              {Own ? <Own layer={l} /> : <Keys layer={l} />}
               <FromSources ids={l.sources} />
               {l.style === "route" && (
                 <Button variant="outline" size="sm" className="self-start" aria-pressed={flying === l.ref} onClick={() => (flying === l.ref ? stopFlight() : flyRoute(l.ref))}>
@@ -287,7 +293,8 @@ function OnTheMap() {
                 </Button>
               )}
             </li>
-          ))}
+            )
+          })}
         </ul>
       )}
     </Section>

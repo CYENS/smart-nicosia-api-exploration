@@ -269,6 +269,11 @@ class Environment:
             self._radar = (time.time(), out)
         return out
 
+    def radar_status(self) -> tuple[float, dict] | None:
+        """When the radar was last read and what it said, without asking it (None: not yet)."""
+        with self._lock:
+            return self._radar
+
     # -- sun and shade ---------------------------------------------------------------------------
 
     def sun_hours(self, lat: float, lon: float, radius_m: float, day: date) -> dict:

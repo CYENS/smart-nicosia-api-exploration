@@ -297,9 +297,10 @@ def _wind(ctx: ToolContext, env, at: datetime | None, when: datetime) -> dict:
                                     "state": "wind", "color": "#8798b0", "speed_ms": sp}))
     title = f"Wind, {'now' if at is None else when.strftime('%a %d %b %H:%M')}"
     layer = ctx.store.add_layer("wind", feats, geometry="point", title=title,
-                                legend={}, value_fields=["speed_ms"])
+                                legend={}, value_fields=["speed_ms"], sources=["open_meteo"])
     ctx.store.layers[layer]["meta"]["environment"] = {"kind": "wind", "at": w["at"]}
-    data = ctx.store.add_dataset("wind", rows, title="Modelled wind at 10 m", link={"key": "id"})
+    data = ctx.store.add_dataset("wind", rows, title="Modelled wind at 10 m", link={"key": "id"},
+                                 sources=["open_meteo"])
     c = w["centre"]
     return {"metric": "wind", "at": w["at"] or "now", "model_hour": w["model_hour"],
             "over_nicosia": {"speed_kmh": round(c["speed_ms"] * 3.6) if c["speed_ms"] is not None else None,
