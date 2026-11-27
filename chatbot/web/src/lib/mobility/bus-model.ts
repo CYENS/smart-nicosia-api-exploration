@@ -32,7 +32,7 @@ const SODIUM: [number, number, number] = [1, 0xae / 255, 0x45 / 255]
 const BUS_LENGTH = 12
 
 // The length a bus is drawn on screen, in CSS pixels, by zoom (until true size takes over).
-const SCREEN_LENGTH: [number, number][] = [[13.4, 24], [15, 30], [16.5, 38], [18, 46]]
+const SCREEN_LENGTH: [number, number][] = [[13.4, 26], [15, 34], [16.5, 42], [18, 50]]
 
 export type BusInstance = { id: string; lon: number; lat: number; heading: number; color: string; open: boolean }
 
@@ -326,10 +326,10 @@ export async function loadBusModel(map: MlMap, onFail: (why: string) => void): P
       gl.uniform3f(s.u.light, lx * Math.cos(b) + ly * Math.sin(b), -lx * Math.sin(b) + ly * Math.cos(b), 0.7)
       gl.enable(gl.CULL_FACE)
       gl.cullFace(gl.BACK)
-      // Counter-clockwise in metres (y north) turns clockwise in the map's mercator (y south).
-      gl.frontFace(gl.CW)
+      // glTF's counter-clockwise front faces stay so on screen: the flip to mercator's southward
+      // y is undone by the map's own projection.
+      gl.frontFace(gl.CCW)
       gl.enable(gl.DEPTH_TEST)
-
       // 1. What is behind the city: a faint silhouette while the bus is bigger than life.
       const ghost = Math.min(0.5, Math.max(0, (scale - 1.2) / 2.6))
       if (ghost > 0.01) {
