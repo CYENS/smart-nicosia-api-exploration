@@ -44,6 +44,10 @@ export const TOOL_LABELS: Record<string, string> = {
   find_high_places: "Finding high places with a view", view_from: "Flying you to the view",
   list_scenarios: "Reading the scenario lab", run_scenario: "Running the scenario",
   compare_scenarios: "Comparing the two runs", open_scenario: "Opening it in the scenario lab",
+  // The street rules (chatbot/tools/streets.py).
+  get_speed_limits: "Reading the speed limits", find_slow_zones: "Finding the slow zones",
+  find_crossings: "Finding crossings and signals", get_cycle_network: "Tracing the cycle network",
+  get_bus_lanes: "Finding the bus lanes", find_enforcement_cameras: "Finding the enforcement cameras",
 }
 
 export function toolLabel(name: string) {

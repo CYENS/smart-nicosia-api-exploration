@@ -95,7 +95,9 @@ function Status({ entity }: { entity: Entity }) {
 // The clock shows a past moment: say which, and what the twin's memory holds of it.
 function MomentBadge({ entity }: { entity: Entity }) {
   const m = entity.moment!
-  const text = !m.applies ? `The clock shows ${m.label}; this has no history` : m.known ? `As it was on ${m.label}` : `No record of ${m.label}`
+  // An inventory (a speed sign, a crossing) says it stands at every moment.
+  const text = m.note ? `The clock shows ${m.label}. ${m.note}`
+    : !m.applies ? `The clock shows ${m.label}; this has no history` : m.known ? `As it was on ${m.label}` : `No record of ${m.label}`
   return (
     <Badge variant="outline" className={cn("h-6 gap-1.5 px-2.5 text-[12.5px]", m.known || !m.applies ? "border-sodium/40 text-sodium" : "text-muted-foreground")}>
       <HistoryIcon data-icon="inline-start" />
