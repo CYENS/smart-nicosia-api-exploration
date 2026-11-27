@@ -394,8 +394,11 @@ def test_a_run_gives_kpis_with_ranges_layers_series_and_a_backtest(tmp_path, off
     assert next(f for f in feats if f["properties"]["id"] == "YW1056")["properties"]["state"] == "never_emptied"
     route = res.layers["route"]
     assert route["meta"]["geometry"] == "route" and route["meta"]["chat"] is True
-    assert route["meta"]["variant"] is None and route["meta"]["show"] is True  # over both sides
-    assert all(f["geometry"]["type"] == "LineString" for f in route["features"])
+    assert route["meta"]["variant"] is None and not route["meta"].get("show")  # a view of its own
+    lines = [f for f in route["features"] if f["geometry"]["type"] == "LineString"]
+    stops = [f for f in route["features"] if f["geometry"]["type"] == "Point"]
+    assert lines and stops and {f["properties"]["id"] for f in stops} <= {f["properties"]["id"] for f in feats}
+    assert all(f["properties"]["stop"] >= 1 for f in stops)
     assert {r["metric"] for r in res.series} >= {"full_hours", "collections", "truck_km", "fill_by_hour"}
     assert {c["metric"] for c in res.charts} == {r["metric"] for r in res.series}
     day = res.details["days"]["scenario"][0]
@@ -424,7 +427,7 @@ def test_finish_draws_the_route_on_the_roads_once_per_run(tmp_path, offline, mon
     ctx = waste_ctx(tmp_path)
     res, params = run(WASTE, ctx, {}, Period.parse("last_30_days", ctx.now()))
     route = res.layers["route"]
-    assert not any(f["properties"]["road"] for f in route["features"])  # offline: straight
+    assert not any(f["properties"].get("road") for f in route["features"])  # offline: straight
     assert route["meta"]["note"].startswith("Straight lines")
     asked = []
 
@@ -437,7 +440,7 @@ def test_finish_draws_the_route_on_the_roads_once_per_run(tmp_path, offline, mon
     f = route["features"][0]
     assert f["properties"]["road"] is True and route["meta"]["note"].startswith("Road lines")
     assert "_stops" not in f["properties"]
-    assert len(asked) == len(route["features"])
+    assert len(asked) == sum(g["geometry"]["type"] == "LineString" for g in route["features"])
 
 
 def test_run_scenario_hands_the_chat_the_route_as_well(tmp_path, offline):
@@ -505,7 +508,8 @@ def test_the_lab_sections_data_links_to_the_map(tmp_path, offline):
     assert all(day["stops"] == res.details["summary"]["bins_modelled"] for day in d["days"]["scenario"])
     drawn = next(x for x in d["days"]["scenario"] if x["date"] == d["route_date"])
     assert drawn["stops"] == max(x["stops"] for x in d["days"]["scenario"])
-    route_ids = {f["properties"]["id"] for f in res.layers["route"]["features"]}
+    route_ids = {f["properties"]["id"] for f in res.layers["route"]["features"]
+                 if f["geometry"]["type"] == "LineString"}
     assert route_ids == {f"trip-{drawn['date']}-{t['n']}" for t in drawn["trips"]}
     hours = [w["full_hours_baseline"] for w in d["watch"]]
     assert hours == sorted(hours, reverse=True) and all(h > 0 for h in hours)

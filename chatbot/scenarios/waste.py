@@ -443,7 +443,8 @@ class Waste(Scenario):
             f["geometry"]["coordinates"] = line
             f["properties"]["road"] = True
             f["properties"].pop("_stops", None)  # only kept for drawing the road line
-        road = all(f["properties"].get("road") for f in layer["features"])
+        road = all(f["properties"].get("road") for f in layer["features"]
+                   if f["geometry"]["type"] == "LineString")
         layer["meta"]["note"] = ("Road lines from Valhalla's heavy truck profile." if road else
                                  "Straight lines between stops, in the order the truck visits them.")
 
@@ -536,9 +537,19 @@ class Waste(Scenario):
                     "trip": k + 1, "truck": trip.truck + 1, "stops": len(trip.stops),
                     "km": round(trip.drive_km, 1), "road": bool(cached),
                     "order": [s.bin_id for s in trip.stops], "_stops": [list(p) for p in stops]}})
+            for i, s in enumerate(trip.stops, 1):  # the stops, numbered in the order the truck takes
+                b = data.bins[s.bin_id]
+                feats.append({"type": "Feature", "geometry": {"type": "Point", "coordinates": [b.lon, b.lat]},
+                              "properties": {
+                                  "id": s.bin_id, "state": trip.stream,
+                                  "color": ROUTE_COLORS.get(trip.stream, "#3d8bff"),
+                                  "label": f"Trip {k + 1}, stop {i} at {_hm(start * 60 + s.eta_min)}: {b.name}",
+                                  "trip": k + 1, "stop": i, "n": i, "level": round(s.level)}})
         used = dict.fromkeys(f["properties"]["state"] for f in feats)
+        # A view of its own (no variant, no switch): every trip leaves from the depot, so split by
+        # the swipe it would fall on one side; drawn alone it shows the whole day's rounds.
         return {"type": "FeatureCollection", "features": feats,
-                "meta": {"title": f"This scenario's rounds on {t:%a} {t.day} {t:%b}", "variant": None, "show": True,
+                "meta": {"title": f"This scenario's rounds on {t:%a} {t.day} {t:%b}", "variant": None,
                          "geometry": "route", "chat": True,
                          "legend": {s: ROUTE_COLORS[s] for s in used if s in ROUTE_COLORS},
                          "legend_labels": {s: ROUTE_LABELS[s] for s in used if s in ROUTE_LABELS},

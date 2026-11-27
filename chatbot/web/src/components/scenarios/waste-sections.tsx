@@ -11,7 +11,7 @@ import { Field, FieldLabel } from "@/components/ui/field"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { registerParamGroups, registerScenarioSection, type ScenarioRun } from "@/lib/registries/scenarios"
-import { flyToScenarioFeature } from "@/lib/scenarios/map"
+import { flyToScenarioFeature, showScenarioLayer } from "@/lib/scenarios/map"
 import { fmtNum } from "@/lib/scenarios/store"
 
 type Stop = { id: string; name: string; eta: string; level: number; load_m3: number }
@@ -93,7 +93,7 @@ function Rounds({ run, compare }: { run: ScenarioRun; compare: ScenarioRun | nul
         <>
           {!drawn && drawnLabel && (
             <p className="text-[12px] text-muted-foreground">
-              The map draws the rounds of {drawnLabel}, the busiest day; a stop here still flies to its bin.
+              The map's rounds view draws {drawnLabel}, the busiest day; a stop here still flies to its bin.
             </p>
           )}
           <DayView day={day} drawn={drawn} />
@@ -120,7 +120,7 @@ function DayView({ day, drawn }: { day: Day; drawn: boolean }) {
             {drawn && (
               <Button variant="ghost" size="xs" className="shrink-0"
                 aria-label={`Show trip ${t.n} on the map`}
-                onClick={() => flyToScenarioFeature(`trip-${day.date}-${t.n}`)}>
+                onClick={() => { showScenarioLayer("route"); flyToScenarioFeature(`trip-${day.date}-${t.n}`) }}>
                 On the map
               </Button>
             )}
