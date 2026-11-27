@@ -21,16 +21,24 @@ router = APIRouter()
 LIST = 8  # reports the card lists
 
 
-def _item(r: RoadReport, now) -> dict:
+def _then(words: str | None) -> str | None:
+    """An age at a past moment of the clock: "12 min before", "the day before"."""
+    if not words:
+        return words
+    return "the day before" if words == "yesterday" else words.replace(" ago", " before")
+
+
+def _item(r: RoadReport, now, past: bool = False) -> dict:
     status = r.status(now)
+    age = when_text(r, status, now) if r.source == "traffic_events" else age_words(r.since, now)
     return {"id": r.id, "kind": r.kind, "kind_label": r.kind_label, "label": r.label, "street": r.street,
             "color": KIND_COLORS[r.kind], "source": r.source, "status": status,
             "since": local_text(r.since), "until": local_text(r.until),
-            "age": when_text(r, status, now) if r.source == "traffic_events" else age_words(r.since, now),
+            "age": _then(age) if past else age,
             "old": bool(r.since and now - r.since > OLD), "lon": r.lon, "lat": r.lat}
 
 
-def summary(reports: list[RoadReport], now) -> dict:
+def summary(reports: list[RoadReport], now, past: bool = False) -> dict:
     """What the Traffic card says: counts by kind, what Waze drivers reported in the last half
     hour, the newest jam, and the reports worth listing (loud and new first, long closures
     last)."""
@@ -43,10 +51,10 @@ def summary(reports: list[RoadReport], now) -> dict:
     by = counts(active)
     return {"counts": by, "in_words": count_words(by), "total": len(active),
             "recent": counts(recent), "recent_words": count_words(counts(recent)) if recent else None,
-            "newest_jam": _item(jams[0], now) if jams else None,
+            "newest_jam": _item(jams[0], now, past) if jams else None,
             "long_closures": sum(1 for r in long if r.kind == "closure"),
             "planned": sum(1 for r in reports if r.status(now) == "planned"),
-            "list": [_item(r, now) for r in (fresh + long)[:LIST]]}
+            "list": [_item(r, now, past) for r in (fresh + long)[:LIST]]}
 
 
 @router.get("/api/road-reports")
@@ -67,7 +75,7 @@ def road_reports(request: Request, at: str | None = AT) -> JSONResponse:
             "meta": {"status": got["status"], "error": got.get("error"), "at": local_text(when),
                      "label": label(when) if when else None, "feeds": feeds, "legend": LEGEND,
                      "kinds": {k: {"label": v[0], "one": v[1], "many": v[2], "color": KIND_COLORS[k]} for k, v in KINDS.items()},
-                     **summary(reports, now)}}
+                     **summary(reports, now, past=when is not None)}}
     # A feed not read yet (the server just started) is asked again soon: never keep that answer.
     waiting = any(f.get("state") == "waiting" for f in feeds.values())
     cache = "no-store" if waiting or got["status"] == "unavailable" else "max-age=60" if when is None else "max-age=300"
