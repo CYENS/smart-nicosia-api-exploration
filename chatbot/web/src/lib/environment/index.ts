@@ -9,9 +9,11 @@ import { createElement } from "react"
 import { ShadeLegend, SunHoursLegend, SurfaceLegend } from "@/components/environment/parts"
 import "@/components/environment/rows"
 import "@/components/environment/sections"
+import { STATION_ICONS } from "@/components/environment/stations"
 import { EnvironmentPanel, rememberEnvironmentOpener } from "@/components/environment/workspace"
 import { KINDS } from "@/lib/entities"
 import { answerMeta, openSpotAtCentre, setShadowsOn, setTerrainOn, setWindOn, startEnvironmentMap } from "@/lib/environment/map"
+import { startStations } from "@/lib/environment/stations"
 import { useEnvironment } from "@/lib/environment/store"
 import { registerLayerKey } from "@/lib/registries/layer-keys"
 import { matches, registerSearchProvider, type SearchItem } from "@/lib/registries/search"
@@ -19,6 +21,8 @@ import { registerWorkspace } from "@/lib/registries/workspaces"
 import { registerActiveSources } from "@/lib/sources"
 
 KINDS.spot = { label: "Spot", icon: CloudSunIcon, chip: "place" }
+KINDS.weather_station = { label: "Weather station", icon: STATION_ICONS.weather_station, chip: "device" }
+KINDS.reference_air_station = { label: "Reference air station", icon: STATION_ICONS.reference_air_station, chip: "device" }
 
 registerWorkspace({
   id: "environment", label: "Environment", description: "Environment: sun, shade, terrain, air and weather",
@@ -68,3 +72,4 @@ registerSearchProvider({
 })
 
 startEnvironmentMap()
+startStations()
