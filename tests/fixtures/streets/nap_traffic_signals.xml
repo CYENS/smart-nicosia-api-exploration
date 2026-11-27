@@ -1,0 +1,3273 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<d2LogicalModel xmlns="https://datex2.eu/schema/3/exchangeInformation" xmlns:xsi="https://www.w3.org/2001/XMLSchema-instance" xmlns:common="https://datex2.eu/schema/3/common" xmlns:location="https://datex2.eu/schema/3/locationReferencing" xmlns:management="https://datex2.eu/schema/3/management" xsi:schemaLocation="https://datex2.eu/schema/3/exchangeInformation/DATEXII_3_ExchangeInformation.xsd">
+  <exchange>
+    <supplierIdentification>
+      <common:country>CY</common:country>
+      <common:nationalIdentifier>Ministry of Transport, Communications and Works</common:nationalIdentifier>
+    </supplierIdentification>
+  </exchange>
+  <management:managementElementPublication xsi:type="ManagementElementPublication">
+    <ns0:publicationTime xmlns:ns0="https://datex2.eu/schema/3/publication">2026-11-26T23:30:15.920071+02:00</ns0:publicationTime>
+    <ns1:publicationCreator xmlns:ns1="https://datex2.eu/schema/3/publication">Ministry of Transport, Communications and Works</ns1:publicationCreator>
+    <management:managementElement>
+      <common:id>0</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>D.AKRITA / LARNAKOS / KENNEDY (NIC-085 - 2 stream)</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΛΕΥΚΩΣΙΑΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.17112409999999</common:latitude>
+            <common:longitude>33.3751681</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>1</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>TH. DERVI / FLORINIS</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΛΕΥΚΩΣΙΑΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.1653315</common:latitude>
+            <common:longitude>33.3578009</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>2</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>TH.DERVI / VAS. FREIDERIKIS</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΛΕΥΚΩΣΙΑΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.16691939999999</common:latitude>
+            <common:longitude>33.3579779</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>3</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>GR.DHIGENI / TH.DERVIΒ</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΛΕΥΚΩΣΙΑΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.16291609999999</common:latitude>
+            <common:longitude>33.3590232</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>4</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>NIKIS / MATSI </common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΛΕΥΚΩΣΙΑΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.1619864</common:latitude>
+            <common:longitude>33.3582024</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>5</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>GR.DHIGENIS / SEVERI </common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΛΕΥΚΩΣΙΑΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.1635388</common:latitude>
+            <common:longitude>33.3542157</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>6</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>GR.DHIGENIS / PRODROMOU </common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΛΕΥΚΩΣΙΑΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.1642668</common:latitude>
+            <common:longitude>33.3491244</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>7</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>ACHAION / DELFON </common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΛΕΥΚΩΣΙΑΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.16887140000001</common:latitude>
+            <common:longitude>33.3426574</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>8</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>ACHAION / METOCHIOU</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΛΕΥΚΩΣΙΑΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.16883190000001</common:latitude>
+            <common:longitude>33.3476784</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>9</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>STROVOLOU / PYTHONOS </common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΣΤΡΟΒΟΛΟΥ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.1422383</common:latitude>
+            <common:longitude>33.3407882</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>10</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>PRODROMOU / METOCHIOU </common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΛΕΥΚΩΣΙΑΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.16945789999998</common:latitude>
+            <common:longitude>33.349213</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>11</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>EVAGOROU / TH.DERVI /DIAGOROU </common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΛΕΥΚΩΣΙΑΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.1681706</common:latitude>
+            <common:longitude>33.3578516</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>12</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>EVAGOROU / MAKARIOU </common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΛΕΥΚΩΣΙΑΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.1688635</common:latitude>
+            <common:longitude>33.3592088</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>13</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>SOLOMOS SQ. / OMIROU </common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΛΕΥΚΩΣΙΑΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.170244800000006</common:latitude>
+            <common:longitude>33.3586134</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>14</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>OMIROU / EVAGOROU </common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΛΕΥΚΩΣΙΑΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.16933709999999</common:latitude>
+            <common:longitude>33.3601422</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>15</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>SOLOMOU SQ. / K.PANTELIDES </common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΛΕΥΚΩΣΙΑΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.1711306</common:latitude>
+            <common:longitude>33.3587877</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>16</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>MAKARIOU / STASANDROU </common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΛΕΥΚΩΣΙΑΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.1666306</common:latitude>
+            <common:longitude>33.3615293</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>17</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>BOUMBOULINAS / STASANDROU </common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΛΕΥΚΩΣΙΑΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.167227</common:latitude>
+            <common:longitude>33.3635999</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>18</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>STASINOU / BOUMBOULINAS </common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΛΕΥΚΩΣΙΑΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.1686435</common:latitude>
+            <common:longitude>33.3641793</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>19</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>STASINOU / E &amp; A THEODOTOU </common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΛΕΥΚΩΣΙΑΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.169744099999996</common:latitude>
+            <common:longitude>33.3691579</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>20</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>LARNAKOS / VYRONOS </common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΛΕΥΚΩΣΙΑΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.16769519999999</common:latitude>
+            <common:longitude>33.3798965</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>21</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>SALAMINOS / SP. CHRISTODOULOU </common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΛΕΥΚΩΣΙΑΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.175763200000006</common:latitude>
+            <common:longitude>33.3726701</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>22</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>EGEOS / KAPOTA</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΛΕΥΚΩΣΙΑΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.175931999999996</common:latitude>
+            <common:longitude>33.3744587</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>23</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>GR. DHIGENI / VYRONOS </common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΛΕΥΚΩΣΙΑΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.16394749999999</common:latitude>
+            <common:longitude>33.3516905</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>24</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>ELEONON / MAKAEDONITISSIS </common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΣΤΡΟΒΟΛΟΥ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.1467636</common:latitude>
+            <common:longitude>33.3337444</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>25</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>STROVOLOU / EVZONON </common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΣΤΡΟΒΟΛΟΥ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.13733580000001</common:latitude>
+            <common:longitude>33.3328198</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>26</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>AG. ANDREOU / KOLOKOTRONI </common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΛΕΥΚΩΣΙΑΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.18176679999999</common:latitude>
+            <common:longitude>33.3857394</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>27</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>SP.KYPRIANOU / MARKORA  </common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΛΕΥΚΩΣΙΑΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.163427299999995</common:latitude>
+            <common:longitude>33.3608679</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>28</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>EVAGOROU / M.KARAOLI </common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΛΕΥΚΩΣΙΑΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.16689389999999</common:latitude>
+            <common:longitude>33.3548829</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>29</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>L.VYRONOS / M. KARAOLI  </common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΛΕΥΚΩΣΙΑΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.1666707</common:latitude>
+            <common:longitude>33.3524045</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>30</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>SALAMINOS / BUS EXIT </common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΛΕΥΚΩΣΙΑΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.1703188</common:latitude>
+            <common:longitude>33.370132</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>31</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>IROON / MAKEDONITISSIS </common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΕΓΚΩΜΗΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.164879199999994</common:latitude>
+            <common:longitude>33.3137277</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>32</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>AG.ANDREOU / POULIOU KAPOTA </common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΛΕΥΚΩΣΙΑΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.17631229999999</common:latitude>
+            <common:longitude>33.37855460000001</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>33</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>IFIGENIAS / SAN SOUSI </common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΣΤΡΟΒΟΛΟΥ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.1548658</common:latitude>
+            <common:longitude>33.3710611</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>34</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>LEMESOU / RIK</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΣΤΡΟΒΟΛΟΥ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.14448050000001</common:latitude>
+            <common:longitude>33.3738902</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>35</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>STROVOLOU / ATHALASSAS </common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΣΤΡΟΒΟΛΟΥ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.1503216</common:latitude>
+            <common:longitude>33.3469881</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>36</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>AKROPOLEOS / ARSINOIS</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΣΤΡΟΒΟΛΟΥ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.1553568</common:latitude>
+            <common:longitude>33.358425</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>37</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>IFIGENIAS / ARMENIAS </common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΣΤΡΟΒΟΛΟΥ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.15338309999999</common:latitude>
+            <common:longitude>33.3662785</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>38</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>ARCHANGGELOU / MAKEDONITISSIS</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΣΤΡΟΒΟΛΟΥ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.14738669999999</common:latitude>
+            <common:longitude>33.3247438</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>39</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>STROVOLOS / PERIKLEOUS </common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΣΤΡΟΒΟΛΟΥ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.144551099999994</common:latitude>
+            <common:longitude>33.3445134</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>40</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>STROVOLOU / ATHINON</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΣΤΡΟΒΟΛΟΥ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.14374829999999</common:latitude>
+            <common:longitude>33.3437517</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>41</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>ARCH. KYPRIANOU / STROVOLOU</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΣΤΡΟΒΟΛΟΥ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.15279579999999</common:latitude>
+            <common:longitude>33.3476286</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>42</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>AKROPOLEOS / KORITSAS </common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΣΤΡΟΒΟΛΟΥ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.15151060000001</common:latitude>
+            <common:longitude>33.3594688</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>43</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>X'' IOSIF / STAVROU </common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΣΤΡΟΒΟΛΟΥ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.134912899999996</common:latitude>
+            <common:longitude>33.3580886</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>44</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>LEMESOU / ARMENIAS </common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΣΤΡΟΒΟΛΟΥ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.15180999999999</common:latitude>
+            <common:longitude>33.3745466</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>45</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>ELEONON / STADIOU </common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΣΤΡΟΒΟΛΟΥ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.1547385</common:latitude>
+            <common:longitude>33.3388117</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>46</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>X'' IOSIF / PERIKLEOUS /AVRAAMIDES </common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΣΤΡΟΒΟΛΟΥ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.14175230000001</common:latitude>
+            <common:longitude>33.3587307</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>47</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>SP. KYPRIANOU / VIKELA</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΣΤΡΟΒΟΛΟΥ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.1272857</common:latitude>
+            <common:longitude>33.356795</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>48</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>SP. KYPRIANOU / KOSTANTINOUP. </common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΣΤΡΟΒΟΛΟΥ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.1233214</common:latitude>
+            <common:longitude>33.343912</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>49</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>AG. ALEXIOU / ARCHANGELOU </common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΣΤΡΟΒΟΛΟΥ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.1451472</common:latitude>
+            <common:longitude>33.321195200000005</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>50</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>ARMENIAS - STASINOU </common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΣΤΡΟΒΟΛΟΥ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.1522849</common:latitude>
+            <common:longitude>33.3704836</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>51</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>ATHALASSAS / AVRAAMIDES </common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΣΤΡΟΒΟΛΟΥ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.141898000000005</common:latitude>
+            <common:longitude>33.3696896</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>52</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>ACROPOLEOS / 28 OCTOBER </common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΣΤΡΟΒΟΛΟΥ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.148425</common:latitude>
+            <common:longitude>33.3599478</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>53</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>ATHALASSIS  / PIREOS  -/ KORAI</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΣΤΡΟΒΟΛΟΥ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.14781969999999</common:latitude>
+            <common:longitude>33.3535213</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>54</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>STROVOLOU / KANTARAS</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΣΤΡΟΒΟΛΟΥ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.1405205</common:latitude>
+            <common:longitude>33.3372975</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>55</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>DELPHON/NAVARINOU/POULIOU </common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΛΕΥΚΩΣΙΑΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.1710177</common:latitude>
+            <common:longitude>33.3435829</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>56</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>KATELARI / AG DEMETRIANOU</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΛΑΤΣΙΩΝ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.115361</common:latitude>
+            <common:longitude>33.3125022</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>57</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>AKADEMIAS / KYRENIAS </common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΑΓΛΑΝΤΖΙΑΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.1485444</common:latitude>
+            <common:longitude>33.3813157</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>58</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>ATHALASSAS / LEMESOU</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΑΓΛΑΝΤΖΙΑΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.14009149999999</common:latitude>
+            <common:longitude>33.3747826</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>59</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>LEMESOU / AG. SOZOMENOS</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΙΔΑΛΙΟΥ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.0553527</common:latitude>
+            <common:longitude>33.38827950000001</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>60</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>LEMESOU /LEFKOSIAS</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΙΔΑΛΙΟΥ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.0505397</common:latitude>
+            <common:longitude>33.3878933</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>61</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>AG.PROKOPIOU / METOCHIOU </common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΕΓΚΩΜΗΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.166166499999996</common:latitude>
+            <common:longitude>33.3413301</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>62</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>K.MATSI / DEMOKRATIAS</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΑΓΙΟΥ ΔΟΜΕΤΙΟΥ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.168762599999994</common:latitude>
+            <common:longitude>33.3245502</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>63</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>DEMOKRATIAS / GR. AFXENTIOU </common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΑΓΙΟΥ ΔΟΜΕΤΙΟΥ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.1722706</common:latitude>
+            <common:longitude>33.32442150000001</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>64</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>AG. GEORGIOU / MAKARIOU III </common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΛΑΚΑΤΑΜΙΑΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.111118000000005</common:latitude>
+            <common:longitude>33.3060408</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>65</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>AG. GEORGIOU / CHAMATSOU</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΛΑΚΑΤΑΜΙΑΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.1088975</common:latitude>
+            <common:longitude>33.2991851</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>66</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>AG. GEORGIOU / SPORADON</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΛΑΚΑΤΑΜΙΑΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.1107002</common:latitude>
+            <common:longitude>33.294284</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>67</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>AG.GEORGIOU / I. MATROZOU</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΛΑΚΑΤΑΜΙΑΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.108918200000005</common:latitude>
+            <common:longitude>33.3013111</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>69</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>Kallipoleos / Ethnikis Frouras</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΛΕΥΚΩΣΙΑΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.16002647999999</common:latitude>
+            <common:longitude>33.37515995</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>70</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>Armenias / Esperidon</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΣΤΡΟΒΟΛΟΥ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.15480415</common:latitude>
+            <common:longitude>33.36331149</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>71</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>Peikleous / Peiraios</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΣΤΡΟΒΟΛΟΥ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.142741449999995</common:latitude>
+            <common:longitude>33.35177904</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>72</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>Kyriakou Matsi / 25 March</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΑΓΙΟΥ ΔΟΜΕΤΙΟΥ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.16811634999999</common:latitude>
+            <common:longitude>33.33080222</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>73</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>Louki Akrita / Iroon / Metochiou</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΛΕΥΚΩΣΙΑΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.17314858000001</common:latitude>
+            <common:longitude>33.35106583</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>74</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>Omirou / Vyronos / Mousiou</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΛΕΥΚΩΣΙΑΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.17157461</common:latitude>
+            <common:longitude>33.3550362</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>75</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>Omirou / Egyptou / Diagorou</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΛΕΥΚΩΣΙΑΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.170878269999996</common:latitude>
+            <common:longitude>33.3566656</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>76</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>Makariou Ave / Gr. Digeni Ave (Astynomia Lykavitou)</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΛΕΥΚΩΣΙΑΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.16447013</common:latitude>
+            <common:longitude>33.36404016</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>77</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>Makariou Ave / Ethnikis Frouras St</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΛΕΥΚΩΣΙΑΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.15972334</common:latitude>
+            <common:longitude>33.37240876</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>78</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>Makariou Ave / John Kennedy Ave</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΛΕΥΚΩΣΙΑΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.15753888</common:latitude>
+            <common:longitude>33.37340721</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>79</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>Kennedy / Stasinou</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΛΕΥΚΩΣΙΑΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.15725754000001</common:latitude>
+            <common:longitude>33.37188812</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>80</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>Kennedy / Esperidon</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΛΕΥΚΩΣΙΑΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.15850971999999</common:latitude>
+            <common:longitude>33.36440346</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>81</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>Makariou Ave / Kallipoleos(2 stream-083)</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΑΓΛΑΝΤΖΙΑΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.15580903</common:latitude>
+            <common:longitude>33.37475595</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>82</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>Lemesou Ave / Aglantzias Ave(2 stream-082)</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΑΓΛΑΝΤΖΙΑΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.155029729999995</common:latitude>
+            <common:longitude>33.37517729</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>83</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>Aglantzias Ave / Athinas St</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΑΓΛΑΝΤΖΙΑΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.15709503</common:latitude>
+            <common:longitude>33.39030238</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>84</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>Kennedy / Markou Drakou (NIC-001 - 2 stream)</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΛΕΥΚΩΣΙΑΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.172083490000006</common:latitude>
+            <common:longitude>33.37561954</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>85</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>Kennedy / Vyronos</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΛΕΥΚΩΣΙΑΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.17311591</common:latitude>
+            <common:longitude>33.38196962</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>86</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>Kennedy / Enotitos</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΛΕΥΚΩΣΙΑΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.17260678</common:latitude>
+            <common:longitude>33.38836711</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>87</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>Sopaz / Kolokotroni</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΛΕΥΚΩΣΙΑΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.17735560999999</common:latitude>
+            <common:longitude>33.39569981</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>88</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>Sopaz / Mpotsari</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΛΕΥΚΩΣΙΑΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.183025289999996</common:latitude>
+            <common:longitude>33.39418821</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>89</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>RIK / Akademias</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΑΓΛΑΝΤΖΙΑΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.14475379</common:latitude>
+            <common:longitude>33.38140185</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>90</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>Larnakos / Salaminos</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΛΕΥΚΩΣΙΑΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.17290831</common:latitude>
+            <common:longitude>33.3713368</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>91</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>Digeni Akrita / Kallipoleos (Agios Antonios)</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΛΕΥΚΩΣΙΑΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.16765005999999</common:latitude>
+            <common:longitude>33.37102177</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>92</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>Strovolou Ave / Machera St</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΣΤΡΟΒΟΛΟΥ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.13393185000001</common:latitude>
+            <common:longitude>33.32989197</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>93</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>Tseriou / Konstantinoupoleos</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΣΤΡΟΒΟΛΟΥ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.13729182000001</common:latitude>
+            <common:longitude>33.34132524</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>94</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>Morfou Ave / Lykavitou St</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΛΑΚΑΤΑΜΙΑΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.13854362</common:latitude>
+            <common:longitude>33.308292</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>95</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>Morfou Ave / Andromachis St</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΛΑΚΑΤΑΜΙΑΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.14063805</common:latitude>
+            <common:longitude>33.30554814</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>96</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>Levkotheou / Iroon</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΕΓΚΩΜΗΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.14884994999999</common:latitude>
+            <common:longitude>33.30779553</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>97</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>Levkotheou / Elia Papakyriakou (Kratiki Ekthesi)</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΕΓΚΩΜΗΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.14811269</common:latitude>
+            <common:longitude>33.3172416</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>98</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>Elia Papakyriakou / 28 October Ave</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΕΓΚΩΜΗΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.156546369999994</common:latitude>
+            <common:longitude>33.31458181</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>99</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>28 October Ave / Paleon Patron (Mall of Egkomi)</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΕΓΚΩΜΗΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.16216283999999</common:latitude>
+            <common:longitude>33.31755866</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>100</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>Griva Digeni Ave / 28 October Ave</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΕΓΚΩΜΗΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.16552449000001</common:latitude>
+            <common:longitude>33.31880506</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>101</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>Griva Digeni Ave / Neas Egkomis (Milano)</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΕΓΚΩΜΗΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.16428798</common:latitude>
+            <common:longitude>33.32428846</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>102</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>Griva Digeni Ave / 25 March St (Demstar)</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΕΓΚΩΜΗΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.163954399999994</common:latitude>
+            <common:longitude>33.3308267</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>103</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>Griva Digeni Ave / Agiou Prokopiou (Metochi Kykkou)</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΕΓΚΩΜΗΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.161294649999995</common:latitude>
+            <common:longitude>33.33864444</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>104</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>Vyzantiou / 1st Apriliou</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΣΤΡΟΒΟΛΟΥ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.15736858999999</common:latitude>
+            <common:longitude>33.34122715</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>105</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>Prodromou / Vyzantiou</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΣΤΡΟΒΟΛΟΥ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.16220403</common:latitude>
+            <common:longitude>33.34690047000001</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>106</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>Prodromou / Erythrou Stavrou</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΣΤΡΟΒΟΛΟΥ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.15999743999999</common:latitude>
+            <common:longitude>33.34601262</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>107</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>Agion Omologiton / Dimostheni Severi</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΛΕΥΚΩΣΙΑΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.15738714</common:latitude>
+            <common:longitude>33.35116834</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>108</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>Dimostheni Severi / Miaouli</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΛΕΥΚΩΣΙΑΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.16083843</common:latitude>
+            <common:longitude>33.3533976</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>109</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>Kyr. Matsi / Samou</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΛΕΥΚΩΣΙΑΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.160373240000006</common:latitude>
+            <common:longitude>33.35609148</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>110</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>Akropoleos Ave / Athalassas Ave</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΣΤΡΟΒΟΛΟΥ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.14553203999999</common:latitude>
+            <common:longitude>33.35987276000001</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>111</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>Athalassas Ave / M. Kousoulidi</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΣΤΡΟΒΟΛΟΥ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.1443701</common:latitude>
+            <common:longitude>33.36300671</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>112</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>Stavrou / Agiou Andrea</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΣΤΡΟΒΟΛΟΥ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.13487172999999</common:latitude>
+            <common:longitude>33.36588759</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>113</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>Tseriou / Anagnostopoulou (Aletras)</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΣΤΡΟΒΟΛΟΥ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.115023519999994</common:latitude>
+            <common:longitude>33.33256469</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>114</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>Tseriou / Ippokratous</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΣΤΡΟΒΟΛΟΥ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.11297493</common:latitude>
+            <common:longitude>33.33239012</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>115</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>Tseriou / Theof. Georgiadi</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΣΤΡΟΒΟΛΟΥ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.105024829999984</common:latitude>
+            <common:longitude>33.3297813</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>116</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>Tseriou Ave / K. Misiaouli</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΤΣΕΡΙΟΥ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.07669734</common:latitude>
+            <common:longitude>33.32466138</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>117</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>Makariou / Agiou Stylianou, Lakatamia</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΛΑΚΑΤΑΜΙΑΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.12274794000001</common:latitude>
+            <common:longitude>33.32073414</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>118</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>Makariou / Anexartisias, Lakatamia</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΛΑΚΑΤΑΜΙΑΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.120918790000005</common:latitude>
+            <common:longitude>33.31827982</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>119</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>Makariou / Antheon, Lakatamia</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΛΑΚΑΤΑΜΙΑΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.11981477999999</common:latitude>
+            <common:longitude>33.31684155</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>120</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>Makariou / P. Katelari</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΛΑΚΑΤΑΜΙΑΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.118484730000006</common:latitude>
+            <common:longitude>33.31449323</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>121</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>Giannou Kranidioti / Pefkou, Lakatamia</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΛΑΚΑΤΑΜΙΑΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.099028999999994</common:latitude>
+            <common:longitude>33.31375363</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>122</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>Makariou / Pefkou, Lakatamia</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΛΑΚΑΤΑΜΙΑΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.10496463999999</common:latitude>
+            <common:longitude>33.30295074</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>123</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>Iroon Ave / K. Krystalli</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΕΓΚΩΜΗΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.144917070000005</common:latitude>
+            <common:longitude>33.30554659</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>124</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>Iroon / Florinis</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΕΓΚΩΜΗΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.15187281</common:latitude>
+            <common:longitude>33.30822857</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>125</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>Iroon / Elevtherias</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΕΓΚΩΜΗΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.156431669999996</common:latitude>
+            <common:longitude>33.30946208</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>126</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>Anthoupoleos Ave / Agiou Georgiou</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΛΑΚΑΤΑΜΙΑΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.115891530000006</common:latitude>
+            <common:longitude>33.28599204</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>127</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>Anthoupoleos Ave / Syn. Anthoupolis</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΛΑΚΑΤΑΜΙΑΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.1255263</common:latitude>
+            <common:longitude>33.29495236</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>128</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>Makariou / Agiou Georgiou, Latsia</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΛΑΤΣΙΩΝ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.10453211</common:latitude>
+            <common:longitude>33.38583429</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>129</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>G. Kranidioti / Agiou Georgiou, Latsia</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΛΑΤΣΙΩΝ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.10426855</common:latitude>
+            <common:longitude>33.37917013</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>130</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>G. Kranidioti / Venizelou, Latsia</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΛΑΤΣΙΩΝ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.101942419999986</common:latitude>
+            <common:longitude>33.3794918</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>131</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>G. Kranidioti / D. Solomou, Latsia</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΛΑΤΣΙΩΝ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.09906459999999</common:latitude>
+            <common:longitude>33.37967584</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>132</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>Kalamon / Athalassis</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΓΕΡΙΟΥ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.12615386</common:latitude>
+            <common:longitude>33.41224515</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>133</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>Pindarou/ E. &amp; A. Theodotou</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΛΕΥΚΩΣΙΑΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.16887722</common:latitude>
+            <common:longitude>33.3699729</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>134</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>kalamon / Nosolevtiki Scholi</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΣΤΡΟΒΟΛΟΥ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.12355635000001</common:latitude>
+            <common:longitude>33.3795739</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>138</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>Archaggelou Ave / Pyrasou</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΣΤΡΟΒΟΛΟΥ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.1525855</common:latitude>
+            <common:longitude>33.32867955</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>139</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>Makedonias / G. Kanidioti (Egkomi)</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΕΓΚΩΜΗΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.15742367</common:latitude>
+            <common:longitude>33.3309459</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>140</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>Strovolou / P. Mela</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΣΤΡΟΒΟΛΟΥ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.130919009999985</common:latitude>
+            <common:longitude>33.32661927</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>141</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>Larnakos Ave / Ilision (Lidl Aglantzias)</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΑΓΛΑΝΤΖΙΑΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.15119129000001</common:latitude>
+            <common:longitude>33.40737628</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>143</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>Athinon / Irakleous Strovolos</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΣΤΡΟΒΟΛΟΥ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.13954303</common:latitude>
+            <common:longitude>33.34596018</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>144</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>Agiou Georgiou / Griva Digeni Lakatamia</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΛΑΚΑΤΑΜΙΑΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.109450990000006</common:latitude>
+            <common:longitude>33.29705287</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>145</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>G. Kranidioti / F. Papakyprianou</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΛΑΤΣΙΩΝ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.109845879999995</common:latitude>
+            <common:longitude>33.37756705000001</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>146</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>Kallipoleos / Ypatias</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΛΕΥΚΩΣΙΑΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.16377360999999</common:latitude>
+            <common:longitude>33.37316667</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>147</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>Digeni Akrita / Nikod. Mylona</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΛΕΥΚΩΣΙΑΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.16536452999999</common:latitude>
+            <common:longitude>33.36790948</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>148</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>Makariou / Iroon Latsia (Sklavenitis)</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΛΑΤΣΙΩΝ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.11055438999998</common:latitude>
+            <common:longitude>33.3833615</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>149</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>Vyronos / K. Palama</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΛΕΥΚΩΣΙΑΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.17001611999999</common:latitude>
+            <common:longitude>33.35442579</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>150</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>Larnakos ave / Athalassis ave</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΑΓΛΑΝΤΖΙΑΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.15204359</common:latitude>
+            <common:longitude>33.4054063</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>151</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>Athalassis ave / E101 (Parko Athalassas)</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΑΓΛΑΝΤΖΙΑΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.14092744</common:latitude>
+            <common:longitude>33.40386143</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>152</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>Stavrou / A. Avraamides</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΣΤΡΟΒΟΛΟΥ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.13910040999999</common:latitude>
+            <common:longitude>33.3664338</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>153</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>Geriou / Ammochostou - Geri</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΓΕΡΙΟΥ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.10586008</common:latitude>
+            <common:longitude>33.41640776</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>155</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>Tseriou ave / Pevkou ave</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΛΑΚΑΤΑΜΙΑΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.09664844</common:latitude>
+            <common:longitude>33.32724937</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>156</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>Larnakos ave / N. Georgiou St</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΑΓΛΑΝΤΖΙΑΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.15452205</common:latitude>
+            <common:longitude>33.40007636</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>157</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>Kyrenias / Karava</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΑΓΛΑΝΤΖΙΑΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.14975066</common:latitude>
+            <common:longitude>33.39401101</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>158</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>Kyrenias / Thessalonikis (Platy)</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΑΓΛΑΝΤΖΙΑΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.149226369999994</common:latitude>
+            <common:longitude>33.39209811</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>159</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>Kyrenias / Promitheos</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΑΓΛΑΝΤΖΙΑΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.148858439999984</common:latitude>
+            <common:longitude>33.3884075</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>160</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>Akademias/Kentavrou</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΑΓΛΑΝΤΖΙΑΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.15264162999999</common:latitude>
+            <common:longitude>33.38214825</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>161</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>Aglantzias / Arch. Makariou III</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΑΓΛΑΝΤΖΙΑΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.15724409999999</common:latitude>
+            <common:longitude>33.38429061</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>162</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>Ph. Papakyprianou / Elevtheroupoleos, Latsia</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΛΑΤΣΙΩΝ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.111748559999995</common:latitude>
+            <common:longitude>33.37262864</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>163</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>Anth. Palexoriou E903/Ag. Trimithias</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΛΑΚΑΤΑΜΙΑΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.11446751</common:latitude>
+            <common:longitude>33.28496362</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>165</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>Stsandrou/Kritis</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΛΕΥΚΩΣΙΑΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.166908840000005</common:latitude>
+            <common:longitude>33.36512340000001</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>167</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>Athalasas/Petrou Iliadi</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΣΤΡΟΒΟΛΟΥ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.142877240000004</common:latitude>
+            <common:longitude>33.36707471</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>168</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>Prodromou/Sina</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΛΕΥΚΩΣΙΑΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.16692121</common:latitude>
+            <common:longitude>33.34884804</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>169</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>Kennedy / Karpenisiou</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΛΕΥΚΩΣΙΑΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.15732336000001</common:latitude>
+            <common:longitude>33.36970964</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  <management:managementElement>
+      <common:id>170</common:id>
+      <common:generalPublicComment>
+        <common:comment>
+          <common:value>Ag.Georgiou / Eleutherias</common:value>
+          <common:lang>en</common:lang>
+        </common:comment>
+      </common:generalPublicComment>
+      <common:responsibleOrganisation>
+        <common:organisationName>ΔΗΜΟΣ ΛΑΚΑΤΑΜΙΑΣ</common:organisationName>
+      </common:responsibleOrganisation>
+      <location:location>
+        <location:pointByCoordinates>
+          <location:pointCoordinates>
+            <common:latitude>35.11157715000001</common:latitude>
+            <common:longitude>33.29259025</common:longitude>
+          </location:pointCoordinates>
+        </location:pointByCoordinates>
+      </location:location>
+    </management:managementElement>
+  </management:managementElementPublication>
+</d2LogicalModel>
