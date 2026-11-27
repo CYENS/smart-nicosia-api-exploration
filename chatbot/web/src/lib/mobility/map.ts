@@ -7,7 +7,9 @@
    between fixes or cutting across blocks. A bus never slides backwards: when a fix lands a
    little behind where it was drawn, it waits there until the bus catches up. With reduced
    motion each fix is shown as it comes. Coloured by line (the operator's colour, lifted for the
-   night map), pointing where it heads; at street zoom its line number sits in a pill.
+   night map). From near city zoom each bus is a small 3D bus facing where it heads
+   (lib/mobility/bus-model.ts, loaded when buses are first shown), with its line number in a pill
+   just above it; farther out, and wherever the model can't be drawn, a dot with an arrow.
 
    Roads. Each Bluetooth segment runs one way; it is drawn offset to the left of its direction
    (Cyprus drives on the left), so the two directions of an avenue sit side by side. A neutral
@@ -186,11 +188,17 @@ function matches(b: LiveBus, f: BusFilter | null) {
   return true
 }
 
+function openBusId() {
+  const { open, entity } = useInspector.getState()
+  return open && (entity?.kind as string) === "bus" ? entity!.id : null
+}
+
 function busFeatures(): any {
   const f = activeFilter()
   const features: any[] = []
   // The live feed is only now: while the clock shows the past, the buses step aside.
   if (useClock.getState().at !== null) return { type: "FeatureCollection", features }
+  const openId = openBusId()
   for (const t of tracks.values()) {
     const b = t.bus
     if (b.finished || !matches(b, f)) continue
@@ -198,7 +206,7 @@ function busFeatures(): any {
     features.push({
       type: "Feature", geometry: { type: "Point", coordinates: t.pos },
       properties: { id: b.id, line: b.line, color, text_color: b.text_color || NIGHT, heading: Math.round(t.heading),
-                    pill: `mob-pill-${color}`, arrow: `mob-arrow-${color}` },
+                    pill: `mob-pill-${color}`, arrow: `mob-arrow-${color}`, open: b.id === openId },
     })
   }
   return { type: "FeatureCollection", features }
@@ -213,9 +221,84 @@ function frame(ts: number) {
   if (!tracks.size) return
   const now = Date.now()
   for (const t of tracks.values()) step(t, now, dt)
+  const fc = busFeatures()
   const src = map.getSource(BUS_SRC) as GeoJSONSource | undefined
-  if (src) src.setData(busFeatures())
+  if (src) src.setData(fc)
+  if (modelState === "ready" && map.getLayer(BUS_MODEL)) {
+    busModel!.setBuses(fc.features.map((ft: any) => {
+      const p = ft.properties
+      return { id: p.id, lon: ft.geometry.coordinates[0], lat: ft.geometry.coordinates[1], heading: p.heading, color: p.color, open: p.open }
+    }))
+  }
   followOpenBus(ts)
+}
+
+// -- buses in 3D ----------------------------------------------------------------------------------
+// The model is loaded the first time buses are shown. Until it is ready, and for good if it
+// fails, the dots and arrows below are the buses. Once it draws, the dot stays as the bus's far
+// zoom look and, transparent and as big as the model, as what a click or the pointer finds.
+
+type BusModelModule = typeof import("@/lib/mobility/bus-model")
+const BUS_MODEL = "mob::bus-model"
+let busModel: import("@/lib/mobility/bus-model").BusModel | null = null
+let modelMod: BusModelModule | null = null
+let modelState: "off" | "loading" | "ready" | "failed" = "off"
+
+function wantBusModel(map: MlMap) {
+  if (modelState === "ready") placeBusModel(map)
+  if (modelState !== "off") return
+  modelState = "loading"
+  import("@/lib/mobility/bus-model")
+    .then(async (mod) => {
+      modelMod = mod
+      busModel = await mod.loadBusModel(map, (why) => busModelFailed(map, why))
+      modelState = "ready"
+      placeBusModel(map)
+    })
+    .catch((e) => busModelFailed(map, (e as Error).message))
+}
+
+function busModelFailed(map: MlMap, why: string) {
+  if (modelState === "failed") return
+  console.warn(`3D buses off: ${why}`)
+  modelState = "failed"
+  if (map.getLayer(BUS_MODEL)) map.removeLayer(BUS_MODEL)
+  lookOfMarkers(map)
+}
+
+function placeBusModel(map: MlMap) {
+  if (modelState !== "ready" || !busModel || !map.getLayer("mob::bus-dot") || map.getLayer(BUS_MODEL)) return
+  map.addLayer(busModel.layer, "mob::bus-arrow") // over the dots, under the arrows and the numbers
+  lookOfMarkers(map)
+}
+
+// The dots, arrows and pills as the buses are drawn: flat markers, or around the 3D model.
+function lookOfMarkers(map: MlMap) {
+  if (!map.getLayer("mob::bus-dot")) return
+  const model = modelState === "ready" && !!modelMod && !!map.getLayer(BUS_MODEL)
+  if (!model) {
+    map.setPaintProperty("mob::bus-dot", "circle-opacity", 1)
+    map.setPaintProperty("mob::bus-dot", "circle-stroke-opacity", 1)
+    map.setPaintProperty("mob::bus-dot", "circle-radius", DOT_RADIUS)
+    map.setLayoutProperty("mob::bus-arrow", "visibility", "visible")
+    map.setLayoutProperty("mob::bus-label", "text-offset", [0, 0])
+    map.setLayerZoomRange("mob::bus-label", 14.5, 24)
+    return
+  }
+  const { SHOW_ZOOM, busScreenLength } = modelMod!
+  const zooms = [SHOW_ZOOM, 14, 14.5, 15, 15.5, 16, 16.5, 17, 17.5, 18, 18.5, 19, 19.5, 20, 21, 22]
+  const fade: any = ["interpolate", ["linear"], ["zoom"], SHOW_ZOOM, 1, SHOW_ZOOM + 0.4, 0]
+  map.setPaintProperty("mob::bus-dot", "circle-opacity", fade)
+  map.setPaintProperty("mob::bus-dot", "circle-stroke-opacity", fade)
+  // As big as the bus on screen (half its length), so a click anywhere on it finds it.
+  map.setPaintProperty("mob::bus-dot", "circle-radius",
+    ["interpolate", ["linear"], ["zoom"], 10, 2.5, 13, 4.5, ...zooms.flatMap((z) => [z, Math.max(5, busScreenLength(z) / 2)])])
+  map.setLayoutProperty("mob::bus-arrow", "visibility", "none")
+  // The number floats just over the bus: half its length (as much as it can reach upward on
+  // screen, from any pitch and bearing), then half the pill and a gap. In ems of 12 px.
+  map.setLayoutProperty("mob::bus-label", "text-offset",
+    ["interpolate", ["linear"], ["zoom"], ...zooms.flatMap((z) => [z, ["literal", [0, -(busScreenLength(z) / 2 + 13) / 12]]])])
+  map.setLayerZoomRange("mob::bus-label", SHOW_ZOOM, 24)
 }
 
 // The open bus keeps its sodium ring as it moves.
@@ -289,14 +372,16 @@ function bindOnce(map: MlMap, id: string) {
   cursorOn(map, id)
 }
 
+const DOT_RADIUS: any = ["interpolate", ["linear"], ["zoom"], 10, 2.5, 13, 4.5, 15, 6]
+
 function addBusLayers(map: MlMap) {
-  if (map.getSource(BUS_SRC)) return
+  if (map.getSource(BUS_SRC)) { wantBusModel(map); return }
   map.addSource(BUS_SRC, { type: "geojson", data: busFeatures() })
   map.addLayer({
     id: "mob::bus-dot", type: "circle", source: BUS_SRC,
     paint: {
       "circle-color": ["get", "color"],
-      "circle-radius": ["interpolate", ["linear"], ["zoom"], 10, 2.5, 13, 4.5, 15, 6],
+      "circle-radius": DOT_RADIUS,
       "circle-stroke-color": NIGHT, "circle-stroke-width": ["interpolate", ["linear"], ["zoom"], 10, 0.8, 14, 1.5],
     },
   })
@@ -314,15 +399,18 @@ function addBusLayers(map: MlMap) {
     layout: {
       "text-field": ["get", "line"], "text-font": FONT_BOLD, "text-size": 12,
       "icon-image": ["get", "pill"], "icon-text-fit": "both", "icon-text-fit-padding": [1, 3, 1, 3],
-      "text-allow-overlap": false, "icon-allow-overlap": false, "symbol-sort-key": ["get", "heading"],
+      // Never on top of each other: where they crowd, the open bus's number is placed first.
+      "text-allow-overlap": false, "icon-allow-overlap": false,
+      "symbol-sort-key": ["case", ["boolean", ["get", "open"], false], -1, ["get", "heading"]],
     },
     paint: { "text-color": ["get", "text_color"] },
   })
   for (const id of ["mob::bus-dot", "mob::bus-arrow", "mob::bus-label"]) bindOnce(map, id)
+  wantBusModel(map)
 }
 
 function removeBusLayers(map: MlMap) {
-  for (const id of ["mob::bus-label", "mob::bus-arrow", "mob::bus-dot", "mob::stop-name", "mob::stop"]) if (map.getLayer(id)) map.removeLayer(id)
+  for (const id of [BUS_MODEL, "mob::bus-label", "mob::bus-arrow", "mob::bus-dot", "mob::stop-name", "mob::stop"]) if (map.getLayer(id)) map.removeLayer(id)
   for (const id of [BUS_SRC, STOP_SRC]) if (map.getSource(id)) map.removeSource(id)
 }
 
