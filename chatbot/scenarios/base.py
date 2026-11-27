@@ -212,6 +212,7 @@ class Scenario:
     main_kpi: str = ""  # the KPI the tornado chart and the headline use (default: the first)
     sources: tuple[str, ...] = ()
     method: str = ""  # a paragraph for the brief: how the model works
+    today: str = ""  # how the brief names today's baseline ("as the lamps measured it")
 
     # -- to implement ------------------------------------------------------------------------
 

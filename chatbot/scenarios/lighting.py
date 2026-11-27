@@ -872,6 +872,7 @@ class Lighting(Scenario):
                 "where would it leave streets darker?")
     params = PARAMS
     main_kpi = "cost"
+    today = "as the lamps measured it"
     sources = ("smart_nicosia", "twin_memory", "bus_timetable", "registers", "grid_co2", "led_retrofit")
     method = ("Each lamp's power at full light and its standby come from its own power readings; its "
               "switching times, as minutes after sunset and sunrise, from the readings either side of "

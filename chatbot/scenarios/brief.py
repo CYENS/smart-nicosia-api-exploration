@@ -145,7 +145,7 @@ def _backtest(run_: dict) -> str:
     bt = run_["result"].get("backtest")
     if not bt:
         return "<p>This scenario has no backtest.</p>"
-    out = (f"<p><b>{e(bt['metric'])}, {e(bt['period'].lower())}:</b> the sensors measured "
+    out = (f"<p><b>{e(bt['metric'])}, {e(_lower_first(bt['period']))}:</b> the sensors measured "
            f"{num(bt['measured'], 1)} {e(bt['unit'])}; the model of today's policy gives {num(bt['modelled'], 1)} "
            f"{e(bt['unit'])}, an error of {num(bt['error_pct'], 1, sign=True)}%.")
     hold = bt.get("holdout")
@@ -154,7 +154,18 @@ def _backtest(run_: dict) -> str:
                 f"{num(hold['error_pct'], 1, sign=True)}%.")
     if bt.get("median_lamp_error_pct") is not None:
         out += f" Lamp by lamp, half are within {num(bt['median_lamp_error_pct'], 1)}%."
-    return out + f"</p><p class='small'>{e(bt['note'])}</p>"
+    out += f"</p><p class='small'>{e(bt['note'])}</p>"
+    for o in bt.get("others") or []:  # further comparisons a scenario makes
+        err = "" if o.get("error_pct") is None else f", an error of {num(o['error_pct'], 1, sign=True)}%"
+        out += (f"<p><b>{e(o['metric'])}, {e(_lower_first(o['period']))}:</b> measured "
+                f"{num(o['measured'], 1)}, modelled {num(o['modelled'], 1)} {e(o.get('unit', ''))}{err}."
+                f"</p><p class='small'>{e(o.get('note', ''))}</p>")
+    return out
+
+
+def _lower_first(text: str) -> str:
+    """'The last 30 days' -> 'the last 30 days'; dates keep their capitals."""
+    return text[:1].lower() + text[1:] if text.startswith("The ") else text
 
 
 def _safety(run_: dict) -> str:
@@ -218,11 +229,13 @@ def brief_html(run_: dict, other: dict | None = None) -> str:
     runs = [run_] + ([other] if other else [])
     res = run_["result"]
     question = (res.get("details") or {}).get("question") or ""
+    today = "as measured"
     try:
         from chatbot.scenarios import registry
         scen = registry.get(run_["scenario"])
         question = question or scen.question
         method = scen.method
+        today = getattr(scen, "today", "") or today
     except Exception:  # noqa: BLE001 - a run of a scenario that no longer exists still prints
         method = ""
     title = run_.get("scenario_title") or run_["scenario"]
@@ -230,7 +243,7 @@ def brief_html(run_: dict, other: dict | None = None) -> str:
     headline = next((k for k in res["kpis"] if k.get("delta") not in (None, 0)), res["kpis"][0] if res["kpis"] else None)
     lead = ""
     if headline:
-        lead = (f"<p class='lead'><b>{e(run_['label'])}</b> {e(change_words(headline))} a year on "
+        lead = (f"<p class='lead'><b>{e(run_['label'])}</b> {e(change_words(headline))} on "
                 f"{e(headline['label'].lower())}, against today's measured policy. Ranges span every combination "
                 "of the assumptions' plausible values.</p>")
     options = "".join(f"<li><b>{e(r['label'])}</b> (run {e(r['id'])}, learnt from {e(r['period']['label'].lower())})</li>"
@@ -243,7 +256,7 @@ def brief_html(run_: dict, other: dict | None = None) -> str:
         "<div class='tools'><button type='button' onclick='window.print()'>Print or save as PDF</button>"
         f"<a href='series.csv' download>Download the data (CSV)</a></div>",
         f"<h2>The question</h2><p>{e(question)}</p>",
-        f"<h2>Options compared</h2><ul><li><b>Today</b>, as the lamps measured it</li>{options}</ul>",
+        f"<h2>Options compared</h2><ul><li><b>Today</b>, {e(today)}</li>{options}</ul>",
         f"<h2>Results</h2>{lead}{_kpi_table(runs)}",
     ]
     for r in runs:
@@ -254,8 +267,9 @@ def brief_html(run_: dict, other: dict | None = None) -> str:
     night = _night_chart(run_)
     if night:
         parts.append(f"<h2>A night, today and in the scenario</h2>{night}")
-    parts += [f"<h2>Safety check</h2>{_safety(run_)}",
-              f"<h2>Backtest</h2>{_backtest(run_)}",
+    if "safety" in (res.get("details") or {}):
+        parts.append(f"<h2>Safety check</h2>{_safety(run_)}")
+    parts += [f"<h2>Backtest</h2>{_backtest(run_)}",
               f"<h2>Method</h2><p>{e(method)}</p><ul class='small'>{notes}</ul>",
               f"<h2>Assumptions</h2>{_assumptions(run_)}",
               f"<h2>Sources</h2>{_sources(run_)}",

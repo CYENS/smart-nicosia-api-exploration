@@ -200,6 +200,7 @@ class Waste(Scenario):
                 "overflowing with the fewest kilometres?")
     params = PARAMS
     main_kpi = "full_hours"
+    today = "the city's own pickups, replayed on the same model"
     sources = ("smart_nicosia", "twin_memory", "valhalla", "openstreetmap")
     method = (
         "Each bin's fill level, read every two hours by its sensor, shows when it was emptied "
