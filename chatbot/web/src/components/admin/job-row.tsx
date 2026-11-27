@@ -1,13 +1,13 @@
-/* One collector job on the admin page, as a shadcn Item that opens (Collapsible) onto its
-   details. The row stays short: its switch, title, a one-line summary, then how it last ran,
-   when it runs next and where its data comes from (a "From ..." line that opens the source).
-   The details hold the rest: what it records in full, what the twin uses it for, the tables it
-   writes, its last run, and its night window.
+/* One collector job on the admin page, as a shadcn Item: its switch, title, a one-line summary,
+   then how it last ran, when it runs next and where its data comes from (a "From ..." link that
+   opens the source). How often it runs, Run now and Reset sit on the right, with Read more,
+   which opens "How it's collected" (how-sheet.tsx) for everything else.
 
-   Controls are never disabled while a change is saved: a disabled control drops the keyboard's
-   focus. They ignore presses until the answer is back instead. */
-import { ChevronDownIcon, RotateCcwIcon } from "lucide-react"
-import { useState } from "react"
+   The controls follow the admin lock: without the admin password they are shown but can't be
+   used. While a change is saved they stay focusable (a disabled control drops the keyboard's
+   focus) and ignore presses until the answer is back. */
+import { RotateCcwIcon } from "lucide-react"
+import { useState, type ReactNode } from "react"
 import { toast } from "sonner"
 
 import { SourceLink } from "@/components/admin/source-link"
@@ -17,15 +17,13 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
-import { Field, FieldContent, FieldDescription, FieldLabel } from "@/components/ui/field"
-import { Item, ItemActions, ItemContent, ItemDescription, ItemFooter, ItemMedia, ItemTitle } from "@/components/ui/item"
+import { Item, ItemActions, ItemContent, ItemDescription, ItemMedia, ItemTitle } from "@/components/ui/item"
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Spinner } from "@/components/ui/spinner"
 import { Switch } from "@/components/ui/switch"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import {
-  ago, cadenceLabel, clockTime, number, requestsPerDay, resetJob, runJobNow, until, updateJob,
+  ago, cadenceLabel, number, openHow, requestsPerDay, resetJob, runJobNow, until, updateJob,
   useCollectors, type CollectorJob, type CollectorsReport, type JobSettings,
 } from "@/lib/collectors"
 import { cn } from "@/lib/utils"
@@ -66,24 +64,24 @@ function nextRun(job: CollectorJob, r: CollectorsReport): string | null {
   return next === "due now" ? "Due now" : `Next ${next}`
 }
 
-export function JobRow({ job, report }: { job: CollectorJob; report: CollectorsReport }) {
+/* A job's changes, shared by its row and its sheet: a change that takes the city's requests over
+   the budget asks first (the returned `dialog` must be rendered), and every outcome is a toast. */
+export function useJobControls(job: CollectorJob, report: CollectorsReport): {
+  locked: boolean; pending: boolean
+  change: (patch: Partial<JobSettings>, done: string) => void
+  runNow: () => void; reset: () => void; dialog: ReactNode
+} {
   const pending = useCollectors((s) => !!s.pending[job.name])
-  const [open, setOpen] = useState(false)
+  const locked = !report.admin.unlocked
   const [overBudget, setOverBudget] = useState<{ patch: Partial<JobSettings>; done: string; perDay: number } | null>(null)
-  const id = `job-${job.name}`
-  const run = lastRun(job)
-  const busy = job.state !== null
-  const cadences = report.cadences.includes(job.every_minutes)
-    ? report.cadences : [...report.cadences, job.every_minutes].sort((a, b) => a - b)
 
   async function commit(patch: Partial<JobSettings>, done: string) {
     if (await updateJob(job.name, patch)) toast.success(done)
     else toast.error(useCollectors.getState().error ?? "The change wasn't saved.")
   }
 
-  // A change that takes the city's requests over the budget asks first.
   function change(patch: Partial<JobSettings>, done: string) {
-    if (pending) return
+    if (pending || locked) return
     const next = { enabled: job.enabled, every_minutes: job.every_minutes, night_only: job.night_only, ...patch }
     const perDay = report.budget.per_day - job.requests_per_day + requestsPerDay(job, next, report.night_fraction)
     if (job.counts_against_budget && perDay > report.budget.limit && perDay > report.budget.per_day) {
@@ -94,16 +92,47 @@ export function JobRow({ job, report }: { job: CollectorJob; report: CollectorsR
   }
 
   async function runNow() {
-    if (pending || busy) return
+    if (pending || locked || job.state !== null) return
     if (await runJobNow(job.name)) toast.success(`${job.title} will run now`)
     else toast.error(useCollectors.getState().error ?? "It couldn't be started.")
   }
 
   async function reset() {
-    if (pending) return
+    if (pending || locked) return
     if (await resetJob(job.name)) toast.success(`${job.title} is back to its defaults`)
     else toast.error(useCollectors.getState().error ?? "It couldn't be reset.")
   }
+
+  const dialog = (
+    <AlertDialog open={overBudget !== null} onOpenChange={(o) => { if (!o) setOverBudget(null) }}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Go over the request budget?</AlertDialogTitle>
+          <AlertDialogDescription>
+            The twin would send the city's API about {number(overBudget?.perDay)} requests a day, over the
+            {" "}{number(report.budget.limit)} agreed while the polling agreement is pending.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Keep it as it is</AlertDialogCancel>
+          <AlertDialogAction onClick={() => { if (overBudget) void commit(overBudget.patch, overBudget.done); setOverBudget(null) }}>
+            Change it anyway
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  )
+
+  return { locked, pending, change, runNow: () => void runNow(), reset: () => void reset(), dialog }
+}
+
+export function JobRow({ job, report }: { job: CollectorJob; report: CollectorsReport }) {
+  const { locked, pending, change, runNow, reset, dialog } = useJobControls(job, report)
+  const id = `job-${job.name}`
+  const run = lastRun(job)
+  const next = nextRun(job, report)
+  const cadences = report.cadences.includes(job.every_minutes)
+    ? report.cadences : [...report.cadences, job.every_minutes].sort((a, b) => a - b)
 
   const defaults = [
     job.changed.includes("enabled") && (job.defaults.enabled ? "on" : "off"),
@@ -112,14 +141,11 @@ export function JobRow({ job, report }: { job: CollectorJob; report: CollectorsR
   ].filter(Boolean).join(", ")
 
   return (
-    <Collapsible
-      open={open}
-      onOpenChange={setOpen}
-      render={<Item role="listitem" data-job={job.name} className="items-start" />}
-    >
+    <Item role="listitem" data-job={job.name} className="items-start">
       <ItemMedia>
         <Switch
           checked={job.enabled}
+          disabled={locked}
           onCheckedChange={(on) => change({ enabled: on }, on ? `${job.title} is on` : `${job.title} is off`)}
           aria-labelledby={`${id}-title`}
           aria-describedby={`${id}-status`}
@@ -136,12 +162,12 @@ export function JobRow({ job, report }: { job: CollectorJob; report: CollectorsR
             {job.state === "running" ? <Spinner aria-hidden="true" /> : <Dot tone={run.tone} />}
             {run.text}
           </span>
-          {nextRun(job, report) && <span>{nextRun(job, report)}</span>}
+          {next && <span>{next}</span>}
           <SourceLink source={job.source} />
         </div>
       </ItemContent>
       <ItemActions className="flex-wrap">
-        {job.changed.length > 0 && (
+        {job.changed.length > 0 && !locked && (
           <Tooltip>
             <TooltipTrigger render={<Button variant="ghost" size="sm" onClick={reset} aria-disabled={pending || undefined} />}>
               <RotateCcwIcon data-icon="inline-start" />
@@ -156,6 +182,7 @@ export function JobRow({ job, report }: { job: CollectorJob; report: CollectorsR
             const every = Number(v)
             if (every !== job.every_minutes) change({ every_minutes: every }, `${job.title} runs ${cadenceLabel(every).toLowerCase()}`)
           }}
+          disabled={locked}
         >
           <SelectTrigger size="sm" aria-label={`How often ${job.title} runs`} className="w-40">
             <SelectValue>{cadenceLabel(job.every_minutes)}</SelectValue>
@@ -168,75 +195,18 @@ export function JobRow({ job, report }: { job: CollectorJob; report: CollectorsR
             </SelectGroup>
           </SelectContent>
         </Select>
-        <Button variant="outline" size="sm" onClick={runNow} aria-disabled={pending || busy || undefined} aria-describedby={`${id}-title`}>
+        <Button
+          variant="outline" size="sm" onClick={runNow} disabled={locked}
+          aria-disabled={pending || job.state !== null || undefined} aria-describedby={`${id}-title`}
+        >
           {job.state === "running" && <Spinner data-icon="inline-start" />}
           {job.state === "running" ? "Running" : job.state === "queued" ? "Waiting" : "Run now"}
         </Button>
-        <CollapsibleTrigger render={<Button variant="ghost" size="icon-sm" aria-label={`Details of ${job.title}`} />}>
-          <ChevronDownIcon className={cn("transition-transform motion-reduce:transition-none", open && "rotate-180")} />
-        </CollapsibleTrigger>
+        <Button variant="ghost" size="sm" onClick={() => openHow(job.name)} aria-label={`Read more: how ${job.title} is collected`}>
+          Read more
+        </Button>
       </ItemActions>
-      <CollapsibleContent render={<ItemFooter />}>
-        <dl className="grid w-full gap-x-6 gap-y-2.5 rounded-lg bg-muted/40 p-3.5 text-sm sm:grid-cols-[10rem_1fr]">
-          <dt className="text-muted-foreground">What it records</dt>
-          <dd>{job.records}</dd>
-          <dt className="text-muted-foreground">Used for</dt>
-          <dd>{job.uses}</dd>
-          <dt className="text-muted-foreground">Cost</dt>
-          <dd>
-            About {number(job.requests_per_day)} requests a day
-            {job.counts_against_budget ? "" : ", outside the city's budget"}.{" "}
-            {number(job.requests_24h)} in the last 24 hours
-            {job.last && job.last.errors_24h > 0 && <span className="text-signal">, {job.last.errors_24h} failed {job.last.errors_24h === 1 ? "run" : "runs"}</span>}.
-          </dd>
-          <dt className="text-muted-foreground">Last run</dt>
-          <dd>
-            {job.last?.started ? (
-              <>
-                {clockTime(job.last.started)}
-                {job.last.seconds != null && `, took ${job.last.seconds} s`}
-                {job.last.rows != null && `, ${number(job.last.rows)} ${job.last.rows === 1 ? "row" : "rows"}`}
-                {job.last.message && <span className={cn("block", job.last.status === "error" ? "text-signal" : "text-muted-foreground")}>{job.last.message}</span>}
-              </>
-            ) : "Not yet"}
-          </dd>
-          <dt className="text-muted-foreground">Writes to</dt>
-          <dd>{job.tables.join(", ")}</dd>
-          <dt className="sr-only">Night window</dt>
-          <dd className="sm:col-span-2">
-            <Field orientation="horizontal">
-              <Switch
-                id={`${id}-night`}
-                size="sm"
-                checked={job.night_only}
-                onCheckedChange={(on) => change({ night_only: on }, on ? `${job.title} runs only after dark` : `${job.title} runs day and night`)}
-              />
-              <FieldContent>
-                <FieldLabel htmlFor={`${id}-night`}>Only after dark</FieldLabel>
-                <FieldDescription>For devices that report only while powered, such as street lights.</FieldDescription>
-              </FieldContent>
-            </Field>
-          </dd>
-        </dl>
-      </CollapsibleContent>
-
-      <AlertDialog open={overBudget !== null} onOpenChange={(o) => { if (!o) setOverBudget(null) }}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Go over the request budget?</AlertDialogTitle>
-            <AlertDialogDescription>
-              The twin would send the city's API about {number(overBudget?.perDay)} requests a day, over the
-              {" "}{number(report.budget.limit)} agreed while the polling agreement is pending.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Keep it as it is</AlertDialogCancel>
-            <AlertDialogAction onClick={() => { if (overBudget) void commit(overBudget.patch, overBudget.done); setOverBudget(null) }}>
-              Change it anyway
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </Collapsible>
+      {dialog}
+    </Item>
   )
 }

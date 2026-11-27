@@ -68,6 +68,9 @@ def guard_change(request: Request) -> None:
 def _report(c: Collectors, request: Request, status: int = 200) -> JSONResponse:
     body = c.report()
     body["admin"] = admin_state(request)
+    if body["admin"]["configured"] and not body["admin"]["unlocked"] \
+            and request.headers.get(ADMIN_HEADER):
+        time.sleep(WRONG_PASSWORD_PAUSE_S)  # the report says whether it was right: as slow
     return JSONResponse(body, status_code=status, headers=NO_STORE)
 
 

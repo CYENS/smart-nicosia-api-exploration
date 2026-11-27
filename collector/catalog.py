@@ -37,7 +37,7 @@ GROUPS = (
 # A test checks every declared setting has a label here and is a real Config field. Only these
 # are ever shown: never the whole config or the environment.
 SETTING_LABELS: dict[str, str] = {
-    "every_minutes": "Runs every (minutes)",
+    "every_minutes": "How often",
     "enabled": "Switched on",
     "night_only": "Only after dark",
     "tenant": "The city's account on the platform",
@@ -132,8 +132,7 @@ JOB_INFO: dict[str, JobInfo] = {
     "lamps": JobInfo(
         "Street lights",
         "Each light's power, energy and on or off",
-        "Each street light's power draw, energy meter and whether it is on. Lamps only report "
-        "while powered, so this runs between sunset and sunrise.",
+        "Each street light's power draw, energy meter and whether it is on.",
         "Lights out alerts, energy use and the street lighting scenario.",
         "Each run, the twin asks every street light for its latest readings, one request per "
         "light. Lamps only report while powered, so a run by day learns nothing.",
