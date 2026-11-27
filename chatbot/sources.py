@@ -109,12 +109,16 @@ SOURCES: tuple[Source, ...] = (
         "Map, places and routes", url="https://openfreemap.org",
         refresh="Tiles as you move the map"),
     Source(
-        "terrain_tiles", "Terrain Tiles", "the terrain tiles", "Mapzen, on the AWS Registry of Open Data "
-        "(from SRTM, EU-DEM and other public elevation models)",
-        "The height of the ground, for the terrain and its hillshade",
-        "Map, places and routes", url="https://registry.opendata.aws/terrain-tiles/",
-        refresh="Tiles as you move the map",
-        credit="Terrain: Mapzen, AWS Open Data"),
+        "terrain_tiles", "Ground heights (DLS terrain model, 2019)", "the DLS terrain model",
+        "Department of Lands and Surveys: a 1 m grid from its 2019 LiDAR flight, served as open "
+        "terrain tiles by Mapterhorn. North of the buffer zone the tiles are filled from Copernicus "
+        "GLO-30 (30 m)",
+        "The height of the ground: the terrain and its hillshade, the views from high places and "
+        "what hides what",
+        "Map, places and routes", url="https://www.data.gov.cy/el/dataset/ypsometria-inspire",
+        licence=CC_BY, licence_url="https://creativecommons.org/licenses/by/4.0/",
+        refresh="Tiles as you move the map; the server keeps each one it has read",
+        credit="Ground: DLS Cyprus 2019, CC BY 4.0"),
     Source(
         "valhalla", "Valhalla routing", "Valhalla", "The Valhalla project, on FOSSGIS's public server",
         "Walking and driving routes, how far you reach on foot, walks to and from the bus, the "
