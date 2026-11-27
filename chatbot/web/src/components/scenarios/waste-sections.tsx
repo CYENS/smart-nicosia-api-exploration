@@ -37,7 +37,7 @@ function details(run: ScenarioRun): WasteDetails | null {
   return d?.days ? (d as WasteDetails) : null
 }
 
-function Rounds({ run }: { run: ScenarioRun; compare: ScenarioRun | null }) {
+function Rounds({ run, compare }: { run: ScenarioRun; compare: ScenarioRun | null }) {
   const d = details(run)
   const ids = { side: useId(), day: useId() }
   const [side, setSide] = useState<"scenario" | "baseline">("scenario")
@@ -50,6 +50,7 @@ function Rounds({ run }: { run: ScenarioRun; compare: ScenarioRun | null }) {
   const drawnLabel = d.days.scenario.find((x) => x.date === d.route_date)?.label
   return (
     <div className="flex flex-col gap-3">
+      {compare && <p className="text-[12px] text-muted-foreground">The rounds of A: {run.label}.</p>}
       <div className="flex flex-col gap-2.5">
         <Field>
           <FieldLabel id={ids.side} className="text-[12.5px] font-normal text-muted-foreground">Show</FieldLabel>
@@ -145,13 +146,15 @@ function DayView({ day, drawn }: { day: Day; drawn: boolean }) {
   )
 }
 
-function BinsToWatch({ run }: { run: ScenarioRun; compare: ScenarioRun | null }) {
+function BinsToWatch({ run, compare }: { run: ScenarioRun; compare: ScenarioRun | null }) {
   const d = details(run)
   const left = useMemo(() => Object.entries(d?.summary.not_modelled ?? {}), [d])
   if (!d) return null
   return (
     <div className="flex flex-col gap-3">
-      <p className="text-[12.5px] text-muted-foreground">Full the longest under today's pickups, hours a week: today to this scenario.</p>
+      <p className="text-[12.5px] text-muted-foreground">
+        Full the longest under today's pickups, hours a week: today to {compare ? `A, ${run.label}` : "this scenario"}.
+      </p>
       {d.watch.length ? (
         <RowList label="Bins full the longest today">
           {d.watch.map((w) => (

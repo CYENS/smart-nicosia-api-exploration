@@ -538,7 +538,7 @@ class Waste(Scenario):
                     "order": [s.bin_id for s in trip.stops], "_stops": [list(p) for p in stops]}})
         used = dict.fromkeys(f["properties"]["state"] for f in feats)
         return {"type": "FeatureCollection", "features": feats,
-                "meta": {"title": f"Rounds on {t:%a} {t.day} {t:%b}", "variant": None, "show": True,
+                "meta": {"title": f"This scenario's rounds on {t:%a} {t.day} {t:%b}", "variant": None, "show": True,
                          "geometry": "route", "chat": True,
                          "legend": {s: ROUTE_COLORS[s] for s in used if s in ROUTE_COLORS},
                          "legend_labels": {s: ROUTE_LABELS[s] for s in used if s in ROUTE_LABELS},
