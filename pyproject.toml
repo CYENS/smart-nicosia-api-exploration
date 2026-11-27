@@ -30,8 +30,16 @@ only-include = ["collector", "chatbot", "smart_nicosia_api.py"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+# The browser tests (tests/e2e) need the e2e group and Chromium, so a plain run leaves them out:
+# uv run --group e2e pytest -m e2e
+addopts = ["-m", "not e2e"]
+markers = ["e2e: browser tests of the page, offline (uv run --group e2e pytest -m e2e)"]
 
 [dependency-groups]
 dev = [
     "pytest>=9.1.1",
+]
+e2e = [
+    "axe-playwright-python>=0.1.9",
+    "pytest-playwright>=0.10.0",
 ]
