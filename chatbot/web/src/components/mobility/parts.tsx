@@ -2,9 +2,11 @@
    in its colour, a road's speed against its free flow, and the road speeds legend. */
 import type { ReactNode } from "react"
 
+import { UsualLegend } from "@/components/mobility/stalled"
 import { Item, ItemGroup } from "@/components/ui/item"
 import { ROAD_BANDS, ROAD_COLORS } from "@/lib/mobility/map"
 import { useMapUi } from "@/lib/map/engine"
+import { useMobility } from "@/lib/mobility/store"
 import { useRovingList } from "@/lib/roving"
 import { cn } from "@/lib/utils"
 
@@ -93,6 +95,8 @@ export function SpeedMeter({ speed, free, usual, state, label }: {
 
 export function RoadLegend({ className }: { className?: string }) {
   const colors = useRoadColors()
+  const stalled = useMobility((s) => s.roads.status === "stalled")
+  if (stalled) return <UsualLegend className={className} /> // no road has a live band to show
   return (
     <ul className={cn("grid grid-cols-2 gap-x-3 gap-y-1.5 text-[12.5px] text-muted-foreground", className)} aria-label="Road speed legend">
       {ROAD_BANDS.map((b, i) => (

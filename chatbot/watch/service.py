@@ -10,8 +10,8 @@
 - While a page is listening (and the full collector isn't running here, which fetches them
   anyway), it asks the city for its active alarms and its event feed every five minutes: two
   requests, recorded into the memory like everything else the chatbot fetches. It reads the
-  other feeds its detectors need (`feeds`: the road reports) on the same terms, each at its own
-  pace.
+  other feeds its detectors need (`readers`: the road reports) on the same terms, each at its
+  own pace.
 - Everything that changes goes to the open pages through `Hub`, a server-sent events stream.
 """
 
@@ -96,13 +96,16 @@ class Watcher:
         self._fresh: set[str] = set()
         # Other feeds the detectors read from the memory, refreshed while a page listens (each
         # throttles itself): the road reports (chatbot/mobility/reports.py), set by the Agent.
-        self.feeds: list[Callable[[], None]] = []
+        self.readers: list[Callable[[], None]] = []
         self._thread: threading.Thread | None = None
         self._last_eval = 0.0
         self._last_fetch = 0.0
         self.evaluated_at: datetime | None = None
         self.last_error: str | None = None
         self.last_took_s: float | None = None
+        # Feeds that aren't devices, read as their last fetch left them: source id -> a
+        # callable giving its health (the agent adds the road detectors' feed).
+        self.feeds: dict[str, Callable[[], dict | None]] = {}
         if city is not None and hasattr(city, "listeners"):
             city.listeners.append(self.fresh_readings)
 
@@ -188,7 +191,7 @@ class Watcher:
         """The other feeds the detectors read (the road reports), while a page listens."""
         if self.hub.listening == 0:
             return
-        for read in self.feeds:
+        for read in self.readers:
             try:
                 read()
             except Exception:  # noqa: BLE001 - one feed never stops the watch
@@ -210,6 +213,14 @@ class Watcher:
             self.last_error = str(e)
             self.book.load()
             return []
+        for source, health in self.feeds.items():
+            try:
+                h = health()
+            except Exception:  # noqa: BLE001 - a feed that can't say leaves its rule unrun
+                log.exception("watch: no health for %s", source)
+                continue
+            if h is not None:
+                obs.feeds[source] = h
         found, ran = detectors.detect(obs)
         changes = self.book.update(found, now, streets_near(obs), ran)
         self.book.save()

@@ -63,7 +63,7 @@ The variable message signs (`VmsTablePublication`, `VmsPublication`) were left o
   floods the inbox with closures from July; `road_jam` for a standstill or heavy jam (or a jam
   line of level 3 or more) and for an accident (high severity). They group with each other in the
   family `roads` (500 m, an hour), and end when the report leaves its feed. While a page listens,
-  the watch reads the feeds itself (`Watcher.feeds`).
+  the watch reads the feeds itself (`Watcher.readers`).
 
 ## On the page
 

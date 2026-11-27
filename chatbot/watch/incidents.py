@@ -83,16 +83,18 @@ LINKS: dict[str, tuple[float | None, timedelta | None]] = {
     "air": (math.inf, timedelta(hours=2)),  # an episode over the city
     "roads": (500.0, timedelta(hours=1)),  # a closure, an accident and the jams behind them
     "other": (0.0, timedelta(0)),  # never across devices
+    "feed": (0.0, timedelta(0)),  # a data feed stalling is its own incident
 }
 SAME_DEVICE_GAP = {"outage": timedelta(hours=18), "lighting": timedelta(hours=18)}
 DEFAULT_SAME_GAP = timedelta(hours=8)
 
 CATEGORIES = {"outage": "Outage", "lighting": "Lit by day", "power": "Lamp power",
-              "parking": "Parking sensor", "bins": "Bins", "air": "Air", "roads": "Roads",
-              "other": "City alarm"}
+              "parking": "Parking sensor", "bins": "Bins", "air": "Air", "other": "City alarm",
+              "feed": "Data feed", "roads": "Roads"}
 NOUNS = {"Lighting": ("lamp", "lamps"), "Parking": ("bay", "bays"), "Wastebin": ("bin", "bins"),
          "smartsense": ("air station", "air stations"), "InfoPoints": ("info screen", "info screens"),
-         "Camera": ("camera", "cameras"), "road_report": ("road report", "road reports")}
+         "Camera": ("camera", "cameras"), "feed": ("data feed", "data feeds"),
+         "road_report": ("road report", "road reports")}
 ACTIONS = ("acknowledge", "snooze", "unsnooze", "resolve", "reopen")
 DONE = {"acknowledge": "acknowledged", "snooze": "snoozed", "unsnooze": "unsnoozed",
         "resolve": "resolved", "reopen": "reopened"}
@@ -224,6 +226,10 @@ def compose(members: list[dict], place: dict) -> tuple[str, str, str]:
     spread = span(timedelta(milliseconds=links[-1] - links[0])) if n > 1 else ""
     first = devices[next(iter(devices))]
     one = f"{cap(noun(first['device_type']))} {first['device']}"
+    if family == "feed":  # a feed has no place: its name and what is true of it now say it
+        lead = max(members, key=lambda m: (m.get("end") is None, m["start"]))
+        story = (lead.get("extra") or {}).get("story") or f"{first['label']}: {lead['what']}."
+        return f"{first.get('label') or one}: {lead['what']}", severity, story
     if family == "roads":
         return roads_story(list(devices.values()), severity, on)
     if n == 1:
