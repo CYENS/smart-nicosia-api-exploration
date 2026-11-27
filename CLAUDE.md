@@ -42,6 +42,11 @@ npm run build                     # writes chatbot/static (committed, see below)
   trips, road speeds against free flow ([docs/live-mobility.md](docs/live-mobility.md)), and
   road reports: closures, jams, hazards and roadworks ([docs/road-reports.md](docs/road-reports.md)). One
   `Mobility` on the Agent shares each feed's fetch between pages, tools and the inspector.
+- `chatbot/mobility/facilities.py` is where people park, charge and hire: six national
+  inventories (car parks, park and ride, EV chargers, Nextbike stations, Bolt scooter zones,
+  bicycle racks) read once a day, and Nextbike's live bikes; `facility_kinds.py` is their entity
+  kinds (a car park's live bays are the city's sensors within 60 m). The page side is
+  `lib/facilities/` and `components/facilities/` ([docs/park-charge-hire.md](docs/park-charge-hire.md)).
 - `chatbot/lidar.py` is the 2019 LiDAR flight: it fetches DLS's open surface and terrain sheets
   (heavy, kept out of git in `data/dls_lidar/`), measures every DLS building on them, and
   compares them with the 2014 survey. The twin reads two small files it writes
