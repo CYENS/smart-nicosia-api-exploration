@@ -320,8 +320,8 @@ function Devices({ d }: { d: IncidentDetail }) {
   const { ref, onKeyDown, onFocus } = useRovingList<HTMLDivElement>({ orientation: "both" })
   return (
     <section aria-labelledby="incident-devices" className="flex flex-col gap-2">
-      <Heading aside={<span className="text-[12px] text-muted-foreground">open one in the inspector</span>}>
-        <span id="incident-devices">{d.members.length === 1 ? "The device" : `${d.members.length} devices`}</span>
+      <Heading aside={<span className="text-[12px] text-muted-foreground">{d.family === "feed" ? "opens in Data sources" : "open one in the inspector"}</span>}>
+        <span id="incident-devices">{d.family === "feed" ? "The data feed" : d.members.length === 1 ? "The device" : `${d.members.length} devices`}</span>
       </Heading>
       <div ref={ref} role="list" aria-labelledby="incident-devices" onKeyDown={onKeyDown} onFocus={onFocus} className="flex flex-wrap gap-1.5">
         {d.members.map((m) => {
