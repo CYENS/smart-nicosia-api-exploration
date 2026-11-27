@@ -27,6 +27,9 @@ log = logging.getLogger(__name__)
 
 DOMAINS = (city, places, routes, buildings, maps, charts, memory, entities, clock, mobility,
            watch, environment, views, scenarios, streets)
+# Road reports (closures, jams, roadworks): a domain of its own, at the end.
+from chatbot.tools import roadreports  # noqa: E402
+DOMAINS += (roadreports,)
 
 TOOLS: list[Tool] = [t for domain in DOMAINS for t in domain.TOOLS]
 TOOL_DEFS: list[dict] = [t.definition for t in TOOLS]

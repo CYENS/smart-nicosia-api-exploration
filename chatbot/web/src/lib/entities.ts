@@ -9,7 +9,7 @@ import {
 export type EntityKind =
   | "street_light" | "parking_sensor" | "waste_bin" | "air_station" | "info_screen" | "camera"
   | "register_building" | "building_3d" | "place" | "web_place" | "overture_place"
-  | "bus" | "bus_stop" | "bus_line" | "road_segment" | "incident"
+  | "bus" | "bus_stop" | "bus_line" | "road_segment" | "road_report" | "incident"
   | "spot"
   // The street rules (lib/streets).
   | "speed_limit" | "slow_zone" | "slow_zone_entrance" | "traffic_signal" | "pedestrian_crossing"
@@ -107,6 +107,7 @@ const ID_KINDS: [RegExp, EntityKind][] = [
   [/^stop-\d{1,7}$/, "bus_stop"],
   [/^line-(npt|ic|pame)-[a-z0-9]{1,8}$/, "bus_line"],
   [/^road-\d{1,5}$/, "road_segment"],
+  [/^report-(waze-[0-9a-f]{8}|jam-[0-9a-f]{8}|works-\d{1,20})$/, "road_report"],
   [/^web-[0-9a-f]{8}$/, "web_place"],
   [/^ov-[0-9a-f]{12}$/, "overture_place"],
   [/^INC-\d{1,7}$/, "incident"],
@@ -116,7 +117,7 @@ const ID_KINDS: [RegExp, EntityKind][] = [
   [/^signal-\d{1,5}$/, "traffic_signal"], [/^xing-\d{1,5}$/, "pedestrian_crossing"], [/^ecam-\d{1,5}$/, "enforcement_camera"],
   [/^cycle-\d{1,5}$/, "cycleway"], [/^buslane-\d{1,5}$/, "bus_lane"], [/^school-([nwr]\d{1,12}|ov-[0-9a-f]{12})$/, "school"],
 ]
-export const ID_IN_TEXT = /\b(Y[LPW]\d{2,6}|(?:NIC|LIM|LAR)-\d{1,5}(?:-\d+)?|FAM-15[AB]-\d{1,5}|B\d{3,10}|[0-9a-f]{12}|bus-\d{1,6}|stop-\d{1,7}|line-(?:npt|ic|pame)-[a-z0-9]{1,8}|road-\d{1,5}|web-[0-9a-f]{8}|ov-[0-9a-f]{12}|INC-\d{1,7}|spot-\d{1,2}\.\d{1,6}-\d{1,2}\.\d{1,6}|limit(?:way)?-\d{1,12}|zone-\d{1,4}|zentry-\d{1,5}|signal-\d{1,5}|xing-\d{1,5}|ecam-\d{1,5}|cycle-\d{1,5}|buslane-\d{1,5}|school-(?:[nwr]\d{1,12}|ov-[0-9a-f]{12}))\b/g
+export const ID_IN_TEXT = /\b(Y[LPW]\d{2,6}|(?:NIC|LIM|LAR)-\d{1,5}(?:-\d+)?|FAM-15[AB]-\d{1,5}|B\d{3,10}|[0-9a-f]{12}|bus-\d{1,6}|stop-\d{1,7}|line-(?:npt|ic|pame)-[a-z0-9]{1,8}|road-\d{1,5}|web-[0-9a-f]{8}|ov-[0-9a-f]{12}|INC-\d{1,7}|spot-\d{1,2}\.\d{1,6}-\d{1,2}\.\d{1,6}|limit(?:way)?-\d{1,12}|zone-\d{1,4}|zentry-\d{1,5}|signal-\d{1,5}|xing-\d{1,5}|ecam-\d{1,5}|cycle-\d{1,5}|buslane-\d{1,5}|school-(?:[nwr]\d{1,12}|ov-[0-9a-f]{12})|report-(?:waze-[0-9a-f]{8}|jam-[0-9a-f]{8}|works-\d{1,20}))\b/g
 
 export function kindOfId(id: string): EntityKind | undefined {
   return ID_KINDS.find(([re]) => re.test(id))?.[1]
