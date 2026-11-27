@@ -1,10 +1,10 @@
 """The waste collection study: the city's bins as the twin's memory knows them over a period,
 the measured baseline, each policy replayed on them, and the numbers a council would ask for.
 
-`load` reads the bins and their readings from the memory (never the city API); `Study` turns
-them into per-bin models; `evaluate` runs a policy three times (each bin filling at its lower,
-central and upper rate), routes every round and returns the KPIs with ranges; `backtest`
-replays the city's own pickups on the model and compares with what the sensors read.
+`bin_data` turns the bins and their readings (read from the memory by chatbot/scenarios/waste.py,
+never the city API) into series and emptyings; `Study` models each bin; `baseline` replays the
+city's own pickups on the model and `policy_outcome` a policy, routing every round; `backtest`
+compares the model with what the sensors read.
 """
 
 from __future__ import annotations
@@ -29,7 +29,6 @@ from chatbot.scenarios.waste_model import (
     Bin,
     BinModel,
     DayPlan,
-    FillRate,
     Pickup,
     Policy,
     Shape,
@@ -53,13 +52,13 @@ STUCK_SPAN = 3.0  # a sensor whose readings move less than this all period is st
 FULL_SHARE = 0.8  # never emptied and at 80 % or more for this share of readings: sat full
 DEFAULT_LEFTOVER = 2.0
 STANDARD_SIZES = (1500.0, 2500.0, 3200.0, 5000.0)  # container sizes the city already uses
-WEEKS_A_YEAR = 365.25 / 7
 STREAMS = {"Glass": "glass", "Underground": "underground"}
 
 STATUS_LABELS = {
     "modelled": "Modelled",
     "no_readings": "No readings in the period",
     "few_readings": "Too few readings",
+    "partial": "Started reporting after the period began",
     "stuck": "Sensor reads the same all period",
     "sat_full": "Sat full all period, never emptied",
     "no_rate": "No stretch long enough to measure filling",
@@ -143,6 +142,8 @@ def classify(d: BinData, start_ms: int, end_ms: int) -> str:
         return "no_readings"
     if len(inside) < MIN_READINGS:
         return "few_readings"
+    if level_at(d.times, d.levels, start_ms) is None:
+        return "partial"  # nothing says where it stood when the period began
     if max(inside) - min(inside) < STUCK_SPAN:
         return "stuck"
     emptied = any(start_ms <= p.t_ms < end_ms for p in d.pickups)
@@ -153,24 +154,6 @@ def classify(d: BinData, start_ms: int, end_ms: int) -> str:
     return "modelled"
 
 
-@dataclass
-class Assumptions:
-    """Every number the model takes on trust, with its range and where it comes from."""
-    truck_m3: float = 20.0
-    service_min: float = 4.0
-    service_range: tuple[float, float] = (3.0, 6.0)
-    unload_min: float = 20.0
-    unload_range: tuple[float, float] = (15.0, 30.0)
-    shift_h: float = 8.0
-    fuel_l_per_km: float = 0.70
-    fuel_range: tuple[float, float] = (0.57, 1.0)
-    co2_kg_per_l: float = 2.68
-    co2_range: tuple[float, float] = (2.51, 2.70)
-    depot: tuple[float, float] = (35.1385, 33.3365)
-    depot_name: str = "Strovolos industrial area"
-
-    def crew(self) -> Crew:
-        return Crew(self.truck_m3, self.service_min, self.unload_min, self.shift_h)
 
 
 class Study:
@@ -232,12 +215,11 @@ class Study:
         return tuple(sorted(w for w, n in weekday_weeks.items() if n >= 2)) or (0,)
 
 
-# -- measured -----------------------------------------------------------------------------------
+# -- what a policy (or the city) did ------------------------------------------------------------
 
 
 @dataclass
 class Outcome:
-    """What a policy (or the city) did over the period, per bin and in total."""
     full_hours: float
     capacity_hours: float
     bins_at_capacity: int
@@ -252,18 +234,16 @@ class Outcome:
     plans: list[DayPlan]
     daily: list[dict]
 
-    def hours(self, a: Assumptions, service_min: float | None = None,
-              unload_min: float | None = None) -> float:
-        s = a.service_min if service_min is None else service_min
-        u = a.unload_min if unload_min is None else unload_min
-        return self.drive_h + self.stops * s / 60 + self.trips * u / 60
+    def hours(self, service_min: float, unload_min: float) -> float:
+        """Driver hours: driving, plus every lift and every unloading."""
+        return self.drive_h + self.stops * service_min / 60 + self.trips * unload_min / 60
 
 
-def route_day(study: Study, matrix: Matrix, a: Assumptions,
+def route_day(matrix: Matrix, crew: Crew,
               stops_by_stream: dict[str, list[tuple[Bin, float, float]]], t_ms: int) -> DayPlan:
     plan = DayPlan(t_ms)
     for stream, stops in sorted(stops_by_stream.items()):
-        plan.trips.extend(plan_round(stream, stops, matrix, a.crew()))
+        plan.trips.extend(plan_round(stream, stops, matrix, crew))
     return plan
 
 
@@ -275,7 +255,7 @@ def plan_totals(plans: Sequence[DayPlan]) -> tuple[float, float, int, int]:
     return km, drive_h, stops, trips
 
 
-def city_plans(study: Study, matrix: Matrix, a: Assumptions) -> list[DayPlan]:
+def city_plans(study: Study, matrix: Matrix, crew: Crew, start_hour: int = 6) -> list[DayPlan]:
     """The city's own pickups, routed day by day the same way as every policy's rounds. The
     trucks' real routes aren't known, so these are the kilometres an efficient round through
     the same bins would drive: like for like with the policies, and likely fewer than the real
@@ -292,9 +272,8 @@ def city_plans(study: Study, matrix: Matrix, a: Assumptions) -> list[DayPlan]:
                 (d.bin, lv, d.bin.volume_l / 1000 * lv / 100))
     plans = []
     for day in sorted({k[0] for k in by_day}):
-        t = int(datetime(day.year, day.month, day.day, 6, tzinfo=study.tz).timestamp() * 1000)
-        plans.append(route_day(study, matrix, a,
-                               {s: v for (dd, s), v in by_day.items() if dd == day}, t))
+        t = int(datetime(day.year, day.month, day.day, start_hour, tzinfo=study.tz).timestamp() * 1000)
+        plans.append(route_day(matrix, crew, {s: v for (dd, s), v in by_day.items() if dd == day}, t))
     return plans
 
 
@@ -317,29 +296,16 @@ def sensor_hours(study: Study) -> dict[str, dict]:
     return out
 
 
-def baseline(study: Study, matrix: Matrix, a: Assumptions) -> dict[str, Outcome]:
-    """The city's month on the model: its own pickups replayed on the bins' lower, central and
-    upper fill rates, so the baseline and every policy share the model and its biases (the
-    backtest says how far the model is from the sensors)."""
-    plans = city_plans(study, matrix, a)
-    policy = Policy("measured", study.measured_round_days())
-    out = {}
-    for which in ("low", "central", "high"):
-        sim = simulate(study.models, study.start_ms, study.days, policy, shape_of=study.shape_of,
-                       tz=study.tz, which=which, measured=study.measured_pickups())
-        sim.plans = plans
-        out[which] = sim_outcome(study, sim, policy)
-    return out
-
-
-def sim_outcome(study: Study, sim: Simulation, policy: Policy) -> Outcome:
+def sim_outcome(study: Study, sim: Simulation, policy: Policy, fill: float) -> Outcome:
     km, drive_h, stops, trips = plan_totals(sim.plans)
     per_bin = {bid: {"full_hours": o.full_hours, "capacity_hours": o.capacity_hours,
                      "collections": o.collections, "low_lifts": o.low_lifts}
                for bid, o in sim.bins.items()}
+    # a bigger container is for a busy week: the fast end of the bin's range, or beyond it
+    # when the fill-rate assumption is set above that
     bigger = {}
     for m in study.models:
-        size = bigger_container(m, policy, STANDARD_SIZES)
+        size = bigger_container(m, policy, STANDARD_SIZES, max(1.0, fill))
         if size:
             bigger[m.bin.id] = size
     daily = []
@@ -353,164 +319,136 @@ def sim_outcome(study: Study, sim: Simulation, policy: Policy) -> Outcome:
                    daily)
 
 
-def run_policy(study: Study, policy: Policy, matrix: Matrix, a: Assumptions) -> dict[str, Outcome]:
-    """The policy with every bin at its lower, central and upper fill rate."""
+def baseline(study: Study, matrix: Matrix, crew: Crew, fill: float = 0.0,
+             start_hour: int = 6) -> Outcome:
+    """The city's period on the model: its own pickups replayed on the bins' fill rates (at
+    `fill` within each bin's range), so the baseline and every policy share the model and its
+    biases (the backtest says how far the model is from the sensors), with those pickups routed
+    day by day."""
+    policy = Policy("measured", study.measured_round_days(), start_hour=start_hour)
+    sim = simulate(study.models, study.start_ms, study.days, policy, shape_of=study.shape_of,
+                   tz=study.tz, fill=fill, measured=study.measured_pickups())
+    sim.plans = city_plans(study, matrix, crew, start_hour)
+    return sim_outcome(study, sim, policy, fill)
+
+
+def policy_outcome(study: Study, policy: Policy, matrix: Matrix, crew: Crew,
+                   fill: float = 0.0) -> Outcome:
+    """A policy replayed over the period, every round routed."""
     def planner(stream, stops, t_ms):
-        return plan_round(stream, stops, matrix, a.crew())
+        return plan_round(stream, stops, matrix, crew)
 
-    out = {}
-    for which in ("low", "central", "high"):
-        sim = simulate(study.models, study.start_ms, study.days, policy, shape_of=study.shape_of,
-                       tz=study.tz, which=which, planner=planner, truck_m3=a.truck_m3)
-        out[which] = sim_outcome(study, sim, policy)
-    return out
-
-
-# -- KPIs ---------------------------------------------------------------------------------------
-
-
-def _r(v: float | None, nd: int = 1) -> float | None:
-    if v is None:
-        return None
-    return round(v, nd) if nd else round(v)
-
-
-def kpis(study: Study, base: Outcome, runs: dict[str, Outcome], a: Assumptions) -> list[dict]:
-    """Per week (CO2 per year), with the scenario's range: the bins at their lower and upper
-    fill rates, and the low and high end of every factor that enters the number."""
-    wk = 7 / study.days
-    c = runs["central"]
-    variants = list(runs.values())
-
-    def span(values: list[float]) -> tuple[float, float]:
-        return min(values), max(values)
-
-    def fuel(o: Outcome, f: float) -> float:
-        return o.km * f * wk
-
-    def row(id_, label, unit, b, s, lo_hi, better="lower", nd=1, note=None):
-        lo, hi = lo_hi
-        out = {"id": id_, "label": label, "unit": unit, "baseline": _r(b, nd), "scenario": _r(s, nd),
-               "delta": _r(s - b, nd) if b is not None else None, "better": better,
-               "low": _r(lo, nd), "high": _r(hi, nd)}
-        if note:
-            out["note"] = note
-        return out
-
-    hours_lo = [o.hours(a, a.service_range[0], a.unload_range[0]) * wk for o in variants]
-    hours_hi = [o.hours(a, a.service_range[1], a.unload_range[1]) * wk for o in variants]
-    fuel_lo = [fuel(o, a.fuel_range[0]) for o in variants]
-    fuel_hi = [fuel(o, a.fuel_range[1]) for o in variants]
-    co2 = lambda litres, k: litres * WEEKS_A_YEAR * k / 1000  # noqa: E731
-    return [
-        row("overflow_hours", "Bin-hours at capacity", "bin-hours a week",
-            base.capacity_hours * wk, c.capacity_hours * wk,
-            span([o.capacity_hours * wk for o in variants]), nd=0,
-            note="Hours a bin read 95 % or more, when waste starts going beside it"),
-        row("bins_overflowing", "Bins that reach capacity", "bins",
-            base.bins_at_capacity, c.bins_at_capacity,
-            span([o.bins_at_capacity for o in variants]), nd=0),
-        row("full_hours", "Bin-hours full", "bin-hours a week", base.full_hours * wk,
-            c.full_hours * wk, span([o.full_hours * wk for o in variants]), nd=0,
-            note="Hours at 80 % or more, the city's alarm level"),
-        row("collections", "Collections", "a week", base.collections * wk, c.collections * wk,
-            span([o.collections * wk for o in variants]), nd=0),
-        row("low_lifts", "Collections of bins under 30 % full", "a week", base.low_lifts * wk,
-            c.low_lifts * wk, span([o.low_lifts * wk for o in variants]), nd=0),
-        row("truck_km", "Truck kilometres", "km a week", base.km * wk, c.km * wk,
-            span([o.km * wk for o in variants]), nd=0),
-        row("driver_hours", "Driver hours", "hours a week", base.hours(a) * wk, c.hours(a) * wk,
-            (min(hours_lo), max(hours_hi)), nd=1),
-        row("fuel", "Diesel", "litres a week", fuel(base, a.fuel_l_per_km),
-            fuel(c, a.fuel_l_per_km), (min(fuel_lo), max(fuel_hi)), nd=0),
-        row("co2", "CO2 from the trucks", "tonnes a year", co2(fuel(base, a.fuel_l_per_km), a.co2_kg_per_l),
-            co2(fuel(c, a.fuel_l_per_km), a.co2_kg_per_l),
-            (co2(min(fuel_lo), a.co2_range[0]), co2(max(fuel_hi), a.co2_range[1])), nd=1),
-        row("bigger_bins", "Bins that need a bigger container", "bins", len(base.bigger),
-            len(c.bigger), span([len(o.bigger) for o in variants]), nd=0,
-            note="Would reach capacity between two rounds even at a busy week's fill rate"),
-    ]
+    sim = simulate(study.models, study.start_ms, study.days, policy, shape_of=study.shape_of,
+                   tz=study.tz, fill=fill, planner=planner, truck_m3=crew.truck_m3)
+    return sim_outcome(study, sim, policy, fill)
 
 
 # -- backtest -----------------------------------------------------------------------------------
 
 
-def backtest(study: Study, data_for_fit: list[BinData] | None = None) -> list[dict]:
-    """Replay the city's own pickups on the model and compare the hours full (80 % or more) and
-    at capacity with what the sensors read, over the hours the readings cover.
+def _bt(metric: str, measured: float, modelled: float, lo_hi: Sequence[float], period: str,
+        note: str, kind: str) -> dict:
+    err = None if not measured else round(100 * (modelled - measured) / measured, 1)
+    return {"metric": metric, "unit": "bin-hours", "measured": round(measured),
+            "modelled": round(modelled), "low": round(min([*lo_hi, modelled])),
+            "high": round(max([*lo_hi, modelled])), "error_pct": err, "period": period,
+            "note": note, "kind": kind}
 
-    In sample: rates measured over the whole period. Out of sample: rates from the first half
-    only, replayed over the second half from the levels read at its start (the honest test)."""
+
+def _measured_total(study: Study, ids: set[str], start_ms: int, days: int, level: float) -> float:
+    total = 0
+    for d in study.modelled():
+        if d.bin.id in ids:
+            _, vals = measured_hours(d.times, d.levels, start_ms, days * 24)
+            total += sum(1 for v in vals if v is not None and v >= level)
+    return total
+
+
+def _daily_rows(study: Study, sim: Simulation, start_ms: int, days: int, ids: set[str]) -> list[dict]:
+    """Per day, bin-hours full as read and as modelled."""
+    measured = [0] * days
+    for d in study.modelled():
+        if d.bin.id not in ids:
+            continue
+        _, vals = measured_hours(d.times, d.levels, start_ms, days * 24)
+        for h, v in enumerate(vals):
+            if v is not None and v >= FULL:
+                measured[h // 24] += 1
+    out = []
+    for i in range(days):
+        modelled = next((r["full_hours"] for r in sim.daily if r["day"] == i), None)
+        out.append({"time": local(start_ms + i * DAY_MS + 12 * HOUR_MS, study.tz).date().isoformat(),
+                    "measured": measured[i], "modelled": modelled})
+    return out
+
+
+def backtest(study: Study) -> list[dict]:
+    """Replay the city's own pickups on the model and compare the bin-hours full (80 % or more)
+    and at capacity (95 % or more) with what the sensors read, over the hours the readings
+    cover. Out of sample first (fill rates from the first half of the period, replayed over the
+    second half from the levels read at its start: the honest test), then in sample (rates from
+    the whole period). Each comes with the model's range (every bin at the slow and at the fast
+    end of its fill rates) and, for the first, its days."""
     out = []
     known = study.known()
     measured = study.measured_pickups()
-    period = f"{_day(study.start_ms, study.tz)} to {_day(study.end_ms - DAY_MS, study.tz)}"
-    meas_full = meas_cap = 0
-    for d in study.modelled():
-        k, vals = measured_hours(d.times, d.levels, study.start_ms, study.days * 24)
-        meas_full += sum(1 for v in vals if v is not None and v >= FULL)
-        meas_cap += sum(1 for v in vals if v is not None and v >= AT_CAPACITY)
-    replay = {w: simulate(study.models, study.start_ms, study.days, Policy("measured"),
-                          shape_of=study.shape_of, tz=study.tz, which=w, measured=measured,
-                          known=known)
-              for w in ("low", "central", "high")}
-    pooled = sum(1 for m in study.models if m.rate.basis == "pooled")
-    out.append(_bt("Bin-hours full (80 % or more), in sample", meas_full,
-                   replay["central"].total("full_hours"),
-                   [replay[w].total("full_hours") for w in ("low", "high")], period,
-                   f"The city's {sum(len(v) for v in measured.values())} pickups replayed on fill "
-                   f"rates measured over the same weeks. {pooled} of {len(study.models)} bins have "
-                   "one stretch between emptyings, so their range is borrowed from the others."))
-    out.append(_bt("Bin-hours at capacity (95 % or more), in sample", meas_cap,
-                   replay["central"].total("capacity_hours"),
-                   [replay[w].total("capacity_hours") for w in ("low", "high")], period,
-                   "Capacity hours hinge on the last hours before a pickup, so they swing more "
-                   "than hours full."))
+    tz = study.tz
     half = study.days // 2
     if half >= 7:
-        first = Study(_cut(study.data, study.start_ms, study.start_ms + half * DAY_MS),
-                      study.start_ms, half, study.tz)
-        second_start = study.start_ms + half * DAY_MS
+        second = study.start_ms + half * DAY_MS
         days2 = study.days - half
+        first = Study(_cut(study.data, second), study.start_ms, half, tz)
         fitted = {m.bin.id: m for m in first.models}
         models = []
         for d in study.modelled():
             m = fitted.get(d.bin.id)
-            lv = level_at(d.times, d.levels, second_start)
+            lv = level_at(d.times, d.levels, second)
             if m and lv is not None:
                 models.append(BinModel(d.bin, m.rate, m.leftover, lv))
         ids = {m.bin.id for m in models}
-        known2 = {bid: k[half * 24:] for bid, k in known.items() if bid in ids}
-        picks2 = {bid: [p for p in ps if p.t_ms >= second_start] for bid, ps in measured.items()
-                  if bid in ids}
-        sim = simulate(models, second_start, days2, Policy("measured"), shape_of=first.shape_of,
-                       tz=study.tz, measured=picks2, known=known2)
-        lo_hi = [simulate(models, second_start, days2, Policy("measured"), shape_of=first.shape_of,
-                          tz=study.tz, which=w, measured=picks2, known=known2).total("full_hours")
-                 for w in ("low", "high")]
-        meas2 = 0
-        for d in study.modelled():
-            if d.bin.id in ids:
-                _, vals = measured_hours(d.times, d.levels, second_start, days2 * 24)
-                meas2 += sum(1 for v in vals if v is not None and v >= FULL)
-        out.append(_bt("Bin-hours full (80 % or more), out of sample", meas2,
-                       sim.total("full_hours"), lo_hi,
-                       f"{_day(second_start, study.tz)} to {_day(study.end_ms - DAY_MS, study.tz)}",
-                       f"Fill rates from the first {half} days only, for the {len(models)} bins "
-                       "they could be measured for; the city's pickups in the last "
-                       f"{days2} days replayed on them."))
+        known2 = {b: k[half * 24:] for b, k in known.items() if b in ids}
+        picks2 = {b: [p for p in ps if p.t_ms >= second] for b, ps in measured.items() if b in ids}
+        runs = {f: simulate(models, second, days2, Policy("measured"), shape_of=first.shape_of,
+                            tz=tz, fill=f, measured=picks2, known=known2) for f in (-1.0, 0.0, 1.0)}
+        row = _bt("Bin-hours full (80 % or more), out of sample",
+                  _measured_total(study, ids, second, days2, FULL), runs[0.0].total("full_hours"),
+                  [runs[-1.0].total("full_hours"), runs[1.0].total("full_hours")],
+                  f"{_day(second, tz)} to {_day(study.end_ms - DAY_MS, tz)}",
+                  f"Fill rates measured over the first {half} days only, for the {len(models)} bins "
+                  f"they could be measured for; the city's own pickups in the last {days2} days "
+                  "replayed on them from the levels read when those days began.", "out_of_sample")
+        row["rows"] = _daily_rows(study, runs[0.0], second, days2, ids)
+        out.append(row)
+    runs = {f: simulate(study.models, study.start_ms, study.days, Policy("measured"),
+                        shape_of=study.shape_of, tz=tz, fill=f, measured=measured, known=known)
+            for f in (-1.0, 0.0, 1.0)}
+    ids = {m.bin.id for m in study.models}
+    period = f"{_day(study.start_ms, tz)} to {_day(study.end_ms - DAY_MS, tz)}"
+    pooled = sum(1 for m in study.models if m.rate.basis == "pooled")
+    row = _bt("Bin-hours full (80 % or more), in sample",
+              _measured_total(study, ids, study.start_ms, study.days, FULL),
+              runs[0.0].total("full_hours"),
+              [runs[-1.0].total("full_hours"), runs[1.0].total("full_hours")], period,
+              f"The city's {sum(len(v) for v in measured.values())} pickups replayed on fill rates "
+              f"measured over the same days. {pooled} of {len(study.models)} bins were emptied "
+              "at most once, so their range is borrowed from the bins emptied more often.",
+              "in_sample")
+    if not out:
+        row["rows"] = _daily_rows(study, runs[0.0], study.start_ms, study.days, ids)
+    out.append(row)
+    out.append(_bt("Bin-hours at capacity (95 % or more), in sample",
+                   _measured_total(study, ids, study.start_ms, study.days, AT_CAPACITY),
+                   runs[0.0].total("capacity_hours"),
+                   [runs[-1.0].total("capacity_hours"), runs[1.0].total("capacity_hours")], period,
+                   "The model counts more hours at capacity than the sensors read: a full "
+                   "container's sensor reads anywhere from about 85 to 100 as the heap under it "
+                   "shifts, so readings dip below 95 while the model holds the bin at the top. "
+                   "Read hours at capacity as an upper bound; between policies the comparison "
+                   "holds, since both sides use the model.", "capacity"))
     return out
 
 
-def _bt(metric: str, measured: float, modelled: float, lo_hi: list[float], period: str,
-        note: str) -> dict:
-    err = None if not measured else round(100 * (modelled - measured) / measured, 1)
-    return {"metric": metric, "measured": round(measured), "modelled": round(modelled),
-            "low": round(min(lo_hi + [modelled])), "high": round(max(lo_hi + [modelled])),
-            "error_pct": err, "period": period, "note": note}
-
-
-def _cut(data: list[BinData], start_ms: int, end_ms: int) -> list[BinData]:
+def _cut(data: list[BinData], end_ms: int) -> list[BinData]:
     out = []
     for d in data:
         keep = [(t, v) for t, v in zip(d.times, d.levels) if t < end_ms]
@@ -524,6 +462,20 @@ def _day(t_ms: int, tz: ZoneInfo) -> str:
     return f"{t.day} {t.strftime('%b %Y')}"
 
 
+def midnight_after(t_ms: int, tz: ZoneInfo) -> int:
+    """The first local midnight at or after t."""
+    t = local(t_ms, tz)
+    day = t.replace(hour=0, minute=0, second=0, microsecond=0)
+    if day < t:
+        day = (day + timedelta(days=1)).replace(tzinfo=tz)
+    return int(day.replace(tzinfo=tz).timestamp() * 1000)
+
+
+def midnight_before(t_ms: int, tz: ZoneInfo) -> int:
+    t = local(t_ms, tz).replace(hour=0, minute=0, second=0, microsecond=0)
+    return int(t.replace(tzinfo=tz).timestamp() * 1000)
+
+
 def period_start(now_ms: int, days: int, tz: ZoneInfo) -> int:
     """The local midnight `days` whole days before today's."""
     today = local(now_ms, tz).replace(hour=0, minute=0, second=0, microsecond=0)
@@ -531,6 +483,6 @@ def period_start(now_ms: int, days: int, tz: ZoneInfo) -> int:
     return int(start.replace(tzinfo=tz).timestamp() * 1000)
 
 
-__all__ = ["Assumptions", "BinData", "bin_data", "FillRate", "Outcome", "STATUS_LABELS", "Study",
-           "backtest", "baseline", "kpis", "sensor_hours", "parse_bin", "parse_records", "period_start",
-           "run_policy"]
+__all__ = ["BinData", "Outcome", "STATUS_LABELS", "Study", "backtest", "baseline", "bin_data",
+           "city_plans", "midnight_after", "midnight_before", "parse_bin", "parse_records",
+           "period_start", "policy_outcome", "sensor_hours"]

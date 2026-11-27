@@ -13,6 +13,7 @@ below; its sources in chatbot/sources.py; on the page, optional sections in
 """
 
 from chatbot.scenarios import lighting  # noqa: F401  (registers itself)
+from chatbot.scenarios import waste  # noqa: F401  (registers itself, after lighting)
 from chatbot.scenarios.base import Period, Result, Scenario, ScenarioContext, ScenarioError, kpi, run
 from chatbot.scenarios.lab import Lab, RunStore
 from chatbot.scenarios.registry import get, register, scenarios

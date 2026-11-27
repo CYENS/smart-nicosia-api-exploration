@@ -38,12 +38,12 @@ AT_CAPACITY = 95.0  # a full container reads 95 to 100; beyond, waste goes besid
 LOW_LIFT = 30.0  # a collection of a bin below this is a lift that could have waited
 STALE_MS = 6 * HOUR_MS  # a reading speaks for the hours after it for this long (bins report every 2 h)
 
-# Pickup detection: a fall of at least DROP points to AFTER_MAX or below, which the next reading
-# confirms (it stays below AFTER_MAX + CONFIRM_SLACK). Checked on 28 days of the city's bins
-# against their own pickup reports: 89 of 96 reported pickups found, the misses being lifts of
-# bins under 25 % full, which the reports carry anyway.
+# Pickup detection: a fall of at least DROP points to AFTER_MAX or below, or of BIG_DROP points to
+# anything (some containers read 40 % just after a lift), from the lower of the two readings
+# before, which the next reading confirms (it stays within CONFIRM_SLACK of the low one).
 DROP = 25.0
 AFTER_MAX = 25.0
+BIG_DROP = 35.0
 CONFIRM_SLACK = 15.0
 MIN_GAP_MS = 6 * HOUR_MS  # two emptyings of one bin closer than this are one
 # The city's own pickup reports fall between 06:00 and 13:00 (92 of 96 in November 2026); a fall
@@ -138,12 +138,13 @@ def detect_pickups(times: Sequence[int], levels: Sequence[float],
     out = sorted((p for p in reported if working(p.t_ms)), key=lambda p: p.t_ms)
     drops: list[Pickup] = []
     for i in range(1, len(times)):
-        before = max(levels[max(0, i - 2):i])
+        before = min(levels[max(0, i - 2):i])  # the lower of the two before: one spike up can't fake it
         now = levels[i]
-        if before - now < DROP or now > AFTER_MAX:
+        fall = before - now
+        if not ((fall >= DROP and now <= AFTER_MAX) or fall >= BIG_DROP):
             continue
         nxt = levels[i + 1] if i + 1 < len(levels) else None
-        if nxt is not None and nxt > AFTER_MAX + CONFIRM_SLACK:
+        if nxt is not None and nxt > now + CONFIRM_SLACK:
             continue  # a spike down, not an emptying
         if drops and times[i] - drops[-1].t_ms < MIN_GAP_MS:
             continue
@@ -172,7 +173,7 @@ def level_at(times: Sequence[int], levels: Sequence[float], t_ms: int) -> float 
 def stretches(times: Sequence[int], levels: Sequence[float],
               pickups: Sequence[Pickup]) -> list[list[tuple[int, float]]]:
     """The readings of each stretch between emptyings while the bin fills: from an emptying to
-    the first reading at RATE_MAX_LEVEL or more (that one included; past it the sensor sits at
+    the second of two readings in a row at RATE_MAX_LEVEL or more (past it the sensor sits at
     its top and says nothing more about the rate), when long enough to show the filling."""
     cuts = [p.t_ms for p in pickups]
     out: list[list[tuple[int, float]]] = []
@@ -187,7 +188,8 @@ def stretches(times: Sequence[int], levels: Sequence[float],
         if capped:
             continue
         cur.append((t, v))
-        capped = v >= RATE_MAX_LEVEL
+        # at the top: two readings in a row at RATE_MAX_LEVEL or more (one alone is a spike)
+        capped = len(cur) >= 2 and v >= RATE_MAX_LEVEL and cur[-2][1] >= RATE_MAX_LEVEL
     out.append(cur)
     return [s for s in out
             if len(s) >= STRETCH_MIN_POINTS and s[-1][0] - s[0][0] >= STRETCH_MIN_MS]
@@ -195,18 +197,14 @@ def stretches(times: Sequence[int], levels: Sequence[float],
 
 def net_rise(points: Sequence[tuple[int, float]]) -> float:
     """% a day from the start of a stretch to its end: the median of its first three readings
-    to the median of its last three (or to its last reading, when that one reached the top). One
-    jumpy reading can't swing it, and a crate of bottles dropped in at once counts in full (a
-    robust slope would treat that step as an outlier and say the bin fills slower than it does)."""
-    head = points[:3]
+    to the median of its last three. One jumpy reading can't swing it, and a crate of bottles
+    dropped in at once counts in full (a robust slope would treat that step as an outlier and
+    say the bin fills slower than it does)."""
+    head, tail = points[:3], points[-3:]
     v0 = statistics.median(v for _, v in head)
     t0 = statistics.median(t for t, _ in head)
-    if points[-1][1] >= RATE_MAX_LEVEL:
-        t1, v1 = points[-1]
-    else:
-        tail = points[-3:]
-        v1 = statistics.median(v for _, v in tail)
-        t1 = statistics.median(t for t, _ in tail)
+    v1 = statistics.median(v for _, v in tail)
+    t1 = statistics.median(t for t, _ in tail)
     if t1 <= t0:
         return 0.0
     return max(0.0, (v1 - v0) / ((t1 - t0) / DAY_MS))
@@ -406,6 +404,13 @@ class Simulation:
         return sum(getattr(o, attr) for o in self.bins.values())
 
 
+def rate_at(rate: FillRate, fill: float) -> float:
+    """% a day at `fill` within the bin's range: -1 its low end, 0 its usual rate, 1 its high end,
+    in a straight line between."""
+    f = max(-1.0, min(1.0, fill))
+    return rate.per_day + f * ((rate.high - rate.per_day) if f > 0 else (rate.per_day - rate.low))
+
+
 def hour_factors(start_ms: int, hours: int, shape: Shape, tz: ZoneInfo) -> list[float]:
     out = []
     for h in range(hours):
@@ -433,16 +438,16 @@ def round_starts(start_ms: int, days: int, policy: Policy, tz: ZoneInfo) -> list
 
 
 def simulate(models: Sequence[BinModel], start_ms: int, days: int, policy: Policy, *,
-             shape_of: Callable[[str], Shape], tz: ZoneInfo, which: str = "central",
+             shape_of: Callable[[str], Shape], tz: ZoneInfo, fill: float = 0.0,
              planner: Planner | None = None,
              measured: dict[str, Sequence[Pickup]] | None = None,
              known: dict[str, Sequence[bool]] | None = None,
              truck_m3: float = 20.0) -> Simulation:
     """Replay `policy` hour by hour over `days` from `start_ms`.
 
-    `which` picks the fill rates the bins really follow (central, low or high); a forecast
-    policy always predicts with the central rate, as a real planner would, so the low and high
-    runs also show what a wrong forecast costs. `measured` (policy "measured") gives the city's
+    `fill` places each bin's real fill rate within its measured range (-1 its slow end, 0 its
+    usual rate, 1 its fast end); a forecast policy always predicts with the usual rate, as a
+    real planner would, so the slow and fast runs also show what a wrong forecast costs. `measured` (policy "measured") gives the city's
     own emptyings to replay. `known`, per bin and hour, limits the counted hours to those the
     readings cover (for comparing with them). `planner` routes each round; without one, stops
     are collected at the round's start."""
@@ -452,9 +457,8 @@ def simulate(models: Sequence[BinModel], start_ms: int, days: int, policy: Polic
         if m.bin.stream not in factors:
             factors[m.bin.stream] = hour_factors(start_ms, hours, shape_of(m.bin.stream), tz)
 
-    def per_hour(m: BinModel, rate: str = which) -> float:
-        r = {"central": m.rate.per_day, "low": m.rate.low, "high": m.rate.high}[rate]
-        return r / 24
+    def per_hour(m: BinModel, at: float = fill) -> float:
+        return rate_at(m.rate, at) / 24
 
     level = {m.bin.id: m.start_level for m in models}
     out = {m.bin.id: BinOutcome() for m in models}
@@ -542,7 +546,7 @@ def choose(policy: Policy, models: Sequence[BinModel], level: dict[str, float], 
         out = []
         for m in models:
             f = factors[m.bin.stream]
-            rate = per_hour(m, "central")
+            rate = per_hour(m, 0.0)
             # the level the bin would reach by the next round has emptied it (its start plus
             # the usual few hours on the road), forecast with the central rate
             ahead = sum(f[k % len(f)] for k in range(h, next_h + 4))
@@ -572,13 +576,15 @@ def measured_hours(times: Sequence[int], levels: Sequence[float], start_ms: int,
     return known, vals
 
 
-def bigger_container(m: BinModel, policy: Policy, sizes: Sequence[float]) -> float | None:
+def bigger_container(m: BinModel, policy: Policy, sizes: Sequence[float],
+                     fill: float = 1.0) -> float | None:
     """The container a bin would need so that, collected at every round, it does not reach
     capacity before the next one: None when its own is big enough. The fill over the longest gap
-    between round days uses the bin's upper fill rate (a busy week, not an average one); the
-    answer is the smallest standard size that holds it, or the fill itself when none does."""
+    between round days uses the bin's rate at `fill` (by default its fast end: a busy week, not
+    an average one); the answer is the smallest standard size that holds it, or the fill itself
+    rounded up to 100 litres when none does."""
     days = policy.max_gap_days()
-    rise = m.rate.high * days
+    rise = rate_at(m.rate, fill) * days
     room = AT_CAPACITY - m.leftover
     if rise <= room:
         return None
@@ -586,4 +592,4 @@ def bigger_container(m: BinModel, policy: Policy, sizes: Sequence[float]) -> flo
     for s in sorted(sizes):
         if s >= need_l:
             return s
-    return round(need_l, -2)
+    return math.ceil(need_l / 100) * 100

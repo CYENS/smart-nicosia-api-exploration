@@ -1,9 +1,10 @@
 """Collection rounds: the road distances between bins, and the routes a day's trucks drive.
 
 - `Matrix` holds road kilometres and driving seconds between every pair of points (the depot
-  first, then the bins), from Valhalla's `truck` costing, fetched once in blocks and kept on
-  disk (bins don't move), so a scenario run costs the public server nothing after the first.
-  When Valhalla can't answer, the matrix is estimated from straight lines and says so.
+  first, then the bins), from Valhalla's `truck` costing, fetched a row at a time and kept on
+  disk pair by pair (bins don't move), so a scenario run costs the public server nothing once
+  the pairs are in. Pairs not fetched yet (or when Valhalla can't answer) are estimated from
+  straight lines, and the matrix says how many.
 - `solve` splits a day's bins into trips that fit the truck (Clarke and Wright's savings
   algorithm) and orders each trip with 2-opt. Small and transparent, and on small cases within a
   few per cent of the exact best (tests/test_waste_scenario.py checks it against Held-Karp).
@@ -16,7 +17,6 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
-import math
 import time
 from collections.abc import Sequence
 from dataclasses import dataclass
@@ -28,8 +28,9 @@ from chatbot.web import WebError, get_json
 
 log = logging.getLogger(__name__)
 
-BLOCK = 40  # locations per side of one matrix request (1,600 pairs, well inside the public limits)
-REQUEST_GAP_S = 1.0  # between matrix requests: be gentle with the public server
+MAX_PAIRS = 100  # what the public Valhalla instance takes in one matrix request (sources x targets)
+REQUEST_GAP_S = 1.2  # between requests: be gentle with the public server
+FETCH_PER_RUN = 15  # new matrix requests one run may make; the rest waits for the next runs
 ROUTE_LOCATIONS = 10  # what the public Valhalla instance takes in one route request
 # A crane truck that empties bell and underground containers: about 10 m and 26 t loaded.
 TRUCK = {"truck": {"length": 10.0, "weight": 26.0, "height": 3.9, "width": 2.55}}
@@ -44,7 +45,8 @@ class Matrix:
     points: list[tuple[float, float]]  # (lat, lon); index 0 is the depot
     km: list[list[float]]
     seconds: list[list[float]]
-    source: str  # "valhalla" | "straight lines"
+    source: str  # "valhalla" | "partly estimated" | "straight lines"
+    estimated: int = 0  # pairs estimated from straight lines
 
     def index(self) -> dict[tuple[float, float], int]:
         return {p: i for i, p in enumerate(self.points)}
@@ -61,85 +63,103 @@ def _key(points: Sequence[tuple[float, float]]) -> str:
     return hashlib.sha256(text.encode()).hexdigest()[:16]
 
 
-class MatrixSource:
-    """Road distances from Valhalla, kept on disk per set of points."""
+def _pt(p: tuple[float, float]) -> str:
+    return f"{p[0]:.6f},{p[1]:.6f}"
 
-    def __init__(self, valhalla_url: str, user_agent: str, cache_dir: Path):
+
+class MatrixSource:
+    """Road distances and times between points from Valhalla's truck profile, kept on disk pair
+    by pair (bins don't move, so a pair is fetched once, ever). A run fetches at most
+    FETCH_PER_RUN requests of the pairs it lacks, one source and up to MAX_PAIRS targets at a
+    time, and estimates the rest from straight lines until a later run has them."""
+
+    def __init__(self, valhalla_url: str, user_agent: str, cache_dir: Path,
+                 fetch_per_run: int = FETCH_PER_RUN):
         self.url = valhalla_url
         self.user_agent = user_agent
         self.dir = cache_dir
-        self._memo: dict[str, Matrix] = {}
+        self.fetch_per_run = fetch_per_run
+        self._pairs: dict[str, list[float]] | None = None
 
-    def _block(self, sources: list[tuple[float, float]], targets: list[tuple[float, float]]
-               ) -> tuple[list[list[float]], list[list[float]]]:
-        body = {"sources": [{"lat": a, "lon": b} for a, b in sources],
+    @property
+    def _pairs_path(self) -> Path:
+        return self.dir / "waste_pairs.json"
+
+    def _load(self) -> dict[str, list[float]]:
+        if self._pairs is None:
+            try:
+                self._pairs = json.loads(self._pairs_path.read_text())
+            except (OSError, ValueError):
+                self._pairs = {}
+        return self._pairs
+
+    def _save(self) -> None:
+        self.dir.mkdir(parents=True, exist_ok=True)
+        tmp = self._pairs_path.with_suffix(".tmp")
+        tmp.write_text(json.dumps(self._pairs, separators=(",", ":")))
+        tmp.replace(self._pairs_path)
+
+    def _row(self, source: tuple[float, float], targets: list[tuple[float, float]]) -> None:
+        body = {"sources": [{"lat": source[0], "lon": source[1]}],
                 "targets": [{"lat": a, "lon": b} for a, b in targets],
                 "costing": "truck", "costing_options": TRUCK, "units": "kilometers"}
         data = get_json(f"{self.url}/sources_to_targets", user_agent=self.user_agent,
                         data=json.dumps(body, separators=(",", ":")).encode(), timeout=60)
-        km = [[math.inf] * len(targets) for _ in sources]
-        sec = [[math.inf] * len(targets) for _ in sources]
+        pairs = self._load()
         for row in data["sources_to_targets"]:
             for cell in row:
-                i, j = cell["from_index"], cell["to_index"]
+                t = targets[cell["to_index"]]
                 if cell.get("time") is not None and cell.get("distance") is not None:
-                    km[i][j] = float(cell["distance"])
-                    sec[i][j] = float(cell["time"])
-        return km, sec
+                    pairs[f"{_pt(source)}|{_pt(t)}"] = [round(float(cell["distance"]), 3),
+                                                        round(float(cell["time"]), 1)]
+                else:  # no road between them: remember that too, so it isn't asked again
+                    pairs[f"{_pt(source)}|{_pt(t)}"] = [None, None]
 
     def matrix(self, depot: tuple[float, float], bins: Sequence[tuple[float, float]]) -> Matrix:
-        """The depot and the bins (in this order). The bins' own matrix and the depot's row and
-        column are kept apart, so moving the depot costs two requests, not the whole matrix."""
+        """The depot and the bins (in this order): cached pairs, up to fetch_per_run new rows,
+        and straight-line estimates for whatever is still missing."""
         points = [depot, *bins]
-        key = _key(points)
-        if key in self._memo:
-            return self._memo[key]
+        pairs = self._load()
+        requests = 0
+        changed = False
         try:
-            bins_km, bins_sec = self._cached(f"waste_matrix_{_key(bins)}", list(bins), list(bins))
-            out_km, out_sec = self._cached(f"waste_depot_{_key(points)}_out", [depot], list(bins))
-            in_km, in_sec = self._cached(f"waste_depot_{_key(points)}_in", list(bins), [depot])
-            n = len(points)
-            km = [[0.0] * n for _ in range(n)]
-            sec = [[0.0] * n for _ in range(n)]
-            for i in range(1, n):
-                km[0][i], sec[0][i] = out_km[0][i - 1], out_sec[0][i - 1]
-                km[i][0], sec[i][0] = in_km[i - 1][0], in_sec[i - 1][0]
-                for j in range(1, n):
-                    km[i][j], sec[i][j] = bins_km[i - 1][j - 1], bins_sec[i - 1][j - 1]
-            fill_gaps(points, km, sec)
-            m = Matrix(points, km, sec, "valhalla")
+            for a in points:
+                missing = [b for b in points if b != a and f"{_pt(a)}|{_pt(b)}" not in pairs]
+                for k in range(0, len(missing), MAX_PAIRS):
+                    if requests >= self.fetch_per_run:
+                        break
+                    if requests:
+                        time.sleep(REQUEST_GAP_S)
+                    self._row(a, missing[k:k + MAX_PAIRS])
+                    requests += 1
+                    changed = True
         except (WebError, KeyError, ValueError, TypeError) as e:
-            log.warning("waste rounds: Valhalla matrix unavailable (%s); using straight lines", e)
-            km, sec = straight_matrix(points)
-            m = Matrix(points, km, sec, "straight lines")
-            return m  # not memoised: the next run tries Valhalla again
-        self._memo[key] = m
-        return m
+            log.warning("waste rounds: Valhalla matrix unavailable (%s); estimating the rest", e)
+        if changed:
+            self._save()
+        est_km, est_sec = straight_matrix(points)
+        n = len(points)
+        km = [[0.0] * n for _ in range(n)]
+        sec = [[0.0] * n for _ in range(n)]
+        estimated = 0
+        for i, a in enumerate(points):
+            for j, b in enumerate(points):
+                if i == j or a == b:
+                    continue
+                got = pairs.get(f"{_pt(a)}|{_pt(b)}")
+                if got and got[0] is not None:
+                    km[i][j], sec[i][j] = got
+                else:
+                    km[i][j], sec[i][j] = est_km[i][j], est_sec[i][j]
+                    estimated += 1
+        source = ("valhalla" if not estimated else
+                  "straight lines" if estimated >= n * (n - 1) else "partly estimated")
+        return Matrix(points, km, sec, source, estimated)
 
-    def _cached(self, name: str, sources: list[tuple[float, float]],
-                targets: list[tuple[float, float]]) -> tuple[list[list[float]], list[list[float]]]:
-        path = self.dir / f"{name}.json"
-        if path.exists():
-            data = json.loads(path.read_text())
-            return data["km"], data["seconds"]
-        km = [[math.inf] * len(targets) for _ in sources]
-        sec = [[math.inf] * len(targets) for _ in sources]
-        first = True
-        for si in range(0, len(sources), BLOCK):
-            for ti in range(0, len(targets), BLOCK):
-                if not first:
-                    time.sleep(REQUEST_GAP_S)
-                first = False
-                bk, bs = self._block(sources[si:si + BLOCK], targets[ti:ti + BLOCK])
-                for a, row in enumerate(bk):
-                    for b, v in enumerate(row):
-                        km[si + a][ti + b] = v
-                        sec[si + a][ti + b] = bs[a][b]
-        self.dir.mkdir(parents=True, exist_ok=True)
-        clean = {"km": [[None if math.isinf(v) else round(v, 3) for v in r] for r in km],
-                 "seconds": [[None if math.isinf(v) else round(v, 1) for v in r] for r in sec]}
-        path.write_text(json.dumps(clean))
-        return (_inf(clean["km"]), _inf(clean["seconds"]))
+    def cached_line(self, stops: Sequence[tuple[float, float]]) -> list[list[float]] | None:
+        """The road line through the stops if an earlier run fetched it, else None (no request)."""
+        path = self.dir / f"waste_line_{_key(list(stops))}.json"
+        return json.loads(path.read_text()) if path.exists() else None
 
     def route_line(self, stops: Sequence[tuple[float, float]]) -> list[list[float]]:
         """The road line through (lat, lon) stops in order, as [[lon, lat], ...], from Valhalla
@@ -170,23 +190,6 @@ class MatrixSource:
         self.dir.mkdir(parents=True, exist_ok=True)
         path.write_text(json.dumps(coords))
         return coords
-
-
-def _inf(rows: list[list[float | None]]) -> list[list[float]]:
-    return [[math.inf if v is None else float(v) for v in r] for r in rows]
-
-
-def fill_gaps(points: Sequence[tuple[float, float]], km: list[list[float]],
-              sec: list[list[float]]) -> int:
-    """Pairs Valhalla found no route for get the straight-line estimate. Returns how many."""
-    est_km, est_sec = straight_matrix(points)
-    n = 0
-    for i in range(len(points)):
-        for j in range(len(points)):
-            if i != j and (math.isinf(km[i][j]) or math.isinf(sec[i][j])):
-                km[i][j], sec[i][j] = est_km[i][j], est_sec[i][j]
-                n += 1
-    return n
 
 
 # -- routes -------------------------------------------------------------------------------------
