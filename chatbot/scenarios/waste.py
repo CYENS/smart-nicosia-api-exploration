@@ -332,8 +332,8 @@ class Waste(Scenario):
                 digits=1),
             kpi("bigger_bins", "Bins that need a bigger container", "bins", len(base.bigger),
                 len(scen.bigger), digits=0,
-                note="They would reach capacity between two round days even if collected at "
-                     "every round, in a busy week"),
+                note=f"Emptied on every round day, they would still reach capacity in a busy week "
+                     f"during the longest wait between two: {_wait(_policy(params))}"),
         ]
         policy = _policy(params)
         days_scen = [self._day(data, plan, int(params["start_hour"])) for plan in scen.plans]
@@ -565,6 +565,18 @@ class Waste(Scenario):
              "unit": "times the average", "x": "category", "kind": "bar"},
         ]
         return rows, charts
+
+
+def _wait(policy: Policy) -> str:
+    """The longest wait between round days, in words: "3 days (Friday to Monday)"."""
+    days = sorted(set(policy.round_days))
+    if len(days) <= 1:
+        return "a week"
+    gaps = [((days[(i + 1) % len(days)] - d) % 7 or 7, d, days[(i + 1) % len(days)])
+            for i, d in enumerate(days)]
+    n, a, b = max(gaps)
+    span = f"{n} {'day' if n == 1 else 'days'}"
+    return span if len({g for g, _, _ in gaps}) == 1 else f"{span} ({WEEKDAYS[a]} to {WEEKDAYS[b]})"
 
 
 def _cache(ctx: ScenarioContext):
