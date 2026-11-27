@@ -39,7 +39,10 @@ zone, and a model frozen at 2014 (buildings) and 2019 (surface).
 ground heights read the 1 m model. Building it turned up a shorter road to rung 4. DLS publishes
 the 2019 surface and terrain models as plain files in its INSPIRE download folder, which
 data.gov.cy lists under CC BY 4.0, so no CY Login is needed and the licence is stated (section
-3.1, "The open folder"). Only the folder's listings have been read; no file has been fetched.
+3.1, "The open folder"). The first slice of rung 4 is built on them ([#41](https://github.com/CYENS/smart-nicosia-api-exploration/pull/41)): the 54 sheets for
+greater Nicosia were fetched with the owner's go-ahead, every DLS building was measured on
+them, and the twin shows the measured heights and what changed since the 2014 survey
+([lidar-2019.md](lidar-2019.md)).
 
 ### The ladder
 
@@ -51,7 +54,7 @@ Effort: S is part of a session, M one feature session, L more than one.
 | 1. A city that looks like Nicosia | The 2019 aerial photo on the ground, roofs shaped from the DLS roof type, the old town split into houses, OpenStreetMap's trees, the 1963 and 1993 photos to compare | DLS services (terms not stated), OSM (ODbL) | A raw WebGL custom layer for roofs and trees | In progress | Draft [#31](https://github.com/CYENS/smart-nicosia-api-exploration/pull/31) |
 | 2. The twin's own things in 3D | Lamps that glow when the twin says they are lit, bins coloured by fill, bays by occupancy, buses moving, all on the clock; click one and the inspector opens | The twin's own data; CC0 model kits | Instancing in the same custom layer | M | Proposed, no blockers |
 | 3. Measured ground | Terrain from the 1 m DLS model: the Pedieos valley, the moat and the bastions read as shapes; views and shade use it | DLS DTM 2019, CC BY 4.0 on data.gov.cy, served open by Mapterhorn | A tile URL and a decoder | S | Built, [#38](https://github.com/CYENS/smart-nicosia-api-exploration/pull/38) |
-| 4. A measured city | Roofs with their real pitch and ridge, each old-town house at its own height, trees where they stand at their real size, buildings as they were in 2019 | DLS DSM and DTM of 2019: open files in DLS's INSPIRE download folder, CC BY 4.0 by its data.gov.cy record (about 1.2 GB for greater Nicosia) | An offline pipeline; the page draws its output | L | Files are open; fetching them waits for the owner's go-ahead |
+| 4. A measured city | Roofs with their real pitch and ridge, each old-town house at its own height, trees where they stand at their real size, buildings as they were in 2019 | DLS DSM and DTM of 2019: open files in DLS's INSPIRE download folder, CC BY 4.0 by its data.gov.cy record (about 1.2 GB for greater Nicosia) | An offline pipeline; the page draws its output | L | First slice built, [#41](https://github.com/CYENS/smart-nicosia-api-exploration/pull/41): measured heights and what changed since 2014. Roof shapes, the old town's houses and trees are still to come |
 | 5. The whole city | North of the buffer zone gets buildings too, drawn as estimates | Overture footprints (ODbL), modelled heights (3D-GloBFP, CC BY 4.0), canopy (Meta and WRI, CC BY 4.0) | None | M | Proposed |
 | 6. The old town as a photo-real mesh | The walled city as it looks, walls, bastions and squares in texture, with the clickable twin underneath | CYENS iNicosia, 3D Tiles on Cesium ion; licence not stated, by agreement | three.js with 3DTilesRendererJS in a custom layer | M to L | Needs an agreement |
 | 7. Faces on the buildings | Windows by floor count; later, real facade textures on main streets | DLS floors; Panoramax photos (CC BY-SA 4.0, share-alike) | Texture atlas in the mesh layer | M, then research | Proposed |
@@ -671,9 +674,17 @@ with `lib/city3d/` are #31's; the plan assumes it lands first.
   `chatbot/trees.py` gains a "measured" kind above "mapped"; a `dls_lidar_2019` entry in
   `chatbot/sources.py` and in `TOOL_SOURCES`; the inspector says for each building whether its
   shape is measured (2019), surveyed (2014) or estimated.
-- **Risks**: the grid of the surface model is unconfirmed until a sheet is opened (the sizes
-  fit 50 cm); the DSM is of 2019 and the footprints of 2014, so a new tower has heights and no
+- **Risks**: the DSM is of 2019 and the footprints of 2014, so a new tower has heights and no
   outline; and nothing is measured north of the buffer zone, where the sheets stop.
+- **As built, first slice** ([#41](https://github.com/CYENS/smart-nicosia-api-exploration/pull/41), [lidar-2019.md](lidar-2019.md)): `chatbot/lidar.py` fetches
+  the sheets and measures every DLS building on them (items 1 and 2 above, and the footprint
+  half of item 5). The sheets are on a longitude and latitude grid of about half a metre, so no
+  reprojection is needed. The measured top (95th percentile) is the survey's roof height to a
+  median 0.1 m. Of 74,550 buildings measured in greater Nicosia, 1,167 are taller by a floor or
+  more, 1,500 are gone and 44 are lower. The twin reads two small files in git, not the
+  sheets. Still to do: roof planes (item 3), trees (item 4), buildings that are new since 2014
+  (the other half of item 5), the old town's houses once #31's outlines are in, and drawing
+  the 3D city from the measured shapes.
 
 ### Step 4. The whole city (rung 5)
 
@@ -761,9 +772,10 @@ which would also give facades).
 
 1. **DLS terms** for the photo and cadastre services and for portal downloads: the letter in
    section 3.8. Until then #31's photo is a private-use feature.
-2. **What the surface model's sheets hold** (the grid, the height reference, how gaps are
-   marked): opening one sheet from the open folder answers it. The e-service behind CY Login is
-   no longer on the path.
+2. **What the surface model's sheets hold**: answered. Longitude and latitude on ETRS89, about
+   half a metre a cell, heights above sea level that agree with the survey's ground to 0.2 m,
+   and the lowest 32-bit float where nobody measured ([lidar-2019.md](lidar-2019.md)). The
+   e-service behind CY Login is no longer on the path.
 3. **Is the "2019" tile cache the 2019 photo?** Its own description says "Cached OI 2014". A
    building finished between the two flights would show which; the 10 cm 2019 orthophoto from
    the portal settles it either way.

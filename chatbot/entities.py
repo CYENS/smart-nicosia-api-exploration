@@ -938,7 +938,7 @@ def build_building(ents: Entities, eid: str, near) -> dict | None:
         readings += [
             {"key": "height_2019_m", "label": "Top, measured in 2019", "value": measured["top"], "unit": "m"},
             {"key": "eave_2019_m", "label": "Eave, measured in 2019", "value": measured["eave"], "unit": "m"},
-            {"key": "standing_pct", "label": "Footprint with something standing, 2019",
+            {"key": "standing_pct", "label": "Footprint built on, 2019",
              "value": round(100 * measured["built"]), "unit": "%"}]
         change = lidar.compare(p["h"], measured, p.get("a"))
         since = {"same": "No change of a floor or more",

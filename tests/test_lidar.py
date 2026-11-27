@@ -320,7 +320,7 @@ def test_changed_buildings_draw_at_the_right_height(flight):
     assert gone["height_m"] == 15.1  # what went is drawn at the height it had
     assert taller["height_m"] == 15.6 and taller["color"] == STATE_COLORS["taller"]
     assert taller["popup"].splitlines()[1] == "Taller by 6.2 m: 15.6 m at the top in 2019, 9.4 m in the 2014 survey"
-    assert not any(dash in p["popup"] for p in feats.values() for dash in "–—")
+    assert not any(chr(code) in p["popup"] for p in feats.values() for code in (0x2013, 0x2014))
 
 
 # -- the tool ---------------------------------------------------------------------------------------

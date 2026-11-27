@@ -41,6 +41,10 @@ npm run build                     # writes chatbot/static (committed, see below)
 - `chatbot/mobility/` is live mobility: the bus timetables and live feed, departures and
   trips, and road speeds against free flow ([docs/live-mobility.md](docs/live-mobility.md)). One
   `Mobility` on the Agent shares each feed's fetch between pages, tools and the inspector.
+- `chatbot/lidar.py` is the 2019 LiDAR flight: it fetches DLS's open surface and terrain sheets
+  (heavy, kept out of git in `data/dls_lidar/`), measures every DLS building on them, and
+  compares them with the 2014 survey. The twin reads two small files it writes
+  (`data/lidar_*_2019.json.gz`), never the sheets ([docs/lidar-2019.md](docs/lidar-2019.md)).
 - `chatbot/environment/` is the environment twin: the sun's path, shade and sun hours from the
   DLS 3D buildings (`shade.py`), air, noise and temperature surfaces with their uncertainty
   (`surfaces.py`), the Open-Meteo grids and the wind, the RainViewer radar, and the `spot` kind

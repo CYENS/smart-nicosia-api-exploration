@@ -54,6 +54,11 @@ It also has:
   inspector: sun or shade, its hours of sun that day, the air and noise with how sure they are,
   the temperature and the wind. Walks can keep to the shade at the time of the walk. See
   [docs/environment-twin.md](docs/environment-twin.md).
+- **The city as measured in 2019.** Every DLS building measured on the open surface model of
+  the 2019 LiDAR flight: its top and eave beside the heights surveyed in 2014, on its card.
+  "What was knocked down around Eleftheria Square since 2014?" shows the buildings that grew a
+  floor or more, lost height, or are gone, in 3D with a linked chart; the same layer is the
+  "Changed since 2014" row of the Layers sheet. See [docs/lidar-2019.md](docs/lidar-2019.md).
 - **Links to a view.** The address keeps the camera and the open thing
   (`#/e/YL1015/@35.16680,33.36082,17z`), so a view can be shared and survives a reload.
 
