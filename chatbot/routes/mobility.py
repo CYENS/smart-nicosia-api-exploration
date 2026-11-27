@@ -14,6 +14,8 @@ from chatbot.mobility.gtfs import simplify
 from chatbot.mobility.roads import LEGEND, STALLED_LEGEND, parse_moment, segment_feature
 from chatbot.overview import cached
 from chatbot.routes import agent_of
+from chatbot.routes.live import AT, moment
+from chatbot.sky.bus_archive import buses_at
 
 router = APIRouter()
 
@@ -23,11 +25,18 @@ BUS_FIELDS = ("id", "line", "line_id", "color", "text_color", "headsign", "lon",
 
 
 @router.get("/api/buses")
-def buses(request: Request, lines: str | None = Query(None, max_length=400)) -> JSONResponse:
-    """The buses on the road now, compact, for the live layer (one feed fetch every 30 s)."""
-    m = agent_of(request).mobility
-    tt = m.timetable(20)
+def buses(request: Request, lines: str | None = Query(None, max_length=400),
+          at: str | None = AT) -> JSONResponse:
+    """The buses on the road now (live every 30 s) or recorded in `bus_positions` at `?at=`."""
+    agent = agent_of(request)
+    m = agent.mobility
+    when = moment(request, at)
     wanted = {x.strip().lower() for x in lines.split(",") if x.strip()} if lines else None
+    if when is not None:
+        tt = m.timetable(0)
+        body = buses_at(agent.memory, when, lines=wanted, timetable_state="ready" if tt else "loading")
+        return JSONResponse(body, headers={"Cache-Control": "max-age=300"})
+    tt = m.timetable(20)
     snap = m.snapshot()
     rows = [{k: b.get(k) for k in BUS_FIELDS if b.get(k) is not None}
             for b in snap.vehicles if not wanted or (b.get("line_id") or "") in wanted]
