@@ -72,6 +72,7 @@ async def lifespan(app: FastAPI):
     if memory.recorder is not None:
         memory.recorder.start()
     agent.watcher.start()
+    agent.grid.start()  # the island's grid, read as the operator publishes it
     if settings.collect:
         start_collector(memory)
     log.info("twin's memory: %s (recording %s, full collection %s)", memory.path,
@@ -84,6 +85,7 @@ async def lifespan(app: FastAPI):
     yield
     app.state.city_tiles.stop()
     agent.watcher.stop()
+    agent.grid.stop()
     if memory.recorder is not None:
         memory.recorder.stop()
 

@@ -40,8 +40,8 @@ class Source:
         return asdict(self)
 
 
-GROUPS = ("City sensors", "Mobility", "Weather", "Map, places and routes", "Buildings", "This twin",
-          "Figures the scenarios assume")
+GROUPS = ("City sensors", "Mobility", "Weather", "Map, places and routes", "Buildings", "Energy",
+          "This twin", "Figures the scenarios assume")
 
 SOURCES: tuple[Source, ...] = (
     Source(
@@ -174,9 +174,34 @@ SOURCES: tuple[Source, ...] = (
         "grid_co2", "CO2 per kWh of the Cyprus grid", "the grid's emission factor",
         "Electricity Authority of Cyprus (EAC), and Ember",
         "The CO2 the lamps' electricity emits: 0.627 kg per kWh sold in EAC's 2023 energy mix, about "
-        "0.49 in Ember's 2025 data as solar grows; the lighting scenario assumes 0.55 and shows the range",
+        "0.49 in Ember's 2025 data as solar grows. The twin now measures the grid's carbon at each "
+        "quarter hour instead (the Transmission System Operator), and these yearly figures are for comparison",
         "Figures the scenarios assume",
         url="https://eac.com.cy/EN/EAC/Sustainability/Documents/%CE%95%CE%9D%CE%95%CE%A1%CE%93%CE%95%CE%99%CE%91%CE%9A%CE%9F%20%CE%9C%CE%95%CE%99%CE%93%CE%9C%CE%91%202023%20ENG.pdf",
+        refresh="A published yearly figure"),
+    Source(
+        "tso_grid", "The island's grid, live (Transmission System Operator)",
+        "the Transmission System Operator", "Transmission System Operator of Cyprus (ΔΣΜΚ)",
+        "How much power the island's grid (the Republic's side) uses every 15 minutes, and what "
+        "meets it: the oil-fired stations, wind, and the operator's estimate of rooftop solar and "
+        "other small plants. The twin estimates the grid's CO2 per kWh from it. Island-wide "
+        "figures, not Nicosia's",
+        "Energy",
+        url="https://tsoc.org.cy/electrical-system/total-daily-system-generation-on-the-transmission-system/",
+        licence="No licence stated: the operator publishes no terms of use, only its copyright "
+                "notice. The twin shows the figures with this credit and a link to the page, and "
+                "keeps them for its own clock",
+        refresh="Every 15 minutes at most, as the operator publishes each quarter hour (about 12 "
+                "minutes after it)",
+        credit="Grid: Transmission System Operator of Cyprus"),
+    Source(
+        "oil_co2", "CO2 per kWh of the oil-fired stations", "the oil-fired stations' emission factor",
+        "Ember (power-sector CO2 and generation, 2023), and the IPCC 2006 Guidelines (heavy fuel oil)",
+        "What a kWh from the island's oil-fired stations emits: 0.70 kg CO2 (Ember: just under 3 Mt "
+        "for about 4.2 TWh of fossil generation in 2023; heavy fuel oil, 77.4 t CO2 per TJ, burnt at "
+        "about 40% efficiency gives the same), spanning 0.65 to 0.78",
+        "Figures the scenarios assume",
+        url="https://ember-energy.org/data/yearly-electricity-data/",
         refresh="A published yearly figure"),
     Source(
         "led_retrofit", "LED street lighting demonstrations", "the DOE's LED demonstrations",
@@ -224,6 +249,7 @@ TOOL_SOURCES: dict[str, tuple[str, ...]] = {
     "view_from": ("terrain_tiles", "dls", "openstreetmap", "twin_memory"),
     "run_scenario": ("twin_memory", "smart_nicosia"),
     "compare_scenarios": ("twin_memory",),
+    "get_grid": ("tso_grid", "oil_co2", "twin_memory", "openstreetmap"),
 }
 
 _tool: ContextVar[str | None] = ContextVar("source_tool", default=None)

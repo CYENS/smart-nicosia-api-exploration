@@ -18,6 +18,7 @@ from datetime import datetime, timedelta, timezone
 from collector.http import ApiError
 
 from chatbot import history
+from chatbot import sources as data_sources
 from chatbot.city import KINDS, Device, DeviceState, label_and_street
 from chatbot.context import OBJECT_TYPES
 from chatbot.geo import haversine_m, loose_match
@@ -520,7 +521,7 @@ def assemble(kind: str, metric: Metric, series: Series, meta: dict[str, dict], a
     b = history.bucketize(series, metric, bucket, how, weekdays=weekdays, hours=hours)
     if not b.keys:
         raise _tools().ToolError("no moments in that range pass the weekday and hour filters")
-    notes = list(notes)
+    notes = list(notes) + ([metric.note] if metric.note else [])
     base = None
     base_for: dict[str, history.Baseline | None] = {}
     if a.get("baseline"):
@@ -818,8 +819,14 @@ def h_query_history(ctx, a: dict) -> dict:
         link = {"key": "frame", "layer": layer_ref}
     else:
         link = None
+    extra = list(getattr(METRICS.get(res["kind"], {}).get(m), "sources", ()) or ())
+    if extra:  # a weighted metric also names where its weights come from (the grid's carbon)
+        if layer_ref:
+            meta = ctx.store.layers[layer_ref]["meta"]
+            meta["sources"] = data_sources.known(meta["sources"] + extra)
     res["data_ref"] = ctx.store.add_dataset(f"{res['kind']}_{m}", payload["rows"], title=title,
-                                            link=link)
+                                            link=link,
+                                            sources=[*data_sources.current(), *extra] if extra else None)
     res["_summary"] = (f"{m} by {res['bucket']}, {res['rows_total']} rows from {res['source']}"
                        f" ({res['coverage_pct']:g}% covered)" if res.get("coverage_pct") is not None
                        else f"{m} by {res['bucket']}, {res['rows_total']} rows")

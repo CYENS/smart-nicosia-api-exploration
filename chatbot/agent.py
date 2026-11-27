@@ -22,8 +22,10 @@ from zoneinfo import ZoneInfo
 
 import anthropic
 
+from chatbot import history
 from chatbot.city import CityData
 from chatbot.dls import DLS
+from chatbot.energy import Grid
 from chatbot.entities import Entities
 from chatbot.environment import spot as _spot  # noqa: F401 - registers the spot kind
 from chatbot.environment.service import Environment
@@ -191,6 +193,10 @@ class Agent:
         self.terrain = Terrain(settings)  # the ground's height, for views and lines of sight
         self.lidar = Flight()  # buildings as the 2019 LiDAR flight measured them
         self.entities.lidar = self.lidar
+        # The island's grid: demand, wind, solar and carbon every 15 minutes (chatbot/energy).
+        self.grid = Grid(settings, memory)
+        self.entities.grid = self.grid
+        history.register_factor("grid_co2", self.grid.carbon_at)  # the lamps' CO2
         # The scenario lab: runs what-ifs on the memory and keeps the runs (chatbot/scenarios).
         self.scenarios = Lab(ScenarioContext(settings, memory, city, router, places, registers,
                                              self.mobility, cache_dir=default_cache_dir()))

@@ -148,6 +148,23 @@ def _radar(agent) -> dict:
     return status("live", at, f"newest frame {_iso(newest)[11:16]}" if newest else None)
 
 
+def _grid(agent) -> dict:
+    grid = getattr(agent, "grid", None)
+    if grid is None:
+        return status(None)
+    h = grid.health()
+    if h["fetched_at"] is None:
+        return status("unavailable" if h["error"] else "waiting",
+                      note=h["error"] or "read when the Outside card or a question asks for it")
+    newest = h["latest"].astimezone(ZoneInfo(TIMEZONE)).strftime("%H:%M") if h["latest"] else None
+    note = f"newest quarter hour {newest}" + (f", {h['latest_mw']:,.0f} MW" if h["latest_mw"] else "") if newest else None
+    if h["layout_changed"]:
+        return status("stale", h["fetched_at"].timestamp(), h["error"], layout_changed=True)
+    if h["error"]:
+        return status("stale", h["fetched_at"].timestamp(), f"{note}; the last read failed ({h['error']})")
+    return status("live", h["fetched_at"].timestamp(), note)
+
+
 PROBES: dict[str, Callable] = {
     "smart_nicosia": lambda a: _cached("city"),
     "open_meteo": lambda a: _cached("weather"),
@@ -158,6 +175,7 @@ PROBES: dict[str, Callable] = {
     "twin_memory": _memory,
     "overture": _overture,
     "rainviewer": _radar,
+    "tso_grid": _grid,
 }
 
 
