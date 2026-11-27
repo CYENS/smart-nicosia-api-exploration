@@ -226,6 +226,21 @@ class Memory:
                    GROUP BY ALL ORDER BY bucket_start""",
                 [granularity, ids, start, end]).fetchall()
 
+    def traffic_lines(self, granularity: str, start: dt.datetime, end: dt.datetime
+                      ) -> list[TrafficRow]:
+        """Per counting line and bucket, as stored (camera rows with a line name), for the
+        counting-lines register to add up (chatbot/traffic_lines.py). Never summed here."""
+        with self.reading() as con:
+            rows = con.execute(
+                """SELECT granularity, bucket_start, analytics_id, line_name, object_type, dir1,
+                          dir2, total
+                   FROM traffic_counts
+                   WHERE granularity = ? AND analytics_id <> 0 AND line_name <> ''
+                     AND bucket_start >= ? AND bucket_start < ?
+                   ORDER BY bucket_start""", [granularity, start, end]).fetchall()
+        return [TrafficRow(g, b.astimezone(self.tz), a, ln, o, d1, d2, tot)
+                for g, b, a, ln, o, d1, d2, tot in rows]
+
     def speeds(self, start: dt.datetime, end: dt.datetime) -> list[tuple]:
         """City-wide average speed per hour: the mean of the 5-minute buckets where the
         collector stored them, else the hourly ones the chatbot recorded."""

@@ -52,6 +52,7 @@ SETTING_LABELS: dict[str, str] = {
     "nap_url": "Feed address",
     "traffic_initial_days": "Days caught up on the first run",
     "traffic_max_days_per_request": "Days per request at most",
+    "traffic_lines_max_hours": "Hours caught up on per run at most",
     "speed_group_by": "Step",
     "speed_line_type": "Measure",
     "speed_max_catchup_days": "Catches up at most (days)",
@@ -185,6 +186,16 @@ JOB_INFO: dict[str, JobInfo] = {
         "The city's busy hours, and today against a usual day.",
         "Each run, the twin asks for today's counts across the city so far, and once more for "
         "yesterday until it is complete.",
+        "smart_nicosia", "Traffic and roads"),
+    "traffic_lines": JobInfo(
+        "Hourly counts per line",
+        "Every camera's counting lines, hour by hour",
+        "People, cars, bikes and other road users counted on each line of each camera, for "
+        "every finished hour.",
+        "Traffic by the hour without counting a car twice: the twin adds a camera's lines only "
+        "where the counting-lines register says they don't overlap.",
+        "Each run, the twin asks for the hours that have finished since the last run, one "
+        "request per hour for every camera at once, and catches up on hours it missed.",
         "smart_nicosia", "Traffic and roads"),
     "speed": JobInfo(
         "City speed",

@@ -6,16 +6,15 @@ Traffic, speed and alarm answers are handed to the twin's memory as they are fet
 
 from __future__ import annotations
 
-import dataclasses
 import json
 import logging
-from collections import defaultdict
+from collections import Counter, defaultdict
 from datetime import date, datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
 from collector import parse
-from collector.http import ApiError
 
+from chatbot import traffic_lines
 from chatbot.city import CityData
 from chatbot.settings import NICOSIA_CENTER, TIMEZONE, Settings
 from chatbot.web import get_json
@@ -216,47 +215,61 @@ def cameras_matching(city: CityData, camera: str | None) -> list[dict]:
             or q in (c.get("stream_name") or "").lower()]
 
 
+def camera_key(cam: dict) -> str:
+    """One camera as answers name it: analytics that share a name are one camera."""
+    return cam.get("name") or str(cam["analytics_id"])
+
+
+def _across(n: int) -> str | None:
+    return (f"summed over {n} cameras: a road user who passes several cameras is counted at "
+            "each, so this is not a count of different people or vehicles") if n > 1 else None
+
+
 def traffic_camera_hours(city: CityData, period: str, camera: str | None) -> list[dict]:
     """Each camera's counts hour by hour over one local day ('today' or 'yesterday'), for
     replaying the day on the map: [{"camera", "lat", "lon", "hours": {"2026-10-19T13:00":
-    {"people": 12, "car": 3, "total": 15}}}]. One small request per camera, in parallel.
-    Analytics that share a camera's name are one camera and are summed; cameras that counted
-    nothing that day, or whose request failed, are left out."""
-    start, end, days = _period_bounds(period, city.now())
-
-    def one(cam: dict):
-        try:
-            payload = city.client.get_json(
-                "getTrafficReports", group_by="hour", start_date=_ms(start), end_date=_ms(end),
-                va_ids=json.dumps([cam["analytics_id"]], separators=(",", ":")))
-        except ApiError as e:
-            log.warning("hourly traffic for %s failed: %s", cam.get("name"), e)
-            return cam, []
-        return cam, parse.parse_traffic_buckets(payload, TZ, day=days[0],
-                                                analytics_id=cam["analytics_id"])
-
+    {"people": 12, "car": 3, "total": 15}}}]. Built from every camera's per-line counts (one
+    request per hour serves every camera, traffic_lines.LineHours) and added up only as the
+    counting-lines register allows, so a car crossing two of a camera's lines counts once.
+    Analytics that share a camera's name are one camera; cameras that counted nothing that day
+    are left out."""
+    start, end, _ = _period_bounds(period, city.now())
+    cams = cameras_matching(city, camera)
+    line_roles = traffic_lines.roles(city.traffic_cameras())
+    hours = traffic_lines.line_hours(city, TZ).get(
+        traffic_lines.day_hours(start, min(end, city.now())))
+    ids = {c["analytics_id"] for c in cams}
+    t = traffic_lines.tally([r for rs in hours.values() if rs for r in rs
+                             if r.analytics_id in ids], line_roles)
+    per_va: dict[int, dict[str, Counter]] = defaultdict(lambda: defaultdict(Counter))
+    for (bucket, va), counts in t.added.items():
+        c = per_va[va][bucket.strftime(HOUR_FMT)]
+        for k, n in counts.items():
+            c[OBJECT_TYPES.get(k, str(k))] += n
+            c["total"] += n
     merged: dict[str, dict] = {}
-    results = city.each(one, cameras_matching(city, camera))
-    city.record("traffic", finished([r for _, rows in results for r in rows], city.now()))
-    for cam, rows in results:
-        if not rows:
+    for cam in cams:  # in the cameras' own order
+        if cam["analytics_id"] not in per_va:
             continue
-        m = merged.setdefault(cam["name"] or str(cam["analytics_id"]), {
-            "camera": cam["name"] or str(cam["analytics_id"]), "lat": None, "lon": None,
-            "hours": defaultdict(lambda: defaultdict(int))})
+        m = merged.setdefault(camera_key(cam), {
+            "camera": camera_key(cam), "lat": None, "lon": None,
+            "hours": defaultdict(Counter)})
         if m["lat"] is None:
             m["lat"], m["lon"] = cam.get("lat"), cam.get("lon")
-        for r in rows:
-            counts = m["hours"][r.bucket_start.strftime(HOUR_FMT)]
-            counts[OBJECT_TYPES.get(r.object_type, str(r.object_type))] += r.total or 0
-            counts["total"] += r.total or 0
+        for h, c in per_va[cam["analytics_id"]].items():
+            m["hours"][h].update(c)
     return [{**m, "hours": {h: dict(c) for h, c in sorted(m["hours"].items())}}
             for m in merged.values()]
 
 
 def traffic(city: CityData, period: str, group_by: str, camera: str | None) -> dict:
-    """Counts of people, bikes, cars, motorcycles, buses and trucks from the video analytics."""
-    start, end, days = _period_bounds(period, city.now())
+    """Counts of people, bikes, cars, motorcycles, buses and trucks from the video analytics,
+    built from per-line counts and added up only as the counting-lines register allows
+    (chatbot/traffic_lines.py): a camera's lines that could count the same road user twice are
+    kept apart, and each line only counts the road users it is drawn for. Every answer says how
+    it was counted (`how_counted`)."""
+    now = city.now()
+    start, end, days = _period_bounds(period, now)
     cams = city.traffic_cameras()
     chosen = []
     if camera:
@@ -264,63 +277,100 @@ def traffic(city: CityData, period: str, group_by: str, camera: str | None) -> d
         if not chosen:
             return {"error": f"no camera matches {camera!r}",
                     "cameras": sorted({c["name"] for c in cams})}
+    line_roles = traffic_lines.roles(cams)
+    in_scope = {c["analytics_id"] for c in (chosen or cams)}
+    names = {c["analytics_id"]: camera_key(c) for c in cams}
+    notes: list[str] = []
+
+    if group_by == "hour_of_day" and period in ("today", "yesterday"):
+        hours = traffic_lines.line_hours(city, TZ).get(traffic_lines.day_hours(start, min(end, now)))
+        missed = sum(1 for rows in hours.values() if rows is None)
+        if missed:
+            notes.append(f"{missed} hour(s) couldn't be read from the city's API and are left out")
+        rows = [r for rs in hours.values() if rs for r in rs if r.analytics_id in in_scope]
+        label = "hour"
+        key = lambda b: b.strftime(HOUR_FMT)  # noqa: E731 - a real local hour, for the replay
+    elif group_by == "hour_of_day":
+        rows = _line_hours_kept(city, start, end, in_scope)
+        covered = len({r.bucket_start for r in rows})
+        if covered >= 0.9 * 24 * len(days):
+            label = "hour_of_day"
+            notes.append(f"each hour is the sum over {len(days)} days (an hour-of-day profile)")
+            key = lambda b: b.strftime("%H:%M")  # noqa: E731
+        else:  # the twin hasn't kept these days hour by hour: by day, rather than a guess
+            rows = _line_days(city, chosen, start, end, in_scope)
+            label = "day"
+            notes.append("hour by hour per line isn't kept for all of these days yet, so this "
+                         "is by day; ask for today or yesterday for hours")
+            key = lambda b: b.strftime("%Y-%m-%d")  # noqa: E731
+    else:
+        rows = _line_days(city, chosen, start, end, in_scope)
+        label = "camera" if group_by == "camera" else "day"
+        key = lambda b: b.strftime("%Y-%m-%d")  # noqa: E731
+
+    t = traffic_lines.tally(rows, line_roles)
+    how = traffic_lines.how_counted(t, line_roles, names)
+    if label == "camera":
+        by_id = {c["analytics_id"]: c for c in cams}
+        per: dict[str, Counter] = defaultdict(Counter)
+        where: dict[str, tuple] = {}
+        for (_, va), counts in t.added.items():
+            cam = by_id.get(va, {"analytics_id": va})
+            k = camera_key(cam)
+            for obj, n in counts.items():
+                per[k][OBJECT_TYPES.get(obj, str(obj))] += n
+            if where.get(k, (None, None))[0] is None:
+                where[k] = (cam.get("lat"), cam.get("lon"))
+        out = [{"camera": k, "lat": where[k][0], "lon": where[k][1], **counts,
+                "total": sum(counts.values())} for k, counts in per.items()]
+        out.sort(key=lambda r: -r["total"])
+        notes.append("each camera's figure counts a road user once at that camera; cameras "
+                     "without coordinates have lat/lon null")
+        return {"period": period, "group_by": "camera", "rows": out, "note": "; ".join(notes),
+                "how_counted": how}
+
+    table: dict[str, Counter] = defaultdict(Counter)
+    counted_at = set()
+    for (bucket, va), counts in t.added.items():
+        counted_at.add(names.get(va, va))
+        for obj, n in counts.items():
+            table[key(bucket)][OBJECT_TYPES.get(obj, str(obj))] += n
+    out = [{label: k, **v, "total": sum(v.values())} for k, v in sorted(table.items())]
+    across = _across(len(counted_at))
+    if across:
+        notes.append(across)
+    result = {"period": period, "group_by": label,
+              "cameras": [c["name"] for c in chosen] or "all cameras", "rows": out,
+              "how_counted": how}
+    if notes:
+        result["note"] = "; ".join(notes)
+    return result
+
+
+def _line_days(city: CityData, chosen: list[dict], start: datetime, end: datetime,
+               in_scope: set[int]) -> list[parse.TrafficRow]:
+    """Per camera, line and day over [start, end): one request (group_by=stream)."""
     # Compact separators: the API fails with HTTP 500 on "[111, 102]" but takes "[111,102]".
     va_ids = json.dumps([c["analytics_id"] for c in chosen], separators=(",", ":"))
-    params = {"va_ids": va_ids, "start_date": _ms(start), "end_date": _ms(end)}
+    payload = city.client.get_json("getTrafficReports", group_by="stream", va_ids=va_ids,
+                                   start_date=_ms(start), end_date=_ms(end))
+    rows = parse.parse_traffic_stream(payload, TZ)
+    city.record("traffic", finished(rows, city.now()))
+    return [r for r in rows if r.analytics_id in in_scope]
 
-    if group_by == "camera":
-        payload = city.client.get_json("getTrafficReports", group_by="stream", **params)
-        rows = parse.parse_traffic_stream(payload, TZ)
-        city.record("traffic", finished(rows, city.now()))  # per camera, line and day
-        per: dict[int, dict] = defaultdict(lambda: defaultdict(int))
-        for r in rows:
-            per[r.analytics_id][OBJECT_TYPES.get(r.object_type, str(r.object_type))] += r.total or 0
-        by_id = {c["analytics_id"]: c for c in cams}
-        out = []
-        for va, counts in per.items():
-            c = by_id.get(va, {})
-            out.append({"camera": c.get("name") or str(va), "lat": c.get("lat"),
-                        "lon": c.get("lon"), **counts, "total": sum(counts.values())})
-        out.sort(key=lambda r: -r["total"])
-        return {"period": period, "group_by": "camera", "rows": out,
-                "note": "counts are line crossings, so one person can be counted at several "
-                        "cameras; cameras without coordinates have lat/lon null"}
 
-    if group_by == "hour_of_day":
-        if period in ("today", "yesterday"):
-            payload = city.client.get_json("getTrafficReports", group_by="hour", **params)
-            rows = parse.parse_traffic_buckets(payload, TZ, day=days[0])
-            if len(chosen) <= 1:  # the city as a whole, or one camera: both worth keeping
-                own = chosen[0]["analytics_id"] if chosen else parse.ALL_CAMERAS
-                city.record("traffic", finished(
-                    [dataclasses.replace(r, analytics_id=own) for r in rows], city.now()))
-            label = "hour"
-            note = None
-            # A real local timestamp, so charts get a time axis that can sync with a time-lapse.
-            key = lambda r: r.bucket_start.strftime(HOUR_FMT)  # noqa: E731
-        else:
-            payload = city.client.get_json("getTrafficReports", group_by="hour", **params)
-            rows = parse.parse_traffic_buckets(payload, TZ, day=days[-1])
-            label = "hour_of_day"
-            note = f"each hour is the sum over {len(days)} days (an hour-of-day profile)"
-            key = lambda r: r.bucket_start.strftime("%H:%M")  # noqa: E731
-    else:
-        payload = city.client.get_json("getTrafficReports", group_by="day", **params)
-        rows = parse.parse_traffic_buckets(payload, TZ)
-        if not chosen:  # per-camera days are stored per counting line, from group_by=stream
-            city.record("traffic", finished(rows, city.now()))
-        label, note = "day", None
-        key = lambda r: r.bucket_start.strftime("%Y-%m-%d")  # noqa: E731
-
-    table: dict[str, dict] = defaultdict(lambda: defaultdict(int))
-    for r in rows:
-        table[key(r)][OBJECT_TYPES.get(r.object_type, str(r.object_type))] += r.total or 0
-    out = [{label: k, **v, "total": sum(v.values())} for k, v in sorted(table.items())]
-    result = {"period": period, "group_by": label,
-              "cameras": [c["name"] for c in chosen] or "all cameras", "rows": out}
-    if note:
-        result["note"] = note
-    return result
+def _line_hours_kept(city: CityData, start: datetime, end: datetime, in_scope: set[int]
+                     ) -> list[parse.TrafficRow]:
+    """Per line and hour from the twin's memory, for profiles over several days."""
+    memory = getattr(getattr(city, "recorder", None), "memory", None)
+    if memory is None:
+        return []
+    try:
+        rows = memory.traffic_lines("hour", start, end)
+    except Exception as e:  # noqa: BLE001 - the memory is optional: fall back to days
+        log.info("no per-line hours from the memory: %s", e)
+        return []
+    return [r for r in rows if r.analytics_id in in_scope]
 
 
 def speed(city: CityData, hours: int) -> dict:

@@ -3,6 +3,7 @@ against a scripted fake of the Claude streaming API (no network, no API key)."""
 
 import asyncio
 import itertools
+import json
 import random
 from datetime import datetime, timezone
 from types import SimpleNamespace
@@ -192,13 +193,32 @@ def test_traffic_sends_camera_ids_without_spaces(city, api, monkeypatch):
             {"name": "Ledras St. (from Lykourgou)", "analytics_id": 111},
             {"name": "Makarios Avenue cam03", "analytics_id": 90}]
     monkeypatch.setattr(city, "traffic_cameras", lambda: cams)
-    api.on("getTrafficReports", {"data": {"group_by": []}})
+    api.on("getTrafficReports", {"data": {"group_by": {}}})
 
-    res = context.traffic(city, "yesterday", "hour_of_day", "Ledras")
+    res = context.traffic(city, "yesterday", "day", "Ledras")
     assert res["cameras"] == ["Ledras Square", "Ledras St. (from Lykourgou)"]
-    context.traffic(city, "yesterday", "day", None)
-    sent = [p["va_ids"] for e, p in api.calls if e == "getTrafficReports"]
-    assert sent == ["[102,111]", "[]"]
+    context.traffic(city, "yesterday", "camera", None)
+    sent = [(p["group_by"], p["va_ids"]) for e, p in api.calls if e == "getTrafficReports"]
+    assert sent == [("stream", "[102,111]"), ("stream", "[]")]
+
+
+def one_line(name: str, types=(0, 1, 2, 3, 4, 5)) -> str:
+    """A camera's lines as the analytics list gives them: here a single line."""
+    return json.dumps([{"id": 0, "name": name, "direction": 0, "count_type": 1,
+                        "types": list(types)}])
+
+
+def per_line_hours(counts: dict) -> callable:
+    """A getTrafficReports handler for per-line hours: {"13:00": {va: {line: {type: n}}}}
+    answers the group_by=stream request whose window starts at that local hour."""
+    def answer(p):
+        start = datetime.fromtimestamp(int(p["start_date"]) / 1000, tz=context.TZ)
+        cams = counts.get(start.strftime("%H:%M"), {})
+        return {"data": {"group_by": {start.strftime("%d-%m-%Y"): {
+            str(va): {line: {str(t): {"1": n, "2": 0, "total": n} for t, n in types.items()}
+                      for line, types in lines.items()}
+            for va, lines in cams.items()}} if cams else {}}}
+    return answer
 
 
 def hourly(counts: dict) -> dict:
@@ -218,16 +238,21 @@ class StreetRouter:
 
 
 def test_get_traffic_by_hour_replays_the_cameras_and_draws_their_street(city, api, monkeypatch):
-    cams = [{"name": "Ledras Square", "analytics_id": 102, "lat": 35.1703, "lon": 33.36105},
-            {"name": "Ledras End Vehicles", "analytics_id": 98, "lat": 35.1742, "lon": 33.36142},
-            {"name": "Ledras (not placed)", "analytics_id": 97, "lat": None, "lon": None},
-            {"name": "Makariou cam03", "analytics_id": 49, "lat": 35.1686, "lon": 33.3592}]
+    cams = [{"name": "Ledras Square", "analytics_id": 102, "lat": 35.1703, "lon": 33.36105,
+             "lines": one_line("Ledras Square")},
+            {"name": "Ledras End Vehicles", "analytics_id": 98, "lat": 35.1742, "lon": 33.36142,
+             "lines": one_line("Ledras End (Hellenic Bank)", (1, 2, 3, 5))},
+            {"name": "Ledras (not placed)", "analytics_id": 97, "lat": None, "lon": None,
+             "lines": one_line("Ledras (Odofragma)", (0, 1))},
+            {"name": "Makariou cam03", "analytics_id": 49, "lat": 35.1686, "lon": 33.3592,
+             "lines": one_line("MK istorm P", (0,))}]
     monkeypatch.setattr(city, "traffic_cameras", lambda: cams)
-    per_camera = {"[102]": {"12:00": {0: 800}, "13:00": {0: 1000, 2: 5}},  # 0 people, 2 cars
-                  "[98]": {"13:00": {2: 40}},
-                  "[97]": {"12:00": {0: 30}}}
-    together = {"12:00": {0: 830}, "13:00": {0: 1000, 2: 45}}
-    api.on("getTrafficReports", lambda p: hourly(per_camera.get(p["va_ids"], together)))
+    # Per line and hour; 0 people, 2 cars. The city's answer is every camera's lines at once.
+    api.on("getTrafficReports", per_line_hours({
+        "12:00": {102: {"Ledras Square": {0: 800}}, 97: {"Ledras (Odofragma)": {0: 30}}},
+        "13:00": {102: {"Ledras Square": {0: 1000, 2: 5}},
+                  98: {"Ledras End (Hellenic Bank)": {2: 40}}},
+    }))
     day = context._period_bounds("yesterday", city.now())[2][0].isoformat()
     line = [[33.36105, 35.1703], [33.36142, 35.1742]]
     events = []

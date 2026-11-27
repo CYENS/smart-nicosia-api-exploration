@@ -43,10 +43,9 @@ from datetime import datetime, timedelta, timezone
 from urllib.parse import urlsplit
 from zoneinfo import ZoneInfo
 
-from collector import parse
 from collector.interpret import Interpretation
 
-from chatbot import context, eoa, history, lidar
+from chatbot import context, eoa, history, lidar, traffic_lines
 from chatbot.city import KINDS, TYPE_TO_KIND, CityData, Device, DeviceState
 from chatbot.dls import DLS, centroid, contains, lonlat_to_tile
 from chatbot.geo import Places, haversine_m, loose, norm
@@ -629,23 +628,26 @@ class Entities:
 
     def _traffic_series(self, entity: dict, until: datetime | None = None) -> dict | None:
         """People (or, at a camera that counts none, everything) per hour over the 24 hours up
-        to `until` (default now): the day before and that day, one small request each (an
-        hourly report can't cross midnight)."""
+        to `until` (default now), from the camera's per-line counts added up as the
+        counting-lines register allows (chatbot/traffic_lines.py), so a road user crossing two
+        of its lines counts once. The hours come from the shared per-line cache: one request per
+        hour serves every camera."""
         feeds = entity["_feeds"]
-        va_ids = json.dumps([f["analytics_id"] for f in feeds], separators=(",", ":"))
+        ids = {f["analytics_id"] for f in feeds}
         now = until or self.now()
-        by_hour: dict[str, Counter] = {}
-        for period in ("yesterday", "today"):
-            start, end, days = context._period_bounds(period, now)
-            payload = self.city.client.get_json(
-                "getTrafficReports", group_by="hour", start_date=int(start.timestamp() * 1000),
-                end_date=int(end.timestamp() * 1000), va_ids=va_ids)
-            for r in parse.parse_traffic_buckets(payload, TZ, day=days[0]):
-                c = by_hour.setdefault(r.bucket_start.strftime("%Y-%m-%dT%H:%M"), Counter())
-                c[context.OBJECT_TYPES.get(r.object_type, str(r.object_type))] += r.total or 0
-                c["total"] += r.total or 0
         last = now.astimezone(TZ).replace(minute=0, second=0, microsecond=0)
-        hours = [(last - timedelta(hours=23 - k)).strftime("%Y-%m-%dT%H:%M") for k in range(24)]
+        starts = [traffic_lines.later(last, -timedelta(hours=23 - k)) for k in range(24)]
+        got = traffic_lines.line_hours(self.city, TZ).get(starts)
+        line_roles = traffic_lines.roles(self.city.traffic_cameras())
+        t = traffic_lines.tally([r for rows in got.values() if rows for r in rows
+                                 if r.analytics_id in ids], line_roles)
+        by_hour: dict[str, Counter] = {}
+        for (bucket, _), counts in t.added.items():
+            c = by_hour.setdefault(bucket.strftime("%Y-%m-%dT%H:%M"), Counter())
+            for obj, n in counts.items():
+                c[context.OBJECT_TYPES.get(obj, str(obj))] += n
+                c["total"] += n
+        hours = [s.strftime("%Y-%m-%dT%H:%M") for s in starts]
         window = {h: by_hour[h] for h in hours if h in by_hour}
         if not window:
             return None

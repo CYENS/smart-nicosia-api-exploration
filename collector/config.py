@@ -45,6 +45,8 @@ DEFAULT_JOBS: dict[str, JobConfig] = {
     "cameras": JobConfig(60),
     "traffic_daily": JobConfig(24 * 60),
     "traffic_hourly": JobConfig(60),
+    # Every camera's counting lines, per finished hour: what the counting-lines register adds up.
+    "traffic_lines": JobConfig(60),
     "speed": JobConfig(60),
 }
 
@@ -82,6 +84,7 @@ class Config:
     alarm_limit: int = 20
     traffic_max_days_per_request: int = 30
     traffic_initial_days: int = 7  # first traffic_daily run fetches this many past days
+    traffic_lines_max_hours: int = 48  # hours traffic_lines catches up on in one run
     speed_group_by: str = "FIVE_MIN"
     speed_line_type: str = "AVERAGE_SPEED"
     speed_max_catchup_days: float = 7.0

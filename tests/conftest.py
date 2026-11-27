@@ -80,3 +80,10 @@ def api() -> FakeApi:
 @pytest.fixture
 def client(cfg, api) -> Client:
     return Client(cfg, fetch=api.fetch, sleep=lambda s: None)
+
+
+@pytest.fixture(autouse=True)
+def isolated_traffic_register(tmp_path, monkeypatch):
+    """Every test reads and writes its own counting-lines register, never the repo's."""
+    from chatbot import traffic_lines
+    monkeypatch.setattr(traffic_lines, "REGISTER", tmp_path / "traffic_lines.csv")

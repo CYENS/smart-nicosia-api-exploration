@@ -660,6 +660,54 @@ class TrafficHourlyJob(Job):
         return "One request for today, and once a day a second one to finish yesterday."
 
 
+class TrafficLinesJob(Job):
+    """Every camera's counts per counting line for each finished hour since the last run: one
+    getTrafficReports request per hour (group_by=stream over that hour) covers every line of
+    every camera. Kept so questions over several days can answer hour by hour without adding
+    lines that overlap (chatbot/traffic_lines.py). Catches up on missed hours, at most
+    `traffic_lines_max_hours` a run; the first run starts a day back."""
+
+    name = "traffic_lines"
+    calls = ("getTrafficReports",)
+    writes = ("traffic_counts",)
+    settings = ("traffic_lines_max_hours",)
+
+    def prepare(self, con, ctx):
+        return db.get_watermark(con, self.name)  # ms: the start of the next hour to fetch
+
+    def fetch(self, client, wm, ctx):
+        hour_ms = 3_600_000
+        last_full = ctx.now_ms // hour_ms * hour_ms  # the hour under way starts here
+        first = wm if wm else last_full - 24 * hour_ms
+        first = max(first, last_full - ctx.cfg.traffic_lines_max_hours * hour_ms)
+        done = []
+        for start in range(first, last_full, hour_ms):
+            try:
+                done.append((start, client.get_json(
+                    "getTrafficReports", va_ids="[]", group_by="stream", start_date=start,
+                    end_date=start + hour_ms - 1)))
+            except ApiError as e:
+                return Fetched(done, [e])  # keep the hours done; the rest next time
+        return Fetched(done)
+
+    def store(self, con, fetched, ctx):
+        rows = []
+        for start, payload in fetched.data:
+            hour = datetime.fromtimestamp(start / 1000, tz=ctx.tz)
+            rows.extend(parse.parse_traffic_stream_hour(payload, hour, ctx.tz))
+        written = store_traffic(con, rows, ctx.now)
+        if fetched.data:
+            db.set_watermark(con, self.name, fetched.data[-1][0] + 3_600_000)
+        return Stored(written, f"{len(fetched.data)} hour(s), {written} line rows")
+
+    def requests_per_run(self, counts, cfg):
+        return 1.0
+
+    def cost_note(self, counts, cfg):
+        return ("One request per finished hour, for every line of every camera at once; after "
+                f"a gap it catches up, at most {cfg.traffic_lines_max_hours} hours a run.")
+
+
 def store_speeds(con, rows: list[parse.SpeedRow], granularity: str, line_type: str,
                  now: datetime) -> int:
     now_us = int(now.timestamp() * 1_000_000)
@@ -836,6 +884,7 @@ def build_jobs() -> dict[str, Job]:
         LatestJob("cameras", "Camera"),
         TrafficDailyJob(),
         TrafficHourlyJob(),
+        TrafficLinesJob(),
         SpeedJob(),
     ]
     return {j.name: j for j in jobs}
