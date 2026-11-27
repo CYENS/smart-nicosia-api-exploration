@@ -425,6 +425,8 @@ def _never_raises(fn):
     slow down or break an answer."""
     @functools.wraps(fn)
     def wrapper(self, *args, **kwargs):
+        if self.paused:  # paused on the admin page: what pages fetch is not kept
+            return
         try:
             with self._lock:
                 fn(self, *args, **kwargs)
@@ -457,6 +459,7 @@ class Recorder:
         self.dropped_rows = 0
         self.last_flush: dt.datetime | None = None
         self.last_error: str | None = None
+        self.paused = False  # set from the admin page (chatbot/collectors.py)
 
     # -- what the chatbot hands over ---------------------------------------------------------
 
@@ -685,7 +688,8 @@ class Recorder:
         self.flush(timeout)
 
     def status(self) -> dict:
-        return {"on": True, "pending_rows": self.pending(), "flushes": self.flushes,
+        return {"on": True, "paused": self.paused, "pending_rows": self.pending(),
+                "flushes": self.flushes,
                 "rows_written": self.rows_written, "busy_retries": self.busy_retries,
                 "dropped_rows": self.dropped_rows,
                 "last_flush": self.last_flush.astimezone(self.memory.tz).strftime(

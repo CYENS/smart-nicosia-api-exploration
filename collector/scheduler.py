@@ -14,7 +14,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
 
-from collector import db, sun
+from collector import controls, db, sun
 from collector.config import Config
 from collector.http import ApiError, Client
 from collector.jobs import JOBS, KNOWN_COUNTS, Context, Fetched, Job
@@ -182,11 +182,21 @@ def run_pass(
     force: bool = False,
     client: Client | None = None,
     now_fn: Callable[[], datetime] = db.utcnow,
+    on_job: Callable[[str | None], None] | None = None,
 ) -> list[RunSummary]:
-    """Run every due job once (or only `only`; `force` ignores cadence and night windows)."""
+    """Run every due job once (or only `only`; `force` ignores cadence and night windows).
+
+    The admin page's controls (collector/controls.py) apply on top of `cfg`: its job switches
+    and cadences, and its pause, which skips a scheduled pass but not one asked for by name.
+    `on_job` hears each job's name as it starts, and None when the pass ends."""
     unknown = [j for j in only or [] if j not in JOBS]
     if unknown:
         raise ValueError(f"unknown job(s): {', '.join(unknown)}; known: {', '.join(JOBS)}")
+    page = controls.load(controls.controls_path(cfg))
+    if page.collecting is False and only is None and not force:
+        log.info("collection is paused on the admin page; skipping this pass")
+        return []
+    cfg = controls.apply(cfg, page)
     lock = FileLock(lock_path(cfg, "run"))
     if not lock.acquire():
         log.warning("another `collector run` is still working; skipping this pass")
@@ -203,10 +213,23 @@ def run_pass(
             names = [n for n in due_jobs(cfg, runs, now) if only is None or n in only]
         summaries = []
         for name in names:
+            if on_job:
+                on_job(name)
             summaries.append(run_job(cfg, JOBS[name], client, now_fn()))
         return summaries
     finally:
+        if on_job:
+            on_job(None)
         lock.release()
+
+
+def lock_held_elsewhere(cfg: Config) -> bool:
+    """Whether another collector is in the middle of a pass on this database right now."""
+    lock = FileLock(lock_path(cfg, "run"))
+    if not lock.acquire():
+        return True
+    lock.release()
+    return False
 
 
 def run_forever(cfg: Config, *, tick_s: float = 30.0) -> None:
