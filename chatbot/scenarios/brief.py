@@ -111,7 +111,9 @@ def _amount(v: float | None, unit: str) -> str:
     """A change in words: 'saves 1,719 EUR' for a fall, 'adds 30 EUR' for a rise."""
     if v is None:
         return "n/a"
-    return f"{'saves' if v < 0 else 'adds' if v > 0 else 'no change,'} {num(v)} {unit}".replace("no change, 0 ", "no change ")
+    if v == 0:
+        return "no change"
+    return f"{'saves' if v < 0 else 'adds'} {num(v)} {unit}"
 
 
 def _effect(s: dict) -> str:

@@ -30,6 +30,8 @@ def list_scenarios(request: Request) -> dict:
 @router.post("/api/scenarios/{scenario_id}/run")
 def run_scenario(request: Request, scenario_id: str, body: dict = Body(default_factory=dict)) -> dict:
     lab = _lab(request)
+    if not isinstance(body, dict):
+        raise HTTPException(400, "send a JSON object: {params, period}")
     try:
         return lab.run(scenario_id, body.get("params"), body.get("period"))
     except ScenarioError as e:

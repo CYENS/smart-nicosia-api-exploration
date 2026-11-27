@@ -164,7 +164,7 @@ function Results({ toSetUp }: { toSetUp: () => void }) {
       <Separator />
       <Section title="Assumptions" id="lab-assumptions">
         <Tornado run={run} />
-        {def && <Assumptions def={def} run={run} values={values} onCommit={() => void runScenario()} />}
+        {def && <Assumptions def={def} run={run} values={values} onCommit={() => void runScenario({}, run.scenario)} />}
       </Section>
       <Separator />
       <Section title="Backtest" id="lab-backtest"><Backtest run={run} /></Section>

@@ -164,6 +164,7 @@ BASIS_LABELS = {"measured": "measured from readings either side of each switch",
 CAMERA_ON_STREET_M = 250
 CAMERA_ANY_M = 100
 FOOTFALL_DAYS = 30
+MIN_COUNTED_DAYS = 7  # a camera that counted on fewer days of the window doesn't measure its street
 
 
 # -- reading the data --------------------------------------------------------------------------
@@ -298,9 +299,35 @@ def _camera_rows(ctx: ScenarioContext) -> list[dict]:
     return out
 
 
+def _counted_days(ctx: ScenarioContext, cam_id: int, start: datetime, stop: datetime) -> int | None:
+    """On how many days of the window a camera counted anything: from the twin's memory, else
+    one request by day. None when nobody can say."""
+    if ctx.memory is not None:
+        try:
+            with ctx.memory.reading() as con:
+                n = con.execute(
+                    """SELECT count(DISTINCT bucket_start) FROM traffic_counts
+                       WHERE granularity = 'day' AND analytics_id = ? AND total > 0
+                         AND bucket_start >= ? AND bucket_start < ?""", [cam_id, start, stop]).fetchone()[0]
+            if n:
+                return int(n)
+        except Exception:  # noqa: BLE001 - ask the city API instead
+            pass
+    try:
+        payload = ctx.city.client.get_json(
+            "getTrafficReports", group_by="day", start_date=int(start.timestamp() * 1000),
+            end_date=int(stop.timestamp() * 1000) - 1, va_ids=f"[{cam_id}]")
+    except Exception:  # noqa: BLE001
+        return None
+    return sum(1 for b in (payload.get("data") or {}).get("group_by") or []
+               if any((c or {}).get("total") for c in (b.get("data") or {}).values()))
+
+
 def footfall(ctx: ScenarioContext, end: datetime, cameras: list[dict]) -> tuple[list[dict], str | None]:
     """Each people-counting camera's average people an hour, hour by hour of the day, over the
-    30 days before `end`'s local midnight. One request per camera, kept for the day."""
+    days it counted in the 30 before `end`'s local midnight (a camera that was down for part of
+    the month isn't diluted). One request per camera, kept for the day once every camera
+    answered."""
     stop = datetime.combine(end.astimezone(TZ).date(), datetime.min.time(), TZ)
     start = stop - timedelta(days=FOOTFALL_DAYS)
     cache: Path | None = None
@@ -309,7 +336,7 @@ def footfall(ctx: ScenarioContext, end: datetime, cameras: list[dict]) -> tuple[
         if cache.exists():
             try:
                 saved = json.loads(cache.read_text(encoding="utf-8"))
-                hours = {int(k): v for k, v in saved["hours"].items()}
+                hours = {int(k): v for k, v in saved["hours"].items() if v}
                 return [{**c, "hours": hours[c["id"]]} for c in cameras if c["id"] in hours], None
             except (ValueError, KeyError):
                 pass
@@ -324,16 +351,21 @@ def footfall(ctx: ScenarioContext, end: datetime, cameras: list[dict]) -> tuple[
         except Exception as e:  # noqa: BLE001 - one camera failing leaves it unmeasured
             log.warning("footfall for camera %s failed: %s", cam["id"], e)
             return cam, None
+        days = _counted_days(ctx, cam["id"], start, stop)
+        if days is None or days < MIN_COUNTED_DAYS:
+            return cam, []  # answered, but too few days to measure the street
         hours = [0.0] * 24
         for b in (payload.get("data") or {}).get("group_by") or []:
             m = re.fullmatch(r"(\d{2}):\d{2}", str(b.get("key", "")))
             people = ((b.get("data") or {}).get("0") or {}).get("total")
             if m and people is not None:
-                hours[int(m.group(1))] = round(float(people) / FOOTFALL_DAYS, 2)
+                hours[int(m.group(1))] = round(float(people) / min(days, FOOTFALL_DAYS), 2)
         return cam, hours
 
-    got = {cam["id"]: h for cam, h in ctx.city.each(one, cameras) if h is not None}
-    if cache is not None and got:
+    results = ctx.city.each(one, cameras)
+    got = {cam["id"]: h for cam, h in results if h}
+    complete = all(h is not None for _, h in results)
+    if cache is not None and got and complete:  # a camera that failed is asked again next run
         try:
             cache.parent.mkdir(parents=True, exist_ok=True)
             cache.write_text(json.dumps({"hours": got}), encoding="utf-8")

@@ -68,15 +68,16 @@ function ParamSlider({ id, label, value, min, max, step, text, onChange, onCommi
 
 // One parameter: a switch, a slider with its value and unit, or a select. A slider commits on
 // release (or a key), so an assumption can re-run the scenario once, not on every step.
-export function ParamField({ name, p, value, onCommit, idPrefix }: {
+export function ParamField({ name, p, value, onCommit, idPrefix, scenario }: {
   name: string; p: ParamSchema; value: unknown; onCommit?: (v: unknown) => void; idPrefix: string
+  scenario?: string // whose value it is (an open run's assumptions); else the one on Set up
 }) {
   const id = `${idPrefix}-${name}`
   const [draft, setDraft] = useState<number | null>(null)
   if (p.type === "boolean") {
     return (
       <Field orientation="horizontal" className="items-start gap-3">
-        <Switch id={id} checked={Boolean(value)} onCheckedChange={(on) => { setValue(name, on); onCommit?.(on) }} className="mt-0.5" />
+        <Switch id={id} checked={Boolean(value)} onCheckedChange={(on) => { setValue(name, on, scenario); onCommit?.(on) }} className="mt-0.5" />
         <div className="flex min-w-0 flex-col gap-0.5">
           <FieldLabel htmlFor={id} className="text-[13.5px] font-medium">{p.title}</FieldLabel>
           {p.description && <FieldDescription className="text-[12.5px] leading-snug">{p.description}</FieldDescription>}
@@ -88,7 +89,7 @@ export function ParamField({ name, p, value, onCommit, idPrefix }: {
     return (
       <Field className="gap-1.5">
         <FieldLabel htmlFor={id} className="text-[12.5px] font-normal text-muted-foreground">{p.title}</FieldLabel>
-        <Select value={String(value)} onValueChange={(v) => { setValue(name, v); onCommit?.(v) }}>
+        <Select value={String(value)} onValueChange={(v) => { setValue(name, v, scenario); onCommit?.(v) }}>
           <SelectTrigger id={id} size="sm" className="w-full"><SelectValue>{enumTitle(p, String(value))}</SelectValue></SelectTrigger>
           <SelectContent>
             {p.enum.map((o) => <SelectItem key={o} value={o}>{enumTitle(p, o)}</SelectItem>)}
@@ -110,7 +111,7 @@ export function ParamField({ name, p, value, onCommit, idPrefix }: {
         onChange={setDraft}
         onCommit={(n) => {
           setDraft(null)
-          setValue(name, n)
+          setValue(name, n, scenario)
           onCommit?.(n)
         }} />
       <div className="flex justify-between font-condensed text-[11.5px] text-muted-foreground tabular-nums" aria-hidden="true">
@@ -459,7 +460,7 @@ export function Assumptions({ def, run, values, onCommit }: {
     <div className="flex flex-col gap-4">
       {props.map(([k, p]) => (
         <div key={k} className="flex flex-col gap-1">
-          <ParamField name={k} p={p} value={values[k]} idPrefix="lab-a" onCommit={onCommit} />
+          <ParamField name={k} p={p} value={values[k]} idPrefix="lab-a" onCommit={onCommit} scenario={run.scenario} />
           {p["x-source"] && <p className="text-[11.5px] leading-snug text-muted-foreground">{p["x-source"]}</p>}
           {run.params[k] !== values[k] && <Badge variant="outline" className="self-start text-[11px]">Not in this run yet</Badge>}
         </div>

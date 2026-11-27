@@ -83,6 +83,11 @@ def store(tmp_path_factory):
     for c in CAMERAS:
         con.execute("INSERT INTO traffic_cameras (analytics_id, name, lat, lon, lines) VALUES (?, ?, ?, ?, ?)",
                     [c["analytics_id"], c["name"], c["lat"], c["lon"], c["lines"]])
+    # The people-counting camera counted on each of the 30 days before today.
+    midnight = datetime.combine(NOW.date(), datetime.min.time(), TZ)
+    for k in range(1, 31):
+        con.execute("INSERT INTO traffic_counts VALUES ('day', ?, 44, '', 0, 0, 0, 900, ?)",
+                    [midnight - timedelta(days=k), midnight])
     con.close()
     return Memory(path, record=False)
 
@@ -264,6 +269,30 @@ def test_footfall_is_one_request_per_counting_camera_and_kept_for_the_day(store,
     assert cams[0]["hours"][1] == round(939 / 30, 2)  # the fixture's 01:00 people over 30 days
     again, _ = lighting.footfall(ctx, NOW, lighting._camera_rows(ctx))
     assert city.requests == 1 and again[0]["hours"] == cams[0]["hours"]
+
+
+def test_a_camera_down_most_of_the_month_measures_nothing_and_a_failure_isnt_kept(store, tmp_path):
+    class Patchy(FakeCity):
+        def __init__(self, fail=False, days=3):
+            super().__init__()
+            self.fail, self.days = fail, days
+
+        def get_json(self, endpoint, **params):
+            if params["group_by"] == "day":  # how many days it counted
+                return {"data": {"group_by": [{"key": f"{d:02d}-11-2026", "data": {"0": {"total": 5}}}
+                                              for d in range(1, self.days + 1)]}}
+            if self.fail:
+                raise RuntimeError("timeout")
+            return super().get_json(endpoint, **params)
+
+    other = ScenarioContext(Settings(), memory=None, city=Patchy(), clock=lambda: NOW, cache_dir=tmp_path)
+    cams = [{"id": 44, "name": "cam", "lat": 35.1668, "lon": 33.3617}]
+    got, note = lighting.footfall(other, NOW, cams)
+    assert got == [] and note  # 3 days counted: too few to say a street is quiet
+    failing = ScenarioContext(Settings(), memory=None, city=Patchy(fail=True, days=30), clock=lambda: NOW,
+                              cache_dir=tmp_path / "f")
+    assert lighting.footfall(failing, NOW, cams)[0] == []
+    assert not list((tmp_path / "f").glob("footfall_*.json"))  # nothing kept: asked again next run
 
 
 def test_without_the_memory_it_says_so(tmp_path):
