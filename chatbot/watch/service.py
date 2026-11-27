@@ -98,6 +98,9 @@ class Watcher:
         self.evaluated_at: datetime | None = None
         self.last_error: str | None = None
         self.last_took_s: float | None = None
+        # Feeds that aren't devices, read as their last fetch left them: source id -> a
+        # callable giving its health (the agent adds the road detectors' feed).
+        self.feeds: dict[str, Callable[[], dict | None]] = {}
         if city is not None and hasattr(city, "listeners"):
             city.listeners.append(self.fresh_readings)
 
@@ -194,6 +197,14 @@ class Watcher:
             self.last_error = str(e)
             self.book.load()
             return []
+        for source, health in self.feeds.items():
+            try:
+                h = health()
+            except Exception:  # noqa: BLE001 - a feed that can't say leaves its rule unrun
+                log.exception("watch: no health for %s", source)
+                continue
+            if h is not None:
+                obs.feeds[source] = h
         found, ran = detectors.detect(obs)
         changes = self.book.update(found, now, streets_near(obs), ran)
         self.book.save()

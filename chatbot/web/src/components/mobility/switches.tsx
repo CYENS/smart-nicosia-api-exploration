@@ -4,6 +4,7 @@ import { RoadLegend } from "@/components/mobility/parts"
 import { Field, FieldContent, FieldDescription, FieldLabel } from "@/components/ui/field"
 import { Switch } from "@/components/ui/switch"
 import { setBusesOn, setRoadsOn } from "@/lib/mobility/map"
+import { stalledShort } from "@/lib/mobility/stalled"
 import { useMobility } from "@/lib/mobility/store"
 
 function busLine(b: ReturnType<typeof useMobility.getState>["buses"]) {
@@ -24,6 +25,7 @@ function roadLine(r: ReturnType<typeof useMobility.getState>["roads"]) {
     case "unavailable": return r.at ? "The twin's memory has no road speeds for that moment" : "The national traffic feed isn't answering. Try again in a minute."
     case "recorded": return r.measured ? `${r.measured} of ${r.total} road segments, as the twin recorded them then` : "No road speeds recorded around that moment"
     case "no_readings": return "No road has a reading in the last 30 minutes"
+    case "stalled": return `${stalledShort(r.lastMeasuredAt)}. ${r.usual ? "Dotted roads show the usual for this hour." : "No road has a live reading."}`
     default: return `${r.measured} of ${r.total} road segments measured, updated every 5 minutes`
   }
 }
@@ -48,6 +50,7 @@ export function MobilitySwitches({ idPrefix = "tg" }: { idPrefix?: string }) {
         </FieldContent>
         <Switch id={`${idPrefix}-roads`} checked={roads.on} onCheckedChange={(on) => setRoadsOn(on)} />
       </Field>
+      {roads.on && roads.status === "stalled" && <RoadLegend />}
       {roads.on && roads.measured > 0 && (
         <div className="flex flex-col gap-2">
           <RoadLegend />

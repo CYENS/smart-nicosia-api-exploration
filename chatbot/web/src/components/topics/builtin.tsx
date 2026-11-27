@@ -9,6 +9,7 @@ import { openLayers } from "@/lib/layers-sheet"
 import { nicosiaTime } from "@/lib/map/engine"
 import { moonName } from "@/lib/map/sky"
 import { setBusesOn, setRoadsOn } from "@/lib/mobility/map"
+import { stalledSentence, usualLine } from "@/lib/mobility/stalled"
 import { useMobility, watchSummary } from "@/lib/mobility/store"
 import { AIR_BANDS, AIR_WORDS, airWords, cap, fmtCount, parkingWord, skyWord, useSky, useStrip } from "@/lib/readouts"
 import { registerTopic, selectTopic, type TopicLink } from "@/lib/registries/topics"
@@ -158,6 +159,7 @@ function TrafficSummary() {
   const { strip, past } = useStrip()
   useEffect(() => watchSummary(), [])
   if (roads.status === "idle" || roads.status === "loading") return <LeadSkeleton />
+  if (roads.status === "stalled") return <Lead tone="signal" detail={usualLine(roads.usual)}>{stalledSentence(roads.lastMeasuredAt)}</Lead>
   if (roads.status === "unavailable") {
     return past
       ? <Lead>The twin's memory has no road speeds for that moment.</Lead>
