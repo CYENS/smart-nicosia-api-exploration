@@ -6,8 +6,10 @@ import { create } from "zustand"
 
 import { useMapUi } from "@/lib/map/engine"
 import { useMobility } from "@/lib/mobility/store"
+import { registerInspectRoute } from "@/lib/registries/inspect-routes"
 
-export type SourceState = "live" | "stale" | "unavailable" | "waiting"
+// stalled: it answers, but with nothing new (the road detectors' newest measurement is old).
+export type SourceState = "live" | "stale" | "stalled" | "unavailable" | "waiting"
 export type SourcePart = { name: string; count: number | null; state: SourceState; as_of: string | null; note: string | null }
 export type SourceStatus = {
   state: SourceState | null; as_of: string | null; note: string | null
@@ -52,6 +54,14 @@ export function openSources(focus: string | null = null, opener: Element | null 
   useSources.setState({ open: true, focus, opener: el })
   void loadSources()
 }
+
+// A source as a thing that opens (source-road_speeds, the member of a stalled feed's incident):
+// it opens in this panel, at that source.
+registerInspectRoute({
+  id: "sources",
+  match: (id) => id.startsWith("source-"),
+  open: (id, { opener }) => openSources(id.slice("source-".length), opener ?? null),
+})
 
 export function closeSources() {
   useSources.setState({ open: false })

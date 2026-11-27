@@ -11,6 +11,7 @@ import { ItemContent, ItemTitle } from "@/components/ui/item"
 import { Skeleton } from "@/components/ui/skeleton"
 import { fetchSeries, type Entity, type Series } from "@/lib/entities"
 import { inspect, useInspector } from "@/lib/inspector"
+import { stalledSentence } from "@/lib/mobility/stalled"
 import { registerInspectorSection, type SectionProps } from "@/lib/registries/inspector-sections"
 import { cn } from "@/lib/utils"
 
@@ -23,7 +24,10 @@ type Live = {
   line_id?: string; line: string; color?: string; text_color?: string; headsign?: string; waiting?: string
   progress?: { stop: number; stops: number }; delay_source?: string
 }
-type Road = { speed_kmh: number | null; free_flow_kmh: number | null; free_flow: string; usual_kmh: number | null; share: number | null }
+type Road = {
+  speed_kmh: number | null; free_flow_kmh: number | null; free_flow: string; usual_kmh: number | null; share: number | null
+  usual_days?: number; stalled?: boolean; last_measured_at?: string // stalled: the detectors' last time
+}
 type OnRoad = { id: string; name: string; detail: string; lon: number; lat: number }
 type MobilityEntity = Entity & {
   departures?: Departure[]; next_stops?: NextStop[]; live?: Live; road?: Road; feed_status?: string; running?: OnRoad[]
@@ -186,8 +190,13 @@ function RoadSection({ entity }: SectionProps) {
         <div><dt className="flex items-center gap-1 text-muted-foreground"><span className="h-3 w-[2px] rounded-full bg-foreground" aria-hidden="true" />Free flow</dt><dd className="font-readout text-[15px] font-semibold">{road.free_flow_kmh ? `${Math.round(road.free_flow_kmh)} km/h` : "None"}</dd></div>
         <div><dt className="flex items-center gap-1 text-muted-foreground"><span className="h-3 w-[2px] rounded-full border border-muted-foreground" aria-hidden="true" />Usual now</dt><dd className="font-readout text-[15px] font-semibold">{road.usual_kmh ? `${Math.round(road.usual_kmh)} km/h` : "Not yet"}</dd></div>
       </dl>
+      {road.stalled && (
+        <p role="status" className="text-[12.5px] leading-snug font-medium text-signal">
+          {stalledSentence(road.last_measured_at)}{road.usual_kmh ? ` Usually ${Math.round(road.usual_kmh)} km/h at this hour${road.usual_days ? `, over ${road.usual_days} ${road.usual_days === 1 ? "week" : "weeks"}` : ""}, not live.` : ""}
+        </p>
+      )}
       <p className="text-[12.5px] leading-snug text-muted-foreground">
-        {share !== null ? `${share}% of its free-flow speed. ` : "No car crossed both detectors in the last 30 minutes. "}
+        {share !== null ? `${share}% of its free-flow speed. ` : road.stalled ? "" : "No car crossed both detectors in the last 30 minutes. "}
         Free flow is {FREE_FLOW_FROM[road.free_flow] ?? "unknown"}.
       </p>
       {series === undefined && <Skeleton className="h-16 w-full" />}
