@@ -357,6 +357,7 @@ def _car_park(ents, fac: Facilities, f: Facility, now: datetime, at: datetime | 
              E.attr("Live occupancy", f"From {b['bays']} city bay sensor{'s' if b['bays'] != 1 else ''} within {BAY_M} m"
                     if b else "None: no city sensor at it or beside it"),
              E.attr("Mapped by", "OpenStreetMap, through the national inventory" if not f.named else None)]
+    readings = []  # the headline shows the bays (components/facilities/sections.tsx)
     return E.new_entity(
         f.id, "car_park", name,
         subtitle=("Car park" + (", municipal" if municipal else "") +
@@ -431,6 +432,7 @@ def _charger(ents, fac: Facilities, f: Facility, now: datetime, at: datetime | N
              E.attr("Hours", i.get("hours")), E.attr("Access", i.get("access")),
              E.attr("Parking spaces", i.get("spaces")), E.attr("Accessible spaces", i.get("accessible_spaces")),
              E.attr("Address", f.address), E.attr("Support", contact), E.attr("Listed since", i.get("since"))]
+    readings = []  # the headline shows the power and connectors
     return E.new_entity(
         f.id, "charger", f.name, subtitle=", ".join(x for x in ("EV charger", charger_line(f)) if x),
         state=state, readings=readings, attributes=attrs,
@@ -478,6 +480,7 @@ def _bike_station(ents, fac: Facilities, f: Facility, now: datetime, at: datetim
              E.attr("Also listed as", ", ".join(f.info.get("also_listed") or []) or None),
              E.attr("Rent one", info.get("web")),
              E.attr("Run by", "Nextbike Cyprus")]
+    readings = []  # the headline shows the bikes now
     return E.new_entity(
         f.id, "bike_station", f.name, subtitle="Nextbike station" + (f", {bike_words(st)}" if st else ""),
         state=state, readings=readings, attributes=attrs, relations=_relations(ents, fac, f, bikes),

@@ -11,6 +11,7 @@ export type EntityKind =
   | "register_building" | "building_3d" | "place" | "web_place" | "overture_place"
   | "bus" | "bus_stop" | "bus_line" | "road_segment" | "incident"
   | "spot"
+  | "car_park" | "park_and_ride" | "charger" | "bike_station" | "scooter_zone" | "bike_rack"
 
 export type Tone = "alarm" | "warn" | "live" | "ok" | "muted"
 
@@ -108,8 +109,14 @@ const ID_KINDS: [RegExp, EntityKind][] = [
   [/^ov-[0-9a-f]{12}$/, "overture_place"],
   [/^INC-\d{1,7}$/, "incident"],
   [/^spot-\d{1,2}\.\d{1,6}-\d{1,2}\.\d{1,6}$/, "spot"],
+  [/^carpark-\d{1,5}$/, "car_park"],
+  [/^pnr-\d{1,3}$/, "park_and_ride"],
+  [/^charger-[0-9a-f]{8}$/, "charger"],
+  [/^nextbike-\d{3,9}$/, "bike_station"],
+  [/^bolt-[0-9a-f]{8}$/, "scooter_zone"],
+  [/^rack-\d{1,4}$/, "bike_rack"],
 ]
-export const ID_IN_TEXT = /\b(Y[LPW]\d{2,6}|(?:NIC|LIM|LAR)-\d{1,5}(?:-\d+)?|FAM-15[AB]-\d{1,5}|B\d{3,10}|[0-9a-f]{12}|bus-\d{1,6}|stop-\d{1,7}|line-(?:npt|ic|pame)-[a-z0-9]{1,8}|road-\d{1,5}|web-[0-9a-f]{8}|ov-[0-9a-f]{12}|INC-\d{1,7}|spot-\d{1,2}\.\d{1,6}-\d{1,2}\.\d{1,6})\b/g
+export const ID_IN_TEXT = /\b(Y[LPW]\d{2,6}|(?:NIC|LIM|LAR)-\d{1,5}(?:-\d+)?|FAM-15[AB]-\d{1,5}|B\d{3,10}|[0-9a-f]{12}|bus-\d{1,6}|stop-\d{1,7}|line-(?:npt|ic|pame)-[a-z0-9]{1,8}|road-\d{1,5}|web-[0-9a-f]{8}|ov-[0-9a-f]{12}|INC-\d{1,7}|spot-\d{1,2}\.\d{1,6}-\d{1,2}\.\d{1,6}|carpark-\d{1,5}|pnr-\d{1,3}|charger-[0-9a-f]{8}|nextbike-\d{3,9}|bolt-[0-9a-f]{8}|rack-\d{1,4})\b/g
 
 export function kindOfId(id: string): EntityKind | undefined {
   return ID_KINDS.find(([re]) => re.test(id))?.[1]

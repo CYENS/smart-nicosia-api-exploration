@@ -44,6 +44,8 @@ export const TOOL_LABELS: Record<string, string> = {
   find_high_places: "Finding high places with a view", view_from: "Flying you to the view",
   list_scenarios: "Reading the scenario lab", run_scenario: "Running the scenario",
   compare_scenarios: "Comparing the two runs", open_scenario: "Opening it in the scenario lab",
+  find_parking: "Finding car parks and free bays", find_chargers: "Finding EV chargers",
+  find_bikes: "Finding bikes, scooters and racks",
 }
 
 export function toolLabel(name: string) {
