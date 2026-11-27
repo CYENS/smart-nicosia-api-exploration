@@ -17,7 +17,7 @@ import type { CanvasSource, ExpressionSpecification, Map as MlMap } from "maplib
 import { firstLabelLayer, getMap, registerLayerRenderer, themedPaint, type LayerData } from "@/lib/map/engine"
 import { FIRE_CLASSES, FIRE_COLOR } from "@/lib/hazards/store"
 
-const FIRE_ALPHA = [0, 0.05, 0.16, 0.3, 0.42, 0.52]
+const FIRE_ALPHA = [0, 0.02, 0.07, 0.22, 0.34, 0.44] // a hint at high, a clear wash only when it matters
 const FONT = ["Noto Sans Regular"]
 const canvases = new Map<string, HTMLCanvasElement>()
 

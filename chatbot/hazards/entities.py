@@ -79,7 +79,7 @@ def build_quake(ents: E.Entities, eid: str, near) -> dict | None:
         state={"value": severity if raises else "minor", "label": label,
                "color": COLORS[severity] if raises else COLORS["low"],
                "tone": TONES[severity] if raises else "muted", "stale": False, "reason": why,
-               "local": None, "as_of": E._iso(h.start), "age_s": None},
+               "local": None, "as_of": None, "age_s": None},
         readings=readings,
         attributes=[E.attr("Time", f"{h.start.astimezone(TZ):%Y-%m-%d %H:%M:%S}"),
                     E.attr("Where", F.where(h.lat, h.lon)["words"] if h.lat is not None else None),
@@ -89,7 +89,7 @@ def build_quake(ents: E.Entities, eid: str, near) -> dict | None:
                     E.attr("How it felt near Nicosia",
                            f"{F.INTENSITY_WORDS.get(i, '?')} (intensity {F.ROMAN.get(i, i)}), the median report"
                            if i else None),
-                    E.attr("Last revised", F.wall(h.issued))],
+                    E.attr("Last revised", (F.wall(h.issued) or "").replace("T", " ") or None)],
         relations=_incidents(ents, h.id), sources=_src(h, d.get("url")), as_of=E._iso(h.issued))
 
 
@@ -111,7 +111,7 @@ def build_warning(ents: E.Entities, eid: str, near) -> dict | None:
         state={"value": level, "label": f"{level.capitalize()}, {state.lower()}",
                "color": LEVEL_COLORS.get(level, "#e8c547"),
                "tone": "alarm" if level == "red" else ("warn" if in_force else "muted"), "stale": False,
-               "reason": d.get("headline"), "local": None, "as_of": E._iso(h.issued), "age_s": None},
+               "reason": d.get("headline"), "local": None, "as_of": None, "age_s": None},
         attributes=[E.attr("Event", d.get("event")), E.attr("Awareness level", d.get("level_word")),
                     E.attr("Area", d.get("area")), E.attr("Covers Nicosia", d.get("covers_nicosia")),
                     E.attr("From", F.wall(h.start).replace("T", " ")),
@@ -146,7 +146,7 @@ def build_fire(ents: E.Entities, eid: str, near) -> dict | None:
                "color": FIRE_COLORS.get(h.level, "#8798b0"),
                "tone": "alarm" if F.fire_index(h) >= 4 else ("warn" if F.fire_index(h) >= 2 else "muted"),
                "stale": False, "reason": f"fire weather index {d.get('fwi')} over at least a quarter of the district",
-               "local": None, "as_of": E._iso(h.issued), "age_s": None},
+               "local": None, "as_of": None, "age_s": None},
         readings=readings,
         attributes=[E.attr("Day", d.get("day")), E.attr("District", d.get("district")),
                     E.attr("At Nicosia's centre", F.FIRE_WORDS.get(d.get("city_level") or "", None)),

@@ -66,6 +66,11 @@ npm run build                     # writes chatbot/static (committed, see below)
   and time with who did what, watches, and a live server-sent events stream
   (`/api/watch/stream`). On the page, `lib/watch/` is the incident inbox (Alt 4), its Layers
   row under Alerts, the toasts (shadcn Sonner, Alt T) and the clock's incident marks.
+- `chatbot/hazards/` reads earthquakes (EMSC with the Geological Survey Department, and felt
+  reports), Meteoalarm's weather warnings and EFFIS's fire danger into the memory's `hazards`
+  table; `chatbot/watch/hazards.py` raises them as incidents through `detectors.register` and
+  `incidents.register_family`, the way a module adds detectors without editing the shared lists
+  ([docs/hazards.md](docs/hazards.md)). On the page, `lib/hazards/` (a Layers row under Alerts).
 - `chatbot/web/src/lib/registries/` is where page features plug in instead of editing shared
   files: workspaces (opened from the Layers sheet, Ctrl K and Alt and a number), topics (the
   chips, four at most, and sections on their cards), the Layers sheet's system layer rows,

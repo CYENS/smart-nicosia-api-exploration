@@ -72,7 +72,8 @@ async def lifespan(app: FastAPI):
     if memory.recorder is not None:
         memory.recorder.start()
     agent.watcher.start()
-    agent.hazards.start()  # earthquakes, weather warnings and fire danger
+    if os.environ.get("CHATBOT_HAZARDS", "1").strip().lower() not in ("0", "false", "no", "off"):
+        agent.hazards.start()  # earthquakes, warnings and fire danger (CHATBOT_HAZARDS=0: from the memory only)
     if settings.collect:
         start_collector(memory)
     log.info("twin's memory: %s (recording %s, full collection %s)", memory.path,
