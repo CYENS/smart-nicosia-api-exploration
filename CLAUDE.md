@@ -45,6 +45,12 @@ npm run build                     # writes chatbot/static (committed, see below)
   (heavy, kept out of git in `data/dls_lidar/`), measures every DLS building on them, and
   compares them with the 2014 survey. The twin reads two small files it writes
   (`data/lidar_*_2019.json.gz`), never the sheets ([docs/lidar-2019.md](docs/lidar-2019.md)).
+- `chatbot/streets/` is the street rules: the National Access Point's inventories (speed signs,
+  slow zones, signals, crossings, cycleways, bus lanes, enforcement cameras) read once a day, the
+  OpenStreetMap street network read once a week, what each speed sign governs with how sure it
+  is, and the school, stop, cycle and zone analyses. One `Streets` on the Agent; the road speeds
+  read posted limits from it; the page side is `lib/streets/` and `components/streets/`
+  ([docs/street-rules.md](docs/street-rules.md)).
 - `chatbot/environment/` is the environment twin: the sun's path, shade and sun hours from the
   DLS 3D buildings (`shade.py`), air, noise and temperature surfaces with their uncertainty
   (`surfaces.py`), the Open-Meteo grids and the wind, the RainViewer radar, and the `spot` kind
