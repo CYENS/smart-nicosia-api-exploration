@@ -61,10 +61,15 @@ DEPOTS = {
                     "allows)", None),
 }
 
+# Short, so a narrow panel shows them whole; the descriptions say the rest.
 POLICY_TITLES = {
-    "threshold": "Only bins at or above a level",
-    "forecast": "Bins forecast to pass a level before the next round",
-    "fixed": "Every bin on every round day",
+    "threshold": "Bins at or above a level",
+    "forecast": "Bins forecast to fill",
+    "fixed": "Every bin, every round",
+}
+DEPOT_TITLES = {
+    "strovolos_industrial": "Strovolos industrial area (stand-in)",
+    "bins_centre": "Middle of the bins (least driving)",
 }
 
 PARAMS = {
@@ -75,7 +80,7 @@ PARAMS = {
             "x-enum-titles": POLICY_TITLES, "title": "Which bins a round collects",
             "description": "Every bin on each round day; only the bins at or above a level when "
                            "the round leaves; or the bins the model forecasts will pass a level "
-                           "before the next round.", "x-group": "policy"},
+                           "before the next round has emptied them.", "x-group": "policy"},
         "rounds_per_week": {
             "type": "integer", "default": 5, "minimum": 1, "maximum": 7, "x-step": 1,
             "x-unit": "a week", "title": "Round days",
@@ -86,8 +91,8 @@ PARAMS = {
         "threshold": {
             "type": "integer", "default": 70, "minimum": 30, "maximum": 95, "x-step": 5,
             "x-unit": "%", "title": "Collect bins at or above",
-            "description": "With 'only bins at or above a level': the fill a bin must have when "
-                           "the round leaves to be collected.", "x-group": "policy"},
+            "description": "With 'Bins at or above a level': the fill a bin must have when the "
+                           "round leaves to be collected.", "x-group": "policy"},
         "forecast_level": {
             "type": "integer", "default": 90, "minimum": 60, "maximum": 100, "x-step": 5,
             "x-unit": "%", "title": "Collect bins forecast to pass",
@@ -100,8 +105,11 @@ PARAMS = {
             "description": "The city's own pickups start at 06:00.", "x-group": "rounds"},
         "depot": {
             "type": "string", "enum": list(DEPOTS), "default": "strovolos_industrial",
-            "x-enum-titles": {k: v[0] for k, v in DEPOTS.items()}, "title": "Depot",
-            "description": "Where every trip starts, unloads and ends.", "x-group": "rounds"},
+            "x-enum-titles": DEPOT_TITLES, "title": "Depot",
+            "description": "Where every trip starts, unloads and ends. The real depot isn't "
+                           "published, so the Strovolos industrial area stands in for it; the "
+                           "middle of the bins shows the least driving any depot allows.",
+            "x-group": "rounds"},
         "fill_rate": {
             "type": "number", "default": 0, "minimum": -1, "maximum": 1, "x-step": 0.5,
             "x-unit": "of each bin's range", "x-assumption": True, "title": "Fill rates",

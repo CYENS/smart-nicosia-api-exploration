@@ -90,7 +90,7 @@ export function ParamField({ name, p, value, onCommit, idPrefix, scenario }: {
       <Field className="gap-1.5">
         <FieldLabel htmlFor={id} className="text-[12.5px] font-normal text-muted-foreground">{p.title}</FieldLabel>
         <Select value={String(value)} onValueChange={(v) => { setValue(name, v, scenario); onCommit?.(v) }}>
-          <SelectTrigger id={id} size="sm" className="w-full"><SelectValue>{enumTitle(p, String(value))}</SelectValue></SelectTrigger>
+          <SelectTrigger id={id} size="sm" className="w-full min-w-0"><SelectValue className="min-w-0"><span className="truncate">{enumTitle(p, String(value))}</span></SelectValue></SelectTrigger>
           <SelectContent>
             {p.enum.map((o) => <SelectItem key={o} value={o}>{enumTitle(p, o)}</SelectItem>)}
           </SelectContent>
@@ -134,7 +134,9 @@ export function ParamForm({ def, values }: { def: ScenarioDef; values: Record<st
   return (
     <div className="flex flex-col gap-4">
       {groups.map(([g, items]) => (
-        <fieldset key={g} className="flex flex-col gap-3 rounded-lg border border-line bg-night/40 p-3">
+        // min-w-0: a fieldset is otherwise as wide as its widest content, and a long option
+        // would push the whole group past the panel's edge.
+        <fieldset key={g} className="flex min-w-0 flex-col gap-3 rounded-lg border border-line bg-night/40 p-3">
           <legend className="sr-only">{PARAM_GROUPS[g] ?? g}</legend>
           {items.filter(([, p]) => !p["x-when"] || values[p["x-when"]]).map(([k, p]) => (
             <div key={k} className={cn(p["x-when"] && "pl-11")}>
@@ -547,8 +549,8 @@ export function CompareSelect({ run }: { run: ScenarioRun }) {
     <Field className="gap-1.5">
       <FieldLabel htmlFor="lab-compare" className="text-[12.5px] font-normal text-muted-foreground">Compare with</FieldLabel>
       <Select value={compare?.id ?? "none"} onValueChange={(v) => { void setCompare(v === "none" ? null : String(v)) }}>
-        <SelectTrigger id="lab-compare" size="sm" className="w-full">
-          <SelectValue>{compare ? compare.label : "No other run"}</SelectValue>
+        <SelectTrigger id="lab-compare" size="sm" className="w-full min-w-0">
+          <SelectValue className="min-w-0"><span className="truncate">{compare ? compare.label : "No other run"}</span></SelectValue>
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="none">No other run</SelectItem>

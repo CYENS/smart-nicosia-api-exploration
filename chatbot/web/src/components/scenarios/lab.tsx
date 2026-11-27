@@ -74,7 +74,7 @@ function SetUp() {
         <Field className="gap-1.5">
           <FieldLabel htmlFor="lab-scenario" className="text-[12.5px] font-normal text-muted-foreground">Scenario</FieldLabel>
           <Select value={scenario} onValueChange={(v) => setScenario(String(v))}>
-            <SelectTrigger id="lab-scenario" size="sm" className="w-full"><SelectValue>{def.title}</SelectValue></SelectTrigger>
+            <SelectTrigger id="lab-scenario" size="sm" className="w-full min-w-0"><SelectValue className="min-w-0"><span className="truncate">{def.title}</span></SelectValue></SelectTrigger>
             <SelectContent>{defs.map((d) => <SelectItem key={d.id} value={d.id}>{d.title}</SelectItem>)}</SelectContent>
           </Select>
         </Field>
@@ -83,8 +83,8 @@ function SetUp() {
       <Field className="gap-1.5">
         <FieldLabel htmlFor="lab-period" className="text-[12.5px] font-normal text-muted-foreground">Learn today's policy from</FieldLabel>
         <Select value={period} onValueChange={(v) => setPeriod(String(v))}>
-          <SelectTrigger id="lab-period" size="sm" className="w-full">
-            <SelectValue>{periods.find((p) => p.name === period)?.label ?? period}</SelectValue>
+          <SelectTrigger id="lab-period" size="sm" className="w-full min-w-0">
+            <SelectValue className="min-w-0"><span className="truncate">{periods.find((p) => p.name === period)?.label ?? period}</span></SelectValue>
           </SelectTrigger>
           <SelectContent>{periods.map((p) => <SelectItem key={p.name} value={p.name}>{p.label}</SelectItem>)}</SelectContent>
         </Select>
