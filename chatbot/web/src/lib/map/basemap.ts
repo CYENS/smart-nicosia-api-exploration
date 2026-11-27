@@ -83,7 +83,8 @@ const BASE_3D: LayerSpecification = {
 }
 
 // Street lighting on every street: a faint warm wash along the roads, shown only after dark
-// (the map engine switches it on at dusk).
+// (the map engine switches it on at dusk, and brightens it on wet roads).
+export const STREET_GLOW_OPACITY = [12, 0.1, 14, 0.16, 15, 0.14, 16, 0.1, 17, 0.07, 18, 0.05]
 const STREET_GLOW: LayerSpecification = {
   id: "street-glow",
   type: "line",
@@ -95,7 +96,7 @@ const STREET_GLOW: LayerSpecification = {
   paint: {
     "line-color": "#ffb45a",
     // Strongest at city zoom; fainter and narrower close up, where it would hide the street.
-    "line-opacity": ["interpolate", ["linear"], ["zoom"], 12, 0.1, 14, 0.16, 15, 0.14, 16, 0.1, 17, 0.07, 18, 0.05],
+    "line-opacity": ["interpolate", ["linear"], ["zoom"], ...STREET_GLOW_OPACITY],
     "line-width": ["interpolate", ["linear"], ["zoom"], 12, 3, 14, 7, 16, 14, 18, 28],
     "line-blur": ["interpolate", ["linear"], ["zoom"], 12, 3, 14, 6, 16, 12, 18, 24],
   },
@@ -125,10 +126,13 @@ export const BASE_SOURCE = "openmaptiles"
 // browsers keep a style for a day, so the address in it can be the blocked one: it isn't used.
 export const BASE_SOURCE_URLS = ["https://tiles.openfreemap.org/backup_planet", "https://tiles.openfreemap.org/planet"]
 
-// A base map's layers: Day as published, Night recoloured.
+// A base map's layers: Day as published, Night recoloured. In both, the labels come after
+// everything else (Day's one-way arrows sat among its bridges), so "under the labels" is one
+// place: where answers' lines and the weather (lib/weather) go, over the ground and buildings.
 export function baseLayers(basemap: Basemap, style: StyleSpecification): LayerSpecification[] {
-  if (basemap !== "night") return style.layers
-  const layers = style.layers.map(recolour)
+  const ordered = [...style.layers.filter((l) => l.type !== "symbol"), ...style.layers.filter((l) => l.type === "symbol")]
+  if (basemap !== "night") return ordered
+  const layers = ordered.map(recolour)
   // The 3D buildings go under the first label, so street names stay on top.
   const firstLabel = layers.findIndex((l) => l.type === "symbol")
   layers.splice(firstLabel < 0 ? layers.length : firstLabel, 0, STREET_GLOW, BASE_3D)

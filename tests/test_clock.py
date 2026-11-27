@@ -157,6 +157,7 @@ def agent(fake_city, memory, monkeypatch):
     monkeypatch.setattr(server.app.state, "agent", a, raising=False)
     monkeypatch.setattr(overview, "weather_history", lambda s: {
         "2026-11-20T20:00": {"temp_c": 14.2, "sky": "clear sky", "daylight": False}})
+    monkeypatch.setattr(overview, "dust_history", lambda s: {})
     overview._cache.clear()
     return a
 
@@ -167,7 +168,8 @@ REQUEST = SimpleNamespace(app=server.app)
 def test_the_strip_and_the_lamps_at_a_moment(agent):
     strip = live_routes.overview(REQUEST, at="2026-11-20T20:00")
     assert strip["live"] is False and strip["parking"]["free"] == 1
-    assert strip["weather"] == {"temp_c": 14.2, "sky": "clear sky", "daylight": False}
+    assert strip["weather"] == {"temp_c": 14.2, "sky": "clear sky", "daylight": False,
+                                "dust_ugm3": None, "aod": None}
     lamps = json.loads(live_routes.lamps(REQUEST, at=str(ms(FRI_2000))).body)
     assert lamps["known"] is False and lamps["features"][0]["properties"]["state"] == "unknown"
     with pytest.raises(HTTPException) as e:

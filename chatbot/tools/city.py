@@ -441,8 +441,9 @@ def h_get_speed(ctx: ToolContext, a: dict) -> dict:
 
 @tool("get_weather",
       "Weather now and for the next 12 hours in Nicosia (temperature, feels-like, rain "
-      "chance, UV, sky), sunrise and sunset, and the regional air-quality model including "
-      "Saharan dust.",
+      "chance, UV, sky; now also cloud by layer, visibility and wind, and rain_mm, the "
+      "model's rain for the hour now falls in), sunrise and sunset, and the regional "
+      "air-quality model including Saharan dust.",
       obj({}))
 def h_get_weather(ctx: ToolContext, a: dict) -> dict:
     res = context.weather(ctx.settings)

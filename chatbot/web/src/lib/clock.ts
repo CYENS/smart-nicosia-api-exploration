@@ -12,6 +12,7 @@ import {
   clockKinds, onClock, putLamps, putStates, setClockView, setSwipeAt, type FC, type StatesAt,
 } from "@/lib/map/engine"
 import { nicosiaWallToDate, skyAt } from "@/lib/map/sky"
+import type { Weather } from "@/lib/weather/look"
 
 export const STEP_MS = 15 * 60e3 // the clock's moments are quarter hours
 const HOUR = 3600e3
@@ -42,7 +43,7 @@ export type Strip = {
   parking?: Readout & { free?: number; total?: number }
   bins?: Readout & { full?: number; total?: number }
   air?: Readout & { caqi?: number; band?: string; stations?: number }
-  weather?: { temp_c: number; sky: string; daylight: boolean }
+  weather?: Weather & { temp_c: number; sky: string; daylight: boolean } // with what the map draws (lib/weather)
   registers?: { buildings: number }
   // Live mobility (now only: the strip leaves them out at a past moment).
   buses?: { running: number; lines?: number; late?: number }
