@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom" xmlns:cap="urn:oasis:names:tc:emergency:cap:1.2">
+  <link href="https://pubsubhubbub.appspot.com/" rel="hub"/>
+  <link href="https://feeds.meteoalarm.org/feeds/meteoalarm-legacy-atom-cyprus" rel="self" type="application/atom+xml"/>
+  <link href="https://meteoalarm.org" rel="alternate" type="text/html"/>
+  <rights>Copyright © 2025 MeteoAlarm.Org. Licensed under terms equivalent to CC BY 4.0, with additional requirements for redistributing outlined in our Terms and Conditions.</rights>
+  <generator>MeteoAlarm Producer Server</generator>
+  <logo>https://feeds.meteoalarm.org/images/logo.svg</logo>
+  <author>
+    <name>meteoalarm.org</name>
+    <uri>https://meteoalarm.org</uri>
+    <email>meteoalarm@geosphere.at</email>
+  </author>
+  <id>tag:meteoalarm.org,2021-02-19:CY</id>
+  <title>MeteoAlarm - Alerting Europe for Extreme Weather</title>
+  <updated>2025-07-25T17:05:10.277468Z</updated>
+  <entry>
+    <cap:geocode>
+      <valueName>EMMA_ID</valueName>
+      <value>CY001</value>
+    </cap:geocode>
+    <link href="https://meteoalarm.org?geocode=EMMA_ID:CY001" hreflang="en" title="Cyprus"/>
+    <cap:areaDesc>Cyprus</cap:areaDesc>
+    <cap:event>High Temperature Orange</cap:event>
+    <cap:sent>2025-07-25T14:09:06+00:00</cap:sent>
+    <cap:expires>2025-07-26T13:59:59+00:00</cap:expires>
+    <cap:effective>2025-07-25T14:09:06+00:00</cap:effective>
+    <cap:onset>2025-07-25T21:00:00+00:00</cap:onset>
+    <cap:certainty>Likely</cap:certainty>
+    <cap:severity>Severe</cap:severity>
+    <cap:urgency>Future</cap:urgency>
+    <cap:scope>Public</cap:scope>
+    <cap:message_type>Alert</cap:message_type>
+    <cap:status>Actual</cap:status>
+    <cap:identifier>2.49.0.0.196.0.CY.250725170906.maxtemp.000</cap:identifier>
+    <link href="https://feeds.meteoalarm.org/api/v1/warnings/feeds-cyprus/0ad82446-c9bb-4857-9bce-cdf0f11805e9" type="application/cap+xml"/>
+    <link href="https://meteoalarm.org?region=CY" hreflang="en" rel="related" title="Cyprus"/>
+    <author>
+      <name>meteoalarm.org</name>
+      <uri>https://meteoalarm.org</uri>
+    </author>
+    <published>2025-07-25T14:09:06Z</published>
+    <id>https://feeds.meteoalarm.org/api/v1/warnings/feeds-cyprus/0ad82446-c9bb-4857-9bce-cdf0f11805e9?index_info=1&amp;index_area=0&amp;index_geocode=0</id>
+    <title>Orange High-temperature Warning issued for Cyprus - Cyprus</title>
+    <updated>2025-07-25T14:09:06Z</updated>
+  </entry>
+  <entry>
+    <cap:geocode>
+      <valueName>EMMA_ID</valueName>
+      <value>CY001</value>
+    </cap:geocode>
+    <link href="https://meteoalarm.org?geocode=EMMA_ID:CY001" hreflang="en" title="Cyprus"/>
+    <cap:areaDesc>Cyprus</cap:areaDesc>
+    <cap:event>High Temperature Orange</cap:event>
+    <cap:sent>2025-07-24T14:15:50+00:00</cap:sent>
+    <cap:expires>2025-07-25T13:59:59+00:00</cap:expires>
+    <cap:effective>2025-07-24T14:15:50+00:00</cap:effective>
+    <cap:onset>2025-07-24T21:00:00+00:00</cap:onset>
+    <cap:certainty>Likely</cap:certainty>
+    <cap:severity>Severe</cap:severity>
+    <cap:urgency>Future</cap:urgency>
+    <cap:scope>Public</cap:scope>
+    <cap:message_type>Alert</cap:message_type>
+    <cap:status>Actual</cap:status>
+    <cap:identifier>2.49.0.0.196.0.CY.250724171550.maxtemp.000</cap:identifier>
+    <link href="https://feeds.meteoalarm.org/api/v1/warnings/feeds-cyprus/f31141e1-2117-491a-bf6c-3cf2b0714baa" type="application/cap+xml"/>
+    <link href="https://meteoalarm.org?region=CY" hreflang="en" rel="related" title="Cyprus"/>
+    <author>
+      <name>meteoalarm.org</name>
+      <uri>https://meteoalarm.org</uri>
+    </author>
+    <published>2025-07-24T14:15:50Z</published>
+    <id>https://feeds.meteoalarm.org/api/v1/warnings/feeds-cyprus/f31141e1-2117-491a-bf6c-3cf2b0714baa?index_info=1&amp;index_area=0&amp;index_geocode=0</id>
+    <title>Orange High-temperature Warning issued for Cyprus - Cyprus</title>
+    <updated>2025-07-24T14:15:50Z</updated>
+  </entry>
+  <entry>
+    <cap:geocode>
+      <valueName>EMMA_ID</valueName>
+      <value>CY001</value>
+    </cap:geocode>
+    <link href="https://meteoalarm.org?geocode=EMMA_ID:CY001" hreflang="en" title="Cyprus"/>
+    <cap:areaDesc>Cyprus</cap:areaDesc>
+    <cap:event>High Temperature Orange</cap:event>
+    <cap:sent>2025-07-23T14:08:28+00:00</cap:sent>
+    <cap:expires>2025-07-24T13:59:59+00:00</cap:expires>
+    <cap:effective>2025-07-23T14:08:28+00:00</cap:effective>
+    <cap:onset>2025-07-24T08:00:00+00:00</cap:onset>
+    <cap:certainty>Likely</cap:certainty>
+    <cap:severity>Severe</cap:severity>
+    <cap:urgency>Future</cap:urgency>
+    <cap:scope>Public</cap:scope>
+    <cap:message_type>Alert</cap:message_type>
+    <cap:status>Actual</cap:status>
+    <cap:identifier>2.49.0.0.196.0.CY.250723170828.maxtemp.000</cap:identifier>
+    <link href="https://feeds.meteoalarm.org/api/v1/warnings/feeds-cyprus/238a45b2-7c2b-4d59-9963-eecb804b324d" type="application/cap+xml"/>
+    <link href="https://meteoalarm.org?region=CY" hreflang="en" rel="related" title="Cyprus"/>
+    <author>
+      <name>meteoalarm.org</name>
+      <uri>https://meteoalarm.org</uri>
+    </author>
+    <published>2025-07-23T14:08:28Z</published>
+    <id>https://feeds.meteoalarm.org/api/v1/warnings/feeds-cyprus/238a45b2-7c2b-4d59-9963-eecb804b324d?index_info=1&amp;index_area=0&amp;index_geocode=0</id>
+    <title>Orange High-temperature Warning issued for Cyprus - Cyprus</title>
+    <updated>2025-07-23T14:08:28Z</updated>
+  </entry>
+</feed>
