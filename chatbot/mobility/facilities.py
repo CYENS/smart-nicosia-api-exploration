@@ -366,6 +366,9 @@ def _charger_id(name: str, taken: set[str]) -> str:
     return fid
 
 
+CODE_NAME = re.compile(r"[A-Z0-9*_.\-]{6,}")  # a charger named by its code only
+
+
 def charger_speed(kw: float | None) -> str:
     return "fast" if kw is not None and kw >= FAST_KW else "standard"
 
@@ -410,7 +413,13 @@ def parse_chargers(xml_text: str) -> tuple[list[Facility], int, int, ET.Element]
         if hours.startswith("{"):  # a schedule written out as code: say only that it has one
             info["hours"] = "Set hours each day"
         addr = _text(_find(r, "chargingPointAddress"), "value") if _find(r, "chargingPointAddress") is not None else None
-        out.append(Facility(_charger_id(name, taken), "charger", name, pt[0], pt[1],
+        fid = _charger_id(name, taken)  # from the name as published, so it stays put
+        shown = name
+        if CODE_NAME.fullmatch(name):  # "CY*EVP*ENIC0022": who runs it and where, the code kept
+            info["code"] = name
+            place = (addr or "").split(",")[0].strip()
+            shown = ", ".join(x for x in (info["operator"] or "EV charger", place) if x)
+        out.append(Facility(fid, "charger", shown, pt[0], pt[1],
                             address=addr, capacity=info["connectors"], info=info))
     return out, len(recs), skipped, root
 

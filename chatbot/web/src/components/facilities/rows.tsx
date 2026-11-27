@@ -47,8 +47,9 @@ function countLine(kind: FacKind, meta: FacMeta, live: ReturnType<typeof useFaci
     case "bike_station": {
       if (past) return `${fmtCount(n)} in Greater Nicosia. Live bikes are known now only`
       if (live.bikesStatus === "unavailable") return `${fmtCount(n)} in Greater Nicosia. Nextbike's live feed isn't answering`
-      const total = Object.values(live.bikes).reduce((s, b) => s + b.bikes, 0)
-      return `${fmtCount(n)} in Greater Nicosia` + (Object.keys(live.bikes).length ? `, ${fmtCount(total)} bikes at them now` : "")
+      const here = live.bikesHere
+      return `${fmtCount(n)} in Greater Nicosia` +
+        (here ? `, ${fmtCount(here.bikes)} bikes at them now${here.ebikes ? `, ${fmtCount(here.ebikes)} electric` : ""}` : "")
     }
     case "scooter_zone":
       return `${fmtCount(n)} zones holding ${fmtCount(meta.capacity_in_nicosia ?? 0)} scooters`

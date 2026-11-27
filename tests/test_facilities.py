@@ -108,6 +108,9 @@ def test_chargers_keep_power_connectors_and_the_listed_status(tmp_path):
     bmw = by["BMW HQ Nicosia (150kW)"]
     assert bmw.info["mode"] == "fastCharging" and bmw.info["kw"] == 22 and bmw.info["speed"] == "standard"
     assert by["EOA Nicosia 8 (22kW)"].info["status"] == "unavailable"
+    # Named only by a code: shown by who runs it and where, the code kept.
+    evp = by["EV Power, 360 Building"]
+    assert evp.info["code"] == "CY*EVP*ENIC0022" and evp.info["kw"] == 200 and evp.info["speed"] == "fast"
     # Ids are stable: the same name gives the same id on every read.
     again, _ = make(tmp_path / "again")
     assert {f.id for f in again.inventory("charger").items} == {f.id for f in by.values()}
@@ -300,7 +303,8 @@ def test_a_car_park_with_sensors_says_what_they_see(ents, mob):
     bays = [r for r in e["relations"] if r["relation"] == "bay"]
     assert bays and all(r["kind"] == "parking_sensor" and r["id"].startswith("YP") for r in bays)
     assert {s["source"] for s in e["sources"]} >= {"nap_public_works", "smart_nicosia"}
-    assert e["has_series"] and e["inventory"]["updated_label"] == "11 Mar 2025"
+    assert not e["has_series"]  # the twin's memory is off here, so no 24 hours of bays
+    assert e["subtitle"].startswith("Προμυθέως, ") and e["inventory"]["updated_label"] == "11 Mar 2025"
     attrs = {a["label"]: a["value"] for a in e["attributes"]}
     assert attrs["Spaces"] == "Not given in the national inventory"
     # Nearest of each other kind, and the bus stop.
@@ -339,7 +343,7 @@ def test_scooter_zones_racks_and_park_and_ride_open_too(ents):
     z = ents.get("bolt-dac81462")
     assert z["state"]["label"] == "Parking for 6 scooters" and z["geometry"]["type"] == "MultiPolygon"
     r = ents.get("rack-0")
-    assert r["kind"] == "bike_rack" and r["subtitle"] == "Bicycle rack, Lefkosia"
+    assert r["kind"] == "bike_rack" and r["subtitle"] == "Lefkosia"
     p = ents.get("pnr-0")
     assert p["kind"] == "park_and_ride" and any(a["label"] == "Area" for a in p["attributes"])
 
@@ -395,6 +399,7 @@ def test_find_parking_near_a_place_with_live_bays(mob, ents):
     assert rows["link"] == {"key": "id"} and rows["rows"][0]["id"] == "carpark-31"
     res, err = run_tool(ctx, "find_parking", {"near_place": "theatre", "with_space": True})
     assert not err and all(r["free_bays"] for r in res["car_parks"])
+    assert ents.city.states_calls == 0  # the last snapshot served; the city's API wasn't asked again
 
 
 def test_find_chargers_fast_and_by_connector(mob, ents):
@@ -483,3 +488,30 @@ def test_summary_and_the_data_sources_panel(app_agent, mob):
     assert by["nap_public_works"]["status"]["state"] == "live"
     assert "car parks in Greater Nicosia, last changed 11 Mar 2025" in by["nap_public_works"]["status"]["note"]
     assert by["nextbike_live"]["status"]["state"] == "live"
+
+
+def test_a_car_park_with_sensors_has_its_day_from_the_memory(ents, mob):
+    from chatbot.moments import Block
+
+    f = mob.facilities.get("carpark-31")
+    near = [d for _, d in K.bay_devices(ents, f)]
+    states = [SimpleNamespace(device=d) for d in near]
+    end = NOW.replace(minute=0, second=0, microsecond=0)
+
+    class Moments:
+        memory = object()
+
+        def block(self, device_type, at):
+            start = at.replace(minute=0, second=0, microsecond=0) - timedelta(hours=at.hour % 6)
+            times = [start + timedelta(minutes=15 * i) for i in range(24)]
+            # Every bay free in the morning's first hour, then all taken.
+            rows = [["free" if t < start + timedelta(hours=1) else "occupied" for _ in near] for t in times]
+            return Block(device_type, start, times, states, rows, {}, [1.0] * len(times))
+
+    ents.moments = Moments()
+    e = ents.get("carpark-31")
+    assert e["has_series"]
+    s = K.car_park_series(ents, e, end)
+    assert s["metric"] == "free_bays" and s["unit"] == "bays" and s["threshold"]["value"] == len(near)
+    vals = [p["v"] for p in s["points"] if p["v"] is not None]
+    assert max(vals) == len(near) and min(vals) == 0
