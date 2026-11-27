@@ -58,6 +58,12 @@ def feature_collection(fac, kind: str, ents=None) -> dict:
             "color": COLORS[kind]}
     if kind == "car_park":
         meta["sensed"] = sensed
+    elif kind == "charger":
+        here = [f for f in inv.items if f.in_nicosia]
+        meta["fast_in_nicosia"] = sum(1 for f in here if f.info.get("speed") == "fast")
+        meta["listed_out_of_service_in_nicosia"] = sum(1 for f in here if f.info.get("status") == "unavailable")
+    elif kind in ("bike_station", "scooter_zone"):
+        meta["capacity_in_nicosia"] = sum(f.capacity or 0 for f in inv.items if f.in_nicosia)
     return {"type": "FeatureCollection", "features": feats, "meta": meta}
 
 

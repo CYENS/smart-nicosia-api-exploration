@@ -14,6 +14,7 @@ export type EntityKind =
   // The street rules (lib/streets).
   | "speed_limit" | "slow_zone" | "slow_zone_entrance" | "traffic_signal" | "pedestrian_crossing"
   | "enforcement_camera" | "cycleway" | "bus_lane" | "school"
+  | "car_park" | "park_and_ride" | "charger" | "bike_station" | "scooter_zone" | "bike_rack"
 
 export type Tone = "alarm" | "warn" | "live" | "ok" | "muted"
 
@@ -116,8 +117,14 @@ const ID_KINDS: [RegExp, EntityKind][] = [
   [/^limit(way)?-\d{1,12}$/, "speed_limit"], [/^zone-\d{1,4}$/, "slow_zone"], [/^zentry-\d{1,5}$/, "slow_zone_entrance"],
   [/^signal-\d{1,5}$/, "traffic_signal"], [/^xing-\d{1,5}$/, "pedestrian_crossing"], [/^ecam-\d{1,5}$/, "enforcement_camera"],
   [/^cycle-\d{1,5}$/, "cycleway"], [/^buslane-\d{1,5}$/, "bus_lane"], [/^school-([nwr]\d{1,12}|ov-[0-9a-f]{12})$/, "school"],
+  [/^carpark-\d{1,5}$/, "car_park"],
+  [/^pnr-\d{1,3}$/, "park_and_ride"],
+  [/^charger-[0-9a-f]{8}$/, "charger"],
+  [/^nextbike-\d{3,9}$/, "bike_station"],
+  [/^bolt-[0-9a-f]{8}$/, "scooter_zone"],
+  [/^rack-\d{1,4}$/, "bike_rack"],
 ]
-export const ID_IN_TEXT = /\b(Y[LPW]\d{2,6}|(?:NIC|LIM|LAR)-\d{1,5}(?:-\d+)?|FAM-15[AB]-\d{1,5}|B\d{3,10}|[0-9a-f]{12}|bus-\d{1,6}|stop-\d{1,7}|line-(?:npt|ic|pame)-[a-z0-9]{1,8}|road-\d{1,5}|web-[0-9a-f]{8}|ov-[0-9a-f]{12}|INC-\d{1,7}|spot-\d{1,2}\.\d{1,6}-\d{1,2}\.\d{1,6}|limit(?:way)?-\d{1,12}|zone-\d{1,4}|zentry-\d{1,5}|signal-\d{1,5}|xing-\d{1,5}|ecam-\d{1,5}|cycle-\d{1,5}|buslane-\d{1,5}|school-(?:[nwr]\d{1,12}|ov-[0-9a-f]{12})|report-(?:waze-[0-9a-f]{8}|jam-[0-9a-f]{8}|works-\d{1,20}))\b/g
+export const ID_IN_TEXT = /\b(Y[LPW]\d{2,6}|(?:NIC|LIM|LAR)-\d{1,5}(?:-\d+)?|FAM-15[AB]-\d{1,5}|B\d{3,10}|[0-9a-f]{12}|bus-\d{1,6}|stop-\d{1,7}|line-(?:npt|ic|pame)-[a-z0-9]{1,8}|road-\d{1,5}|web-[0-9a-f]{8}|ov-[0-9a-f]{12}|INC-\d{1,7}|spot-\d{1,2}\.\d{1,6}-\d{1,2}\.\d{1,6}|limit(?:way)?-\d{1,12}|zone-\d{1,4}|zentry-\d{1,5}|signal-\d{1,5}|xing-\d{1,5}|ecam-\d{1,5}|cycle-\d{1,5}|buslane-\d{1,5}|school-(?:[nwr]\d{1,12}|ov-[0-9a-f]{12})|report-(?:waze-[0-9a-f]{8}|jam-[0-9a-f]{8}|works-\d{1,20})|carpark-\d{1,5}|pnr-\d{1,3}|charger-[0-9a-f]{8}|nextbike-\d{3,9}|bolt-[0-9a-f]{8}|rack-\d{1,4})\b/g
 
 export function kindOfId(id: string): EntityKind | undefined {
   return ID_KINDS.find(([re]) => re.test(id))?.[1]
