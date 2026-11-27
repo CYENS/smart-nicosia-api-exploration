@@ -49,6 +49,8 @@ export const TOOL_LABELS: Record<string, string> = {
   get_speed_limits: "Reading the speed limits", find_slow_zones: "Finding the slow zones",
   find_crossings: "Finding crossings and signals", get_cycle_network: "Tracing the cycle network",
   get_bus_lanes: "Finding the bus lanes", find_enforcement_cameras: "Finding the enforcement cameras",
+  find_parking: "Finding car parks and free bays", find_chargers: "Finding EV chargers",
+  find_bikes: "Finding bikes, scooters and racks",
 }
 
 export function toolLabel(name: string) {

@@ -330,9 +330,9 @@ def test_a_charger_never_claims_to_be_free_now(ents, mob):
 def test_a_nextbike_station_shows_its_bikes_now(ents):
     e = ents.get("nextbike-6495360")
     assert e["kind"] == "bike_station" and e["name"] == "Kipos Eirinis"
-    assert {r["key"] for r in e["readings"]} >= {"bikes", "ebikes"}
+    assert {"bikes", "ebikes", "docks", "renting"} <= set(e["bikes"])
     assert any(s["source"] == "nextbike_live" for s in e["sources"])
-    assert e["bikes"]["bikes"] == next(r["value"] for r in e["readings"] if r["key"] == "bikes")
+    assert e["_for_model"]["live"]["bikes"] == e["bikes"]["bikes"]
 
 
 def test_scooter_zones_racks_and_park_and_ride_open_too(ents):
