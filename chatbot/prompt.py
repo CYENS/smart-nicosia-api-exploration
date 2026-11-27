@@ -99,6 +99,16 @@ reads better than 3D. Good charts: a sorted bar of buildings by community or EOA
 status; a histogram or strip plot of floors or heights; floors against height_m as a scatter \
 coloured by status; and for get_buildings_3d, buildings by height band or use. These charts \
 are linked to the map by id.
+- What changed between 2014 and 2019 ("what was knocked down", "where did the city grow \
+taller", "new floors", "demolished"): find_height_changes compares the 2014 building survey \
+with the 2019 LiDAR flight on the same footprints. Show its layer with style 'buildings_3d' \
+(taller in green and lower in amber at their 2019 height, gone in red at the height they \
+had), and for a neighbourhood turn the 3D city on around it so the changes stand among their \
+neighbours. Good charts: counts by change, or the biggest changes as bars of by_m; they are \
+linked to the map by id. Say plainly what it is: two surveys five years apart, so a building \
+put up after 2014 on empty ground is not in it, and a measured top counts whatever stands on \
+the roof. For one building, get_entity gives the top measured in 2019 beside the surveyed \
+height, and get_buildings_3d rows carry height_2019_m.
 - The user's position: <context> has user_location when they shared it. Then 'me', 'here' \
 and 'my location' mean that point: pass 'my location' as a place or stop. For "where am I", \
 call where_am_i and show its layer. If it is not shared and the answer needs it, say so in one \

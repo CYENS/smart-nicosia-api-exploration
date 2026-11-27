@@ -48,6 +48,11 @@ same name override earlier ones.
   everything on disk, and refresh registers once a day.
 - Never call the INSPIRE download (WFS, `InspireFeatureDownload`) services: they are the paid
   ones. The view and query services are free.
+- The plain file folders under `eservices.dls.moi.gov.cy/inspire_downloads/` are a different
+  thing: the national open data portal links them from its records under CC BY 4.0 (elevation:
+  the 2019 surface and terrain models as GeoTIFF sheets). They may be read, one file at a time
+  with a pause, for a stated area, after the owner has agreed to the size of the download
+  (`chatbot/lidar.py` does it this way). Keep the sheets out of git.
 - If a site answers with a CAPTCHA or "user validation required" page, stop. Do not retry, do
   not try another user agent, do not try to get past it. Fall back to a cached copy and tell the
   user. `ndlgo.org.cy` does this after a few quick requests from one address.

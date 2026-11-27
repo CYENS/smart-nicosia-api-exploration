@@ -7,7 +7,7 @@ import gzip
 from fastapi import APIRouter, HTTPException, Request, Response
 from fastapi.responses import JSONResponse
 
-from chatbot import citytiles
+from chatbot import citytiles, lidar
 from chatbot.citytiles import CityTiles
 from chatbot.dls import CYPRUS_BBOX, TILE_ZOOM
 from chatbot.eoa import layer_features
@@ -81,6 +81,25 @@ def buildings_3d(z: int, x: int, y: int, request: Request) -> JSONResponse:
         raise HTTPException(502, str(e)) from None
     return JSONResponse({"type": "FeatureCollection", "features": feats},
                         headers={"Cache-Control": "public, max-age=86400"})
+
+
+@router.get("/api/buildings/changes")
+def changes(request: Request) -> JSONResponse:
+    """Every building the 2019 flight found a floor or more off the 2014 survey, as a map layer
+    (footprints at their 2019 height, coloured by what changed)."""
+    flight = agent_of(request).lidar
+    if not flight.changes.rows:
+        raise HTTPException(503, "the 2019 measurements aren't in this copy of the twin")
+    rows = [r for r in flight.changes.rows if r["area_m2"] >= lidar.HOUSE_M2]  # no sheds
+    counts = flight.changes.counts
+    return JSONResponse({
+        "type": "FeatureCollection", "features": lidar.layer_features(rows, STATE_COLORS),
+        "meta": {"ref": lidar.CHANGES_REF, "title": "Buildings changed between 2014 and 2019",
+                 "geometry": "buildings", "count": len(rows), "legend": legend_for(lidar.CHANGED),
+                 "sources": ["dls_lidar", "dls"],
+                 "by_change": {s: sum(r["state"] == s for r in rows) for s in lidar.CHANGED},
+                 "measured": sum(counts.values()), "min_footprint_m2": lidar.HOUSE_M2}},
+        headers={"Cache-Control": "public, max-age=3600"})
 
 
 @router.get("/api/dangerous")

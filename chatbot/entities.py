@@ -46,7 +46,7 @@ from zoneinfo import ZoneInfo
 from collector import parse
 from collector.interpret import Interpretation
 
-from chatbot import context, eoa, history
+from chatbot import context, eoa, history, lidar
 from chatbot.city import KINDS, TYPE_TO_KIND, CityData, Device, DeviceState
 from chatbot.dls import DLS, centroid, contains, lonlat_to_tile
 from chatbot.geo import Places, haversine_m, loose, norm
@@ -297,6 +297,7 @@ class Entities:
         self.memory = memory  # the twin's memory: the 24-hour series reads it first
         self.mobility = mobility  # buses, stops and road speeds (chatbot/mobility)
         self.environment = None  # the environment twin (chatbot/environment), set by the Agent
+        self.lidar = None  # buildings as the 2019 flight measured them (chatbot/lidar.py), likewise
         self.moments = None  # the city at past moments (chatbot/moments.py), set by the Agent
         self.places = places
         self.dls = dls
@@ -929,6 +930,24 @@ def build_building(ents: Entities, eid: str, near) -> dict | None:
             readings.append({"key": {"f": "floors", "a": "footprint_m2", "v": "volume_m3",
                                      "g": "ground_m"}[key], "label": label,
                              "value": _round(p[key]), "unit": unit})
+    sources = [{"source": "dls", "name": "DLS 3D buildings (INSPIRE BU3)", "detail": "Department of Lands and Surveys",
+                "url": DLS_3D_URL}]
+    since = None
+    measured = ents.lidar.measured.of(oid) if ents.lidar is not None else None
+    if measured:
+        readings += [
+            {"key": "height_2019_m", "label": "Top, measured in 2019", "value": measured["top"], "unit": "m"},
+            {"key": "eave_2019_m", "label": "Eave, measured in 2019", "value": measured["eave"], "unit": "m"},
+            {"key": "standing_pct", "label": "Footprint built on, 2019",
+             "value": round(100 * measured["built"]), "unit": "%"}]
+        change = lidar.compare(p["h"], measured, p.get("a"))
+        since = {"same": "No change of a floor or more",
+                 "taller": f"Taller by {abs(change['by_m']):g} m",
+                 "lower": f"Lower by {abs(change['by_m']):g} m",
+                 "gone": "Nothing stands on most of it in 2019",
+                 "unknown": "Too little of it was measured to say"}[change["state"]]
+        sources.append({"source": "dls_lidar", "name": "LiDAR flight of 2019",
+                        "detail": "DLS surface and terrain models, CC BY 4.0", "url": lidar.DATASET_URL})
     relations = [{"relation": "register", "label": "On the register" if r.get("match_3d") != "block"
                   else "Register plot inside this block", "id": r["id"],
                   "kind": "register_building", "name": register_name(r), "state": r["status"],
@@ -943,10 +962,9 @@ def build_building(ents: Entities, eid: str, near) -> dict | None:
         state=state_block("register_building", rec["status"], local=eoa.STATUS_GR[rec["status"]],
                           reason=f"on the register as {rec['id']}") if rec else None,
         readings=readings,
-        attributes=[attr("Use", p.get("t")), attr("Roof", p.get("r")), attr("DLS id", oid)],
-        relations=relations,
-        sources=[{"source": "dls", "name": "DLS 3D buildings (INSPIRE BU3)", "detail": "Department of Lands and Surveys",
-                  "url": DLS_3D_URL}])
+        attributes=[attr("Use", p.get("t")), attr("Roof", p.get("r")),
+                    attr("Since the 2014 survey", since), attr("DLS id", oid)],
+        relations=relations, sources=sources)
 
 
 # -- places --------------------------------------------------------------------------------------

@@ -39,6 +39,7 @@ from chatbot.scenarios import Lab, ScenarioContext
 from chatbot.scenarios.lab import default_cache_dir
 from chatbot.settings import TIMEZONE, Settings
 from chatbot.store import SessionStore
+from chatbot.lidar import Flight
 from chatbot.terrain import Terrain
 from chatbot.tools import TOOL_DEFS, WEB_SEARCH, ToolContext, run_tool
 from chatbot.watch import Watcher
@@ -187,6 +188,8 @@ class Agent:
         self.environment = Environment(settings, city, self.moments, dls, memory)
         self.entities.environment = self.environment
         self.terrain = Terrain(settings)  # the ground's height, for views and lines of sight
+        self.lidar = Flight()  # buildings as the 2019 LiDAR flight measured them
+        self.entities.lidar = self.lidar
         # The scenario lab: runs what-ifs on the memory and keeps the runs (chatbot/scenarios).
         self.scenarios = Lab(ScenarioContext(settings, memory, city, router, places, registers,
                                              self.mobility, cache_dir=default_cache_dir()))
@@ -238,7 +241,7 @@ class Agent:
                                mobility=self.mobility, web_places=self.web_places,
                                watcher=self.watcher, environment=self.environment,
                                terrain=self.terrain,
-                               scenarios=self.scenarios)
+                               scenarios=self.scenarios, lidar=self.lidar)
         conv.messages.append({"role": "user", "content": [
             {"type": "text", "text": format_context(context, self.city.now()) + text}]})
 

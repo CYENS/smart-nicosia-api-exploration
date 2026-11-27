@@ -4,6 +4,7 @@ import { BaseMapNotice } from "@/components/base-map-notice"
 import { ChatPanel } from "@/components/chat/chat-panel"
 import { Inspector } from "@/components/inspector/inspector"
 import "@/components/layers/system-rows" // the Layers sheet's City systems rows
+import "@/components/layers/lidar-rows" // and its row for what changed since the 2014 survey
 import { MapMenu } from "@/components/map-menu"
 import { SearchMenu } from "@/components/search-menu"
 import { AskBar } from "@/components/shell/ask-bar"

@@ -23,6 +23,7 @@ from chatbot.store import SessionStore
 if TYPE_CHECKING:
     from chatbot.entities import Entities
     from chatbot.environment.service import Environment
+    from chatbot.lidar import Flight
     from chatbot.mobility import Mobility
     from chatbot.moments import Moments
     from chatbot.scenarios.lab import Lab
@@ -76,6 +77,7 @@ class ToolContext:
     environment: Environment | None = None
     terrain: Terrain | None = None  # the ground's height (chatbot/terrain.py)
     scenarios: Lab | None = None  # the scenario lab: runs and saved runs (chatbot/scenarios)
+    lidar: Flight | None = None  # buildings as the 2019 LiDAR flight measured them (chatbot/lidar.py)
 
 
 # -- schema helpers -----------------------------------------------------------------------------

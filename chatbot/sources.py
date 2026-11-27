@@ -148,6 +148,16 @@ SOURCES: tuple[Source, ...] = (
         refresh="Fetched once per area, then kept",
         credit="Buildings: DLS Cyprus"),
     Source(
+        "dls_lidar", "LiDAR flight of 2019 (DLS surface model)", "the 2019 LiDAR flight",
+        "Department of Lands and Surveys: the surface model (half a metre a cell) and the terrain "
+        "model of its 2019 flight, published as open files",
+        "Each building's height as the laser measured it in 2019, and which buildings grew, "
+        "shrank or went since the 2014 survey",
+        "Buildings", url="https://www.data.gov.cy/el/dataset/ypsometria-inspire",
+        licence=CC_BY, licence_url="https://creativecommons.org/licenses/by/4.0/",
+        refresh="Measured once from the sheets and kept: the flight does not change",
+        credit="Heights 2019: DLS Cyprus, CC BY 4.0"),
+    Source(
         "registers", "Dangerous-building registers", "the ΕΟΑ registers", "District local government organisations (ΕΟΑ) "
         "of Nicosia, Limassol, Larnaca and Famagusta",
         "Buildings declared dangerous or in need of repair",
@@ -196,6 +206,8 @@ TOOL_SOURCES: dict[str, tuple[str, ...]] = {
     "plan_route": ("valhalla", "openstreetmap", "overture"),
     "reachable_area": ("valhalla", "openstreetmap", "overture"),
     "find_dangerous_buildings": ("registers", "dls"),
+    "get_buildings_3d": ("dls", "dls_lidar"),
+    "find_height_changes": ("dls_lidar", "dls"),
     "where_am_i": ("dls", "registers", "geocoding"),
     "query_history": ("twin_memory", "smart_nicosia"),
     "run_sql": ("twin_memory",),
