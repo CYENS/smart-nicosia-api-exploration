@@ -153,7 +153,7 @@ export function changeWords(k: Kpi) {
   if (d === 0 && k.delta_low === 0 && k.delta_high === 0) return "No change"
   const good = (d < 0) === (k.better === "lower")
   const verb = d < 0 ? (good ? "Saves" : "Cuts") : (good ? "Gains" : "Adds")
-  return `${verb} ${fmtNum(d, k.digits)} ${k.unit}`
+  return `${verb} ${fmtNum(d, k.digits)} ${k.unit}` // the number and its unit stay on one line
 }
 
 function rangeWords(k: Kpi) {
