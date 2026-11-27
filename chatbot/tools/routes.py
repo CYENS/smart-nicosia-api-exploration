@@ -9,6 +9,7 @@ from datetime import datetime, timedelta
 from collector.http import ApiError
 
 from chatbot import context, eoa
+from chatbot import sources as data_sources
 from chatbot.dls import distance_to_path_m
 from chatbot.geo import haversine_m
 from chatbot.routing import MAX_TOUR_STOPS, MODES, PREFERENCES, best_order
@@ -16,6 +17,7 @@ from chatbot.store import STATE_COLORS, point
 from chatbot.tools.base import (ToolContext, ToolError, ToolSet, local_now, obj, resolve_place,
                                 resolve_point)
 from chatbot.tools.buildings import STATUSES
+from chatbot.tools.environment import SHADE_COLORS as ENV_SHADE_COLORS
 from chatbot.web import WebError
 
 log = logging.getLogger(__name__)
@@ -46,7 +48,10 @@ def _hhmm(text: str | None, now: datetime) -> datetime:
       "avoid_dangerous_buildings (keeps off the streets in front of buildings on the "
       "dangerous registers; the reply compares it with the usual route, the one picked "
       "without avoiding them: minutes added, buildings passed by each and how many it "
-      "avoids, and the layer shows both routes and the buildings). Every "
+      "avoids, and the layer shows both routes and the buildings), and shade (walking or "
+      "cycling between two places: the real alternatives are read for the shade of the DLS "
+      "3D buildings at the moment of the walk, from start_time, and the shadiest within "
+      "about a third more time is taken; the reply compares them in `shade`). Every "
       "route reports the register buildings it passes within 25 m. Give each stop a place "
       "name, 'my location', or coordinates, and optionally minutes_here for a visit. Driving "
       "routes use typical speeds, not live per-street traffic; the reply adds the current "
@@ -88,7 +93,14 @@ def h_plan_route(ctx: ToolContext, a: dict) -> dict:
         seconds = ctx.router.matrix(coords, mode, prefer)
         order = best_order(seconds, return_to_start, bool(a.get("keep_last_stop_last")))
     path = [coords[i] for i in order] + ([coords[0]] if return_to_start else [])
-    route = ctx.router.route(path, mode, prefer)
+    # In the shade: the real alternatives between two places, each read for its shade below.
+    options = None
+    if ("shade" in prefer and len(path) == 2 and mode != "drive"
+            and "avoid_dangerous_buildings" not in prefer):
+        options = ctx.router.alternatives(path, mode, prefer)
+        route = options[0]
+    else:
+        route = ctx.router.route(path, mode, prefer)
     records = ctx.registers.records() if ctx.registers is not None and ctx.registers.ready else []
     # `usual` is the route picked without avoiding them (not always the shortest: other
     # preferences, like lit streets, weigh in too).
@@ -97,10 +109,15 @@ def h_plan_route(ctx: ToolContext, a: dict) -> dict:
         safer, zones = route_avoiding(ctx, path, mode, prefer, route, records)
         if safer is not route:
             usual, route = route, safer
+    start = _hhmm(a.get("start_time"), local_now(ctx))
+    shade = None
+    if "shade" in prefer and mode == "drive":
+        shade = {"note": "shade is read for walking and cycling, not driving"}
+    elif "shade" in prefer:
+        route, shade = shaded_choice(ctx, options or [route], start, len(path), mode)
     passed = passed_by(route["coordinates"], records)
     usual_passed = passed_by(usual["coordinates"], records) if usual else []
 
-    start = _hhmm(a.get("start_time"), local_now(ctx))
     t = start
     plan = []
     for pos, i in enumerate(order):
@@ -123,10 +140,25 @@ def h_plan_route(ctx: ToolContext, a: dict) -> dict:
                                      "color": STATE_COLORS["usual route"],
                                      "label": f"usual: {usual['distance_km']} km · "
                                               f"{usual['duration_min']:.0f} min"}})
-    feats.append({"type": "Feature", "geometry": {"type": "LineString",
-                                                  "coordinates": route["coordinates"]},
-                  "properties": {"id": "route", "state": "route", "color": STATE_COLORS["route"],
-                                 "label": f"{route['distance_km']} km · {route['duration_min']:.0f} min"}})
+    if shade and shade.get("stretches"):
+        # The other ways first, thin and grey; then the walk, in shade and in sun.
+        for k, other in enumerate(shade["others"]):
+            feats.append({"type": "Feature", "geometry": {"type": "LineString", "coordinates": other["coordinates"]},
+                          "properties": {"id": f"route_other{k + 1}", "state": "usual route",
+                                         "color": STATE_COLORS["usual route"],
+                                         "label": f"other way: {other['shade_pct']:.0f}% in shade · "
+                                                  f"{other['min']:.0f} min"}})
+        for k, (in_shade, line) in enumerate(shade["stretches"]):
+            feats.append({"type": "Feature", "geometry": {"type": "LineString", "coordinates": line},
+                          "properties": {"id": f"route_{k + 1}", "state": "in shade" if in_shade else "in sun",
+                                         "color": SHADE_COLORS["in shade" if in_shade else "in sun"],
+                                         "label": f"{route['distance_km']} km · {route['duration_min']:.0f} min · "
+                                                  f"{shade['chosen']['shade_pct']:.0f}% in shade"}})
+    else:
+        feats.append({"type": "Feature", "geometry": {"type": "LineString",
+                                                      "coordinates": route["coordinates"]},
+                      "properties": {"id": "route", "state": "route", "color": STATE_COLORS["route"],
+                                     "label": f"{route['distance_km']} km · {route['duration_min']:.0f} min"}})
     feats += [point(p["lon"], p["lat"], {"id": f"stop{p['n']}", "label": f"{p['n']}. {p['label']}",
                                          "n": p["n"], "state": "stop", "color": STATE_COLORS["stop"],
                                          "popup": f"{p['n']}. {p['label']}\narrive {p['arrive']}"})
@@ -144,8 +176,13 @@ def h_plan_route(ctx: ToolContext, a: dict) -> dict:
                   **({"usual route": STATE_COLORS["usual route"]} if usual else {}),
                   **{s: STATE_COLORS[s] for s in STATUSES
                      if any(r["status"] == s for r in flagged.values())}}
+    if shade and shade.get("stretches"):
+        legend = {**SHADE_COLORS, **({"other ways": STATE_COLORS["usual route"]} if shade["others"] else {}),
+                  **{k: v for k, v in legend.items() if k not in ("route", "usual route")}}
+    # A walk read for its shade draws on the DLS buildings too.
     layer = ctx.store.add_layer(f"route_{mode}", feats, geometry="route",
-                                title=f"{mode.capitalize()} route", legend=legend)
+                                title=f"{mode.capitalize()} route", legend=legend,
+                                sources=data_sources.current() + (["dls"] if shade and shade.get("stretches") else []))
     visit_min = sum(s["minutes_here"] for s in stops[1:])
     res = {
         "mode": mode, "prefer": prefer, "optimized": bool(seconds),
@@ -186,6 +223,8 @@ def h_plan_route(ctx: ToolContext, a: dict) -> dict:
         else:
             res["avoidance"] = {"note": "no way round them passes fewer register buildings, so "
                                         "this is the usual route"}
+    if shade:
+        res["shade"] = {k: v for k, v in shade.items() if k not in ("stretches", "others")}
     if mode == "drive":
         try:
             sp = context.speed(ctx.city, 2)["rows"]
@@ -229,6 +268,81 @@ def h_reachable_area(ctx: ToolContext, a: dict) -> dict:
                                         for f in feats if "minutes" in f["properties"]})
     return {"origin": center[2], "minutes": a["minutes"], "mode": a["mode"], "layer_ref": layer,
             "_summary": f"{', '.join(map(str, a['minutes']))} min by {a['mode']}"}
+
+
+SHADE_COLORS = ENV_SHADE_COLORS  # one blue and one amber for shade and sun, as on the shade map
+SHADE_MAX_EXTRA = 1.35  # a shadier way may take this much longer than the quickest (plus a minute)
+SHADE_METHOD = ("the shadows of the DLS 3D buildings at the moment the walker passes each point "
+                "(every 8 m, at the route's own pace); trees, awnings and arcades are not in it")
+
+
+def shaded_choice(ctx: ToolContext, options: list[dict], start: datetime, stops: int,
+                  mode: str) -> tuple[dict, dict]:
+    """The route with the most shade at the time of the walk, among the real alternatives
+    (`options`, best first), and what each one offers. With the sun down every way is in shade,
+    so the first one stays."""
+    env = ctx.environment
+    first = options[0]
+    if env is None:
+        return first, {"note": "shade isn't available on this server, so this is the usual route"}
+    scored = []
+    for r in options:
+        pace = r["distance_km"] * 1000 / max(60.0, r["duration_min"] * 60)
+        try:
+            s = env.shade.along(r["coordinates"], start, pace)
+        except (ValueError, WebError, ApiError) as e:
+            log.info("shade along a route failed: %s", e)
+            s = {"shade_pct": None, "sun_up": True, "samples": []}
+        scored.append((r, s))
+    quickest = min(r["duration_min"] for r in options)
+    sun_up = any(s["sun_up"] for _, s in scored)
+    fair = [(r, s) for r, s in scored
+            if s["shade_pct"] is not None and r["duration_min"] <= quickest * SHADE_MAX_EXTRA + 1]
+    best = (max(fair, key=lambda t: (t[1]["shade_pct"], -t[0]["duration_min"]))
+            if fair and sun_up else scored[0])
+    route, chosen = best
+    info: dict = {
+        "walk_starts": start.strftime("%a %H:%M"),
+        "sun_up": sun_up,
+        "chosen": {"km": route["distance_km"], "min": route["duration_min"],
+                   "shade_pct": chosen["shade_pct"]},
+        "options": [{"option": k + 1, "km": r["distance_km"], "min": r["duration_min"],
+                     "shade_pct": s["shade_pct"], "chosen": r is route}
+                    for k, (r, s) in enumerate(scored)],
+        "minutes_added": round(route["duration_min"] - quickest, 1),
+        "method": SHADE_METHOD,
+    }
+    if not sun_up:
+        info["note"] = ("the sun is down for the whole walk: every way is in shade, so this is "
+                        "the usual route")
+    elif len(options) == 1:
+        info["note"] = ("shade is read for walking and cycling, not driving" if mode == "drive" else
+                        "one route only: alternatives come between two places, with no stops on "
+                        "the way" if stops > 2 else
+                        "with the dangerous buildings avoided too, this route is read for its "
+                        "shade but not swapped")
+    if any(s.get("tiles_missing") for _, s in scored):
+        info["buildings_missing"] = ("some 3D buildings along the way couldn't be read, so shade "
+                                     "may be missing there")
+    info["stretches"] = _stretches(chosen["samples"]) if chosen["samples"] else []
+    info["others"] = [{"coordinates": r["coordinates"], "min": r["duration_min"],
+                       "shade_pct": s["shade_pct"] or 0.0}
+                      for r, s in scored if r is not route]
+    return route, info
+
+
+def _stretches(samples: list[dict]) -> list[tuple[bool, list[list[float]]]]:
+    """A walk's sample points as runs of shade and of sun, each a line touching the next."""
+    out: list[tuple[bool, list[list[float]]]] = []
+    for p in samples:
+        xy = [round(p["lon"], 6), round(p["lat"], 6)]
+        if out and out[-1][0] == p["shade"]:
+            out[-1][1].append(xy)
+        else:
+            if out:
+                out[-1][1].append(xy)  # meet the next run, so the line has no gaps
+            out.append((p["shade"], [xy]))
+    return [(sh, line) for sh, line in out if len(line) >= 2]
 
 
 def passed_by(path: list[list[float]], records: list[dict],

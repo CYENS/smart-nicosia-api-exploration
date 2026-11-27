@@ -10,6 +10,7 @@ dependencies = [
     "fastapi>=0.151.0",
     "gtfs-realtime-bindings>=3.0.0",
     "jsonschema>=4.26.0",
+    "numpy>=2.5.5",
     "python-dotenv>=1.2.4",
     "pytz>=2026.5",
     "tzdata>=2026.5",

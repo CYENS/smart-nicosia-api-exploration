@@ -4,6 +4,7 @@ import { BaseMapNotice } from "@/components/base-map-notice"
 import { ChatPanel } from "@/components/chat/chat-panel"
 import { Inspector } from "@/components/inspector/inspector"
 import "@/components/layers/system-rows" // the Layers sheet's City systems rows
+import { MapMenu } from "@/components/map-menu"
 import { SearchMenu } from "@/components/search-menu"
 import { AskBar } from "@/components/shell/ask-bar"
 import { GlobalKeys } from "@/components/shell/global-keys"
@@ -17,7 +18,10 @@ import { SourcesPanel } from "@/components/sources/sources-panel"
 import { Stage } from "@/components/stage"
 import { CityClock } from "@/components/clock/city-clock"
 import { CompareSwipe } from "@/components/clock/compare-swipe"
+import { ViewCard } from "@/components/view-card"
+import "@/components/view-section" // "View from here" in the inspector
 import "@/components/topics/builtin" // Buses, Parking, Traffic and Outside
+import { Toaster } from "@/components/ui/sonner"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { startClock } from "@/lib/clock"
 import { parseHash, startDeepLinks } from "@/lib/deeplink"
@@ -26,7 +30,13 @@ import { useLayout } from "@/lib/layout"
 import { startCredits } from "@/lib/map/credits"
 import { initMap, setInsets } from "@/lib/map/engine"
 import "@/lib/mobility" // buses, stops and road speeds: their workspace, kinds, layers and commands
+import "@/lib/watch" // the incident inbox, its Layers row, marks on the clock, toasts from the live stream
+import "@/lib/environment" // sun, shade, terrain, air, noise and weather: workspace, spot, layers
+// After the environment: "What's here?" is the spot's menu item and icon, and its card holds the
+// environment's "What's it like here?" too.
+import "@/lib/here" // "What's here?": any point of the map, its card, the click, press and Ctrl K
 import { useWorkspace, useWorkspaceSide } from "@/lib/registries/workspaces"
+import { useView } from "@/lib/view"
 
 // The open workspace's own panels, over the map (Live has none of its own), and its side panel
 // in the right column (the Layers sheet takes the column while it is open).
@@ -34,10 +44,11 @@ function WorkspacePanels() {
   const panels = useWorkspace((s) => s.list.find((w) => w.id === s.active)?.Panels)
   const side = useWorkspaceSide()
   const layersOpen = useLayout((s) => s.layersOpen)
+  const viewing = useView((s) => s.open)
   return (
     <>
       {panels && createElement(panels)}
-      {side && !layersOpen && createElement(side)}
+      {side && !layersOpen && !viewing && createElement(side)}
     </>
   )
 }
@@ -85,6 +96,7 @@ export function App() {
         <CityClock />
         <MapControls />
         <Inspector />
+        <ViewCard />
         <WorkspacePanels />
         <LayersSheet />
         <TopicCard />
@@ -92,9 +104,18 @@ export function App() {
         <BaseMapNotice />
         <CompareSwipe />
         <SearchMenu />
+        <MapMenu />
         <Shortcuts />
         <SourcesPanel />
         <GlobalKeys />
+        {/* Toasts from the twin's watch: announced politely, Alt T puts the keyboard on them. */}
+        <Toaster
+          position="top-center"
+          offset={{ top: g.insets.top + 4 }} // the top of the open map, under the clock's console when it shows
+          mobileOffset={{ top: g.belowClock + 4, left: 8, right: 8 }}
+          containerAriaLabel="Notifications"
+          visibleToasts={4}
+        />
       </div>
     </TooltipProvider>
   )

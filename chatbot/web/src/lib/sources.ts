@@ -66,8 +66,18 @@ export function shortName(id: string, list = useSources.getState().list): string
   return list.find((s) => s.id === id)?.short ?? id.replace(/_/g, " ")
 }
 
+// A feature's own layers say where they come from too (the environment twin's terrain, radar
+// and surfaces): what it draws from now, and how to hear when that changes.
+const extra: (() => string[])[] = []
+export const useExtraSources = create<{ n: number }>(() => ({ n: 0 }))
+
+export function registerActiveSources(ids: () => string[], subscribe: (fn: () => void) => void) {
+  extra.push(ids)
+  subscribe(() => useExtraSources.setState((s) => ({ n: s.n + 1 })))
+}
+
 // The sources of what the map draws now: the assistant's layers, the 3D city, the registers,
-// the lamps that glow after dark, and the live buses and roads.
+// the lamps that glow after dark, the live buses and roads, and what features add.
 export function activeSourceIds(): string[] {
   const ui = useMapUi.getState()
   const mob = useMobility.getState()
@@ -75,9 +85,11 @@ export function activeSourceIds(): string[] {
   for (const l of ui.layers) ids.push(...(l.sources ?? []))
   if (ui.nightLights) ids.push("smart_nicosia")
   if (ui.city.on) ids.push("dls")
+  if (ui.terrain) ids.push("terrain_tiles")
   if (ui.registers.on) ids.push("registers", "dls")
   if (mob.buses.on) ids.push("bus_live", "bus_timetable")
   if (mob.roads.on) ids.push("road_speeds")
+  for (const fn of extra) ids.push(...fn())
   return [...new Set(ids)]
 }
 
@@ -86,9 +98,11 @@ export function useActiveSourceIds(): string[] {
   useMapUi((s) => s.layers)
   useMapUi((s) => s.nightLights)
   useMapUi((s) => s.city.on)
+  useMapUi((s) => s.terrain)
   useMapUi((s) => s.registers.on)
   useMobility((s) => s.buses.on)
   useMobility((s) => s.roads.on)
+  useExtraSources((s) => s.n)
   return activeSourceIds()
 }
 

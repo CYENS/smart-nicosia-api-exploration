@@ -100,6 +100,37 @@ def _memory(agent) -> dict:
     return status("live", note=None, holds_from=earliest)
 
 
+def _overture(agent) -> dict:
+    """The release the twin's copy was cut from, and whether the last look for a newer one
+    worked."""
+    ov = getattr(getattr(agent, "places", None), "overture", None)
+    if ov is None:
+        return status(None)
+    if not ov.ready:
+        return status("unavailable" if ov.error else "waiting",
+                      note=ov.error or "the first copy is being cut from the latest release")
+    # "Read" is when the twin last looked at Overture's bucket; the release has its own date.
+    date = ov.release_date
+    note = (f"release {ov.release}" + (f" of {date.day} {date:%b %Y}" if date else "")
+            + f", {len(ov.all()):,} places")
+    if ov.error:
+        return status("stale", ov.checked_at, f"{note}; a newer release couldn't be read "
+                      f"({ov.error})", release=ov.release)
+    return status("live", ov.checked_at, note, release=ov.release)
+
+
+def _radar(agent) -> dict:
+    env = getattr(agent, "environment", None)
+    hit = env.radar_status() if env is not None else None
+    if hit is None:
+        return status("waiting", note="read while the rain radar is on the map")
+    at, out = hit
+    if not out.get("known"):
+        return status("unavailable", at, out.get("reason"))
+    newest = out["frames"][-1]["time"] / 1000
+    return status("live", at, f"newest frame {_iso(newest)[11:16]}" if newest else None)
+
+
 PROBES: dict[str, Callable] = {
     "smart_nicosia": lambda a: _cached("city"),
     "open_meteo": lambda a: _cached("weather"),
@@ -108,6 +139,8 @@ PROBES: dict[str, Callable] = {
     "road_speeds": _roads,
     "registers": _registers,
     "twin_memory": _memory,
+    "overture": _overture,
+    "rainviewer": _radar,
 }
 
 

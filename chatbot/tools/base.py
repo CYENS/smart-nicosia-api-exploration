@@ -15,14 +15,18 @@ from chatbot.city import CityData
 from chatbot.dls import DLS
 from chatbot.geo import Places, norm
 from chatbot.memory import Memory
+from chatbot.overture import OV_ID
 from chatbot.routing import Router
 from chatbot.settings import TIMEZONE, Settings
 from chatbot.store import SessionStore
 
 if TYPE_CHECKING:
     from chatbot.entities import Entities
+    from chatbot.environment.service import Environment
     from chatbot.mobility import Mobility
     from chatbot.moments import Moments
+    from chatbot.terrain import Terrain
+    from chatbot.watch import Watcher
     from chatbot.webplaces import WebPlaces
 
 TZ = ZoneInfo(TIMEZONE)
@@ -66,6 +70,10 @@ class ToolContext:
     moments: Moments | None = None
     mobility: Mobility | None = None  # buses, stops and road speeds (chatbot/mobility)
     web_places: WebPlaces | None = None  # places found on the web, placed (chatbot/webplaces.py)
+    watcher: Watcher | None = None  # incidents and watches (chatbot/watch)
+    # Sun and shade, air and noise surfaces and the weather (chatbot/environment).
+    environment: Environment | None = None
+    terrain: Terrain | None = None  # the ground's height (chatbot/terrain.py)
 
 
 # -- schema helpers -----------------------------------------------------------------------------
@@ -139,11 +147,22 @@ def resolve_place(ctx: ToolContext, text: str) -> dict:
     web = ctx.web_places.named(text) if ctx.web_places is not None else None
     if web:
         return {"name": web["name"], "lat": web["lat"], "lon": web["lon"], "id": web["id"]}
+    loc = ctx.user_location
+    near = (loc["lat"], loc["lon"]) if loc else None
+    # An Overture place by its id (ov-d5564327fe43); by its name only after OSM's places.
+    ov = getattr(ctx.places, "overture", None)
+    ov = ov if ov is not None and ov.ready else None
+    if ov is not None and OV_ID.match(text.strip()):
+        hit = ov.get(text)
+        if hit:
+            return {"name": hit["name"], "lat": hit["lat"], "lon": hit["lon"], "id": hit["id"]}
     if ctx.places.ready:
-        loc = ctx.user_location
-        exact = ctx.places.named(text, (loc["lat"], loc["lon"]) if loc else None)
+        exact = ctx.places.named(text, near)
         if exact:
             return exact[0]
+    if ov is not None and (same := ov.named(text, near)):
+        return {"name": same[0]["name"], "lat": same[0]["lat"], "lon": same[0]["lon"],
+                "id": same[0]["id"]}
     hits = ctx.places.geocode(text)
     if hits:
         return hits[0]

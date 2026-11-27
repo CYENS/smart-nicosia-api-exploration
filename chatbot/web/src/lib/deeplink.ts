@@ -7,6 +7,11 @@
      #/t/2026-11-21T21:00                  the clock at a moment (Nicosia time; none: live)
      #/r/2026-11-21T18:00_2026-11-22T02:00 a range on the clock (the moment is its playhead)
      #/vs/-7d  #/vs/2026-11-14T21:00       a comparison: a week (or n days) before, or a moment
+     #/v/35.12117,33.34402,1.7h,352b,84p/vn/High ground in Strovolos
+                                           a view from a place: where the eye stands, how high
+                                           above the ground, its heading and tilt, and the
+                                           place's name (lib/view.ts); the camera part is left
+                                           out while viewing
 
    The hash follows the map with replaceState, so the back button isn't filled with every pan. */
 import {
@@ -14,9 +19,12 @@ import {
 } from "@/lib/clock"
 import { closeInspector, inspect, useInspector } from "@/lib/inspector"
 import { getCamera, jumpToCamera, onCameraMoved, type Camera } from "@/lib/map/engine"
+import { onRouted, routedThing } from "@/lib/registries/inspect-routes"
+import { VIEW_MAX_PITCH, VIEW_MIN_PITCH, leaveView, useView, viewFrom, viewLink } from "@/lib/view"
 
 export type ClockLink = { at: number | null; range: [number, number] | null; compare: Compare | null }
-export type Link = { camera: Camera | null; entity: string | null; clock?: ClockLink | null }
+export type ViewLink = { lat: number; lon: number; height: number; yaw: number; pitch: number; name: string | null }
+export type Link = { camera: Camera | null; entity: string | null; clock?: ClockLink | null; view?: ViewLink | null }
 
 const NUM = "(-?\\d+(?:\\.\\d+)?)"
 const CAMERA = new RegExp(`@${NUM},${NUM},${NUM}z(?:,${NUM}p)?(?:,${NUM}b)?`)
@@ -25,6 +33,7 @@ const AT = new RegExp(`(?:^|/)t/${WALL}(?:/|$)`)
 const RANGE = new RegExp(`(?:^|/)r/${WALL}_${WALL}(?:/|$)`)
 const VS = new RegExp(`(?:^|/)vs/(?:(-\\d{1,2})d|${WALL})(?:/|$)`)
 const DAY = 24 * 3600e3
+const VIEW = new RegExp(`(?:^|/)v/${NUM},${NUM},${NUM}h,${NUM}b,${NUM}p(?:/vn/([^/]{1,120}))?`)
 
 function moment(wall: string | undefined) {
   if (!wall) return null
@@ -60,12 +69,20 @@ export function parseHash(hash: string): Link {
   if (v?.[1]) compare = { offset: Math.max(-62, Number(v[1])) * DAY }
   else if (v?.[2] && moment(v[2]) !== null) compare = { at: moment(v[2])! }
   const clock = at !== null || range || compare ? { at, range, compare } : null
-  return { camera, entity, clock }
+  let view: ViewLink | null = null
+  const vw = VIEW.exec(h)
+  if (vw) {
+    const [lat, lon, height, yaw, pitch] = vw.slice(1, 6).map(Number)
+    if (Math.abs(lat) <= 90 && Math.abs(lon) <= 180 && height >= 0 && height <= 300) {
+      view = { lat, lon, height, yaw: ((yaw % 360) + 360) % 360, pitch: Math.max(VIEW_MIN_PITCH, Math.min(VIEW_MAX_PITCH, pitch)), name: vw[6]?.trim() || null }
+    }
+  }
+  return { camera, entity, clock, view }
 }
 
 const r = (v: number, d: number) => Number(v.toFixed(d)).toString()
 
-export function formatHash({ camera, entity, clock }: Link): string {
+export function formatHash({ camera, entity, clock, view }: Link): string {
   const parts: string[] = []
   if (entity) parts.push(`e/${encodeURIComponent(entity)}`)
   if (clock?.at !== null && clock?.at !== undefined) parts.push(`t/${toWall(clock.at)}`)
@@ -78,7 +95,10 @@ export function formatHash({ camera, entity, clock }: Link): string {
       if (t !== null) parts.push(`vs/${toWall(t)}`)
     }
   }
-  if (camera) {
+  if (view) {
+    parts.push(`v/${r(view.lat, 5)},${r(view.lon, 5)},${r(view.height, 1)}h,${Math.round(view.yaw)}b,${Math.round(view.pitch)}p`)
+    if (view.name) parts.push(`vn/${encodeURIComponent(view.name.replace(/\//g, " ").slice(0, 120))}`)
+  } else if (camera) {
     const [lon, lat] = camera.center
     let cam = `@${r(lat, 5)},${r(lon, 5)},${r(camera.zoom, 2)}z`
     if (Math.round(camera.pitch) || Math.round(camera.bearing)) cam += `,${Math.round(camera.pitch)}p`
@@ -95,7 +115,8 @@ function clockNow(): ClockLink {
 
 function current(): Link {
   const { open, entity, target } = useInspector.getState()
-  return { camera: getCamera(), entity: open ? (entity?.id ?? target?.id ?? null) : null, clock: clockNow() }
+  // A thing open in a place of its own (an incident in its inbox) when the inspector is closed.
+  return { camera: getCamera(), entity: open ? (entity?.id ?? target?.id ?? null) : routedThing(), clock: clockNow(), view: viewLink() }
 }
 
 let written = ""
@@ -155,15 +176,29 @@ export function startDeepLinks(initial: Link) {
   useClock.subscribe((s, prev) => {
     if (s.at !== prev.at || s.range !== prev.range || s.compare !== prev.compare) soon()
   })
+  onRouted(soon)
+  useView.subscribe((s, prev) => {
+    if (s.open !== prev.open || s.spec !== prev.spec || s.yaw !== prev.yaw || s.pitch !== prev.pitch) soon()
+  })
   window.addEventListener("hashchange", () => {
     if (location.hash === written) return
     const link = parseHash(location.hash)
     written = location.hash
-    if (link.camera) jumpToCamera(link.camera)
+    if (link.view) openView(link.view)
+    else if (useView.getState().open) leaveView()
+    if (link.camera && !link.view) jumpToCamera(link.camera)
     applyClock(link.clock ?? { at: null, range: null, compare: null })
-    if (link.entity && link.entity !== useInspector.getState().entity?.id) inspect({ id: link.entity }, { fly: !link.camera })
+    if (link.entity && link.entity !== useInspector.getState().entity?.id && link.entity !== routedThing()) inspect({ id: link.entity }, { fly: !link.camera })
     else if (!link.entity && useInspector.getState().open) closeInspector()
   })
   applyClock(initial.clock)
-  if (initial.entity) inspect({ id: initial.entity }, { fly: !initial.camera })
+  if (initial.view) openView(initial.view)
+  else if (initial.entity) inspect({ id: initial.entity }, { fly: !initial.camera })
+}
+
+function openView(v: ViewLink) {
+  void viewFrom({
+    from: `${v.lat},${v.lon}`, height: String(v.height), bearing: v.yaw, pitch: v.pitch,
+    name: v.name ?? undefined,
+  })
 }
