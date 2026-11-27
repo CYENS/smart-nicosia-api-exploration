@@ -1,7 +1,9 @@
 # Live mobility
 
 Feature 4 of the [roadmap](digital-twin-roadmap.md): buses on the road, departures, bus trips
-and road speeds, as map layers, inspector kinds, a workspace and chat tools.
+and road speeds, as map layers, inspector kinds, a workspace and chat tools. What else is
+happening on the roads (closures, jams, accidents, hazards, roadworks) is in
+[road reports](road-reports.md).
 
 ## Sources
 

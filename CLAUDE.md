@@ -39,7 +39,8 @@ npm run build                     # writes chatbot/static (committed, see below)
   and cached. `?at=` on `/api/overview`, `/api/lamps` and `/api/entities/{id}` reads it, and
   `set_city_time` too. A moment the memory holds nothing for is unknown, never a guess.
 - `chatbot/mobility/` is live mobility: the bus timetables and live feed, departures and
-  trips, and road speeds against free flow ([docs/live-mobility.md](docs/live-mobility.md)). One
+  trips, road speeds against free flow ([docs/live-mobility.md](docs/live-mobility.md)), and
+  road reports: closures, jams, hazards and roadworks ([docs/road-reports.md](docs/road-reports.md)). One
   `Mobility` on the Agent shares each feed's fetch between pages, tools and the inspector.
 - `chatbot/lidar.py` is the 2019 LiDAR flight: it fetches DLS's open surface and terrain sheets
   (heavy, kept out of git in `data/dls_lidar/`), measures every DLS building on them, and
