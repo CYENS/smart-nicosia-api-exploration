@@ -1,0 +1,58 @@
+{
+ "cut": "2026-11-27",
+ "source": "OpenStreetMap contributors",
+ "licence": "ODbL",
+ "licence_url": "https://www.openstreetmap.org/copyright",
+ "plants": [
+  {
+   "id": "osm-w27618715",
+   "kind": "oil",
+   "name": "Vasilikos Power Station",
+   "name_el": "Ηλεκτροπαραγωγος Σταθμος Βασιλικου",
+   "operator": "Electricity Authority of Cyprus",
+   "capacity_mw": 868.0,
+   "lat": 34.72912,
+   "lon": 33.29034
+  },
+  {
+   "id": "osm-w82814444",
+   "kind": "oil",
+   "name": "Dhekelia Power Station",
+   "name_el": "Ηλεκτροπαραγωγός Σταθμός Δεκέλειας",
+   "operator": "Electricity Authority of Cyprus",
+   "capacity_mw": 460.0,
+   "lat": 34.98059,
+   "lon": 33.74573
+  },
+  {
+   "id": "osm-w24613781",
+   "kind": "oil",
+   "name": "Moni Power Station",
+   "name_el": "Ηλεκτροπαραγωγος Σταθμος Μονης",
+   "operator": "Electricity Authority of Cyprus",
+   "capacity_mw": 150.0,
+   "lat": 34.71176,
+   "lon": 33.18279
+  },
+  {
+   "id": "osm-r19086506",
+   "kind": "wind",
+   "name": "Orites wind farm",
+   "name_el": null,
+   "operator": "Platina Finance",
+   "capacity_mw": 82.0,
+   "lat": 34.73003,
+   "lon": 32.63571
+  },
+  {
+   "id": "osm-r19086490",
+   "kind": "wind",
+   "name": "Alexigros wind farm",
+   "name_el": null,
+   "operator": null,
+   "capacity_mw": 31.5,
+   "lat": 34.86782,
+   "lon": 33.52229
+  }
+ ]
+}
