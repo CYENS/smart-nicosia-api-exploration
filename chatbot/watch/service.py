@@ -9,7 +9,9 @@
   and checks the incident watches.
 - While a page is listening (and the full collector isn't running here, which fetches them
   anyway), it asks the city for its active alarms and its event feed every five minutes: two
-  requests, recorded into the memory like everything else the chatbot fetches.
+  requests, recorded into the memory like everything else the chatbot fetches. It reads the
+  other feeds its detectors need (`feeds`: the road reports) on the same terms, each at its own
+  pace.
 - Everything that changes goes to the open pages through `Hub`, a server-sent events stream.
 """
 
@@ -92,6 +94,9 @@ class Watcher:
         self._wake = threading.Event()
         self._stop = threading.Event()
         self._fresh: set[str] = set()
+        # Other feeds the detectors read from the memory, refreshed while a page listens (each
+        # throttles itself): the road reports (chatbot/mobility/reports.py), set by the Agent.
+        self.feeds: list[Callable[[], None]] = []
         self._thread: threading.Thread | None = None
         self._last_eval = 0.0
         self._last_fetch = 0.0
@@ -144,6 +149,7 @@ class Watcher:
         if force or due >= EVALUATE_EVERY_S or (fresh and due >= EVALUATE_GAP_S):
             if not force:
                 self.fetch_city_alarms()
+                self.read_feeds()
             changes = self.evaluate()
             report |= {"evaluated": True, "changes": len(changes)}
         for e in events:
@@ -177,6 +183,16 @@ class Watcher:
         except ApiError as e:
             log.info("watch: event feed unavailable: %s", e)
         return True
+
+    def read_feeds(self) -> None:
+        """The other feeds the detectors read (the road reports), while a page listens."""
+        if self.hub.listening == 0:
+            return
+        for read in self.feeds:
+            try:
+                read()
+            except Exception:  # noqa: BLE001 - one feed never stops the watch
+                log.exception("watch: a feed failed")
 
     # -- detectors and incidents ------------------------------------------------------------------
 

@@ -442,6 +442,38 @@ def store_travel_times(con, rows: list[parse.TravelTimeRow]) -> int:
     )
 
 
+ROAD_REPORT_COLUMNS = {
+    "id": "VARCHAR", "source": "VARCHAR", "kind": "VARCHAR", "label": "VARCHAR",
+    "street": "VARCHAR", "text": "VARCHAR", "lat": "DOUBLE", "lon": "DOUBLE",
+    "geometry": "VARCHAR", "since": "BIGINT", "until": "BIGINT", "severity": "VARCHAR",
+    "details": "VARCHAR", "first_seen": "BIGINT", "last_seen": "BIGINT",
+}
+
+
+def store_road_reports(con, rows: list[tuple]) -> int:
+    """Road reports (chatbot/mobility/reports.py, `RoadReport.row`) as the twin saw them: a new
+    one is added, one seen before keeps its first sighting and moves its last one on. Rows are
+    in ROAD_REPORT_COLUMNS order, times as epoch microseconds."""
+    def ts(col: str) -> str:
+        return f"CASE WHEN {col} IS NULL THEN NULL ELSE make_timestamptz({col}) END"
+
+    return db.bulk(
+        con, ROAD_REPORT_COLUMNS, rows,
+        f"""INSERT INTO road_reports
+            SELECT id, source, kind, label, street, text, lat, lon, geometry, {ts('since')},
+                   {ts('until')}, severity, details, make_timestamptz(first_seen),
+                   make_timestamptz(last_seen)
+            FROM __SRC__
+            ON CONFLICT (id) DO UPDATE SET
+                kind = excluded.kind, label = excluded.label, street = excluded.street,
+                text = excluded.text, lat = excluded.lat, lon = excluded.lon,
+                geometry = excluded.geometry, since = excluded.since, until = excluded.until,
+                severity = excluded.severity, details = excluded.details,
+                first_seen = least(first_seen, excluded.first_seen),
+                last_seen = greatest(last_seen, excluded.last_seen)""",
+    )
+
+
 # -- traffic counts and city speed -------------------------------------------------------------
 
 

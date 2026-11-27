@@ -74,6 +74,31 @@ def _roads(agent) -> dict:
     return status("stale" if err else "live", at, err)
 
 
+def _road_reports(source: str) -> Callable:
+    """A road report feed, judged by the times inside what it sent (its publication time, its
+    newest report), not by its HTTP status: a feed can answer 200 for weeks without news."""
+    def probe(agent) -> dict:
+        mob = getattr(agent, "mobility", None)
+        rep = getattr(mob, "reports", None)
+        if rep is None or source not in rep.state:
+            return status(None)
+        st = rep.state[source]
+        if st.parsed is None:
+            if st.error:
+                return status("unavailable", st.tried_at, f"the last read failed: {st.error}")
+            return status("waiting", note="read while road reports are on the map or the watch listens")
+        problem = st.fresh_problem(source, rep.now())
+        n = len(st.parsed.reports)
+        newest = st.parsed.newest
+        note = f"{n} in Greater Nicosia" + (f", newest {_iso(newest.timestamp())[11:16]}" if newest and source != "traffic_events" else "")
+        if st.error:
+            return status("stale", st.ok_at, f"the last read failed ({st.error}); {note}")
+        if problem:
+            return status("stale", st.ok_at, f"{problem}; {note}")
+        return status("live", st.ok_at, note)
+    return probe
+
+
 def _registers(agent) -> dict:
     reg = agent.registers
     parts = []
@@ -137,6 +162,9 @@ PROBES: dict[str, Callable] = {
     "bus_live": _bus_live,
     "bus_timetable": _timetable,
     "road_speeds": _roads,
+    "waze_alerts": _road_reports("waze_alerts"),
+    "traffic_events": _road_reports("traffic_events"),
+    "waze_traffic": _road_reports("waze_traffic"),
     "registers": _registers,
     "twin_memory": _memory,
     "overture": _overture,

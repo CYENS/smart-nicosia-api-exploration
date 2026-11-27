@@ -184,6 +184,8 @@ class Agent:
         self.entities.moments = self.moments  # "What's here?" reads parking and lamps from it
         self.watcher = Watcher(city, memory)  # alerts, incidents and watches
         self.entities.watcher = self.watcher  # incidents open by their id (INC-12)
+        if getattr(self.mobility, "reports", None) is not None:  # closures and jams for the watch
+            self.watcher.feeds.append(self.mobility.reports.refresh)
         # Sun and shade, air and noise surfaces, the wind and the rain radar.
         self.environment = Environment(settings, city, self.moments, dls, memory)
         self.entities.environment = self.environment

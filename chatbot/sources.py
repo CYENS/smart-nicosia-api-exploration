@@ -72,6 +72,31 @@ SOURCES: tuple[Source, ...] = (
         refresh="Every 5 minutes",
         credit="Road speeds: traffic4cyprus, CC BY 4.0"),
     Source(
+        "waze_alerts", "Waze drivers' reports", "Waze drivers", "Waze, through FixCyprus and the Cyprus National Access Point",
+        "Closures, jams, accidents and hazards (potholes, a stopped car, something on the road) "
+        "that drivers report in the Waze app, each with its street and when it was reported",
+        "Mobility", url="https://traffic4cyprus.org.cy/dataset/waze_alerts",
+        licence=CC_BY, licence_url="https://creativecommons.org/licenses/by/4.0/",
+        refresh="Every 3 minutes at most while a page or the watch reads them",
+        credit="Road reports: Waze via traffic4cyprus, CC BY 4.0"),
+    Source(
+        "traffic_events", "Roadworks and diversions", "the Public Works Department",
+        "Public Works Department, through the Cyprus National Access Point",
+        "Roadworks, diversions and accidents its traffic operators enter, with when the works "
+        "start and end and a description, often in Greek",
+        "Mobility", url="https://traffic4cyprus.org.cy/dataset/trafficevents",
+        licence=CC_BY, licence_url="https://creativecommons.org/licenses/by/4.0/",
+        refresh="Every 15 minutes at most while a page or the watch reads them",
+        credit="Roadworks: Public Works Department, CC BY 4.0"),
+    Source(
+        "waze_traffic", "Waze jam lines", "Waze traffic", "Waze, through FixCyprus and the Cyprus National Access Point",
+        "Where traffic is jammed, as lines with Waze's jam level, speed and delay: a second "
+        "source of congestion beside the road detectors",
+        "Mobility", url="https://traffic4cyprus.org.cy/dataset/waze_traffic",
+        licence=CC_BY, licence_url="https://creativecommons.org/licenses/by/4.0/",
+        refresh="Every 3 minutes at most; every 15 while it doesn't answer",
+        credit="Jams: Waze via traffic4cyprus, CC BY 4.0"),
+    Source(
         "open_meteo", "Open-Meteo", "Open-Meteo", "Open-Meteo",
         "The weather now and by the hour, sunrise and sunset, modelled air quality and dust (CAMS "
         "Europe, under the air surfaces between the stations), the wind over the city, and the "
@@ -215,6 +240,7 @@ TOOL_SOURCES: dict[str, tuple[str, ...]] = {
     "get_departures": ("bus_timetable", "bus_live"),
     "plan_transit": ("bus_timetable", "bus_live", "valhalla", "overture"),
     "get_road_speeds": ("road_speeds",),
+    "get_road_reports": ("waze_alerts", "traffic_events", "waze_traffic"),
     "list_incidents": ("twin_memory", "smart_nicosia"),
     "explain_incident": ("twin_memory", "smart_nicosia", "open_meteo"),
     "create_watch": ("smart_nicosia",),

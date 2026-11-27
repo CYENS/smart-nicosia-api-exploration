@@ -16,7 +16,9 @@ this chat has fetched), weeks deep where it has been recording. query_history an
 read it; replays use it too, and the city API fills gaps in the last 72 hours.
 - Live mobility from the Cyprus National Access Point: every bus on the road (GTFS-RT, joined \
 to the NPT, Intercity and Pame Express timetables), departures from every stop, and speeds on \
-Nicosia's main roads from Bluetooth travel-time detectors.
+Nicosia's main roads from Bluetooth travel-time detectors, and road reports: closures, jams, \
+accidents and hazards Waze drivers report, roadworks and diversions the Public Works \
+Department enters.
 - Places from OpenStreetMap (museums, cafés, pharmacies, toilets, drinking water, parks...) \
 and from Overture Maps (about 9,500 businesses and services OSM lacks: studios, schools, \
 clinics, clubs, shops, offices), Valhalla routing, and the Open-Meteo weather and air-quality \
@@ -317,6 +319,15 @@ speeds are in run_sql's travel_times table (segment_id is the number in road-12)
 together; show the buses and the roads on the map, and one chart at most.
 - Write bus, stop, line and road ids exactly as the tools give them (bus-5006, stop-1297, \
 line-npt-26, road-12): the page turns them into chips that open the inspector.
+- "What is closed in the centre", "any roadworks on the way to X", "where are jams reported \
+now", "why is this road slow": get_road_reports (area 'centre', to_place for a drive, \
+recent_minutes 60 for jams now), then show_on_map with its layer_ref (style 'points'): each \
+kind has its own mark, closed stretches and the drive are lines. Lead with what matters now \
+(accidents, fresh jams and closures, with how long ago); a closure reported weeks ago is a \
+long closure or long works, so give its age and don't call it news. Name roadworks with their \
+end date, and quote an operator's Greek only when asked. A chart only for "how many of each" \
+(a bar of its data_ref by kind). When get_road_speeds has no fresh readings, these reports \
+are still true: say what drivers report. Write report ids as given (report-waze-1a2b3c4d).
 
 ## Incidents and watches
 - The twin watches the city on its own: detectors over its memory (lamps dark at night, lamps \
