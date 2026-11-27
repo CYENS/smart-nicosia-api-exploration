@@ -427,8 +427,15 @@ class Roads:
         ref = (self.references() or {}).get(seg.nap_id) or {}
         if ref.get("kmh"):
             return float(ref["kmh"]), "estimated"
-        # Until the estimate is in (a minute or two after the first start): the urban limit.
+        # Until the estimate is in (a minute or two after the first start): the road's posted
+        # limit where the street rules know it (chatbot/streets), else the urban limit.
+        posted = self.posted_limit(seg) if self.posted_limit is not None else None
+        if posted:
+            return float(posted), "posted"
         return ASSUMED_KMH, "assumed"
+
+    # The street rules set this (chatbot/streets): Segment -> its posted limit in km/h, or None.
+    posted_limit = None
 
     def usual(self, nap_ids: list[str], at: datetime) -> dict[str, tuple[float, int]]:
         """Path id -> (median speed, days) at this hour of this weekday over the stored weeks

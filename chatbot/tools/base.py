@@ -27,6 +27,7 @@ if TYPE_CHECKING:
     from chatbot.mobility import Mobility
     from chatbot.moments import Moments
     from chatbot.scenarios.lab import Lab
+    from chatbot.streets import Streets
     from chatbot.terrain import Terrain
     from chatbot.watch import Watcher
     from chatbot.webplaces import WebPlaces
@@ -78,6 +79,7 @@ class ToolContext:
     terrain: Terrain | None = None  # the ground's height (chatbot/terrain.py)
     scenarios: Lab | None = None  # the scenario lab: runs and saved runs (chatbot/scenarios)
     lidar: Flight | None = None  # buildings as the 2019 LiDAR flight measured them (chatbot/lidar.py)
+    streets: Streets | None = None  # the street rules: limits, zones, crossings (chatbot/streets)
 
 
 # -- schema helpers -----------------------------------------------------------------------------

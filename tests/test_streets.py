@@ -210,3 +210,175 @@ def test_posted_limit_along_a_road_segment(net):
     got = idx.along(link.coords)
     assert got is not None and got["kmh"] in (30, 50, 65) and 0 < got["coverage"] <= 1
     assert got["tier"] in ("signed", "likely", "mapped")
+
+
+# -- the service, its kinds, tools and routes ----------------------------------------------------
+
+from types import SimpleNamespace  # noqa: E402
+
+from chatbot.entities import Entities, EntityNotFound  # noqa: E402
+from chatbot.settings import Settings  # noqa: E402
+from chatbot.store import SessionStore  # noqa: E402
+from chatbot.streets import Streets  # noqa: E402
+from chatbot.streets import analysis as A  # noqa: E402
+from chatbot.streets import entities as street_kinds  # noqa: E402 - registers the kinds
+from chatbot.tools import ToolContext, run_tool  # noqa: E402
+
+
+@pytest.fixture(scope="module")
+def streets(tmp_path_factory):
+    raw = json.loads(gzip.decompress((FIX / "osm_streets_central.json.gz").read_bytes()))
+    st = Streets(Settings(), fetch=fixture_fetch, network_fetch=lambda q: raw,
+                 cache_dir=tmp_path_factory.mktemp("streets"))
+    assert st.limits(wait=True) is not None
+    return st
+
+
+def ctx_for(st):
+    city = SimpleNamespace(now=lambda: None)
+    places = SimpleNamespace(ready=False, geocode=lambda text, limit=3: [
+        {"name": "Eleftheria Square", "lat": 35.1705, "lon": 33.3605}])
+    return ToolContext(Settings(), city, places, None, SessionStore(), lambda e: None, "c1", streets=st)
+
+
+def test_nothing_is_fetched_until_the_street_rules_start(tmp_path):
+    calls = []
+    st = Streets(Settings(), fetch=lambda u: calls.append(u) or "", cache_dir=tmp_path)
+    assert st.limits() is None and st.network.current() is None and calls == []
+    assert street_kinds.search_items(SimpleNamespace(streets=st)) == [] and calls == []
+
+
+def test_the_speed_limits_tool(streets):
+    ctx = ctx_for(streets)
+    res, err = run_tool(ctx, "get_speed_limits", {"road": "Makariou"})
+    assert not err, res
+    assert res["streets"] and all(r["kmh"] for r in res["streets"]) and "inventory updated" in res["inventory"]
+    layer = ctx.store.layers[res["layer_ref"]]
+    assert layer["meta"]["streets"] == {"kind": "limits"} and layer["meta"]["geometry"] == "route"
+    assert "speed_limits" in layer["meta"]["sources"]
+    assert {f["properties"]["layer"] for f in layer["features"]} <= {"limits", "signs"}
+    assert ctx.store.datasets[res["data_ref"]]["link"] == {"key": "id"}
+    res, err = run_tool(ctx, "get_speed_limits", {"road": "Nowhere at all"})
+    assert err and "no street called" in res["error"]
+    res, err = run_tool(ctx, "get_speed_limits", {"near_place": "Eleftheria Square", "radius_m": 300})
+    assert not err and res["stretches"] > 0
+
+
+def test_the_zones_tool_says_they_are_planned(streets):
+    ctx = ctx_for(streets)
+    res, err = run_tool(ctx, "find_slow_zones", {})
+    assert not err and len(res["zones"]) == 3 and all(z["status"] == "planned" for z in res["zones"])
+    res, err = run_tool(ctx, "find_slow_zones", {"zone": "Pallouriotissa"})
+    assert not err and res["zones"][0]["zone"] == "Zone 30, Pallouriotissa" and res["streets_inside"]
+    assert "none" in str(res["signs_inside_by_kmh"])
+    res, err = run_tool(ctx, "find_slow_zones", {"zone": "Atlantis"})
+    assert err and "Kaimakli" in res["error"]
+
+
+def test_crossings_near_a_place_and_around_schools(streets):
+    ctx = ctx_for(streets)
+    res, err = run_tool(ctx, "find_crossings", {"near_lat": 35.1582, "near_lon": 33.3731, "radius_m": 300})
+    assert not err and res["crossings"] >= 1 and res["nearest"][0]["distance_m"] < 50
+    assert "straight lines" in res["note"]
+    res, err = run_tool(ctx, "find_crossings", {"around": "schools"})
+    assert not err and res["checked"] > 10 and set(res["by_verdict"]) <= set(A.VERDICTS)
+    order = [r["verdict"] for r in res["worst"]]
+    assert order == sorted(order, key=["gap", "slow_road", "quiet", "served"].index)
+    layer = ctx.store.layers[res["layer_ref"]]
+    assert all(f["properties"]["entity_kind"] == "school" for f in layer["features"])
+
+
+def test_the_cycle_network_and_where_it_breaks(streets):
+    ctx = ctx_for(streets)
+    res, err = run_tool(ctx, "get_cycle_network", {})
+    assert not err and len(res["pieces"]) >= 2 and res["total_km"] > 10
+    for g in res["gaps"]:
+        assert 0 < g["length_m"] <= A.GAP_M and g["between"][0] != g["between"][1]
+    layers = {f["properties"]["layer"] for f in ctx.store.layers[res["layer_ref"]]["features"]}
+    assert {"cycleways", "cycle_ends"} <= layers
+
+
+def test_bus_lanes_and_cameras(streets):
+    ctx = ctx_for(streets)
+    res, err = run_tool(ctx, "get_bus_lanes", {"status": "active"})
+    assert not err and all(r["status"] == "in use" for r in res["lanes"]) and res["in_use_km"] > 5
+    res, err = run_tool(ctx, "find_enforcement_cameras", {"road": "Griva Digeni"})
+    assert not err and res["cameras"] and "say" in res["checks"]
+    placed = {r["id"]: r["placed"] for r in res["cameras"]}
+    assert placed["ecam-55"] == "junction" and placed["ecam-44"] == "rough"
+
+
+def test_every_street_kind_opens_in_the_inspector(streets):
+    ents = Entities(None)
+    ents.streets = streets
+    sign = next(s for s, snap in zip(streets.records("speed_limits"), streets.limits().snaps) if snap)
+    for eid, kind in ((sign["id"], "speed_limit"), ("zone-1", "slow_zone"), ("zentry-1", "slow_zone_entrance"),
+                      ("signal-0", "traffic_signal"), ("xing-0", "pedestrian_crossing"),
+                      ("ecam-55", "enforcement_camera"), ("cycle-38", "cycleway"), ("buslane-11", "bus_lane"),
+                      (streets.schools()[0]["id"], "school")):
+        e = ents.get(eid)
+        assert e["kind"] == kind and e["name"] and e["sources"], eid
+        assert e["center"] and e["geometry"]
+    cam = ents.get("ecam-55")
+    assert any(r.get("id") == "signal-5" for r in cam["relations"])
+    zone = ents.get("zone-1")
+    assert zone["state"]["value"] == "planned" and zone["readings"][0]["value"] == 30
+    mapped = next(p for p in streets.limits().pieces if p["tier"] == "mapped")
+    assert ents.get(f"limitway-{mapped['way']}")["state"]["value"] == "mapped"
+    with pytest.raises(EntityNotFound):
+        ents.get("signal-99999")
+    found = ents.search("Kaimakli")
+    assert any(r["id"] == "zone-1" for r in found)
+
+
+def test_inventories_stand_at_every_moment(streets):
+    from datetime import datetime, timezone
+
+    from chatbot.entities import AT_RESOLVERS
+    ents = Entities(None)
+    ents.streets = streets
+    e = AT_RESOLVERS["traffic_signal"](ents, ents.get("signal-0"), datetime(2026, 11, 20, 8, tzinfo=timezone.utc))
+    assert e["moment"]["known"] and not e["moment"]["applies"] and "every moment" in e["moment"]["note"]
+
+
+def test_the_layer_endpoints(streets, monkeypatch):
+    from fastapi import HTTPException
+
+    from chatbot import server
+    from chatbot.routes import streets as routes
+    monkeypatch.setattr(server.app.state, "agent", SimpleNamespace(streets=streets), raising=False)
+    req = SimpleNamespace(app=server.app)
+    for name in routes.LAYERS:
+        body = json.loads(routes.layer(name, req).body)
+        assert body["features"] and body["meta"]["inventory"]["updated"], name
+        assert body["meta"]["status"] == "ready"
+    st = routes.status(req)
+    assert st["limits"]["ready"] and st["feeds"]["speed_limits"]["count"] == 333
+    with pytest.raises(HTTPException):
+        routes.layer("nope", req)
+
+
+def test_sources_name_every_street_inventory(streets):
+    from chatbot import sources
+    from chatbot.routes.sources import PROBES
+    for sid in set(street_kinds.SOURCE_IDS.values()):
+        assert sid in sources.BY_ID and sid in PROBES
+        st = PROBES[sid](SimpleNamespace(streets=streets))
+        assert st["state"] == "live" and "inventory updated" in st["note"]
+    for tool in ("get_speed_limits", "find_slow_zones", "find_crossings", "get_cycle_network",
+                 "get_bus_lanes", "find_enforcement_cameras"):
+        assert set(sources.TOOL_SOURCES[tool]) <= set(sources.BY_ID)
+
+
+def test_a_road_without_an_estimate_uses_its_posted_limit(tmp_path):
+    from chatbot.mobility import roads as roads_mod
+    seg = SimpleNamespace(id="road-1", nap_id="1", coords=[(33.36, 35.16), (33.37, 35.16)])
+    r = roads_mod.Roads(lambda url: "", cache_dir=tmp_path)
+    r._measured = (1e18, {})
+    r._reference = {}
+    r._reference_running = True  # no Valhalla here
+    assert r.free_flow(seg) == (50.0, "assumed")
+    r.posted_limit = lambda s: 30.0
+    assert r.free_flow(seg) == (30.0, "posted")
+    r._reference = {"1": {"kmh": 41.0}}
+    assert r.free_flow(seg) == (41.0, "estimated")  # a better estimate wins over the posted limit

@@ -77,6 +77,7 @@ async def lifespan(app: FastAPI):
     log.info("twin's memory: %s (recording %s, full collection %s)", memory.path,
              "on" if memory.recorder else "off", "on" if settings.collect else "off")
     threading.Thread(target=_warm_up, args=(agent,), daemon=True).start()
+    threading.Thread(target=agent.streets.warm_up, daemon=True, name="streets-warm-up").start()
     # Overture's places: a newer release is looked for at most monthly (a minute or two to cut).
     threading.Thread(target=overture.watch, daemon=True).start()
     # The registers refresh daily; the first build (parcels, then 3D heights) takes ~2 minutes.

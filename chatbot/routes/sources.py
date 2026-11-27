@@ -148,6 +148,26 @@ def _radar(agent) -> dict:
     return status("live", at, f"newest frame {_iso(newest)[11:16]}" if newest else None)
 
 
+def _street_feed(*keys: str) -> Callable:
+    """A street inventory's state: when the publisher last changed it, from the catalogue."""
+    def probe(agent) -> dict:
+        st = getattr(agent, "streets", None)
+        if st is None:
+            return status(None)
+        invs = [inv for k in keys if (inv := st.feeds.peek(k)) is not None]
+        if not invs:
+            return status("waiting", note="read when the server starts, then once a day")
+        bad = [i for i in invs if i.error]
+        updated = max((i.updated for i in invs if i.updated), default=None)
+        count = sum(len(i.records) for i in invs[:1])
+        note = (f"inventory updated {updated}, " if updated else "") + f"{count} in Greater Nicosia"
+        if bad:
+            return status("stale" if any(i.records for i in invs) else "unavailable", max(i.read_at for i in invs),
+                          bad[0].error, updated=updated)
+        return status("live", max(i.read_at for i in invs), note, updated=updated)
+    return probe
+
+
 PROBES: dict[str, Callable] = {
     "smart_nicosia": lambda a: _cached("city"),
     "open_meteo": lambda a: _cached("weather"),
@@ -158,6 +178,14 @@ PROBES: dict[str, Callable] = {
     "twin_memory": _memory,
     "overture": _overture,
     "rainviewer": _radar,
+    # The street rules' inventories (chatbot/streets).
+    "speed_limits": _street_feed("speed_limits"),
+    "slow_zones": _street_feed("zones", "zone_entrances"),
+    "traffic_signals": _street_feed("signals"),
+    "pedestrian_crossings": _street_feed("crossings"),
+    "cycleways": _street_feed("cycleways"),
+    "bus_lanes": _street_feed("bus_lanes"),
+    "enforcement_cameras": _street_feed("cameras"),
 }
 
 

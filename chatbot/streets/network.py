@@ -510,6 +510,7 @@ class NetworkSource:
         self._fetched_at = 0.0
         self._lock = threading.Lock()
         self._running = False
+        self.auto = False  # load and refresh on demand: set once the server starts the street rules
         self.error: str | None = None
 
     @property
@@ -517,8 +518,9 @@ class NetworkSource:
         return self._fetched_at
 
     def current(self) -> Network | None:
-        """The network if it is loaded, never waiting; starts loading it when it isn't."""
-        if self._net is None or time.time() - self._fetched_at > NETWORK_TTL_S:
+        """The network if it is loaded, never waiting; starts loading it when it isn't (once the
+        server has started the street rules)."""
+        if self.auto and (self._net is None or time.time() - self._fetched_at > NETWORK_TTL_S):
             self.load_async()
         return self._net
 

@@ -303,7 +303,13 @@ def build_road(ents, eid: str, near, at: datetime | None = None) -> dict | None:
         readings.append({"key": "travel_min", "label": "Time to drive it", "value": round(row["travel_time_s"] / 60, 1), "unit": "min"})
     how_text = {"measured": "the speed most drivers make here when it is clear (85th percentile of 4 weeks)",
                 "estimated": "estimated from the road network's typical speeds, until the twin has a day of readings",
+                "posted": "the road's posted speed limit, while the estimate loads",
                 "assumed": "assumed 50 km/h, the urban limit, while the estimate loads"}.get(how or "")
+    # The street rules (chatbot/streets): the posted limit beside the measured speed.
+    st = getattr(ents, "streets", None)
+    posted = st.segment_limit(seg) if st is not None else None
+    if posted:
+        readings.append({"key": "limit_kmh", "label": "Posted limit", "value": posted["kmh"], "unit": "km/h"})
     opposite = next((s for s in m.roads.segments() if s.from_site == seg.to_site and s.to_site == seg.from_site), None)
     relations = []
     if opposite:
@@ -326,16 +332,24 @@ def build_road(ents, eid: str, near, at: datetime | None = None) -> dict | None:
         attributes=[E.attr("From", seg.from_name), E.attr("To", seg.to_name),
                     E.attr("Length", f"{round(seg.length_m)} m"), E.attr("Free flow", how_text),
                     E.attr("Usual", usual_note),
+                    E.attr("Posted limit", (f"{posted['kmh']} km/h along {round(100 * posted['coverage'])}% of it"
+                                            + {"signed": ", from the signs", "likely": ", likely, from the nearest sign",
+                                               "mapped": ", as OpenStreetMap maps it"}[posted["tier"]]
+                                            + ("" if posted["share"] >= 0.95 else
+                                               f" ({', '.join(f'{k} on {round(100 * v)}%' for k, v in posted['values'].items())})"))
+                           if posted else None),
                     E.attr("Detectors", f"Bluetooth sites {seg.from_site} and {seg.to_site}")],
         relations=relations,
         sources=[{"source": "road_speeds", "name": "Bluetooth travel times", "detail": f"National Access Point, {ROAD_LICENCE}",
                   "url": ROAD_PAGE, "as_of": row.get("measured_at")}],
         as_of=row.get("measured_at"),
         road={"speed_kmh": speed, "free_flow_kmh": free, "free_flow": how, "usual_kmh": row.get("usual_kmh"),
+              "limit_kmh": posted["kmh"] if posted else None, "limit_tier": posted["tier"] if posted else None,
               "usual_days": row.get("usual_days", 0), "share": row.get("share_of_free_flow"),
               **({"stalled": True, "last_measured_at": sp["last_measured_at"], "note": sp["note"]}
                  if stalled else {})},
         _for_model={"free_flow_kmh": free, "free_flow_from": how, "usual_kmh_this_hour": row.get("usual_kmh"),
+                    "posted_limit": posted,
                     "share_of_free_flow": row.get("share_of_free_flow"),
                     **({"feed": "stalled: no live speed", "note": sp["note"]} if stalled else {})})
 
