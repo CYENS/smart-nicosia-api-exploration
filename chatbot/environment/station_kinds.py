@@ -151,7 +151,7 @@ def build_station(ents, eid: str, near, at: datetime | None = None) -> dict | No
     relations = []
     # One line per city sensor, on the station's headline (NO2, or temperature): the inspector's
     # own section and the model read the rest.
-    compared = [c for c in compared if c["metric"] == HEADLINE[info.kind]]
+    compared = [c for c in compared if c["metric"] == HEADLINE[info.kind] and "bias" in c]
     for c in sorted(compared, key=lambda c: ("bias" not in c, c["distance_m"])):
         relations.append({"relation": "compared", "label": f"City sensor, {c['label']}", "id": c["sensor_id"],
                           "kind": "air_station", "name": c["sensor"], "distance_m": c["distance_m"],
