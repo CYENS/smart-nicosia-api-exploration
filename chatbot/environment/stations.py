@@ -559,8 +559,9 @@ class Measured:
             return False
 
     def stored(self, stations: list[str], keys: list[str] | tuple[str, ...] | None,
-               start: datetime, end: datetime) -> list[tuple[str, str, int, float]]:
-        """Readings in the memory between two moments (and the newest ones held here)."""
+               start: datetime, end: datetime, *, strict: bool = False) -> list[tuple[str, str, int, float]]:
+        """Readings in the memory between two moments (and the newest ones held here). A busy
+        memory gives what is held here only, or with `strict` raises (so it isn't kept)."""
         rows: list[tuple[str, str, int, float]] = []
         if self.memory is not None and getattr(self.memory, "exists", lambda: False)():
             sql = """SELECT station, key, epoch_ms(ts), value FROM station_readings
@@ -576,6 +577,8 @@ class Measured:
             except duckdb.CatalogException:
                 rows = []  # nothing recorded yet
             except Exception as e:  # noqa: BLE001 - the memory is busy or missing: say less, not wrong
+                if strict:
+                    raise
                 log.info("stations: the memory couldn't be read: %s", e)
                 rows = []
         seen = {(r[0], r[1], r[2]) for r in rows}
@@ -636,6 +639,8 @@ class Measured:
                 "lat": s.lat, "lon": s.lon, "type": s.type or None, "source": s.source,
                 "known": bool(readings), "readings": readings,
                 "as_of": _local(newest) if newest else None,
+                # When the newest reading was complete: an hourly mean at the end of its hour.
+                "reported": _local(newest + ends) if newest else None,
                 "age_min": max(0, round((_ms(when) - newest - ends) / 60000)) if newest else None}
 
     def summary(self, at: datetime | None) -> dict | None:
@@ -745,7 +750,11 @@ class Measured:
             if hit and time.time() - hit[0] < COMPARE_TTL_S:
                 return hit[1]
         start = until - timedelta(days=days)
-        city = self._city_hourly([s[0] for s in sensors], metrics, start, until)
+        busy = None  # a memory that couldn't be read: said, and not kept
+        try:
+            city = self._city_hourly([s[0] for s in sensors], metrics, start, until, strict=True)
+        except Exception as e:  # noqa: BLE001
+            busy, city = str(e), {}
         refs: dict[str, StationInfo] = {}
         pairs_for: list[tuple[tuple, str, StationInfo, float]] = []
         for sensor in sensors:
@@ -755,13 +764,22 @@ class Measured:
                 if near:
                     refs[near[0].id] = near[0]
                     pairs_for.append((sensor, m, near[0], near[1]))
-        ref_hourly = self._ref_hourly(list(refs), metrics, start, until)
+        try:
+            ref_hourly = self._ref_hourly(list(refs), metrics, start, until, strict=True)
+        except Exception as e:  # noqa: BLE001
+            busy, ref_hourly = busy or str(e), {}
         out = []
         for sensor, m, ref, dist in pairs_for:
             a = city.get((sensor[0], m), {})
             b = ref_hourly.get((ref.id, m), {})
             hours = sorted(set(a) & set(b))
             out.append(_stats(sensor, m, ref, dist, [(h, a[h], b[h]) for h in hours], days))
+        if busy:
+            log.info("stations: comparison without the memory: %s", busy)
+            for c in out:
+                if "bias" not in c:
+                    c["note"] = "the twin's memory is busy right now; try again in a moment"
+            return out
         with self._lock:
             self._compare[key] = (time.time(), out)
             if len(self._compare) > 64:
@@ -782,15 +800,17 @@ class Measured:
         b = self._ref_hourly([near[0].id], (metric,), start, until).get((near[0].id, metric), {})
         return near[0], [(h, a[h], b[h]) for h in sorted(set(a) & set(b))]
 
-    def _city_hourly(self, names: list[str], metrics: tuple[str, ...], start: datetime, end: datetime
-                     ) -> dict[tuple[str, str], dict[int, float]]:
+    def _city_hourly(self, names: list[str], metrics: tuple[str, ...], start: datetime, end: datetime,
+                     strict: bool = False) -> dict[tuple[str, str], dict[int, float]]:
         keys = [CITY_KEYS[m] for m in metrics if m in CITY_KEYS]
         back = {v: k for k, v in CITY_KEYS.items()}
-        if self.memory is None or not keys:
+        if self.memory is None or not keys or not getattr(self.memory, "exists", lambda: True)():
             return {}
         try:
             recs = self.memory.readings(names, keys, _ms(start), _ms(end))
         except Exception as e:  # noqa: BLE001 - no memory, no comparison
+            if strict:
+                raise
             log.info("stations: city sensors' history unavailable: %s", e)
             return {}
         acc: dict[tuple[str, str], dict[int, list[float]]] = {}
@@ -803,10 +823,10 @@ class Measured:
                 acc.setdefault((name, back[r["key"]]), {}).setdefault(h, []).append(v)
         return {k: {h: statistics.fmean(vs) for h, vs in hv.items()} for k, hv in acc.items()}
 
-    def _ref_hourly(self, ids: list[str], metrics: tuple[str, ...], start: datetime, end: datetime
-                    ) -> dict[tuple[str, str], dict[int, float]]:
+    def _ref_hourly(self, ids: list[str], metrics: tuple[str, ...], start: datetime, end: datetime,
+                    strict: bool = False) -> dict[tuple[str, str], dict[int, float]]:
         acc: dict[tuple[str, str], dict[int, list[float]]] = {}
-        for sid, key, ts, v in self.stored(ids, list(metrics), start, end):
+        for sid, key, ts, v in self.stored(ids, list(metrics), start, end, strict=strict):
             acc.setdefault((sid, key), {}).setdefault(ts // 3_600_000 * 3_600_000, []).append(v)
         return {k: {h: statistics.fmean(vs) for h, vs in hv.items()} for k, hv in acc.items()}
 
