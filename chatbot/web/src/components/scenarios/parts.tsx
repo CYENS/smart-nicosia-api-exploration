@@ -471,6 +471,9 @@ export function Assumptions({ def, run, values, onCommit }: {
 
 // -- the backtest -------------------------------------------------------------------------------
 
+// Whole numbers without a decimal; others with one.
+const whole = (v: number | null | undefined) => (v !== null && v !== undefined && Number.isInteger(v) ? 0 : 1)
+
 export function Backtest({ run }: { run: ScenarioRun }) {
   const bt = run.result.backtest
   if (!bt) return <p className="text-[13px] text-muted-foreground">This scenario has no backtest yet.</p>
@@ -483,7 +486,7 @@ export function Backtest({ run }: { run: ScenarioRun }) {
         <span className="text-muted-foreground">error on {bt.period.toLowerCase()}:</span>
       </p>
       <p>
-        The meters measured {fmtNum(bt.measured, 1)} {bt.unit}; today's policy, modelled, gives {fmtNum(bt.modelled, 1)} {bt.unit}.
+        The sensors measured {fmtNum(bt.measured, whole(bt.measured))} {bt.unit}; today's policy, modelled, gives {fmtNum(bt.modelled, whole(bt.modelled))} {bt.unit}.
         {hold && hold.error_pct !== null && <> Learnt only until {hold.learnt_until} and replayed on the rest: {fmtSigned(hold.error_pct, 1)}%.</>}
         {typeof bt.median_lamp_error_pct === "number" && <> Lamp by lamp, half are within {fmtNum(bt.median_lamp_error_pct as number, 1)}%.</>}
       </p>
