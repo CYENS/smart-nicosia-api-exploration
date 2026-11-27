@@ -30,7 +30,7 @@ log = logging.getLogger(__name__)
 
 MAX_PAIRS = 100  # what the public Valhalla instance takes in one matrix request (sources x targets)
 REQUEST_GAP_S = 1.2  # between requests: be gentle with the public server
-FETCH_PER_RUN = 15  # new matrix requests one run may make; the rest waits for the next runs
+FETCH_PER_RUN = 8  # new matrix requests one run may make (about 10 s); the rest waits for later runs
 ROUTE_LOCATIONS = 10  # what the public Valhalla instance takes in one route request
 # A crane truck that empties bell and underground containers: about 10 m and 26 t loaded.
 TRUCK = {"truck": {"length": 10.0, "weight": 26.0, "height": 3.9, "width": 2.55}}
@@ -46,7 +46,8 @@ class Matrix:
     km: list[list[float]]
     seconds: list[list[float]]
     source: str  # "valhalla" | "partly estimated" | "straight lines"
-    estimated: int = 0  # pairs estimated from straight lines
+    estimated: int = 0  # pairs not fetched yet, estimated from straight lines
+    no_road: int = 0  # pairs Valhalla finds no truck road for, estimated for good
 
     def index(self) -> dict[tuple[float, float], int]:
         return {p: i for i, p in enumerate(self.points)}
@@ -141,7 +142,7 @@ class MatrixSource:
         n = len(points)
         km = [[0.0] * n for _ in range(n)]
         sec = [[0.0] * n for _ in range(n)]
-        estimated = 0
+        estimated = no_road = 0
         for i, a in enumerate(points):
             for j, b in enumerate(points):
                 if i == j or a == b:
@@ -149,12 +150,15 @@ class MatrixSource:
                 got = pairs.get(f"{_pt(a)}|{_pt(b)}")
                 if got and got[0] is not None:
                     km[i][j], sec[i][j] = got
+                    continue
+                km[i][j], sec[i][j] = est_km[i][j], est_sec[i][j]
+                if got:
+                    no_road += 1
                 else:
-                    km[i][j], sec[i][j] = est_km[i][j], est_sec[i][j]
                     estimated += 1
         source = ("valhalla" if not estimated else
                   "straight lines" if estimated >= n * (n - 1) else "partly estimated")
-        return Matrix(points, km, sec, source, estimated)
+        return Matrix(points, km, sec, source, estimated, no_road)
 
     def cached_line(self, stops: Sequence[tuple[float, float]]) -> list[list[float]] | None:
         """The road line through the stops if an earlier run fetched it, else None (no request)."""

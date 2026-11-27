@@ -232,8 +232,9 @@ def test_the_city_pickups_replay_and_known_hours_limit_the_count():
 def test_a_bin_that_fills_between_rounds_needs_a_bigger_container():
     m = model("a", 15.0)  # 22.5 % a day at its fast end
     weekly = Policy("fixed", ROUND_DAYS[1])
-    assert bigger_container(m, weekly, (1500, 2500, 3200, 5000)) == pytest.approx(5000.0) or \
-        bigger_container(m, weekly, (1500, 2500, 3200, 5000)) > 5000
+    # 22.5 % a day for 7 days into 95 points of room: 2500 x 157.5 / 95, about 4,145 litres
+    assert bigger_container(m, weekly, (1500, 2500, 3200, 5000)) == 5000
+    assert bigger_container(m, weekly, (1500, 2500, 3200)) == 4200  # none holds it: rounded up
     assert bigger_container(m, Policy("fixed", ROUND_DAYS[7]), (1500, 2500, 3200, 5000)) is None
     assert weekly.max_gap_days() == 7 and Policy("fixed", ROUND_DAYS[2]).max_gap_days() == 4
 
@@ -434,7 +435,7 @@ def test_finish_draws_the_route_on_the_roads_once_per_run(tmp_path, offline, mon
     WASTE.finish(ctx, res, params)
     f = route["features"][0]
     assert f["properties"]["road"] is True and route["meta"]["note"].startswith("Road lines")
-    assert f["geometry"]["coordinates"][0][0] != f["properties"]["_stops"][0][1]
+    assert "_stops" not in f["properties"]
     assert len(asked) == len(route["features"])
 
 

@@ -151,7 +151,7 @@ function BinsToWatch({ run }: { run: ScenarioRun; compare: ScenarioRun | null })
                 fills {fmt(w.fill_per_day, 1)}% a day
               </span>
               <span className="w-[4.5rem] shrink-0 text-right font-readout text-[13px] tabular-nums">
-                {w.full_hours_baseline} to <span className="text-sodium">{w.full_hours}</span>
+                {w.full_hours_baseline} to <span className="font-semibold">{w.full_hours}</span>
               </span>
             </Row>
           ))}

@@ -269,10 +269,16 @@ class Waste(Scenario):
         points = list(dict.fromkeys(mids))
         matrices = {k: source.matrix(at, points) for k, (_, at) in depots.items()}
         estimated = max(m.estimated for m in matrices.values())
+        no_road = max(m.no_road for m in matrices.values())
+        if no_road:
+            notes.append(f"Valhalla finds no road a heavy truck may take for {no_road} pairs of "
+                         "places (a bin on a pedestrian street, say); those distances stay "
+                         "estimated from straight lines.")
         if estimated:
             n = len(points) + 1
             share = round(100 * estimated / (n * (n - 1)))
-            notes.append(f"{share}% of the road distances between bins are still estimated from "
+            notes.append(f"{share}% of the road distances between bins aren't fetched yet and "
+                         "are estimated from "
                          "straight lines (1.35 times longer, at 20 km/h): the twin fetches them "
                          "from Valhalla a few at a time, so kilometres and hours firm up over the "
                          "next runs.")
@@ -285,17 +291,19 @@ class Waste(Scenario):
         crew = _crew(p)
         fill = float(p["fill_rate"])
         matrix = data.matrices[p["depot"]]
-        bkey = ("base", p["depot"], fill, crew, int(p["start_hour"]))
-        if bkey not in data.memo:
-            data.memo[bkey] = baseline(data.study, matrix, crew, fill, int(p["start_hour"]))
-        policy = _policy(p)
-        skey = ("policy", policy, p["depot"], fill, crew)
-        if skey not in data.memo:
-            data.memo[skey] = policy_outcome(data.study, policy, matrix, crew, fill)
         if len(data.memo) > 400:  # a long-lived prepared period: keep it bounded
             for k in list(data.memo)[:200]:
                 data.memo.pop(k, None)
-        return data.memo[bkey], data.memo[skey]
+        bkey = ("base", p["depot"], fill, crew, int(p["start_hour"]))
+        base = data.memo.get(bkey)
+        if base is None:
+            base = data.memo[bkey] = baseline(data.study, matrix, crew, fill, int(p["start_hour"]))
+        policy = _policy(p)
+        skey = ("policy", policy, p["depot"], fill, crew)
+        scen = data.memo.get(skey)
+        if scen is None:
+            scen = data.memo[skey] = policy_outcome(data.study, policy, matrix, crew, fill)
+        return base, scen
 
     def evaluate(self, data: WasteData, params: dict) -> Result:
         st = data.study
@@ -340,9 +348,11 @@ class Waste(Scenario):
         days_base = [self._day(data, plan, int(params["start_hour"])) for plan in base.plans]
         drawn = max(scen.plans, key=lambda pl: sum(len(t.stops) for t in pl.trips), default=None)
         layers = {
-            "baseline": self._bins_layer(data, base, "baseline", "Bins under today's pickups"),
+            "baseline": self._bins_layer(data, base, "baseline", "Bins under today's pickups",
+                                         fill=float(params["fill_rate"])),
             "change": self._bins_layer(data, scen, "scenario",
-                                       f"Bins under {self.label(params).lower()}", base),
+                                       f"Bins under {self.label(params).lower()}", base,
+                                       fill=float(params["fill_rate"])),
         }
         if drawn is not None and drawn.trips:
             layers["route"] = self._route_layer(data, params, drawn)
@@ -421,15 +431,18 @@ class Waste(Scenario):
         if not layer:
             return
         source = MatrixSource(ctx.settings.valhalla_url, ctx.settings.user_agent, _cache(ctx))
+        failed = False
         for f in layer["features"]:
             pts = [tuple(c) for c in f["properties"].get("_stops", [])]
-            if len(pts) < 2 or f["properties"].get("road"):
+            if len(pts) < 2 or f["properties"].get("road") or failed:
                 continue
             line = source.route_line(pts)
             if line is None:
-                break  # Valhalla can't answer: keep the straight lines between stops
+                failed = True  # Valhalla can't answer: keep the straight lines between stops
+                continue
             f["geometry"]["coordinates"] = line
             f["properties"]["road"] = True
+            f["properties"].pop("_stops", None)  # only kept for drawing the road line
         road = all(f["properties"].get("road") for f in layer["features"])
         layer["meta"]["note"] = ("Road lines from Valhalla's heavy truck profile." if road else
                                  "Straight lines between stops, in the order the truck visits them.")
@@ -462,7 +475,7 @@ class Waste(Scenario):
                 "trips": trips}
 
     def _bins_layer(self, data: WasteData, o: Outcome, variant: str, title: str,
-                    base: Outcome | None = None) -> dict:
+                    base: Outcome | None = None, fill: float = 0.0) -> dict:
         st = data.study
         wk = 7 / st.days
         models = {m.bin.id: m for m in st.models}
@@ -479,7 +492,7 @@ class Waste(Scenario):
                 props |= {"full_hours": round(pb["full_hours"] * wk),
                           "capacity_hours": round(pb["capacity_hours"] * wk),
                           "collections": round(pb["collections"] * wk, 1),
-                          "fill_per_day": round(m.rate.per_day, 1),
+                          "fill_per_day": round(rate_at(m.rate, fill), 1),
                           "fill_range": [round(m.rate.low, 1), round(m.rate.high, 1)],
                           "read_full_hours": round(data.sensor[b.id]["full_hours"] * wk)}
                 if base is not None:
