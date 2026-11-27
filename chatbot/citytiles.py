@@ -321,7 +321,10 @@ class CityTiles:
             done = True
             shift = MAX_ZOOM - MIN_ZOOM
             for x, y in sorted({(x >> shift, y >> shift) for x, y in self.fill}):
-                done = self.get(MIN_ZOOM, x, y).complete(MIN_ZOOM) and done
+                built = self.get(MIN_ZOOM, x, y)
+                if not built.complete(MIN_ZOOM):  # these reach past the fill: ask for the rest
+                    self._ask(MIN_ZOOM, x, y, built)
+                    done = False
             if done:
                 with self._lock:
                     self._warmed = changes
@@ -492,7 +495,12 @@ class CityTiles:
 
     def _loop(self, kind: str) -> None:
         if kind == "osm":
-            self._scan()
+            try:
+                self._scan()
+            except Exception:  # noqa: BLE001 - the fill then reads what it can't vouch for
+                log.exception("3D city: reading what is on disk failed")
+            finally:
+                self._scanned = True
         while not self._stop.is_set():
             if not self._scanned:
                 self._stop.wait(0.5)

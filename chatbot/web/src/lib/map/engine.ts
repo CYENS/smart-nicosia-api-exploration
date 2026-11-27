@@ -1507,7 +1507,7 @@ async function watchCityFill() {
   } catch { /* the next look */ }
   cityStatus()
   const f = CITY.fill
-  if (CITY.on && (!f || f.problem || f.fill.done < f.fill.total || f.waiting)) fillTimer = window.setTimeout(watchCityFill, 10_000)
+  if (CITY.on && (!f || f.problem || f.fill.done < f.fill.total)) fillTimer = window.setTimeout(watchCityFill, 10_000)
 }
 
 // The detailed buildings near the eye are read while at least one `who` wants them (the shadows,
@@ -2508,11 +2508,10 @@ function applyViewBuildings() {
     }
   }
   if (!viewFocus) viewSaved.clear()
-  if (map.getLayer("city3d::fill")) {
-    const day = useMapUi.getState().basemap === "day"
-    map.setPaintProperty("city3d::fill", "fill-extrusion-color",
-      viewFocus && day ? VIEW_STONE : ["interpolate", ["linear"], ["get", "h"], ...cityHeights()])
-  }
+  // By day a view shows the buildings in stone, as they look; otherwise as the map paints them.
+  if (viewFocus && useMapUi.getState().basemap === "day" && map.getLayer("city3d::fill")) {
+    map.setPaintProperty("city3d::fill", "fill-extrusion-color", VIEW_STONE)
+  } else paintCityLayers()
 }
 
 // Place the camera for the view: an eye-level camera from lib/view.ts.
