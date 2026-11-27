@@ -28,6 +28,7 @@ export type CollectorJob = JobSettings & {
   summary: string // one short line under the title
   records: string
   uses: string
+  how: string // how it is collected, in plain words
   group: string
   tables: string[]
   source: JobSource
@@ -69,6 +70,28 @@ export type CollectorsReport = {
   recent_errors: { at: string; job: string; title: string; kind: string; message: string }[]
   cadences: number[]
   changed_at: string | null
+  // configured: the server has an admin password; unlocked: this page sent the right one.
+  admin: { configured: boolean; unlocked: boolean }
+}
+
+// One job in depth: GET /api/admin/collectors/jobs/{name}/how (chatbot/collectors.py, how()).
+export type HowItsCollected = {
+  name: string; title: string; summary: string; how: string; records: string; uses: string
+  source: JobSource
+  doc: string | null
+  code: {
+    path: string; line: number; url: string; commit: string | null
+    on_github: boolean | null; changed_since_commit: boolean | null
+  }
+  calls: { endpoint: string; method: string; url: string }[]
+  cost: { per_run: number; per_day: number; why: string; counts_against_budget: boolean }
+  settings: { key: string; label: string; value: unknown; default: unknown }[]
+  tables: {
+    name: string; rows: number; oldest: string | null; newest: string | null
+    shared_with: string[]; columns: { name: string; type: string }[]
+  }[]
+  runs: { started: string; status: string; seconds: number | null; requests: number | null; rows: number | null; message: string | null }[]
+  store_note: string | null
 }
 
 type State = {
@@ -80,17 +103,63 @@ type State = {
 
 export const useCollectors = create<State>(() => ({ report: null, status: "loading", error: null, pending: {} }))
 
+// Which job's "How it's collected" sheet is open; /admin#job=<name> links to it.
+export const useHow = create<{ name: string | null }>(() => ({ name: null }))
+
+export function openHow(name: string) {
+  useHow.setState({ name })
+  history.replaceState(null, "", `#job=${encodeURIComponent(name)}`)
+}
+
+export function closeHow() {
+  useHow.setState({ name: null })
+  history.replaceState(null, "", location.pathname)
+}
+
 const BASE = "/api/admin/collectors"
 
-async function call(path: string, init?: RequestInit): Promise<CollectorsReport> {
+// The admin password, once entered, lives for this tab only (sessionStorage), and goes with every
+// request in its own header. A browser sends a custom header only from this page, never from
+// another site, so no other site can make changes here on someone's behalf.
+const PASSWORD_KEY = "twin.admin-password"
+
+function adminPassword(): string | null {
+  try { return sessionStorage.getItem(PASSWORD_KEY) } catch { return null }
+}
+
+function keepAdminPassword(password: string | null) {
+  try {
+    if (password) sessionStorage.setItem(PASSWORD_KEY, password)
+    else sessionStorage.removeItem(PASSWORD_KEY)
+  } catch { /* private mode: it lasts until the page reloads */ }
+  memoryPassword = password
+}
+
+let memoryPassword: string | null = null
+
+class ApiError extends Error {
+  status: number
+  constructor(message: string, status: number) {
+    super(message)
+    this.status = status
+  }
+}
+
+async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const headers: Record<string, string> = {}
+  const password = adminPassword() ?? memoryPassword
+  if (password) headers["X-Admin-Password"] = password
+  // Every change goes as JSON, even one with nothing to say.
+  if (init?.method && init.method !== "GET") headers["Content-Type"] = "application/json"
   let res: Response
   try {
     res = await fetch(BASE + path, {
       ...init,
-      headers: init?.body ? { "Content-Type": "application/json" } : undefined,
+      body: init?.method && init.method !== "GET" ? (init.body ?? "{}") : undefined,
+      headers,
     })
   } catch {
-    throw new Error("The server didn't answer. It may be restarting; try again in a moment.")
+    throw new ApiError("The server didn't answer. It may be restarting; try again in a moment.", 0)
   }
   if (!res.ok) {
     let detail = ""
@@ -98,9 +167,30 @@ async function call(path: string, init?: RequestInit): Promise<CollectorsReport>
       const body = await res.json()
       detail = typeof body.detail === "string" ? body.detail : ""
     } catch { /* not JSON */ }
-    throw new Error(detail ? detail.replace(/^./, (c) => c.toUpperCase()) : `The server answered ${res.status}.`)
+    throw new ApiError(detail ? detail.replace(/^./, (c) => c.toUpperCase()) : `The server answered ${res.status}.`, res.status)
   }
   return res.json()
+}
+
+const call = (path: string, init?: RequestInit) => request<CollectorsReport>(path, init)
+
+export const loadHow = (name: string) => request<HowItsCollected>(`/jobs/${encodeURIComponent(name)}/how`)
+
+// Unlock changes for this tab: keeps the password only if the server takes it.
+export async function unlockChanges(password: string): Promise<boolean> {
+  keepAdminPassword(password)
+  try {
+    const report = await call("")
+    useCollectors.setState({ report, status: "ready", error: null })
+    if (report.admin.unlocked) return true
+  } catch { /* said below */ }
+  keepAdminPassword(null)
+  return false
+}
+
+export async function lockChanges() {
+  keepAdminPassword(null)
+  await loadCollectors()
 }
 
 let inflight: Promise<void> | null = null
@@ -123,6 +213,11 @@ async function change(key: string, path: string, init: RequestInit): Promise<boo
     return true
   } catch (e) {
     useCollectors.setState({ error: (e as Error).message })
+    // A refused password (changed on the server, say) locks the page again.
+    if (e instanceof ApiError && e.status === 403) {
+      keepAdminPassword(null)
+      void loadCollectors()
+    }
     return false
   } finally {
     useCollectors.setState((s) => {

@@ -259,7 +259,7 @@ def test_how_reads_the_code_the_settings_and_the_database(cfg, client, city, mon
     assert tables["telemetry"]["rows"] > 0 and tables["telemetry"]["newest"]
     assert "Air and noise stations" in tables["telemetry"]["shared_with"]
     assert h["runs"][0]["status"] == "ok"
-    assert "Wastebin device" in h["cost"]["why"]
+    assert h["cost"]["why"].startswith("One request per bin:")
     assert {s["key"] for s in h["settings"]} <= set(SETTING_LABELS)
     text = json.dumps(h)
     assert "sk-not-to-be-shown" not in text and str(cfg.db_path.parent) not in text
@@ -322,3 +322,15 @@ def test_routes_check_their_input(cfg, client, city, admin):  # noqa: F811
     assert json.loads(routes.reset_job("bins", req).body)["changed_at"]
     how = json.loads(routes.how_it_is_collected("travel_times", request(c)).body)  # no password
     assert how["calls"][0]["endpoint"] == "PredefinedLocationDataPublication"
+
+
+def test_the_report_is_as_slow_as_a_change_for_a_wrong_password(cfg, client, admin, monkeypatch):
+    # The report says whether the password was right, so it mustn't be a fast way to guess.
+    slept = []
+    monkeypatch.setattr(routes.time, "sleep", slept.append)
+    monkeypatch.setattr(routes, "WRONG_PASSWORD_PAUSE_S", 1.0)
+    c = make(cfg, client)
+    routes.collectors_report(request(c, {"X-Admin-Password": "guess"}))
+    routes.collectors_report(request(c, ADMIN))
+    routes.collectors_report(request(c))
+    assert slept == [1.0]

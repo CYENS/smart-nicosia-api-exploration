@@ -3,12 +3,14 @@
    fetch, switch a job on or off, change how often it runs, run it now, put it back to its
    defaults. Composed from shadcn: Cards for the overview, an ItemGroup per group of jobs, Field
    for the switches, Alert for callouts, Empty for the empty and failed states. Words stay short:
-   each row says where its data comes from in one "From ..." link, and the rest waits in its
-   details. The data and the changes go through lib/collectors.ts. */
-import { ArrowLeftIcon, CircleAlertIcon, CircleCheckIcon, TriangleAlertIcon } from "lucide-react"
-import { Fragment, useEffect, useState } from "react"
+   each row says where its data comes from in one "From ..." link, and Read more opens "How
+   it's collected" (how-sheet.tsx). Changes need the admin password: without it the page reads
+   but can't change anything. The data and the changes go through lib/collectors.ts. */
+import { ArrowLeftIcon, CircleAlertIcon, CircleCheckIcon, LockIcon, LockOpenIcon, TriangleAlertIcon } from "lucide-react"
+import { Fragment, useEffect, useState, type FormEvent } from "react"
 import { toast } from "sonner"
 
+import { HowSheet } from "@/components/admin/how-sheet"
 import { Dot, JobRow, type Tone } from "@/components/admin/job-row"
 import { SourceLink } from "@/components/admin/source-link"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
@@ -18,18 +20,96 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty"
-import { Field, FieldContent, FieldDescription, FieldLabel } from "@/components/ui/field"
+import { Field, FieldContent, FieldDescription, FieldError, FieldLabel } from "@/components/ui/field"
+import { Input } from "@/components/ui/input"
 import { Item, ItemContent, ItemDescription, ItemGroup, ItemMedia, ItemSeparator, ItemTitle } from "@/components/ui/item"
 import { Progress } from "@/components/ui/progress"
 import { Skeleton } from "@/components/ui/skeleton"
+import { Spinner } from "@/components/ui/spinner"
 import { Switch } from "@/components/ui/switch"
 import { Toaster } from "@/components/ui/sonner"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import {
-  ago, clockTime, loadCollectors, number, setCollecting, setRecording, startPolling, useCollectors,
-  type CollectorsReport,
+  ago, clockTime, loadCollectors, lockChanges, number, setCollecting, setRecording, startPolling,
+  unlockChanges, useCollectors, type CollectorsReport,
 } from "@/lib/collectors"
+
+// Changes need the admin password. Locked: a button to enter it (kept for this tab only).
+// Unlocked: a button to forget it. No password on the server: the page says it is read only.
+function AdminLock({ r }: { r: CollectorsReport }) {
+  const [open, setOpen] = useState(false)
+  const [password, setPassword] = useState("")
+  const [wrong, setWrong] = useState(false)
+  const [busy, setBusy] = useState(false)
+
+  if (!r.admin.configured) {
+    return (
+      <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+        <LockIcon className="size-3.5" aria-hidden="true" />
+        Read only. Set CHATBOT_ADMIN_PASSWORD on the server to make changes.
+      </p>
+    )
+  }
+  if (r.admin.unlocked) {
+    return (
+      <Button variant="ghost" size="sm" onClick={() => void lockChanges().then(() => toast.success("Changes are locked again"))}>
+        <LockOpenIcon data-icon="inline-start" />
+        Lock changes
+      </Button>
+    )
+  }
+
+  async function submit(e: FormEvent) {
+    e.preventDefault()
+    if (busy || !password) return
+    setBusy(true)
+    const ok = await unlockChanges(password)
+    setBusy(false)
+    if (ok) {
+      setOpen(false)
+      setPassword("")
+      setWrong(false)
+      toast.success("Changes unlocked for this tab")
+    } else setWrong(true)
+  }
+
+  return (
+    <>
+      <Button variant="outline" size="sm" onClick={() => setOpen(true)}>
+        <LockIcon data-icon="inline-start" />
+        Unlock changes
+      </Button>
+      <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) { setPassword(""); setWrong(false) } }}>
+        <DialogContent className="sm:max-w-sm">
+          <form onSubmit={submit} className="flex flex-col gap-4">
+            <DialogHeader>
+              <DialogTitle>Unlock changes</DialogTitle>
+              <DialogDescription>Starting, pausing and changing collectors needs the admin password.</DialogDescription>
+            </DialogHeader>
+            <Field data-invalid={wrong || undefined}>
+              <FieldLabel htmlFor="admin-password">Admin password</FieldLabel>
+              <Input
+                id="admin-password" type="password" autoComplete="current-password" autoFocus
+                value={password} onChange={(e) => { setPassword(e.target.value); setWrong(false) }}
+                aria-invalid={wrong || undefined}
+              />
+              {wrong ? <FieldError>That password isn't right.</FieldError> : <FieldDescription>Kept for this tab only.</FieldDescription>}
+            </Field>
+            <DialogFooter>
+              <DialogClose render={<Button variant="outline" type="button" />}>Cancel</DialogClose>
+              <Button type="submit" aria-disabled={busy || !password || undefined}>
+                {busy && <Spinner data-icon="inline-start" />}
+                Unlock
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+    </>
+  )
+}
 
 function collectionState(r: CollectorsReport): { tone: Tone; title: string; text: string } {
   if (r.elsewhere_now) {
@@ -81,6 +161,7 @@ function CollectionCard({ r }: { r: CollectorsReport }) {
         {/* One button that changes its words, so the keyboard stays on it. */}
         <Button
           variant={r.collecting ? "outline" : "default"}
+          disabled={!r.admin.unlocked}
           aria-disabled={pending || undefined}
           onClick={() => (r.collecting ? setConfirm(true) : void set(true))}
         >
@@ -167,7 +248,7 @@ function MemoryCard({ r }: { r: CollectorsReport }) {
           </Alert>
         )}
         <Field orientation="horizontal" data-disabled={!rec.on || undefined}>
-          <Switch id="recorder" checked={rec.recording} disabled={!rec.on} onCheckedChange={(on) => void set(on)} />
+          <Switch id="recorder" checked={rec.recording} disabled={!rec.on || !r.admin.unlocked} onCheckedChange={(on) => void set(on)} />
           <FieldContent>
             <FieldLabel htmlFor="recorder">Keep what pages fetch</FieldLabel>
             <FieldDescription>
@@ -309,7 +390,10 @@ export function CollectorsPage() {
             <ArrowLeftIcon data-icon="inline-start" />
             Back to the twin
           </Button>
-          <h1 className="mt-2 text-2xl font-semibold tracking-tight">Collectors</h1>
+          <div className="mt-2 flex w-full flex-wrap items-center justify-between gap-x-4 gap-y-2">
+            <h1 className="text-2xl font-semibold tracking-tight">Collectors</h1>
+            {report && <AdminLock r={report} />}
+          </div>
           <p className="max-w-2xl text-sm text-muted-foreground">
             What the twin keeps in its memory, and how often. Changes apply within seconds.
           </p>
@@ -330,6 +414,7 @@ export function CollectorsPage() {
             </>
           )}
         </main>
+        <HowSheet />
         <Toaster position="bottom-center" containerAriaLabel="Notifications" />
       </div>
     </TooltipProvider>

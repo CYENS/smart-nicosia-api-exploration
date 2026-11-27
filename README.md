@@ -132,6 +132,10 @@ are in `.env.example`: `CHATBOT_MODEL`, `CHATBOT_EFFORT` (default `medium`),
 `CHATBOT_WEB_SEARCH`, and for the twin's memory `CHATBOT_RECORD` (default on),
 `CHATBOT_COLLECT` (run the full collector in the chatbot, default off) and `COLLECTOR_DB`.
 
+The collectors have an admin page at `/admin`: what each job records and from where, how it is
+collected (from the code itself), and its controls. Changing anything there needs
+`CHATBOT_ADMIN_PASSWORD`; without it the page is read only.
+
 To host it (Docker and Caddy on a free Oracle Cloud VM, with HTTPS and a shared password set by
 `CHATBOT_PASSWORD`), see [deploy/README.md](deploy/README.md).
 

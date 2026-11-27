@@ -32,6 +32,17 @@ KNOWN_COUNTS = {
     "ParkingLot": 5,
 }
 
+# What each device type is, in the words the admin page uses.
+DEVICE_WORDS = {
+    "Parking": "parking bay",
+    "Lighting": "street light",
+    "Wastebin": "bin",
+    "Camera": "camera",
+    "InfoPoints": "info screen",
+    "smartsense": "air station",
+    "ParkingLot": "car park",
+}
+
 
 @dataclass
 class Context:
@@ -248,7 +259,10 @@ class AttributesJob(Job):
 
 
 class LatestJob(Job):
-    """getLatestTelemetry with a keys= filter for every device of one type."""
+    """The latest readings of every device of one type: one getLatestTelemetry request per
+    device, with a keys= filter asking only for the readings interpret.READING_KEYS lists for
+    that type. Readings already stored are skipped, and each run is a snapshot that marks the
+    whole type as covered at that moment."""
 
     calls = ("getLatestTelemetry",)
     writes = ("telemetry", "state_changes", "devices")
@@ -286,7 +300,8 @@ class LatestJob(Job):
         return float(counts.get(self.device_type, 0))
 
     def cost_note(self, counts, cfg):
-        return f"One request per {self.device_type} device: {counts.get(self.device_type, 0):,}."
+        word = DEVICE_WORDS.get(self.device_type, f"{self.device_type} device")
+        return f"One request per {word}: {counts.get(self.device_type, 0):,}."
 
 
 # -- TENANT feeds ------------------------------------------------------------------------------
