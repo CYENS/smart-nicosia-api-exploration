@@ -12,6 +12,8 @@
                                            above the ground, its heading and tilt, and the
                                            place's name (lib/view.ts); the camera part is left
                                            out while viewing
+     #/s/0c1d2e3f4a  #/s/0c1d2e3f4a+5b6c7d8e9f  a run open in the Scenario lab (and the run
+                                           compared with it)
 
    The hash follows the map with replaceState, so the back button isn't filled with every pan. */
 import {
@@ -20,11 +22,18 @@ import {
 import { closeInspector, inspect, useInspector } from "@/lib/inspector"
 import { getCamera, jumpToCamera, onCameraMoved, type Camera } from "@/lib/map/engine"
 import { onRouted, routedThing } from "@/lib/registries/inspect-routes"
+import { useWorkspace } from "@/lib/registries/workspaces"
+import { openScenarioRun } from "@/lib/scenarios/open"
+import { useLab } from "@/lib/scenarios/store"
 import { VIEW_MAX_PITCH, VIEW_MIN_PITCH, leaveView, useView, viewFrom, viewLink } from "@/lib/view"
 
 export type ClockLink = { at: number | null; range: [number, number] | null; compare: Compare | null }
 export type ViewLink = { lat: number; lon: number; height: number; yaw: number; pitch: number; name: string | null }
-export type Link = { camera: Camera | null; entity: string | null; clock?: ClockLink | null; view?: ViewLink | null }
+export type ScenarioLink = { run: string; compare: string | null }
+export type Link = {
+  camera: Camera | null; entity: string | null; clock?: ClockLink | null; view?: ViewLink | null
+  scenario?: ScenarioLink | null
+}
 
 const NUM = "(-?\\d+(?:\\.\\d+)?)"
 const CAMERA = new RegExp(`@${NUM},${NUM},${NUM}z(?:,${NUM}p)?(?:,${NUM}b)?`)
@@ -77,13 +86,16 @@ export function parseHash(hash: string): Link {
       view = { lat, lon, height, yaw: ((yaw % 360) + 360) % 360, pitch: Math.max(VIEW_MIN_PITCH, Math.min(VIEW_MAX_PITCH, pitch)), name: vw[6]?.trim() || null }
     }
   }
-  return { camera, entity, clock, view }
+  const s = /(?:^|\/)s\/([0-9a-f]{6,32})(?:\+([0-9a-f]{6,32}))?(?:\/|$)/.exec(h)
+  const scenario = s ? { run: s[1], compare: s[2] ?? null } : null
+  return { camera, entity, clock, view, scenario }
 }
 
 const r = (v: number, d: number) => Number(v.toFixed(d)).toString()
 
-export function formatHash({ camera, entity, clock, view }: Link): string {
+export function formatHash({ camera, entity, clock, view, scenario }: Link): string {
   const parts: string[] = []
+  if (scenario) parts.push(`s/${scenario.run}${scenario.compare ? `+${scenario.compare}` : ""}`)
   if (entity) parts.push(`e/${encodeURIComponent(entity)}`)
   if (clock?.at !== null && clock?.at !== undefined) parts.push(`t/${toWall(clock.at)}`)
   if (clock?.range) parts.push(`r/${toWall(clock.range[0])}_${toWall(clock.range[1])}`)
@@ -116,7 +128,14 @@ function clockNow(): ClockLink {
 function current(): Link {
   const { open, entity, target } = useInspector.getState()
   // A thing open in a place of its own (an incident in its inbox) when the inspector is closed.
-  return { camera: getCamera(), entity: open ? (entity?.id ?? target?.id ?? null) : routedThing(), clock: clockNow(), view: viewLink() }
+  return { camera: getCamera(), entity: open ? (entity?.id ?? target?.id ?? null) : routedThing(), clock: clockNow(), view: viewLink(),
+    scenario: scenarioNow() }
+}
+
+// The run open in the Scenario lab, while the lab is the open workspace.
+function scenarioNow(): ScenarioLink | null {
+  const { run, compare } = useLab.getState()
+  return useWorkspace.getState().active === "scenarios" && run ? { run: run.id, compare: compare?.id ?? null } : null
 }
 
 let written = ""
@@ -177,6 +196,8 @@ export function startDeepLinks(initial: Link) {
     if (s.at !== prev.at || s.range !== prev.range || s.compare !== prev.compare) soon()
   })
   onRouted(soon)
+  useLab.subscribe((s, prev) => { if (s.run !== prev.run || s.compare !== prev.compare) soon() })
+  useWorkspace.subscribe((s, prev) => { if (s.active !== prev.active) soon() })
   useView.subscribe((s, prev) => {
     if (s.open !== prev.open || s.spec !== prev.spec || s.yaw !== prev.yaw || s.pitch !== prev.pitch) soon()
   })
@@ -190,10 +211,12 @@ export function startDeepLinks(initial: Link) {
     applyClock(link.clock ?? { at: null, range: null, compare: null })
     if (link.entity && link.entity !== useInspector.getState().entity?.id && link.entity !== routedThing()) inspect({ id: link.entity }, { fly: !link.camera })
     else if (!link.entity && useInspector.getState().open) closeInspector()
+    if (link.scenario) openScenarioRun(link.scenario.run, link.scenario.compare)
   })
   applyClock(initial.clock)
   if (initial.view) openView(initial.view)
   else if (initial.entity) inspect({ id: initial.entity }, { fly: !initial.camera })
+  if (initial.scenario) openScenarioRun(initial.scenario.run, initial.scenario.compare)
 }
 
 function openView(v: ViewLink) {
