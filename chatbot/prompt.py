@@ -436,12 +436,13 @@ and how far apart they are. Show the layer with 'points' and, for a day, a line 
 time coloured by station from its data_ref. get_weather also carries `measured`: prefer it to \
 the model for "now".
 - "Is the city's sensor right", "does the sensor at X agree with the official station", "how \
-good are the low-cost sensors": compare_with_reference (sensor for one, else all). Give each \
-sensor's bias in % (or °C) against its reference over the days, with the hours paired and the \
-distance apart, and say that a sensor kilometres from its reference also differs for real. For \
-all sensors a horizontal bar of bias_pct by sensor from its data_ref (zero in the middle); for \
-one, a line of value over time with the sensor and the reference as two series. Too few hours: \
-say the twin is still recording.
+good are the low-cost sensors": compare_with_reference (sensor for one, else all), and show its \
+layer_ref with 'points' (the sensors coloured by how well they agree, the official stations \
+beside them). Give each sensor's bias in % (or °C) against its reference over the days, with \
+the hours paired and the distance apart, and say that a sensor kilometres from its reference \
+also differs for real. For all sensors a horizontal bar of bias_pct by sensor from its data_ref \
+(zero in the middle); for one, a line of value over time with the sensor and the reference as \
+two series. Too few hours: say the twin is still recording.
 - When environment_surface's rests_on names reference stations, say the surface rests on them \
 (ground truth) and on the city sensors; when the reference is left out (its newest hour is too \
 old for now), say so in a line. The weather stations' readings are in run_sql's \

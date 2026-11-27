@@ -1,8 +1,54 @@
 # Measured weather and reference air
 
 Addition 1 of [what the twin should add next](next-additions-research.md): real instruments
-beside the twin's modelled surfaces. Status: sources probed and fixtures saved (27 November
-2026, about 22:15 Cyprus time); the code is being built in this branch.
+beside the twin's modelled surfaces. Code in `chatbot/environment/stations.py` (the feeds, the
+memory, the comparison), `chatbot/environment/station_kinds.py` (the two kinds) and, on the
+page, `lib/environment/stations.ts` and `components/environment/stations.tsx`.
+
+## Where it shows
+
+- **The Layers sheet, Environment, "Measuring stations"**: the Met stations as blue dots with
+  their temperature, the two official air stations as rings with their NO₂. It follows the
+  clock: a moment the memory holds nothing for shows the stations faded, "no reading then".
+- **The Outside card, "Measured now"**: the centre's thermometer with its age, the rain of the
+  last hour, the wind measured at 10 m and the traffic station's newest hour; "Stations" puts
+  them on the map.
+- **The inspector**: `met-LEFKOSIA` and `aq-CY0004A` with their readings, their 24 hours (the
+  temperature every 10 minutes, NO₂ by the hour) and the city sensors compared with them; a city
+  air sensor gets "Against the official stations, past 7 days".
+- **The surfaces**: the air and temperature surfaces rest on the official stations where that
+  is honest, and the legend names them (see the environment twin).
+- **The chat**: `measured_stations` (the instruments beside the model, with a day's chart),
+  `compare_with_reference` (each city sensor's bias, RMSE and correlation against its nearest
+  official station), and `get_weather`'s `measured`.
+
+## How it works
+
+- **Reading**: the server's poller reads the Met file every 10 minutes and the EEA files every
+  20, each with `If-None-Match`, so a file comes down again only once it changed (the Met file
+  every 10 minutes, the EEA files about hourly). A copy of each is kept in
+  `data/chatbot_cache/stations/` for a restart. Pages and tools never ask the services: they
+  read what the poller read and the memory recorded.
+- **The memory**: every reading goes into the `station_readings` table (station, key, ts,
+  value, source) of the twin's memory, so the clock replays the stations and `run_sql` reaches
+  them. Each EEA file holds the year so far: its first read fills 35 days, later reads the last
+  3 (unverified hours can still change). The Met file holds only now, so its history grows from
+  when the twin starts reading it.
+- **At a moment**: a station's reading is its newest within half an hour (Met) or within three
+  hours after its hour ended (EEA); older, the station shows as unknown, never as its last value.
+- **The comparison**: each city sensor's hourly readings from the memory against its nearest
+  official station's (NO₂, O₃ and PM10 against the traffic or residential station, temperature
+  against the nearest Met thermometer), over 7 days: bias, bias in %, RMSE, r and the hours
+  paired. At least 12 hours, or it says too few. A sensor kilometres from its reference also
+  differs for real, which the answers say.
+
+## Limits
+
+- The Met readings start when the twin first reads them, so the first day's comparisons of
+  temperature say "too few hours".
+- Only the two Nicosia air stations: Agia Marina (CY0002R, the only PM2.5 reference) is 35 km
+  out and left for later; the national network's own real-time API needs a letter.
+- The EEA's hours are not yet verified and run two to three hours behind.
 
 ## Department of Meteorology stations
 

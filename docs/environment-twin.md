@@ -19,6 +19,10 @@ page code in `chatbot/web/src/lib/environment/` and `chatbot/web/src/components/
   are, the temperature and the wind, at the clock's moment.
 - **The chat**: `sun_and_shade` (a moment or a whole day), `environment_surface` (a metric or
   the wind) and `plan_route` with `prefer: ["shade"]`.
+- **Measuring stations** ([measured weather and reference air](measured-weather-air.md)): the
+  Met Department's weather stations and the national network's two air stations, as a Layers
+  row, the Outside card's "Measured" readout, two kinds in the inspector (`met-LEFKOSIA`,
+  `aq-CY0004A`), and the chat's `measured_stations` and `compare_with_reference`.
 
 ## How it works
 
@@ -38,7 +42,12 @@ page code in `chatbot/web/src/lib/environment/` and `chatbot/web/src/components/
   the metric's reach) sets how much of it is kept, and the page draws that as opacity. The
   uncertainty is the sensors' error plus the model's miss away from the stations, so a place far
   from every station is never surer than a station. Noise and the stations' index exist only
-  near the stations and fade out between them.
+  near the stations and fade out between them. Official stations are ground truth: the model's
+  miss is theirs alone when there is one, each station carries its own error (an instrument's
+  small, a city sensor's larger), and the temperature rests on the Met thermometers, a city
+  sensor joining only once its bias against them is measured. An official air station anchors
+  only its own hour or the next, so live it is usually left out (its files run two to three
+  hours behind) and the legend says so.
 - **Wind**: Open-Meteo's 10 m wind on a 5 by 5 lattice about 55 km across, drawn as streaks
   that drift with it (still arrows with reduced motion).
 - **Rain**: RainViewer's radar frames of the last two hours; the frame nearest the clock's
