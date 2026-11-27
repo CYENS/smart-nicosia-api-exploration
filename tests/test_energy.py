@@ -86,6 +86,22 @@ def _table(headers, rows, table_id="production_graph_data"):
     return f"<html><body><table id='{table_id}'><thead><tr>{head}</tr></thead><tbody>{body}</tbody></table></body></html>"
 
 
+def test_just_after_midnight_the_table_is_empty_and_that_is_no_layout_change(tmp_path):
+    page = parse_page(load("tso_generation_2026-11-28_0032.html"))
+    assert page.readings == [] and page.pending == 0 and "demand_mw" in page.columns
+    feed, clock = Feed(), Clock(FETCHED)
+    grid = make_grid(tmp_path, feed, clock, record=False)
+    grid.refresh()
+    feed.live = load("tso_generation_2026-11-28_0032.html")
+    clock.t = local(2026, 11, 28, 0, 32)
+    assert grid.refresh() and not grid.layout_changed and grid.error is None
+    # Yesterday's last row stands until today's first comes; 22:00 is too old to call live.
+    snap = grid.snapshot()
+    assert snap["now"]["t"] == "2026-11-27T22:00+02:00"
+    assert snap["day_span"] == "last_24_hours" and snap["day"][-1]["t"] == "2026-11-27T22:00+02:00"
+    assert snap["status"] == "stale" and snap["error"] is None
+
+
 def test_columns_are_found_by_meaning_in_any_order_and_language_and_under_a_new_id():
     html = _table(["Total Demand", "Conventional Generation", "Timestamp", "Wind Generation",
                    "Estimated Distributed Generation", "Total Available Capacity of Conventional Generation"],
@@ -285,6 +301,22 @@ def test_the_tool_charts_what_met_demand_and_maps_where_it_is_made(recorded):
     assert err
 
 
+def test_just_after_midnight_the_tool_charts_the_last_24_hours(recorded):
+    from chatbot.store import SessionStore
+    from chatbot.tools import ToolContext, run_tool
+
+    _, grid = recorded
+    grid.clock = Clock(local(2026, 11, 28, 0, 40))
+    grid.fetch_text = Feed(live=load("tso_generation_2026-11-28_0032.html"))
+    city = SimpleNamespace(now=grid.clock)
+    ctx = ToolContext(Settings(), city, None, None, SessionStore(), [].append, "c1",
+                      entities=SimpleNamespace(grid=grid))
+    res, err = run_tool(ctx, "get_grid", {})
+    assert not err, res
+    assert res["peak_and_cleanest_over"] == "the last 24 hours" and res["range"]["quarter_hours"] > 80
+    assert res["now"]["t"] == "2026-11-27T22:00+02:00"
+
+
 def test_the_grid_is_an_entity_with_a_series_and_a_moment(recorded):
     from chatbot.entities import Entities
 
@@ -295,7 +327,7 @@ def test_the_grid_is_an_entity_with_a_series_and_a_moment(recorded):
     assert e["kind"] == "power_grid" and e["geometry"] is None and e["state"]["value"] == "live"
     assert e["state"]["label"] == "599 MW, 6% from wind and sun"
     readings = {r["label"]: r["value"] for r in e["readings"]}
-    assert readings["Oil-fired stations"] == 563 and readings["Carbon, estimated"] == pytest.approx(0.658, abs=0.001)
+    assert readings["Oil-fired stations"] == 563 and readings["Carbon, estimated"] == 658  # g CO2 per kWh
     s = ents.series("grid-cyprus")
     assert s["unit"] == "MW" and len(s["points"]) >= 90
     from chatbot.energy.entities import grid_at

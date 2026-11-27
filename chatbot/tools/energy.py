@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 from chatbot.energy import LABELS, SOLAR_NOTE, WHERE, carbon, local_midnight, plants, point
 from chatbot.energy.tso import TZ
@@ -16,6 +16,7 @@ tool = TOOLS.tool
 COLORS = {LABELS["conventional_mw"]: "#b8835c", LABELS["wind_mw"]: "#3fc1b0",
           LABELS["solar_mw"]: "#f2cf4a"}
 STACK = ("conventional_mw", "wind_mw", "solar_mw")  # bottom to top
+CHART_SOURCES = ["tso_grid", "oil_co2", "twin_memory"]  # the plants layer adds OpenStreetMap
 
 
 def _wall(iso: str) -> str:
@@ -53,12 +54,17 @@ def h_get_grid(ctx: ToolContext, a: dict) -> dict:
     snap = grid.snapshot(at)
     end = now if snap["live"] else at
     days = a.get("days") or 1
-    start = local_midnight(end) - timedelta(days=days - 1)
+    # One day is the snapshot's: from midnight, or in a day's first hours the last 24 hours.
+    start = (datetime.fromisoformat(snap["day_from"]) if days == 1
+             else local_midnight(end) - timedelta(days=days - 1))
     rows = grid.series(start, end)
     if not rows:
-        if snap["live"]:
+        if snap["live"] and snap["status"] == "unavailable":
             raise ToolError("the operator's page isn't answering and the twin has no copy of the "
                             f"grid yet ({snap.get('error') or 'nothing read'}). Say so plainly")
+        if snap["live"]:
+            raise ToolError("the twin has no record of the grid in that range yet; it keeps 15 days "
+                            "back from when it started reading")
         raise ToolError(f"the twin's memory has no record of the grid between "
                         f"{start.astimezone(TZ):%a %d %b %H:%M} and {end.astimezone(TZ):%a %d %b %H:%M}; "
                         "it records the grid while the server runs and keeps 15 days back")
@@ -69,15 +75,17 @@ def h_get_grid(ctx: ToolContext, a: dict) -> dict:
     line_rows = [{"time": _wall(p["t"]), "demand_mw": p["demand_mw"],
                   "usual_demand_mw": usual.get(p["t"][11:16]) if days == 1 else None,
                   "carbon_kg_kwh": p["carbon_kg_kwh"], "renewable_pct": p["renewable_pct"]} for p in pts]
-    when = f"{start.astimezone(TZ):%a %d %b}" + (f" to {end.astimezone(TZ):%a %d %b}" if days > 1 else "")
-    data_ref = ctx.store.add_dataset("grid_mix", stack_rows, title=f"What met the island's demand, {when} (MW)")
-    carbon_ref = ctx.store.add_dataset("grid_carbon", line_rows,
-                                       title=f"The island's demand and carbon, {when}")
+    when = (f"{start.astimezone(TZ):%a %d %b %H:%M} to {end.astimezone(TZ):%a %d %b %H:%M}"
+            if days > 1 or snap["day_span"] != "today" else f"{start.astimezone(TZ):%a %d %b}")
+    data_ref = ctx.store.add_dataset("grid_mix", stack_rows, title=f"What met the island's demand, {when} (MW)",
+                                     sources=CHART_SOURCES)
+    carbon_ref = ctx.store.add_dataset("grid_carbon", line_rows, title=f"The island's demand and carbon, {when}",
+                                       sources=CHART_SOURCES)
     n = snap["now"] or {}
     feats = plants.features({"oil": n.get("conventional_mw"), "wind": n.get("wind_mw")})
     layer_ref = ctx.store.add_layer("grid_plants", feats, geometry="point",
                                     title="Where the island's power is made", legend=plants.legend(),
-                                    value_fields=["capacity_mw"])
+                                    value_fields=["capacity_mw"], sources=["openstreetmap", "tso_grid"])
     ctx.store.layers[layer_ref]["meta"]["note"] = plants.SOLAR_NOTE
     dem = [p["demand_mw"] for p in pts if p["demand_mw"] is not None]
     ren = [p["renewable_pct"] for p in pts if p["renewable_pct"] is not None]
@@ -90,7 +98,8 @@ def h_get_grid(ctx: ToolContext, a: dict) -> dict:
             "t", "age_min", "demand_mw", "conventional_mw", "wind_mw", "solar_mw", "carbon_kg_kwh",
             "renewable_pct", "wind_pct", "solar_pct")} if n else None,
         "usual_demand_mw_at_this_time": usual.get(hm), "usual_days": snap["usual_days"],
-        "day_peak": snap["peak"], "day_cleanest": snap["cleanest"],
+        "peak": snap["peak"], "cleanest": snap["cleanest"],
+        "peak_and_cleanest_over": "today so far" if snap["day_span"] == "today" else "the last 24 hours",
         "range": {"from": _wall(pts[0]["t"]), "to": _wall(pts[-1]["t"]), "quarter_hours": len(pts),
                   "demand_mw": {"min": min(dem), "mean": round(sum(dem) / len(dem)), "max": max(dem)} if dem else None,
                   "renewable_pct_mean": round(sum(ren) / len(ren), 1) if ren else None,

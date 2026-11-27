@@ -54,7 +54,8 @@ def build_grid(ents, eid: str, near, at: datetime | None = None) -> dict | None:
         _num(n.get("conventional_mw"), "MW", "conventional_mw", "Oil-fired stations", as_of),
         _num(n.get("wind_mw"), "MW", "wind_mw", "Wind", as_of),
         _num(n.get("solar_mw"), "MW", "solar_mw", "Solar and small plants, estimated", as_of),
-        _num(n.get("carbon_kg_kwh"), "kg CO2/kWh", "carbon_kg_kwh", "Carbon, estimated", as_of),
+        _num(round(n["carbon_kg_kwh"] * 1000) if n.get("carbon_kg_kwh") is not None else None,
+             "g CO2/kWh", "carbon_g_kwh", "Carbon, estimated", as_of),
         _num(n.get("renewable_pct"), "%", "renewable_pct", "From wind and sun", as_of),
     ) if x]
     inst = snap.get("installed") or {}
