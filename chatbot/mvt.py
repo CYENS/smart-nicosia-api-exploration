@@ -56,7 +56,13 @@ def _delimited(field_no: int, payload: bytes) -> bytes:
 
 
 def _packed(field_no: int, values: Iterable[int]) -> bytes:
-    return _delimited(field_no, b"".join(_varint(v) for v in values))
+    buf = bytearray()
+    for v in values:  # inline: most values fit one byte, and this runs for every coordinate
+        while v > 0x7F:
+            buf.append((v & 0x7F) | 0x80)
+            v >>= 7
+        buf.append(v)
+    return _key(field_no, 2) + _varint(len(buf)) + bytes(buf)
 
 
 def _value(v: object) -> bytes:
@@ -163,10 +169,17 @@ def _fields(buf: bytes):
 
 
 def _unpack(buf: bytes) -> list[int]:
-    out, i, n = [], 0, len(buf)
+    out: list[int] = []
+    append = out.append
+    i, n = 0, len(buf)
     while i < n:
-        v, i = _read_varint(buf, i)
-        out.append(v)
+        b = buf[i]
+        if b < 0x80:  # one byte, the usual case
+            append(b)
+            i += 1
+        else:
+            v, i = _read_varint(buf, i)
+            append(v)
     return out
 
 

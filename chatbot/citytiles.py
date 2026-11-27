@@ -33,7 +33,7 @@ import shutil
 import threading
 import time
 from collections import OrderedDict
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 from chatbot import mvt
 from chatbot.dls import CYPRUS_BBOX, DLS, lonlat_to_tile, tile_bounds, tiles_for_bbox
@@ -56,6 +56,9 @@ FINAL_MAX_AGE_S = 86400
 MEMORY_BYTES = 96 * 2 ** 20
 RETRY_S = 600  # a tile that failed to load is tried again after this
 DLS_THREADS = 2  # each waits on the DLS throttle, so together they stay within it
+# While buildings arrive (the first fill), a wide tile is made again at most this often (s): a z12
+# tile takes a second or two, and a new DLS tile under it comes every few tenths of a second.
+REBUILD_AFTER_S = {12: 30.0, 13: 15.0, 14: 6.0, 15: 0.0, 16: 0.0}
 EARTH_M = 40075016.686
 # zoom: (smallest footprint kept in m², unless at least this tall in m, outline tolerance in m)
 LEVELS: dict[int, tuple[float, float, float]] = {
@@ -70,15 +73,17 @@ class Built:
     missing_fill: bool = False  # DLS tiles of greater Nicosia not read yet
     missing_far: bool = False  # DLS tiles elsewhere in Cyprus not read yet
     missing_osm: bool = False  # OpenStreetMap tiles not read yet
+    stale: bool = False  # buildings under it changed since it was made (it is made again soon)
 
     @property
     def final(self) -> bool:
-        return not (self.missing_fill or self.missing_far or self.missing_osm)
+        return not (self.missing_fill or self.missing_far or self.missing_osm or self.stale)
 
     def complete(self, z: int) -> bool:
         """Whether there is nothing more to wait for at zoom z (the DLS outside greater Nicosia
         is only asked for close up)."""
-        return not (self.missing_fill or self.missing_osm or (z >= CLOSE_ZOOM and self.missing_far))
+        return not (self.missing_fill or self.missing_osm or self.stale
+                    or (z >= CLOSE_ZOOM and self.missing_far))
 
 
 def _gzip(raw: bytes) -> bytes:
@@ -172,6 +177,10 @@ class CityTiles:
         self._mem: OrderedDict[tuple[int, int, int], Built] = OrderedDict()
         self._mem_bytes = 0
         self._gens: dict[tuple[int, int, int], int] = {}
+        self._stale: dict[tuple[int, int, int], float] = {}  # tile: since when (kept meanwhile)
+        self._changes = 0  # buildings arrived, all told
+        self._warmed = -1  # ... when the pyramid was last made in full
+        self._warm_lock = threading.Lock()
         self._build_locks: dict[tuple[int, int, int], threading.Lock] = {}
         # What the background readers know and are asked for.
         self._dls_known: set[tuple[int, int]] = set()  # fresh on disk
@@ -203,27 +212,41 @@ class CityTiles:
         failing = self.last_error is not None and time.time() - self.last_error[0] < 120
         return FAILING_MAX_AGE_S if failing else PARTIAL_MAX_AGE_S
 
+    def _cached(self, key: tuple[int, int, int]) -> Built | None:
+        """The tile in memory, unless it changed long enough ago to be made again (under the
+        lock). One that changed lately is handed out marked stale, so it is asked for again."""
+        hit = self._mem.get(key)
+        if hit is None:
+            return None
+        since = self._stale.get(key)
+        if since is None:
+            self._mem.move_to_end(key)
+            return hit
+        if time.time() - since < REBUILD_AFTER_S[key[0]]:
+            self._mem.move_to_end(key)
+            return hit if hit.stale else replace(hit, stale=True)
+        return None
+
     def get(self, z: int, x: int, y: int) -> Built:
         key = (z, x, y)
         with self._lock:
-            hit = self._mem.get(key)
+            hit = self._cached(key)
             if hit is not None:
-                self._mem.move_to_end(key)
                 return hit
             lock = self._build_locks.setdefault(key, threading.Lock())
         with lock:  # one build per tile, however many ask at once
             with self._lock:
-                hit = self._mem.get(key)
+                hit = self._cached(key)
                 gen = self._gens.get(key, 0)
+                was_stale = key in self._stale
             if hit is not None:
                 return hit
-            built = self._read(key)
+            built = None if was_stale else self._read(key)
             if built is None:
                 built = self._build(z, x, y)
                 if built.final:
                     self._write(key, built, gen)
-            self._remember(key, built, gen)
-            return built
+            return self._remember(key, built, gen)
 
     def _path(self, key: tuple[int, int, int]):
         z, x, y = key
@@ -249,33 +272,62 @@ class CityTiles:
         except OSError as e:
             log.warning("couldn't keep 3D city tile %s: %s", key, e)
 
-    def _remember(self, key: tuple[int, int, int], built: Built, gen: int) -> None:
+    def _remember(self, key: tuple[int, int, int], built: Built, gen: int) -> Built:
+        """Keep a tile just made. If its buildings changed while it was being made, it is kept
+        all the same (during the first fill they change every moment) but as stale."""
         with self._lock:
-            if self._gens.get(key, 0) != gen:
-                return
+            if self._gens.get(key, 0) != gen and not built.stale:
+                built = replace(built, stale=True)
+            if built.stale:
+                self._stale[key] = time.time()
+            else:
+                self._stale.pop(key, None)
             old = self._mem.pop(key, None)
             if old is not None:
                 self._mem_bytes -= len(old.data)
             self._mem[key] = built
             self._mem_bytes += len(built.data)
             while self._mem_bytes > MEMORY_BYTES and len(self._mem) > 1:
-                _, gone = self._mem.popitem(last=False)
+                gone_key, gone = self._mem.popitem(last=False)
                 self._mem_bytes -= len(gone.data)
+                self._stale.pop(gone_key, None)
+            return built
 
     def _forget(self, keys: set[tuple[int, int, int]]) -> None:
-        """Drop tiles whose buildings changed, in memory and on disk."""
+        """Tiles whose buildings changed: gone from disk, and stale in memory (still served
+        until made again, at most every REBUILD_AFTER_S)."""
+        now = time.time()
         with self._lock:
+            self._changes += 1
             for key in keys:
                 self._gens[key] = self._gens.get(key, 0) + 1
-                old = self._mem.pop(key, None)
-                if old is not None:
-                    self._mem_bytes -= len(old.data)
+                if key in self._mem:
+                    self._stale.setdefault(key, now)
                 self._path(key).unlink(missing_ok=True)
 
     def _changed(self, z16: list[tuple[int, int]]) -> None:
         keys = {(z, x >> (MAX_ZOOM - z), y >> (MAX_ZOOM - z))
                 for x, y in z16 for z in range(MIN_ZOOM, MAX_ZOOM + 1)}
         self._forget(keys)
+
+    def warm(self) -> bool:
+        """Make greater Nicosia's tiles, every zoom, so a first view need not wait for them (the
+        fill does it when it has nothing to read). True once they are all made and complete."""
+        if not self._warm_lock.acquire(blocking=False):
+            return False
+        try:
+            with self._lock:
+                changes = self._changes
+            done = True
+            shift = MAX_ZOOM - MIN_ZOOM
+            for x, y in sorted({(x >> shift, y >> shift) for x, y in self.fill}):
+                done = self.get(MIN_ZOOM, x, y).complete(MIN_ZOOM) and done
+            if done:
+                with self._lock:
+                    self._warmed = changes
+            return done
+        finally:
+            self._warm_lock.release()
 
     # -- building ----------------------------------------------------------------------------
 
@@ -288,12 +340,12 @@ class CityTiles:
         upm = units_per_m(z, y)
         tol = tol_m * upm
         feats: list[mvt.Feature] = []
-        flags = [False, False, False]
+        flags = [False, False, False, False]
         for dy in (0, 1):
             for dx in (0, 1):
                 kid = self.get(z + 1, 2 * x + dx, 2 * y + dy)
                 flags = [flags[0] or kid.missing_fill, flags[1] or kid.missing_far,
-                         flags[2] or kid.missing_osm]
+                         flags[2] or kid.missing_osm, flags[3] or kid.stale]
                 if kid.count == 0:
                     continue
                 layer = mvt.decode(gzip.decompress(kid.data), only=[LAYER]).get(LAYER)
@@ -446,8 +498,16 @@ class CityTiles:
                 self._stop.wait(0.5)
                 continue
             self._wake[kind].clear()
-            if not self._read_one(kind):
-                self._wake[kind].wait(5)
+            if self._read_one(kind):
+                continue
+            with self._lock:
+                behind = self._warmed != self._changes
+            if kind == "dls" and behind:
+                try:
+                    self.warm()
+                except Exception:  # noqa: BLE001 - try again on the next quiet moment
+                    log.exception("3D city: making the tiles in advance failed")
+            self._wake[kind].wait(5)
 
     def start(self) -> None:
         """Start filling in the background (once)."""
