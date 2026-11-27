@@ -99,8 +99,16 @@ def fetch_each(
 
 
 class Job:
+    """A polling job. What it declares here is shown on the admin page ("How it's collected")
+    and checked by tests/test_collectors.py against what the job really does, so the page can't
+    drift from the code: `calls` are the API endpoints `fetch` requests, `writes` the tables
+    `store` fills, and `settings` the Config fields that shape it beyond its cadence."""
+
     name: str = ""
     nokia: bool = True  # counts against the Smart Nicosia request budget
+    calls: tuple[str, ...] = ()
+    writes: tuple[str, ...] = ()
+    settings: tuple[str, ...] = ()
 
     def prepare(self, con: duckdb.DuckDBPyConnection, ctx: Context) -> Any:
         return None
@@ -118,12 +126,22 @@ class Job:
     def requests_per_run(self, counts: dict[str, int], cfg: Config) -> float:
         return 1.0
 
+    def cost_note(self, counts: dict[str, int], cfg: Config) -> str:
+        """Why a run costs `requests_per_run`, in a sentence (override it beside that method)."""
+        return "One request a run."
+
 
 # -- inventory ---------------------------------------------------------------------------------
 
 
 class DevicesJob(Job):
+    """The inventory: every device registered to the tenant, with its type and position, in one
+    getTenantDevices request. Devices missing from it are kept but marked out of inventory."""
+
     name = "devices"
+    calls = ("getTenantDevices",)
+    writes = ("devices",)
+    settings = ("tenant",)
 
     def fetch(self, client, plan, ctx):
         return Fetched(
@@ -162,7 +180,14 @@ class DevicesJob(Job):
 
 
 class AttributesJob(Job):
+    """Each device's attributes (street, postal code, metadata, inactivity timeout and last
+    activity), one getLatestAttribute request per device in the inventory; the device row gets
+    the fields the page and interpret.online_status need."""
+
     name = "attributes"
+    calls = ("getLatestAttribute",)
+    writes = ("attributes", "devices")
+    settings = ("concurrency",)
 
     def prepare(self, con, ctx):
         return [r[0] for r in con.execute(
@@ -215,12 +240,19 @@ class AttributesJob(Job):
     def requests_per_run(self, counts, cfg):
         return float(sum(counts.values()))
 
+    def cost_note(self, counts, cfg):
+        return f"One request per device in the inventory: {sum(counts.values()):,}."
+
 
 # -- per-device latest telemetry ---------------------------------------------------------------
 
 
 class LatestJob(Job):
     """getLatestTelemetry with a keys= filter for every device of one type."""
+
+    calls = ("getLatestTelemetry",)
+    writes = ("telemetry", "state_changes", "devices")
+    settings = ("concurrency",)
 
     def __init__(self, name: str, device_type: str, keys: tuple[str, ...] | None = None):
         self.name = name
@@ -253,6 +285,9 @@ class LatestJob(Job):
     def requests_per_run(self, counts, cfg):
         return float(counts.get(self.device_type, 0))
 
+    def cost_note(self, counts, cfg):
+        return f"One request per {self.device_type} device: {counts.get(self.device_type, 0):,}."
+
 
 # -- TENANT feeds ------------------------------------------------------------------------------
 
@@ -264,6 +299,10 @@ class StreamJob(Job):
     every parking, lamp and bin change for a few hundred requests a day."""
 
     name = "stream"
+    calls = ("getTelemetryRange",)
+    writes = ("telemetry", "state_changes", "devices")
+    settings = ("tenant", "stream_keys", "range_cap", "stream_max_pages",
+                "stream_max_lookback_hours")
     # Device types whose messages the TENANT series mirrors (status, level, state, connection).
     covered_types = ("Parking", "Lighting", "Wastebin", "InfoPoints", "Camera")
     overlap = timedelta(minutes=10)
@@ -321,11 +360,18 @@ class StreamJob(Job):
     def requests_per_run(self, counts, cfg):
         return 1.3  # one page usually; two when a poll window spans >1,000 records
 
+    def cost_note(self, counts, cfg):
+        return (f"One page of up to {cfg.range_cap:,} records, sometimes two when more arrived "
+                f"since the last run; at most {cfg.stream_max_pages} pages.")
+
 
 class EventsJob(Job):
     """The city's running alarm log: TENANT toastDesc ("YW1337: Fill level above ... 80 %")."""
 
     name = "events"
+    calls = ("getTelemetryRange",)
+    writes = ("events",)
+    settings = ("tenant", "range_cap", "events_max_pages")
     overlap = timedelta(minutes=30)
     first_lookback = timedelta(days=1)
 
@@ -362,7 +408,14 @@ def store_events(con, events: list[tuple[int, str | None, str]]) -> int:
 
 
 class AlarmsJob(Job):
+    """The tenant's alarms in each watched state (getAlarms), upserted so an alarm keeps the
+    time it was first seen and gains its clear time. The API has no paging: a state with
+    `alarm_limit` alarms or more is reported as capped."""
+
     name = "alarms"
+    calls = ("getAlarms",)
+    writes = ("alarms",)
+    settings = ("tenant", "alarm_states", "alarm_limit")
 
     def fetch(self, client, plan, ctx):
         cfg = ctx.cfg
@@ -408,13 +461,23 @@ class AlarmsJob(Job):
     def requests_per_run(self, counts, cfg):
         return float(len(cfg.alarm_states))
 
+    def cost_note(self, counts, cfg):
+        return f"One request per alarm state watched: {', '.join(cfg.alarm_states)}."
+
 
 # -- national Bluetooth travel times -----------------------------------------------------------
 
 
 class TravelTimesJob(Job):
+    """The national Bluetooth travel times (DATEX II XML from the Cyprus National Access Point):
+    one request returns every road segment's latest time and speed. The feed keeps no history,
+    so a reading not stored here is gone."""
+
     name = "travel_times"
     nokia = False
+    calls = ("PredefinedLocationDataPublication",)
+    writes = ("travel_times",)
+    settings = ("nap_url",)
 
     def fetch(self, client, plan, ctx):
         return Fetched(client.get_text(ctx.cfg.nap_url, "PredefinedLocationDataPublication"))
@@ -508,6 +571,9 @@ class TrafficDailyJob(Job):
     """Per-camera, per-counting-line daily counts (group_by=stream) for finished local days."""
 
     name = "traffic_daily"
+    calls = ("getTrafficReports",)
+    writes = ("traffic_counts",)
+    settings = ("traffic_initial_days", "traffic_max_days_per_request")
 
     def prepare(self, con, ctx):
         wm = db.get_watermark(con, self.name)  # ordinal of the last stored local day
@@ -543,6 +609,8 @@ class TrafficHourlyJob(Job):
     """City-wide hourly counts for today (and yesterday, until it has been fetched complete)."""
 
     name = "traffic_hourly"
+    calls = ("getTrafficReports",)
+    writes = ("traffic_counts",)
 
     def prepare(self, con, ctx):
         return db.get_watermark(con, self.name)
@@ -573,6 +641,9 @@ class TrafficHourlyJob(Job):
     def requests_per_run(self, counts, cfg):
         return 1 + 1 / 24
 
+    def cost_note(self, counts, cfg):
+        return "One request for today, and once a day a second one to finish yesterday."
+
 
 def store_speeds(con, rows: list[parse.SpeedRow], granularity: str, line_type: str,
                  now: datetime) -> int:
@@ -593,6 +664,9 @@ class SpeedJob(Job):
     """City-wide average speed (generalReports), five-minute buckets."""
 
     name = "speed"
+    calls = ("generalReports",)
+    writes = ("speeds",)
+    settings = ("speed_group_by", "speed_line_type", "speed_max_catchup_days")
 
     def prepare(self, con, ctx):
         return db.get_watermark(con, self.name)
@@ -675,6 +749,9 @@ class CamerasMapJob(Job):
     """Traffic-analytics feeds -> Camera devices (exact name) or hand coordinates (CSV)."""
 
     name = "cameras_map"
+    calls = ("analytics", "object_types")
+    writes = ("traffic_cameras", "object_types")
+    settings = ("camera_csv",)
 
     def prepare(self, con, ctx):
         return {r[0]: (r[1], r[2]) for r in con.execute(
@@ -719,6 +796,9 @@ class CamerasMapJob(Job):
 
     def requests_per_run(self, counts, cfg):
         return 2.0
+
+    def cost_note(self, counts, cfg):
+        return "Two requests: the camera feeds, and the kinds of things they count."
 
 
 # -- registry ----------------------------------------------------------------------------------
