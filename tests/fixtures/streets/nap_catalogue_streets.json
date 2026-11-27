@@ -1,0 +1,72 @@
+{
+ "success": true,
+ "result": {
+  "count": 8,
+  "results": [
+   {
+    "name": "traffic_enforcement_cameras",
+    "metadata_modified": "2025-11-21T12:04:57.361906",
+    "title": {
+     "el": "Κάμερες Ελέγχου Κυκλοφορίας",
+     "en": "Traffic Enforcement Cameras"
+    }
+   },
+   {
+    "name": "lez",
+    "metadata_modified": "2025-05-12T11:16:56.184925",
+    "title": {
+     "el": "Ζώνες Κυκλοφορίας Χαμηλών Εκπομπών",
+     "en": "Low Speed Emission Zones (LEZ)"
+    }
+   },
+   {
+    "name": "lez_entrance_points",
+    "metadata_modified": "2025-03-11T13:34:38.806441",
+    "title": {
+     "el": "Σημεία Εισόδου σε Ζώνες Κυκλοφορίας Χαμηλών Εκπομπών",
+     "en": "Entrance Points on Low Speed Emission Zones (LEZ)"
+    }
+   },
+   {
+    "name": "speed_limits",
+    "metadata_modified": "2025-03-11T13:13:27.246197",
+    "title": {
+     "el": "Όρια Ταχύτητας",
+     "en": "Speed Limits"
+    }
+   },
+   {
+    "name": "cycleways",
+    "metadata_modified": "2025-03-10T15:00:28.913484",
+    "title": {
+     "el": "Ποδηλατόδρομοι",
+     "en": "Cycleways"
+    }
+   },
+   {
+    "name": "bus_lanes",
+    "metadata_modified": "2025-03-10T14:53:41.302463",
+    "title": {
+     "el": "Λεωφορειολωρίδες",
+     "en": "Bus Lanes"
+    }
+   },
+   {
+    "name": "traffic_signals",
+    "metadata_modified": "2025-03-10T14:40:06.121290",
+    "title": {
+     "el": "Σήματα Κυκλοφορίας",
+     "en": "Traffic Signals"
+    }
+   },
+   {
+    "name": "pedestrian_crossings",
+    "metadata_modified": "2025-03-10T14:30:42.696112",
+    "title": {
+     "el": "Διαβάσεις Πεζών",
+     "en": "Pedestrian Crossings"
+    }
+   }
+  ]
+ }
+}
