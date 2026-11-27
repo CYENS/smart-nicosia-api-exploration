@@ -40,8 +40,8 @@ export const STREET_COLORS = {
 
 function limitColor(base: "night" | "day"): any {
   const c = LIMIT_COLORS[base]
-  return ["match", ["to-number", ["get", "kmh"]], 20, c[20], 30, c[30], 40, c[40], 50, c[50], 65, c[65], 80, c[80], 100, c[100],
-          ["<", ["to-number", ["get", "kmh"]], 45], c[40], ["<", ["to-number", ["get", "kmh"]], 70], c[65], c[80]]
+  // Each limit's own colour, and a value between (25, 60) the nearer one's.
+  return ["step", ["to-number", ["get", "kmh"], 50], c[20], 25, c[30], 35, c[40], 45, c[50], 57, c[65], 72, c[80], 90, c[100]]
 }
 const themed = (night: string, day: string) => ({ night, day })
 
@@ -125,7 +125,7 @@ function ensureImages(map: MlMap) {
 // -- the layers, for one source -----------------------------------------------------------------
 
 const BAND: any = ["interpolate", ["linear"], ["zoom"], 11, 1.2, 13, 2.5, 15, 5.5, 17, 11, 19, 20]
-const TIER_OPACITY: any = ["match", ["get", "tier"], "signed", 0.62, "likely", 0.42, "mapped", 0.3, 0.5]
+const TIER_OPACITY: any = ["match", ["get", "tier"], "signed", 0.72, "likely", 0.5, "mapped", 0.34, 0.5]
 
 function bind(map: MlMap, id: string, ids: string[]) {
   ids.push(id)

@@ -39,7 +39,10 @@ function useLine(id: StreetLayerId, idleText: string, ready: (by: Record<string,
   const one = useStreets((s) => s[id])
   const past = useClock((s) => s.at !== null)
   if (one.status === "loading") return "Reading the national inventory"
-  if (one.status === "error") return `Couldn't read it: ${one.error}. Switch it off and on to try again`
+  if (one.status === "error") {
+    const why = /couldn't/i.test(one.error ?? "") ? one.error : `Couldn't read it: ${one.error}`
+    return `${why}. Switch it off and on to try again`
+  }
   if (!one.on || !one.meta) return idleText
   const m = one.meta
   if (!m.count) return "None in Greater Nicosia in the national inventory"
@@ -52,7 +55,12 @@ function row(id: string, order: number, label: string, layers: StreetLayerId[], 
     id: `streets_${id}`, group: STREETS_GROUP, order, label,
     useOn: () => useStreets((s) => layers.some((l) => s[l].on)),
     setOn: (on) => { for (const l of layers) void setStreetLayer(l, on) },
-    Summary, Legend,
+    Summary,
+    // The key shows once the layer has drawn something: not while it loads, fails or is empty.
+    Legend: Legend ? function Key() {
+      const one = useStreets((s) => s[layers[0]])
+      return one.status === "ready" && one.meta?.count ? <Legend /> : null
+    } : undefined,
   })
 }
 

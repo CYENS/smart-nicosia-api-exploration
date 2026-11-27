@@ -182,7 +182,7 @@ def build_limit(ents, eid: str, near) -> dict | None:
     tier = "signed" if by_tier.get("signed") else "likely" if by_tier.get("likely") else "unplaced"
     return _inventory(E.new_entity(
         s["id"], "speed_limit", f"{s['kmh']} km/h" + (f" on {street}" if street else " sign"),
-        subtitle="Speed limit sign" + (f", national road {s['road_ref']}" if s.get("road_ref") else ""),
+        subtitle=f"Sign on national road {s['road_ref']}" if s.get("road_ref") else "Sign",
         geometry=geometry, center=[round(lon, 6), round(lat, 6)],
         state=_state("posted", f"Posted {s['kmh']} km/h", limit_color(s["kmh"]), "ok",
                      reason=TIER_LABELS.get(tier)),
@@ -317,7 +317,7 @@ def build_crossing(ents, eid: str, near) -> dict | None:
     rels += road_rels(ents, [[x["lon"], x["lat"]]], max_m=80)
     rels += zone_rel(st, x["lon"], x["lat"]) + near_rels(st, x["lat"], x["lon"], skip=x["id"])
     return _inventory(E.new_entity(
-        x["id"], "pedestrian_crossing", x["name"], subtitle="Pedestrian crossing" + (f" on {x['street']}" if x.get("street") else ""),
+        x["id"], "pedestrian_crossing", x["name"], subtitle=x.get("street") or "Marked crossing",
         geometry=E.point_geom(x["lon"], x["lat"]), center=[x["lon"], x["lat"]],
         state=_state("signalled" if sig else "crossing", "At signals" if sig else "Pedestrian crossing", CROSSING_COLOR),
         readings=[{"key": "kmh", "label": "Traffic limit here", "value": piece["kmh"], "unit": "km/h"}] if piece else [],
