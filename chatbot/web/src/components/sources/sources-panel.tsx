@@ -1,12 +1,12 @@
 /* The data sources panel: every source the twin reads, grouped, with its publisher, licence,
    what it gives the twin, how fresh it is and a link to read more. Opened from a "From ..."
    line, the map's credits, the conversation's Sources link or the search menu (Ctrl K). */
-import { ExternalLinkIcon } from "lucide-react"
+import { ArrowRightIcon, ExternalLinkIcon } from "lucide-react"
 import { useEffect, useMemo, useRef } from "react"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import {
@@ -120,6 +120,7 @@ function SourceRow({ s, onMap, focused, rowRef }: {
                 size="icon-sm"
                 className="shrink-0"
                 aria-label={`Read more about ${s.name} at its publisher (opens a new tab)`}
+                nativeButton={false}
                 render={<a href={s.url} target="_blank" rel="noreferrer" />}
               />
             }
@@ -221,6 +222,13 @@ export function SourcesPanel() {
             </div>
           )}
         </div>
+        {/* What keeps these in the twin's memory, and how often: the collectors' admin page. */}
+        <DialogFooter className="mx-0 mb-0 px-5 py-3">
+          <Button variant="ghost" size="sm" nativeButton={false} render={<a href="/admin" />}>
+            Manage what the twin records
+            <ArrowRightIcon data-icon="inline-end" />
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   )
