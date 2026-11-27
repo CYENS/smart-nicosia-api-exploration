@@ -6,7 +6,7 @@ import maplibregl, {
 import { LocateFixedIcon, type LucideIcon } from "lucide-react"
 import { create } from "zustand"
 
-import { BASE_SOURCE, BASE_SOURCE_URLS, BASEMAP_URLS, baseLayers, type Basemap } from "@/lib/map/basemap"
+import { BASE_SOURCE, BASE_SOURCE_URLS, BASEMAP_URLS, STREET_GLOW_OPACITY, baseLayers, type Basemap } from "@/lib/map/basemap"
 import { lightFor, nicosiaWallToDate, skyAt, skyFor, type Sky } from "@/lib/map/sky"
 import { kindOfId } from "@/lib/entities"
 import { clickableLayer, handleEmptyClick, resolveClick, type InspectTarget } from "@/lib/registries/map-clicks"
@@ -304,6 +304,7 @@ export function initMap(container: HTMLElement, camera?: Camera | null) {
     addAmbientLamps()
     if (CITY.on) addCityLayer()
     for (const entry of state.layers.values()) addToMap(entry)
+    weatherHooks.place()
     syncHighlight()
     syncSelection()
     applySky()
@@ -440,6 +441,7 @@ function placeOnBase() {
   if (label) for (const id of ["landmark-walls-glow", "landmark-walls"]) if (map.getLayer(id)) map.moveLayer(id, label)
   const buildings = glowBelow()
   if (buildings) for (const id of order) if (/(^|::)lamps-(pool|bulb)$|::street-glow$/.test(id)) map.moveLayer(id, buildings)
+  weatherHooks.place()
 }
 
 function firstBaseLayer(type: string) {
@@ -534,13 +536,73 @@ function showSky(at: Date) {
 
 function applySky() {
   if (!styleReady) return
-  map.setLight(lightFor(shown))
+  applyLight()
+  syncViewLights()
+  syncNightLights()
+}
+
+// The light on the 3D buildings and the sky of a tilted view, from the sun and moon, leaned
+// towards the weather of the moment.
+function applyLight() {
+  if (!styleReady) return
+  map.setLight(weatherHooks.light(lightFor(shown), shown))
   // Looking out at eye level, the haze gathers only near the horizon: the city a few km off
   // stays in sight (and its lights at night).
   const sky = viewFocus ? { ...skyFor(shown), "fog-ground-blend": 0.94, "horizon-fog-blend": shown.dark ? 0.25 : 0.4 } : skyFor(shown)
-  try { map.setSky(sky) } catch { /* a style without sky support */ }
-  syncViewLights()
-  syncNightLights()
+  try { map.setSky(weatherHooks.sky(sky, shown)) } catch { /* a style without sky support */ }
+}
+
+// The weather (lib/weather) leans the light and the sky towards the weather of the clock's
+// moment, keeps its own layers where they belong (over the ground and the buildings, under the
+// labels and everything drawn), and gives the lamps a halo in wet or misty air. It registers
+// these; this module never imports it.
+type LightSpec = ReturnType<typeof lightFor>
+type SkySpec = ReturnType<typeof skyFor>
+export const weatherHooks = {
+  light: (l: LightSpec, sky: Sky): LightSpec => { void sky; return l },
+  sky: (s: SkySpec, sky: Sky): SkySpec => { void sky; return s },
+  place: (): void => {},
+}
+
+export function onWeather(h: Partial<typeof weatherHooks>) {
+  Object.assign(weatherHooks, h)
+  if (map && styleReady) { weatherHooks.place(); applyLight() }
+}
+
+// The sky the map shows (the clock's moment), and its light and sky again when the weather moves.
+export function shownSky() {
+  return shown
+}
+
+export function refreshSky() {
+  applyLight()
+}
+
+// The lamps in the weather: their pools wider and stronger in wet or misty air, their bulbs
+// softer, the wash along the night streets brighter on wet roads (lib/weather/look.ts lampsFor).
+type LampAir = { halo: number; glow: number; streets: number; bloom: number }
+let lampAir: LampAir = { halo: 1, glow: 1, streets: 1, bloom: 1 }
+const POOL_RADIUS = [12, 9, 14, 20, 15, 28, 16, 36, 17, 44, 18, 54, 19, 64]
+const POOL_INTENSITY = [12, 1.4, 15, 1.1, 16, 1, 17, 0.9, 18, 0.8]
+const BULB_BLUR = [13, 0.4, 17, 0.15]
+const byZoom = (stops: number[], f: number) => ["interpolate", ["linear"], ["zoom"], ...stops.map((v, i) => (i % 2 ? v * f : v))]
+
+export function setLampWeather(l: LampAir) {
+  const same = (Object.keys(l) as (keyof LampAir)[]).every((k) => Math.abs(l[k] - lampAir[k]) < 0.01)
+  if (same) return
+  lampAir = l
+  if (!styleReady) return
+  for (const id of nightLayers) {
+    if (!map.getLayer(id)) continue
+    if (id.endsWith("-pool")) {
+      map.setPaintProperty(id, "heatmap-radius", byZoom(POOL_RADIUS, l.halo))
+      map.setPaintProperty(id, "heatmap-intensity", byZoom(POOL_INTENSITY, l.glow))
+    } else if (id.endsWith("-bulb")) {
+      map.setPaintProperty(id, "circle-blur", byZoom(BULB_BLUR, l.bloom))
+    }
+  }
+  const glow = `${basePrefix}street-glow`
+  if (map.getLayer(glow)) map.setPaintProperty(glow, "line-opacity", byZoom(STREET_GLOW_OPACITY, l.streets))
 }
 
 export function setNightLights(on: boolean) {
@@ -641,8 +703,8 @@ function addLampGlow(prefix: string, src: string, lit: any, ids: string[], befor
       // Zoomed out, the lamps of a street merge into one warm line; zoomed in, each lamp keeps
       // its own soft pool (radius in px grows far slower than the map, intensity and opacity
       // fall), so the street, the routes and the labels stay readable underneath.
-      "heatmap-intensity": ["interpolate", ["linear"], ["zoom"], 12, 1.4, 15, 1.1, 16, 1, 17, 0.9, 18, 0.8],
-      "heatmap-radius": ["interpolate", ["linear"], ["zoom"], 12, 9, 14, 20, 15, 28, 16, 36, 17, 44, 18, 54, 19, 64],
+      "heatmap-intensity": byZoom(POOL_INTENSITY, lampAir.glow) as any,
+      "heatmap-radius": byZoom(POOL_RADIUS, lampAir.halo) as any,
       "heatmap-color": ["interpolate", ["linear"], ["heatmap-density"],
         0, "rgba(255,160,60,0)", 0.12, "rgba(255,150,55,0.12)", 0.3, "rgba(255,165,70,0.26)",
         0.55, "rgba(255,185,100,0.38)", 0.8, "rgba(255,205,140,0.48)", 1, "rgba(255,222,175,0.56)"],
@@ -654,7 +716,7 @@ function addLampGlow(prefix: string, src: string, lit: any, ids: string[], befor
     paint: {
       "circle-radius": ["interpolate", ["linear"], ["zoom"], 13, 1, 16, 2.2, 18, 3.2, 19, 4],
       "circle-color": "#fff3d6",
-      "circle-blur": ["interpolate", ["linear"], ["zoom"], 13, 0.4, 17, 0.15],
+      "circle-blur": byZoom(BULB_BLUR, lampAir.bloom) as any,
     },
   }, before)
   for (const id of [`${prefix}-pool`, `${prefix}-bulb`]) { ids.push(id); nightLayers.add(id) }
@@ -1275,6 +1337,7 @@ function addCityLayer() {
   const before = map.getStyle().layers.find((l) => l.id.includes("::") && !l.id.startsWith("city3d::") && !l.id.endsWith("::street-glow"))?.id
   if (!map.getLayer("city3d::fill")) map.addLayer({ id: "city3d::fill", type: "fill-extrusion", source: CITY_SRC, minzoom: CITY_MIN_ZOOM - 0.5, paint: cityPaint("city3d::fill", 0.92) }, before)
   if (!map.getLayer("city3d::ghost")) map.addLayer({ id: "city3d::ghost", type: "fill-extrusion", source: CITY_SRC, minzoom: CITY_MIN_ZOOM - 0.5, filter: ["in", ["id"], ["literal", []]], paint: cityPaint("city3d::ghost", 0.28) }, before)
+  weatherHooks.place() // the 3D city stands under the weather, with the ground
   setBaseBuildings(false)
   syncCityClaims()
   bindCityPopup()

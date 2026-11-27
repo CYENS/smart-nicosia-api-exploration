@@ -5,6 +5,7 @@ import { useMemo } from "react"
 
 import { useClock, type Strip } from "@/lib/clock"
 import { skyAt } from "@/lib/map/sky"
+import { weatherWord, type Weather } from "@/lib/weather/look"
 
 export const AIR_WORDS: Record<string, string> = {
   very_low: "Very good", low: "Good", medium: "Moderate", high: "Poor", very_high: "Very poor",
@@ -27,6 +28,12 @@ export function useSky() {
   const at = useClock((s) => s.at)
   const now = useClock((s) => s.now)
   return useMemo(() => skyAt(new Date(at ?? now)), [at, now])
+}
+
+// The weather in a word, as the map draws it (lib/weather/look.ts): "Overcast", "Light rain",
+// "Mist", "Dusty". The model's own word when the map's readings are missing.
+export function skyWord(w: (Weather & { sky?: string }) | null | undefined) {
+  return weatherWord(w) ?? (w?.sky ? cap(w.sky) : null)
 }
 
 export function airWords(air: Strip["air"]) {

@@ -16,9 +16,10 @@ import { typing } from "@/lib/hooks"
 import { GAP, PHONE_GAP, ROW_H } from "@/lib/layout"
 import { nicosiaTime } from "@/lib/map/engine"
 import { moonName } from "@/lib/map/sky"
-import { airWords, cap, useSky, useStrip } from "@/lib/readouts"
+import { airWords, skyWord, useSky, useStrip } from "@/lib/readouts"
 import { selectTopic, useTopics } from "@/lib/registries/topics"
 import { cn } from "@/lib/utils"
+import { useWeatherMap } from "@/lib/weather/map"
 
 export const CLOCK_ID = "city-clock"
 
@@ -78,17 +79,19 @@ export function NowLine() {
   const outsideOpen = useTopics((s) => s.active === "outside")
   const hasOutside = useTopics((s) => s.list.some((t) => t.id === "outside"))
   const said = useAnnouncement()
+  const weatherShown = useWeatherMap((s) => s.on)
   useClockKeys()
 
   // A phone's clock console takes this row while it shows.
   if (!g.desktop && expanded) return <span className="sr-only" aria-live="polite">{said}</span>
 
   const w = strip?.weather
+  const word = skyWord(w)
   const air = airWords(strip?.air)
   const light = `${sky.dark ? "Light at" : "Dark at"} ${nicosiaTime(sky.next.at)}`
   const vs = compareName(compare, other)
   const outsideLabel = [
-    w ? `${cap(w.sky)}, ${Math.round(w.temp_c)}°C` : null,
+    w ? `${word}, ${Math.round(w.temp_c)}°C` : null,
     air ? `${air.toLowerCase()} air` : null,
     light,
   ].filter(Boolean).join(", ")
@@ -123,7 +126,7 @@ export function NowLine() {
             {joined([
               w && (
                 <span key="w" className="font-readout text-[15px] font-semibold">
-                  {g.desktop && <span className="mr-1.5 font-sans text-[13.5px] font-normal">{cap(w.sky)}</span>}
+                  {g.desktop && <span className="mr-1.5 font-sans text-[13.5px] font-normal">{word}</span>}
                   {Math.round(w.temp_c)}°
                 </span>
               ),
@@ -133,6 +136,7 @@ export function NowLine() {
           </TooltipTrigger>
           <TooltipContent side="bottom" className="flex-col items-start gap-0.5">
             <span>{light}. {sky.dark ? `${moonName(sky.moon.phase)}, ${Math.round(sky.moon.lit * 100)}% lit.` : `The sun is ${Math.round(sky.sun.altitude)}° up.`}</span>
+            {w && <span>{weatherShown ? `${word} on the map too` : "Weather on the map is off (Layers)"}</span>}
             <span className="text-background/70">{outsideOpen ? "Close" : "Open"} the weather and the air</span>
           </TooltipContent>
         </Tooltip>

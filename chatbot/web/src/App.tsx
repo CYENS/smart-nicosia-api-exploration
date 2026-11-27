@@ -33,6 +33,7 @@ import "@/lib/mobility" // buses, stops and road speeds: their workspace, kinds,
 import "@/lib/watch" // the incident inbox, its Layers row, marks on the clock, toasts from the live stream
 import "@/lib/environment" // sun, shade, terrain, air, noise and weather: workspace, spot, layers
 import "@/lib/scenarios" // the Scenario lab: its workspace, split map, sections and saved runs
+import "@/lib/weather" // the weather of the clock's moment on the map: light, sky, cloud, rain, haze
 // After the environment: "What's here?" is the spot's menu item and icon, and its card holds the
 // environment's "What's it like here?" too.
 import "@/lib/here" // "What's here?": any point of the map, its card, the click, press and Ctrl K
