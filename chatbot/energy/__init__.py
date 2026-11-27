@@ -506,8 +506,9 @@ class Grid:
         return out
 
     def health(self) -> dict:
-        """For the data sources panel: when it was last read and how that went."""
-        latest = self.latest()
+        """For the data sources panel: when it was last read and how that went, and the newest
+        quarter hour the twin holds (from the memory when the page had nothing newer)."""
+        latest = self.latest() or self.at(self.clock(), timedelta(hours=6))
         return {"fetched_at": self.fetched_at, "tried_at": self.tried_at, "error": self.error,
                 "layout_changed": self.layout_changed,
                 "latest": latest.t if latest else None, "latest_mw": latest.demand_mw if latest else None}

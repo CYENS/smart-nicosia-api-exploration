@@ -136,7 +136,7 @@ def test_carbon_is_the_oil_fired_share_times_the_stations_factor():
     assert carbon.intensity(563, 599) == pytest.approx(563 / 599 * 0.70)
     assert carbon.intensity(None, 599) is None and carbon.intensity(500, 0) is None
     assert carbon.renewable_share(21, 15, 599) == pytest.approx(36 / 599)
-    assert "estimate" in carbon.METHOD.lower() and "—" not in carbon.METHOD
+    assert "estimate" in carbon.METHOD.lower() and "\u2014" not in carbon.METHOD
 
 
 # -- reading it politely -----------------------------------------------------------------------
