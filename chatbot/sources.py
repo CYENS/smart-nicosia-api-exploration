@@ -118,7 +118,7 @@ SOURCES: tuple[Source, ...] = (
         "Map, places and routes", url="https://www.data.gov.cy/el/dataset/ypsometria-inspire",
         licence=CC_BY, licence_url="https://creativecommons.org/licenses/by/4.0/",
         refresh="Tiles as you move the map; the server keeps each one it has read",
-        credit="Ground: DLS Cyprus 2019, CC BY 4.0, via Mapterhorn"),
+        credit="Ground: DLS Cyprus 2019, CC BY 4.0"),
     Source(
         "valhalla", "Valhalla routing", "Valhalla", "The Valhalla project, on FOSSGIS's public server",
         "Walking and driving routes, how far you reach on foot, walks to and from the bus, the "

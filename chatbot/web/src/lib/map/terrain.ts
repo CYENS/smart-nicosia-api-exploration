@@ -25,9 +25,9 @@ export const TERRAIN_TILES = "https://tiles.mapterhorn.com/{z}/{x}/{y}.webp"
 export const TERRAIN_MAX_ZOOM = 16
 export const HILLSHADE_MAX_ZOOM = 15
 // The credit the tiles ask for: Mapterhorn's page names every model under them, the DLS one and
-// Copernicus GLO-30 among them.
+// Copernicus GLO-30 among them. The twin's own credit beside it names DLS (chatbot/sources.py).
 export const TERRAIN_ATTRIBUTION =
-  '<a href="https://mapterhorn.com/attribution" target="_blank" rel="noopener">Ground: DLS Cyprus 2019 (CC BY 4.0), Copernicus, via Mapterhorn</a>'
+  '<a href="https://mapterhorn.com/attribution" target="_blank" rel="noopener">© Mapterhorn</a>'
 // A modest lift, so low hills read as hills from a few km away. Heights drawn on the map are the
 // real ones times this; groundAt gives them as drawn, which is what a camera must stand on.
 export const EXAGGERATION = 1.2
