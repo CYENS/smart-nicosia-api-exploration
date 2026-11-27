@@ -5,7 +5,7 @@ import { create } from "zustand"
 
 import { toWall, useClock } from "@/lib/clock"
 import {
-  EntityError, cachedEntity, fetchBand, fetchEntity, fetchSeries, placeholderEntity, type Band, type Entity,
+  EntityError, cachedEntity, fetchBand, fetchEntity, fetchSeries, kindOfId, placeholderEntity, type Band, type Entity,
   type EntityRef, type LocalThing, type Series,
 } from "@/lib/entities"
 import { flyToThing, onInspect, setSelection } from "@/lib/map/engine"
@@ -119,7 +119,7 @@ export function inspect(target: InspectTarget, opts: InspectOptions = {}) {
   })
   if (cached) selectEntity(cached)
   else if (at) setSelection({ center: at })
-  if (opts.fly && (cached?.center ?? at)) flyToThing((cached?.center ?? at)!, cached?.kind)
+  if (opts.fly && (cached?.center ?? at)) flyToThing((cached?.center ?? at)!, cached?.kind ?? kindOfId(id))
   fetchEntity(id, at, mine.signal, moment)
     .then((entity) => {
       if (mine.signal.aborted) return
