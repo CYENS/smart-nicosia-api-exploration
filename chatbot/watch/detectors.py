@@ -620,8 +620,8 @@ def road_feed_stalled(obs: Observed) -> list[Detection] | None:
         extra={"silent_since": _ms(newest), "source": "road_speeds",
                "story": (f"The national road speeds feed (traffic4cyprus.org.cy) still answers, but "
                          f"its Bluetooth detectors have sent nothing new since {since}, so no road "
-                         "has a live speed. The map shows each road's usual speed for the hour "
-                         "until they send again.")})]
+                         "has a live speed. Where the twin knows a road's usual speed for the hour, "
+                         "the map shows that, dotted, until they send again.")})]
 
 
 # -- the city's own alarms -----------------------------------------------------------------------

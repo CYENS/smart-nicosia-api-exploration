@@ -192,7 +192,7 @@ function RoadSection({ entity }: SectionProps) {
       </dl>
       {road.stalled && (
         <p role="status" className="text-[12.5px] leading-snug font-medium text-signal">
-          {stalledSentence(road.last_measured_at)}{road.usual_kmh ? ` Usually ${Math.round(road.usual_kmh)} km/h at this hour${road.usual_days ? `, over ${road.usual_days} ${road.usual_days === 1 ? "week" : "weeks"}` : ""}, not live.` : ""}
+          {stalledSentence(road.last_measured_at)}{road.usual_kmh ? ` Usually ${Math.round(road.usual_kmh)} km/h at this hour on this weekday${road.usual_days ? `, over ${road.usual_days} ${road.usual_days === 1 ? "day" : "days"}` : ""}. That is the usual, not a reading.` : ""}
         </p>
       )}
       <p className="text-[12.5px] leading-snug text-muted-foreground">
