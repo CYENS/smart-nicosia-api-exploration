@@ -240,6 +240,8 @@ def bays(ents, f: Facility, at: datetime | None = None, fetch: bool = False) -> 
 def bays_words(b: dict) -> str:
     if not b["known"]:
         return f"{b['bays']} bay sensor{'s' if b['bays'] != 1 else ''} beside it, no recent reading"
+    if b["free"] + b["taken"] == 1:
+        return f"The one sensed bay beside it is {'free' if b['free'] else 'taken'}"
     if b["free"] == 0:
         return f"All {b['free'] + b['taken']} sensed bays beside it taken"
     return f"{b['free']} of {b['free'] + b['taken']} sensed bays beside it free"
@@ -360,11 +362,13 @@ def _car_park(ents, fac: Facilities, f: Facility, now: datetime, at: datetime | 
     readings = []  # the headline shows the bays (components/facilities/sections.tsx)
     return E.new_entity(
         f.id, "car_park", name,
-        subtitle=("Car park" + (", municipal" if municipal else "") +
-                  (f", {bays_words(b).lower()}" if b and b["known"] else "")),
+        subtitle=", ".join(x for x in ("Municipal" if municipal else None, f.name_el if f.named else "Mapped on OpenStreetMap, no name",
+                                        bays_words(b).lower() if b and b["known"] else None) if x) or None,
         state=state, readings=readings, attributes=attrs,
         relations=relations + _relations(ents, fac, f), sources=sources,
-        as_of=_iso(b["as_of"]) if b and b["known"] else None, has_series=bool(b),
+        as_of=_iso(b["as_of"]) if b and b["known"] else None,
+        # The free bays of the last 24 hours come from the twin's memory, where it holds them.
+        has_series=bool(b) and remembers(ents, {r["id"] for r in b["rows"]}, at or now),
         bays={k: v for k, v in b.items() if k != "as_of"} | {"as_of": _iso(b["as_of"])} if b else None,
         fee=fee,
         _for_model={"live_bays": ({k: b[k] for k in ("bays", "free", "taken", "no_reading")} |
@@ -388,7 +392,7 @@ def _park_and_ride(ents, fac: Facilities, f: Facility, now: datetime, at: dateti
     state = _state("park_and_ride", f"Park and ride, lines {served}" if served else "Park and ride",
                    COLORS["park_and_ride"], "muted")
     return E.new_entity(
-        f.id, "park_and_ride", f.name, subtitle="Park and ride" + (f", buses {served}" if served else ""),
+        f.id, "park_and_ride", f.name, subtitle=f"Buses {served}" if served else f.name_el,
         state=state,
         attributes=[E.attr("In Greek", f.name_el), E.attr("Area", f"about {area / 10_000:.1f} hectares" if area else None),
                     E.attr("Buses from here", ", ".join(f"{ln.short} ({ln.operator})" for ln in lines[:6]) or None),
@@ -410,10 +414,9 @@ def _charger(ents, fac: Facilities, f: Facility, now: datetime, at: datetime | N
     i = f.info
     value, label, tone = STATUS_WORDS.get(i.get("status") or "", ("not_listed", "No status listed", "muted"))
     color = COLORS["charger"] if tone == "ok" else "#f59e0b" if tone == "warn" else "#8798b0"
-    inv = fac.cached("charger")
+    # No as_of: the listing isn't a reading (the inventory note says how old it is).
     state = _state(value, label, color, tone,
-                   reason="the national inventory's status, republished nightly: not whether a connector is free now",
-                   as_of=inv.published if inv else None, now=now)
+                   reason="the national inventory's status, republished nightly: not whether a connector is free now")
     kw, total = i.get("kw"), i.get("max_kw")
     readings = []
     if kw:
@@ -431,10 +434,11 @@ def _charger(ents, fac: Facilities, f: Facility, now: datetime, at: datetime | N
              E.attr("Note", mode_note), E.attr("Operator", i.get("operator")), E.attr("Owner", i.get("owner")),
              E.attr("Hours", i.get("hours")), E.attr("Access", i.get("access")),
              E.attr("Parking spaces", i.get("spaces")), E.attr("Accessible spaces", i.get("accessible_spaces")),
-             E.attr("Address", f.address), E.attr("Support", contact), E.attr("Listed since", i.get("since"))]
+             E.attr("Address", f.address), E.attr("Support", contact), E.attr("Listed since", i.get("since")),
+             E.attr("Charger code", i.get("code"))]
     readings = []  # the headline shows the power and connectors
     return E.new_entity(
-        f.id, "charger", f.name, subtitle=", ".join(x for x in ("EV charger", charger_line(f)) if x),
+        f.id, "charger", f.name, subtitle=charger_line(f) or None,
         state=state, readings=readings, attributes=attrs,
         relations=_relations(ents, fac, f, address=f.address),
         charger={k: i.get(k) for k in ("kw", "max_kw", "speed", "power_type", "connector_types", "connectors", "status", "operator", "hours")},
@@ -482,7 +486,7 @@ def _bike_station(ents, fac: Facilities, f: Facility, now: datetime, at: datetim
              E.attr("Run by", "Nextbike Cyprus")]
     readings = []  # the headline shows the bikes now
     return E.new_entity(
-        f.id, "bike_station", f.name, subtitle="Nextbike station" + (f", {bike_words(st)}" if st else ""),
+        f.id, "bike_station", f.name, subtitle=bike_words(st).capitalize() if st else "Nextbike Cyprus",
         state=state, readings=readings, attributes=attrs, relations=_relations(ents, fac, f, bikes),
         sources=sources, as_of=state.get("as_of"),
         bikes=({**st, "virtual": bool(info.get("virtual")), "capacity": cap} if st else None),
@@ -496,7 +500,7 @@ def _scooter_zone(ents, fac: Facilities, f: Facility, now: datetime, at: datetim
                    COLORS["scooter_zone"], "muted",
                    reason="Bolt's zone from the national inventory; where the scooters are now isn't published")
     return E.new_entity(
-        f.id, "scooter_zone", f.name, subtitle="Bolt scooter zone" + (f", {f.capacity} scooters" if f.capacity else ""),
+        f.id, "scooter_zone", f.name, subtitle=f"Holds {f.capacity} scooters" if f.capacity else "Bolt",
         state=state,
         readings=[{"key": "capacity", "label": "Scooters it holds", "value": f.capacity, "unit": ""}] if f.capacity else [],
         attributes=[E.attr("Holds", f"{f.capacity} scooters" if f.capacity else None),
@@ -509,7 +513,7 @@ def _scooter_zone(ents, fac: Facilities, f: Facility, now: datetime, at: datetim
 def _bike_rack(ents, fac: Facilities, f: Facility, now: datetime, at: datetime | None) -> dict:
     state = _state("rack", "Bicycle rack", COLORS["bike_rack"], "muted", reason="for your own bike")
     return E.new_entity(
-        f.id, "bike_rack", f.name, subtitle="Bicycle rack" + (f", {f.address}" if f.address else ""),
+        f.id, "bike_rack", f.name, subtitle=f.address or f.name_el,
         state=state, attributes=[E.attr("In Greek", f.name_el), E.attr("Address", f.address),
                                  E.attr("Spaces", "Not given in the national inventory")],
         relations=_relations(ents, fac, f, address=f.name))
@@ -531,6 +535,21 @@ def facility_at(ents, entity: dict, at: datetime) -> dict:
     if kind == "car_park" and e.get("bays") and not known:
         e["state"] = {**e["state"], "label": "No bay readings recorded then"}
     return e
+
+
+def remembers(ents, names: set[str], at: datetime) -> bool:
+    """Whether the twin's memory holds readings of these bays in the six hours around `at` (one
+    block of the city clock, which it reads anyway)."""
+    moments = getattr(ents, "moments", None)
+    if moments is None or moments.memory is None or not names:
+        return False
+    try:
+        b = moments.block("Parking", at)
+    except Exception:  # noqa: BLE001 - not known: don't promise a chart
+        return False
+    idx = [j for j, d in enumerate(b.devices) if d.device.name in names]
+    return any(b.covered[k] > 0 and any(b.states[k][j] in ("free", "occupied") for j in idx)
+               for k in range(len(b.times)) if b.covered)
 
 
 def car_park_series(ents, entity: dict, end: datetime | None = None) -> dict | None:

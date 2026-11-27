@@ -108,7 +108,11 @@ def live(request: Request, at: str | None = Query(None, max_length=40),
             except Exception:  # noqa: BLE001
                 stations = []
             by_station = {f.info.get("station_id"): f.id for f in stations}
+            here = [b.stations[f.info.get("station_id")] for f in stations
+                    if f.in_nicosia and f.info.get("station_id") in b.stations]
             body["bikes"] = {"status": b.status, "error": b.error,
+                             "in_nicosia": {"stations": len(here), "bikes": sum(s["bikes"] for s in here),
+                                            "ebikes": sum(s.get("ebikes") or 0 for s in here)},
                              "as_of": datetime.fromtimestamp(b.feed_time or b.fetched_at, timezone.utc).isoformat(),
                              "stations": {by_station[sid]: {k: v for k, v in st.items() if k in ("bikes", "ebikes", "docks", "renting")}
                                           for sid, st in b.stations.items() if sid in by_station}}

@@ -27,9 +27,9 @@ const FONT_BOLD = ["Noto Sans Bold"]
 const FONT_REGULAR = ["Noto Sans Regular"]
 const LIVE_POLL_MS = 120_000
 const CLUSTER_MAX_ZOOM = 14
-const AREA_ZOOM: Partial<Record<FacKind, number>> = { scooter_zone: 15.5 }
-const src = (k: FacKind) => `fac::${k}`
-const areaSrc = (k: FacKind) => `fac::${k}-area`
+const AREA_ZOOM: Partial<Record<FacKind, number>> = { scooter_zone: 16.5 }
+const src = (k: FacKind) => `facility/${k}`
+const areaSrc = (k: FacKind) => `facility/${k}-area`
 
 // -- the badges ---------------------------------------------------------------------------------
 
@@ -161,7 +161,7 @@ function withLive(f: any) {
 }
 
 function layerIds(k: FacKind) {
-  return [`fac::${k}-fill`, `fac::${k}-line`, `fac::${k}-cluster`, `fac::${k}-count`, `fac::${k}-icon`, `fac::${k}-live`, `fac::${k}-name`]
+  return [`facility/${k}-fill`, `facility/${k}-line`, `facility/${k}-cluster`, `facility/${k}-count`, `facility/${k}-icon`, `facility/${k}-name`]
 }
 
 function addKind(map: MlMap, k: FacKind, fc: FacFC) {
@@ -175,61 +175,57 @@ function addKind(map: MlMap, k: FacKind, fc: FacFC) {
     map.addSource(areaSrc(k), { type: "geojson", data: areas(fc) as any })
     const before = firstLabelLayer()
     const minzoom = AREA_ZOOM[k] ?? 0
-    map.addLayer({ id: `fac::${k}-fill`, type: "fill", source: areaSrc(k), minzoom,
-                   paint: { "fill-color": color, "fill-opacity": 0.16 } }, before)
-    map.addLayer({ id: `fac::${k}-line`, type: "line", source: areaSrc(k), minzoom,
+    map.addLayer({ id: `facility/${k}-fill`, type: "fill", source: areaSrc(k), minzoom,
+                   paint: { "fill-color": color, "fill-opacity": k === "scooter_zone" ? 0.1 : 0.16 } }, before)
+    map.addLayer({ id: `facility/${k}-line`, type: "line", source: areaSrc(k), minzoom,
                    paint: { "line-color": color, "line-width": ["interpolate", ["linear"], ["zoom"], 12, 1, 17, 2.2], "line-opacity": 0.9 } }, before)
-    bindCursor(map, `fac::${k}-fill`)
+    bindCursor(map, `facility/${k}-fill`)
   }
   const clustered: any = ["has", "point_count"]
   map.addLayer({
-    id: `fac::${k}-cluster`, type: "circle", source: src(k), filter: clustered,
+    id: `facility/${k}-cluster`, type: "circle", source: src(k), filter: clustered,
     paint: {
       "circle-color": color, "circle-opacity": 0.92,
       "circle-radius": ["step", ["get", "point_count"], 11, 10, 14, 40, 18],
-      ...themedPaint(`fac::${k}-cluster`, { "circle-stroke-color": { night: NIGHT, day: "#ffffff" } }),
+      ...themedPaint(`facility/${k}-cluster`, { "circle-stroke-color": { night: NIGHT, day: "#ffffff" } }),
       "circle-stroke-width": 2,
     },
   })
   map.addLayer({
-    id: `fac::${k}-count`, type: "symbol", source: src(k), filter: clustered,
+    id: `facility/${k}-count`, type: "symbol", source: src(k), filter: clustered,
     layout: { "text-field": ["get", "point_count_abbreviated"], "text-font": FONT_BOLD, "text-size": 12, "text-allow-overlap": true },
     paint: { "text-color": NIGHT },
   })
   const single: any = ["!", ["has", "point_count"]]
+  // The badge, and beside it what is live (free bays at a car park, bikes at a station), in one
+  // symbol: the count shows only with its badge, and gives way before the badge does.
   map.addLayer({
-    id: `fac::${k}-icon`, type: "symbol", source: src(k), filter: single,
+    id: `facility/${k}-icon`, type: "symbol", source: src(k), filter: single,
     layout: {
       "icon-image": ["case", ["get", "dim"], `fac-${k}-dim`, `fac-${k}`],
       "icon-size": ["interpolate", ["linear"], ["zoom"], 11, 0.7, 14, 0.9, 17, 1.1],
       "icon-allow-overlap": ["step", ["zoom"], false, 15, true],
       "icon-padding": 1,
       "symbol-sort-key": ["case", ["get", "dim"], 2, 1],
-    },
-  })
-  // The live count beside the badge: free bays at a car park, bikes at a station.
-  map.addLayer({
-    id: `fac::${k}-live`, type: "symbol", source: src(k), filter: ["all", single, ["!=", ["get", "live"], ""]],
-    minzoom: 13.5,
-    layout: {
-      "text-field": ["get", "live"], "text-font": FONT_BOLD, "text-size": 12, "text-anchor": "left",
-      "text-offset": [1.15, 0], "text-allow-overlap": true, "text-ignore-placement": true,
+      "text-field": ["step", ["zoom"], "", 13.5, ["get", "live"]],
+      "text-font": FONT_BOLD, "text-size": 12, "text-anchor": "left", "text-offset": [1.15, 0],
+      "text-optional": true, "text-padding": 1,
     },
     paint: {
-      ...themedPaint(`fac::${k}-live`, { "text-color": { night: "#e4ebf4", day: "#0f172a" }, "text-halo-color": { night: NIGHT, day: "#ffffff" } }),
+      ...themedPaint(`facility/${k}-icon`, { "text-color": { night: "#e4ebf4", day: "#0f172a" }, "text-halo-color": { night: NIGHT, day: "#ffffff" } }),
       "text-halo-width": 1.6,
     },
   })
   map.addLayer({
-    id: `fac::${k}-name`, type: "symbol", source: src(k), filter: ["all", single, ["get", "named"]], minzoom: 16.5,
+    id: `facility/${k}-name`, type: "symbol", source: src(k), filter: ["all", single, ["get", "named"]], minzoom: 16.5,
     layout: { "text-field": ["get", "name"], "text-font": FONT_REGULAR, "text-size": 11, "text-anchor": "top",
               "text-offset": [0, 1.25], "text-optional": true, "text-max-width": 9 },
     paint: {
-      ...themedPaint(`fac::${k}-name`, { "text-color": { night: "#8798b0", day: "#475569" }, "text-halo-color": { night: NIGHT, day: "#ffffff" } }),
+      ...themedPaint(`facility/${k}-name`, { "text-color": { night: "#8798b0", day: "#475569" }, "text-halo-color": { night: NIGHT, day: "#ffffff" } }),
       "text-halo-width": 1.2,
     },
   })
-  for (const id of [`fac::${k}-icon`, `fac::${k}-cluster`]) bindCursor(map, id)
+  for (const id of [`facility/${k}-icon`, `facility/${k}-cluster`]) bindCursor(map, id)
 }
 
 function removeKind(map: MlMap, k: FacKind) {
@@ -330,6 +326,7 @@ async function pollLive() {
         bays: body.bays?.car_parks ?? {}, baysAsOf: body.bays?.as_of ?? null, baysError: body.bays?.error ?? null,
         bikes: body.bikes?.stations ?? {}, bikesStatus: body.bikes?.status ?? "idle",
         bikesError: body.bikes?.error ?? body.bikes?.note ?? null, bikesAsOf: body.bikes?.as_of ?? null,
+        bikesHere: body.bikes?.in_nicosia ?? null,
       })
       redraw()
     } catch (e) {
@@ -400,7 +397,7 @@ registerLayerRenderer({
 registerClickHandler({
   id: "facilities",
   priority: 12,
-  layers: (l) => /^fac::[a-z_]+-(icon|fill|live)$/.test(l),
+  layers: (l) => /^facility\/[a-z_]+-(icon|fill)$/.test(l),
   resolve: (f, at) => {
     const id = f.properties?.id
     if (!id) return null
@@ -416,12 +413,12 @@ registerEmptyClickHandler({
     if (how !== "click") return false
     const map = getMap()
     if (!map) return false
-    const layers = FAC_KINDS.map((k) => `fac::${k}-cluster`).filter((id) => map.getLayer(id))
+    const layers = FAC_KINDS.map((k) => `facility/${k}-cluster`).filter((id) => map.getLayer(id))
     if (!layers.length) return false
     const p = map.project(at)
     const hit = map.queryRenderedFeatures([[p.x - 4, p.y - 4], [p.x + 4, p.y + 4]], { layers })[0]
     if (!hit) return false
-    const kind = hit.layer.id.slice(5, -8) as FacKind
+    const kind = hit.layer.id.replace(/^facility\//, "").replace(/-cluster$/, "") as FacKind
     const s = map.getSource(src(kind)) as GeoJSONSource | undefined
     s?.getClusterExpansionZoom(hit.properties?.cluster_id).then((z) => {
       map.easeTo({ center: (hit.geometry as any).coordinates, zoom: Math.min(z + 0.3, 17), duration: 500 })

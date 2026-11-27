@@ -191,7 +191,9 @@ def _on_street(ctx: ToolContext, lat: float, lon: float, at: datetime | None, sk
     out: dict = {"radius_m": ON_STREET_M, "free": 0, "taken": 0, "no_reading": 0, "_rows": []}
     try:
         if at is None:
-            states = {s.device.name: (s.interp.state, s.interp.stale, s.device) for s in city.states("Parking")}
+            # The strip's last snapshot when it is recent; the city's API only when there is none.
+            live = list(city.cached_states("Parking").values()) or city.states("Parking")
+            states = {s.device.name: (s.interp.state, s.interp.stale, s.device) for s in live}
         else:
             moments = ctx.moments or getattr(ctx.entities, "moments", None)
             if moments is None:
