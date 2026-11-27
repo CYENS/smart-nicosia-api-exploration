@@ -215,6 +215,7 @@ class Scenario:
     main_kpi: str = ""  # the KPI the tornado chart and the headline use (default: the first)
     sources: tuple[str, ...] = ()
     method: str = ""  # a paragraph for the brief: how the model works
+    today: str = ""  # how the brief names today's baseline ("as the lamps measured it")
 
     # -- to implement ------------------------------------------------------------------------
 
@@ -226,6 +227,10 @@ class Scenario:
 
     def backtest(self, ctx: ScenarioContext, data: Any, params: dict, period: Period) -> dict | None:
         return None
+
+    def finish(self, ctx: ScenarioContext, result: Result, params: dict) -> None:
+        """Once per run, after the ranges and the backtest: slow or networked touches to the
+        result (road lines for a drawn route, say), which `evaluate` must not make."""
 
     def label(self, params: dict) -> str:
         """A short name for a run with these parameters ("Dim to 50% 01:00 to 05:00")."""
@@ -338,6 +343,7 @@ def run(scenario: Scenario, ctx: ScenarioContext, params: dict | None, period: P
                                        "base": main["delta"] if main["delta"] is not None else main["scenario"]})
         result.sensitivity.sort(key=lambda s: -abs((s["at_high"] or 0) - (s["at_low"] or 0)))
     result.backtest = scenario.backtest(ctx, data, params, period)
+    scenario.finish(ctx, result, params)
     if not result.sources:
         result.sources = list(scenario.sources)
     return result, params

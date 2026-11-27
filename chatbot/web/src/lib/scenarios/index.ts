@@ -1,10 +1,11 @@
 /* The Scenario lab plugs into the page here: its workspace (Layers sheet, Ctrl K, Alt 5), the
-   swipe over the map while a run is open, its map layers and clicks, the lighting scenario's own
-   sections, and the saved runs in Ctrl K. Links (#/s/<run>) and the chat's open_scenario come
+   swipe over the map while a run is open, its map layers and clicks, each scenario's own sections
+   (street lighting, waste collection), and the saved runs in Ctrl K. Links (#/s/<run>) and the chat's open_scenario come
    through openScenarioRun. */
 import { FlaskConicalIcon } from "lucide-react"
 
 import "@/components/scenarios/lighting"
+import "@/components/scenarios/waste-sections"
 import { ScenarioLab, rememberLabOpener } from "@/components/scenarios/lab"
 import { ScenarioSwipe } from "@/components/scenarios/parts"
 import { matches, registerSearchProvider, type SearchItem } from "@/lib/registries/search"
