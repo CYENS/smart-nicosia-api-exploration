@@ -17,17 +17,20 @@ export type RoadState = "moving" | "busy" | "slow" | "very_slow" | "no_reading"
 export type RoadsBody = GeoJSON.FeatureCollection<GeoJSON.LineString, {
   id: string; label: string; state: RoadState; color: string; speed_kmh: number | null
   free_flow_kmh: number | null; share: number | null; name: string
-}> & { meta: { status: string; error: string | null; measured: number; total: number; at: string | null; free_flow: string[] } }
+  usual_state?: RoadState; usual_kmh?: number // only while the feed is stalled
+}> & { meta: { status: string; error: string | null; measured: number; total: number; at: string | null; free_flow: string[]
+               last_measured_at?: string | null; usual?: number } }
 
 export type LineRow = { id: string; line: string; name: string | null; operator: string | null; color: string; buses: number; late: number; mean_delay_min: number | null }
 export type RoadRow = {
   id: string; name: string; road: string | null; speed_kmh: number | null; free_flow_kmh: number | null
   free_flow: string; share_of_free_flow: number | null; state: RoadState; state_label: string
-  usual_kmh: number | null; measured_at: string | null
+  usual_kmh: number | null; measured_at: string | null; usual_days?: number; usual_label?: string | null
 }
 export type Summary = {
   buses?: { status: string; running: number; lines?: number; late?: number; by_line?: LineRow[]; error?: string | null }
-  roads?: { status: string; measured?: number; total?: number; by_state?: Record<string, number>; slowest?: RoadRow[]; error?: string | null }
+  roads?: { status: string; measured?: number; total?: number; by_state?: Record<string, number>; slowest?: RoadRow[]; error?: string | null
+            last_measured_at?: string; usual?: number; usually_slowest?: RoadRow[] }
   cameras?: { camera: string; lat: number | null; lon: number | null; people?: number; car?: number; bus?: number; bike?: number; total?: number }[] | null
 }
 
@@ -41,8 +44,9 @@ type Mobility = {
     paused: boolean // the city clock shows the past: the live buses wait for now
   }
   roads: {
-    on: boolean; status: "idle" | "loading" | "live" | "recorded" | "unavailable" | "no_readings"
+    on: boolean; status: "idle" | "loading" | "live" | "recorded" | "unavailable" | "no_readings" | "stalled"
     error: string | null; measured: number; total: number; at: string | null; freeFlow: string[]
+    lastMeasuredAt: string | null; usual: number // stalled: the detectors' last time, roads at their usual
   }
   summary: Summary | null
   summaryStatus: "idle" | "loading" | "ready" | "error"
@@ -50,7 +54,7 @@ type Mobility = {
 
 export const useMobility = create<Mobility>(() => ({
   buses: { on: false, status: "idle", error: null, count: 0, fetchedAt: 0, filter: null, paused: false },
-  roads: { on: false, status: "idle", error: null, measured: 0, total: 0, at: null, freeFlow: [] },
+  roads: { on: false, status: "idle", error: null, measured: 0, total: 0, at: null, freeFlow: [], lastMeasuredAt: null, usual: 0 },
   summary: null,
   summaryStatus: "idle",
 }))

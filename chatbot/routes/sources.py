@@ -12,6 +12,7 @@ from zoneinfo import ZoneInfo
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 
+from chatbot.mobility.roads import is_stalled, since_words
 from chatbot.overview import last_read, moments_of
 from chatbot.routes import agent_of
 from chatbot.settings import TIMEZONE
@@ -32,7 +33,8 @@ def _iso(epoch: float | None) -> str | None:
 
 def status(state: str | None, at: float | None = None, note: str | None = None, **more) -> dict:
     """state: live (read and fine), stale (the last read failed, an older copy stands in),
-    unavailable (nothing to show), waiting (not read yet since the server started)."""
+    stalled (it answers, but with nothing new: its newest measurement is old), unavailable
+    (nothing to show), waiting (not read yet since the server started)."""
     return {"state": state, "as_of": _iso(at), "note": note, **more}
 
 
@@ -66,12 +68,27 @@ def _timetable(agent) -> dict:
 
 
 def _roads(agent) -> dict:
+    """Judged by the newest measurement in the feed, not by whether it answered: a feed that
+    answers with an old measurement has stalled."""
     mob = getattr(agent, "mobility", None)
-    hit = mob.roads.last_live() if mob is not None else None
-    if hit is None:
+    h = mob.roads.health() if mob is not None else None
+    if h is None:
         return status("waiting", note="read while road speeds are on the map")
-    at, err = hit
-    return status("stale" if err else "live", at, err)
+    newest, now = h["newest"], mob.roads.now()
+    measured = {"measured_at": newest.astimezone(ZoneInfo(TIMEZONE)).isoformat(timespec="minutes")} if newest else {}
+    fresh = newest is not None and not is_stalled(newest, now)
+    if h["error"]:
+        # Not answering: an older copy stands in only while its measurements still count.
+        if fresh:
+            return status("stale", h["read_ok_at"], h["error"], **measured)
+        return status("unavailable", h["read_at"], h["error"], **measured)
+    if newest is None:
+        return status("unavailable", h["read_at"], "the feed answered with no measurements")
+    if not fresh:
+        return status("stalled", h["read_at"], f"the detectors have sent nothing new since "
+                      f"{since_words(newest, now)}; the feed still answers with that measurement",
+                      **measured)
+    return status("live", h["read_at"], f"newest measurement {since_words(newest, now)}", **measured)
 
 
 def _registers(agent) -> dict:
