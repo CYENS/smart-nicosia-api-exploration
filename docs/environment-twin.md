@@ -43,8 +43,10 @@ page code in `chatbot/web/src/lib/environment/` and `chatbot/web/src/components/
   that drift with it (still arrows with reduced motion).
 - **Rain**: RainViewer's radar frames of the last two hours; the frame nearest the clock's
   moment is drawn.
-- **Terrain**: Mapzen's Terrain Tiles on AWS (keyless), raised and hillshaded, lit from where
-  the sun is at the clock's moment.
+- **Terrain**: the terrain model the Department of Lands and Surveys made from its 2019 LiDAR
+  flight (a 1 m grid, CC BY 4.0), as Mapterhorn's open height tiles (keyless), raised and
+  hillshaded, lit from where the sun is at the clock's moment. North of the buffer zone the
+  tiles are filled from Copernicus GLO-30 (30 m).
 
 ## Being gentle
 

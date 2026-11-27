@@ -1,16 +1,22 @@
-"""The ground's height: Mapzen's terrain tiles on AWS (Terrarium PNGs), read and cached here, for
-the twin's views from high places and its line-of-sight checks. The page draws the same tiles as
-its 3D terrain (chatbot/web/src/lib/map/terrain.ts), so what the tools say and what the map shows
-agree.
+"""The ground's height: the terrain model the Department of Lands and Surveys made from its
+2019 LiDAR flight (a 1 m grid, CC BY 4.0), read as Mapterhorn's open terrain tiles (Terrarium
+heights in lossless WebP, 512 px) and cached here, for the twin's views from high places and its
+line-of-sight checks. The page draws the same tiles as its 3D terrain
+(chatbot/web/src/lib/map/terrain.ts), so what the tools say and what the map shows agree.
+
+The model stops at the buffer zone. North of it the tiles are filled from Copernicus GLO-30
+(30 m), so the ground there is smoother than it really is and less sure.
 
 A Terrarium pixel holds the height above sea level as (R * 256 + G + B / 256) - 32768 metres.
-Tiles are fetched once per area (throttled, with the twin's user agent), kept on disk as the PNGs
-came, and decoded with the standard library: they are 8-bit RGB, which needs only zlib and the
-five PNG row filters.
+Two levels are read: ZOOM (about 16 m a pixel) for far views and for scanning the land for high
+ground, and FINE_ZOOM (about 2 m a pixel) for the ground near where someone stands, where a
+moat, a bastion or a river bank matters. Tiles are fetched once per area (throttled, with the
+twin's user agent) and kept on disk as they came.
 """
 
 from __future__ import annotations
 
+import io
 import logging
 import math
 import struct
@@ -19,24 +25,32 @@ import time
 import urllib.error
 import urllib.request
 import zlib
+from array import array
 from collections import OrderedDict
 from collections.abc import Callable
 from pathlib import Path
+
+import numpy as np
+from PIL import Image
 
 from chatbot.settings import CACHE_DIR, Settings
 from chatbot.web import Throttle, WebError
 
 log = logging.getLogger(__name__)
 
-TILE_URL = "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png"
-ZOOM = 12  # about 31 m a pixel at Nicosia's latitude, as fine as the SRTM data under it
-SIZE = 256
-MEMORY_TILES = 64
+TILE_URL = "https://tiles.mapterhorn.com/{z}/{x}/{y}.webp"
+ZOOM = 12  # about 16 m a pixel at Nicosia's latitude: far views, and scanning for high ground
+FINE_ZOOM = 15  # about 2 m a pixel: the ground near where someone stands
+FINE_STEP_M = 5.0  # a line of sight is sampled this often where it runs over the fine tiles
+SIZE = 512
+MEMORY_TILES = 96  # about 1 MB each
 EARTH_R = 6371008.8
 REFRACTION = 0.13  # light bends with the air: a line of sight curves a little with the earth
 
 
 # -- PNG -----------------------------------------------------------------------------------------
+# A small decoder of its own, for checking the PNGs the twin makes or is handed (the tests'
+# tiles, an imagery tile): 8-bit RGB needs only zlib and the five PNG row filters.
 
 
 def _paeth(a: int, b: int, c: int) -> int:
@@ -98,10 +112,17 @@ def decode_png(data: bytes) -> tuple[int, int, int, bytes]:
     return width, height, channels, bytes(out)
 
 
-def terrarium(data: bytes) -> list[float]:
-    """A Terrarium tile -> its heights above sea level (m), row by row from the north-west."""
-    w, h, ch, px = decode_png(data)
-    return [px[i] * 256 + px[i + 1] + px[i + 2] / 256 - 32768 for i in range(0, w * h * ch, ch)]
+def terrarium(data: bytes) -> array:
+    """A Terrarium tile (WebP as the tiles come, or PNG) -> its heights above sea level (m), row
+    by row from the north-west. They are kept as 32-bit floats, which hold every Terrarium step
+    (1/256 m) exactly, in a quarter of the memory a list would take."""
+    try:
+        with Image.open(io.BytesIO(data)) as im:
+            px = np.asarray(im.convert("RGB"), dtype=np.float32)
+    except (OSError, ValueError, SyntaxError) as e:  # not an image, or a cut-off one
+        raise ValueError(f"not a terrain tile ({e})") from None
+    heights = px[..., 0] * 256 + px[..., 1] + px[..., 2] / 256 - 32768
+    return array("f", heights.tobytes())
 
 
 # -- tiles and points ----------------------------------------------------------------------------
@@ -194,7 +215,7 @@ class Terrain:
         self.dir = (cache_dir or CACHE_DIR) / "terrain"
         self._fetch_bytes = fetch or self._download
         self._throttle = Throttle(interval_s)
-        self._mem: OrderedDict[tuple[int, int, int], list[float]] = OrderedDict()
+        self._mem: OrderedDict[tuple[int, int, int], array] = OrderedDict()
         self._lock = threading.Lock()
         self._tile_locks: dict[tuple[int, int, int], threading.Lock] = {}
         self._failed: dict[tuple[int, int, int], float] = {}
@@ -212,9 +233,9 @@ class Terrain:
             raise WebError(f"terrain tiles unreachable: {getattr(e, 'reason', e)}") from None
 
     def _path(self, z: int, x: int, y: int) -> Path:
-        return self.dir / str(z) / f"{x}_{y}.png"
+        return self.dir / str(z) / f"{x}_{y}.webp"
 
-    def tile(self, x: int, y: int, z: int = ZOOM) -> list[float]:
+    def tile(self, x: int, y: int, z: int = ZOOM) -> array:
         """One tile's heights, from memory, the disk or the terrain tiles (once per area)."""
         key = (z, x, y)
         with self._lock:
@@ -242,7 +263,9 @@ class Terrain:
                 path.write_bytes(data)
             try:
                 heights = terrarium(data)
-            except (ValueError, zlib.error) as e:
+                if len(heights) != SIZE * SIZE:
+                    raise ValueError(f"{len(heights)} heights, not {SIZE} by {SIZE}")
+            except ValueError as e:
                 path.unlink(missing_ok=True)
                 raise WebError(f"a terrain tile could not be read: {e}") from None
             with self._lock:
@@ -251,15 +274,16 @@ class Terrain:
                     self._mem.popitem(last=False)
             return heights
 
-    def elevation(self, lat: float, lon: float) -> float:
-        """The ground above sea level at a point (m), between the four nearest pixels."""
-        fx, fy = tile_xy(lat, lon)
+    def elevation(self, lat: float, lon: float, z: int = ZOOM) -> float:
+        """The ground above sea level at a point (m), between the four nearest pixels of the
+        tiles at zoom `z`: ZOOM unless the point is where someone stands (FINE_ZOOM)."""
+        fx, fy = tile_xy(lat, lon, z)
         px, py = fx * SIZE - 0.5, fy * SIZE - 0.5  # pixel centres
         x0, y0 = math.floor(px), math.floor(py)
         tx, ty = px - x0, py - y0
 
         def at(gx: int, gy: int) -> float:
-            heights = self.tile(gx // SIZE, gy // SIZE)
+            heights = self.tile(gx // SIZE, gy // SIZE, z)
             return heights[(gy % SIZE) * SIZE + gx % SIZE]
 
         top = at(x0, y0) * (1 - tx) + at(x0 + 1, y0) * tx
@@ -267,14 +291,24 @@ class Terrain:
         return top * (1 - ty) + bottom * ty
 
     def profile(self, lat1: float, lon1: float, lat2: float, lon2: float,
-                step_m: float = 30.0) -> list[tuple[float, float]]:
-        """(distance from the first point in m, ground above sea level) every `step_m` along the
-        straight line to the second point, both ends included."""
+                step_m: float = 30.0, fine_m: float = 0.0) -> list[tuple[float, float]]:
+        """(distance from the first point in m, ground above sea level) along the straight line
+        to the second point, both ends included: every `step_m`, and within `fine_m` of the first
+        point (where the eye stands) every FINE_STEP_M from the fine tiles."""
         total = distance_m(lat1, lon1, lat2, lon2)
-        n = max(1, math.ceil(total / step_m))
+        near = min(max(fine_m, 0.0), total)
+        marks: list[tuple[float, int]] = []
+        if near > 0:
+            k = math.ceil(near / FINE_STEP_M)
+            marks += [(near * i / k, FINE_ZOOM) for i in range(k)]
+        if total > near or not marks:
+            n = max(1, math.ceil((total - near) / step_m))
+            marks += [(near + (total - near) * i / n, ZOOM) for i in range(n + 1)]
+        else:  # the whole line is near the eye
+            marks.append((total, FINE_ZOOM))
         out = []
-        for i in range(n + 1):
-            f = i / n
+        for d, z in marks:
+            f = d / total if total else 0.0
             lat, lon = lat1 + (lat2 - lat1) * f, lon1 + (lon2 - lon1) * f
-            out.append((total * f, self.elevation(lat, lon)))
+            out.append((d, self.elevation(lat, lon, z)))
         return out

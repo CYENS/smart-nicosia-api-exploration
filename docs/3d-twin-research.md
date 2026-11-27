@@ -35,6 +35,12 @@ on the city clock. The honest ceiling without new capture is a city with measure
 photographed ground but painted walls: no real facades, nothing measured north of the buffer
 zone, and a model frozen at 2014 (buildings) and 2019 (surface).
 
+**Update, 27 November 2026.** Rung 3 is built ([#38](https://github.com/CYENS/smart-nicosia-api-exploration/pull/38)): the page's terrain and the server's
+ground heights read the 1 m model. Building it turned up a shorter road to rung 4. DLS publishes
+the 2019 surface and terrain models as plain files in its INSPIRE download folder, which
+data.gov.cy lists under CC BY 4.0, so no CY Login is needed and the licence is stated (section
+3.1, "The open folder"). Only the folder's listings have been read; no file has been fetched.
+
 ### The ladder
 
 Effort: S is part of a session, M one feature session, L more than one.
@@ -44,8 +50,8 @@ Effort: S is part of a session, M one feature session, L more than one.
 | 0. Blocks under a real sun | Every DLS building at its height, lit by the sun and moon, casting shadows, on terrain; a view from any roof | DLS 3D model of 2014 (LoD1); AWS Terrarium terrain | None | Done | On `main` (#13, #26) |
 | 1. A city that looks like Nicosia | The 2019 aerial photo on the ground, roofs shaped from the DLS roof type, the old town split into houses, OpenStreetMap's trees, the 1963 and 1993 photos to compare | DLS services (terms not stated), OSM (ODbL) | A raw WebGL custom layer for roofs and trees | In progress | Draft [#31](https://github.com/CYENS/smart-nicosia-api-exploration/pull/31) |
 | 2. The twin's own things in 3D | Lamps that glow when the twin says they are lit, bins coloured by fill, bays by occupancy, buses moving, all on the clock; click one and the inspector opens | The twin's own data; CC0 model kits | Instancing in the same custom layer | M | Proposed, no blockers |
-| 3. Measured ground | Terrain from the 1 m DLS model: the Pedieos valley, the moat and the bastions read as shapes; views and shade use it | DLS DTM 2019, CC BY 4.0 on data.gov.cy, served open by Mapterhorn | A tile URL and a decoder | S | Proposed, no blockers |
-| 4. A measured city | Roofs with their real pitch and ridge, each old-town house at its own height, trees where they stand at their real size, buildings as they were in 2019 | DLS DSM 50 cm and DTM 1 m of 2019, free through the portal with a CY Login | An offline pipeline; the page draws its output | L | Needs the owner to download |
+| 3. Measured ground | Terrain from the 1 m DLS model: the Pedieos valley, the moat and the bastions read as shapes; views and shade use it | DLS DTM 2019, CC BY 4.0 on data.gov.cy, served open by Mapterhorn | A tile URL and a decoder | S | Built, [#38](https://github.com/CYENS/smart-nicosia-api-exploration/pull/38) |
+| 4. A measured city | Roofs with their real pitch and ridge, each old-town house at its own height, trees where they stand at their real size, buildings as they were in 2019 | DLS DSM and DTM of 2019: open files in DLS's INSPIRE download folder, CC BY 4.0 by its data.gov.cy record (about 1.2 GB for greater Nicosia) | An offline pipeline; the page draws its output | L | Files are open; fetching them waits for the owner's go-ahead |
 | 5. The whole city | North of the buffer zone gets buildings too, drawn as estimates | Overture footprints (ODbL), modelled heights (3D-GloBFP, CC BY 4.0), canopy (Meta and WRI, CC BY 4.0) | None | M | Proposed |
 | 6. The old town as a photo-real mesh | The walled city as it looks, walls, bastions and squares in texture, with the clickable twin underneath | CYENS iNicosia, 3D Tiles on Cesium ion; licence not stated, by agreement | three.js with 3DTilesRendererJS in a custom layer | M to L | Needs an agreement |
 | 7. Faces on the buildings | Windows by floor count; later, real facade textures on main streets | DLS floors; Panoramax photos (CC BY-SA 4.0, share-alike) | Texture atlas in the mesh layer | M, then research | Proposed |
@@ -58,9 +64,10 @@ Effort: S is part of a session, M one feature session, L more than one.
    and buses as instanced models that glow, fill and move with the twin's memory, pickable into
    the inspector. No data to wait for, no licence question, and it is the step that only a twin
    can take.
-2. **Measured ground, and two letters (S).** Switch the terrain to the open 1 m DLS model; in the
-   same week the owner downloads the 2019 surface and terrain models through the DLS portal and
-   writes to DLS about terms. This unblocks step 3 and settles the licence question #31 raises.
+2. **Measured ground, and two letters (S).** Switch the terrain to the open 1 m DLS model (built,
+   [#38](https://github.com/CYENS/smart-nicosia-api-exploration/pull/38)); in the same week the 2019 surface and terrain models are fetched (from DLS's open
+   folder, not through the portal as first thought) and the owner writes to DLS about terms.
+   This unblocks step 3 and settles the licence question #31 raises.
 3. **A measured city from the 2019 LiDAR surface model (L).** An offline pipeline that turns the
    50 cm surface model into roof shapes, per-house heights in the old town and a tree canopy
    layer, replacing #31's estimates with measurements building by building.
@@ -182,8 +189,8 @@ building underneath.
 | --- | --- | --- | --- | --- |
 | 3D buildings (INSPIRE BU3) | 2014 flight, finished August 2015 | 564,454 footprints with roof, eave and ground heights, floors, use and a roof type; from stereo photogrammetry, not LiDAR; LoD1; no CityGML or LOD2 edition; no accuracy figure published | Anonymous ArcGIS query service (what the twin reads today) | [DLS metadata](https://eservices.dls.moi.gov.cy/portal_geocatalog/opensearch?q=buildings&f=json&size=20), [project page](https://portal.dls.moi.gov.cy/anaptixiako_program/aerofotografisi/) |
 | LiDAR flight | 2019 | Contract targets: 10 points per m2 urban, 5 rural; orthophotos at 10 cm | The point cloud is offered nowhere | [EuroGeographics 2019](https://eurogeographics.org/app/uploads/2024/12/eurogeographics-annualreview2019-cyprus.pdf) |
-| Terrain model (DTM) | 2019 | 1 m grid of the government-controlled area | Free through the portal; open on data.gov.cy and through Mapterhorn (section 3.3) | [ICA national report 2023](https://icaci.org/files/documents/national_reports/2019-2023/Cyprus-2023.pdf) |
-| Surface model (DSM) | 2019 | 50 cm grid of the city areas, "(Lidar Survey 2019)" | Free through the portal | same |
+| Terrain model (DTM) | 2019 | 1 m grid of the government-controlled area | Open files in DLS's INSPIRE download folder (below), CC BY 4.0 on data.gov.cy; also through Mapterhorn (section 3.3) and the portal | [ICA national report 2023](https://icaci.org/files/documents/national_reports/2019-2023/Cyprus-2023.pdf) |
+| Surface model (DSM) | 2019 | 50 cm grid of the city areas, "(Lidar Survey 2019)" | Open files in the same folder; also free through the portal | same |
 | Orthophotos | 1963, 1993, 2008, 2014, 2019 | 2014 and 2019 at 10 cm; six anonymous map services | Map services; 2019 at 10 cm as files through the portal | [BASEMAPS folder](https://eservices.dls.moi.gov.cy/arcgis/rest/services/BASEMAPS?f=json) |
 | Cadastral building outlines | current | Every building outline, no heights; covers the north with pre-1974 outlines | Anonymous query service | `National/CadastralMap_EN/MapServer/28` |
 
@@ -198,6 +205,30 @@ research; the service itself sits behind CY Login and was not opened, so the exa
 tile size and formats are not confirmed. The paid route, by application, is EUR 17 per km2 for a
 DTM or a DSM plus VAT, with areas over 50 km2 needing the Director's approval
 ([service page](https://portal.dls.moi.gov.cy/application_forms/fotogrammetrika-dedomena/)).
+
+**The open folder** (found on 27 November 2026, while building rung 3). The data.gov.cy record
+for DLS elevation, licensed CC BY 4.0, lists an "Elevation Directory" resource
+([record](https://www.data.gov.cy/el/dataset/ypsometria-inspire),
+[resource](https://www.data.gov.cy/el/resource/elevation-directory-gml)) that points at
+`eservices.dls.moi.gov.cy/inspire_downloads/EL/`. Mapterhorn built its Cyprus terrain from the
+`rasters/2019_DTM` folder there
+([its recipe](https://github.com/mapterhorn/mapterhorn/tree/main/source-catalog/cy)). With the
+owner's go-ahead the folder's listings were read (five requests, nothing downloaded):
+
+| Folder | What the listing shows |
+| --- | --- |
+| `rasters/2019_DSM` | 1,068 GeoTIFF sheets of 2.5 km, each with a world file and overviews; 64 GB in all. The sheet sizes (median 50 MB against 14 MB for the terrain) fit a 50 cm grid, which is not confirmed until a file is opened |
+| `rasters/2019_DTM` | 1,070 sheets, 18 GB in all |
+| `rasters/2014_DSM`, `2014_DTM`, `1993_DTM`, `1963_DTM` | Earlier models, not listed further |
+| `Pancyprian_Index_2500X2500_ETRS89` | The sheet index, one 83 kB zip |
+
+Sheets are named `ETRS89_<x>_<y>.tif` after their south-west corner on the national grid
+(EPSG:6312), in hundreds of metres. Greater Nicosia is 27 sheets: 0.95 GB of surface model and
+0.22 GB of terrain model. The walled city is three (`2300_3925`, `2325_3925` and a part sheet
+`2325_3950` north of the line): 83 MB and 16 MB. The surface model has a sheet wherever the
+terrain model has one, so it is not limited to "the city areas"; whether it is 50 cm everywhere
+is for the files to say. This folder is plain files behind a public record, not the WFS download
+service that the house rule keeps away from; the rule's wording should say so.
 
 **What is planned.** DLS has announced no 3D cadastre and no national twin. It plans to update
 the 2014 buildings database from the 2019 flight
@@ -330,7 +361,8 @@ which.
 | DLS INSPIRE dataset metadata | "Use limitation: CC BY-SA 4.0", "no limitations" ([elevation record](https://eservices.dls.moi.gov.cy/portal_geocatalog/rest/metadata/item/e1898e980ef8414497943f7b0fce542b/html)) | As above, and share derived datasets alike |
 | DLS `BASEMAPS` photo services (2014, 2019, 1993) | Nothing: empty copyright fields, empty WMS fees and constraints; only 1963 is on data.gov.cy | Unknown; #31 credits DLS and keeps every tile on disk |
 | DLS `National` map services (parcels, cadastral buildings) | The portal's API catalogue: "please contact the Portal Administrator", "All rights reserved" ([catalogue](https://portal.dls.moi.gov.cy/en/alles-ypiresies/katalogos-apis/)) | Unknown; the registers (on `main`) read parcels and #31 reads the building outlines |
-| DLS portal downloads (DTM, DSM, 10 cm orthophoto) | "Free of charge"; no licence text found | Ask before redistributing tiles cut from them |
+| DLS elevation files in the INSPIRE download folder (DTM, DSM) | CC BY 4.0, through the data.gov.cy record that links the folder | Credit DLS, mark changes; the letter still asks DLS to confirm it for the surface model |
+| DLS portal downloads (10 cm orthophoto, and the same DTM and DSM) | "Free of charge"; no licence text found | Ask before redistributing tiles cut from them |
 | OSM, Overture | ODbL | Credit; share the derived database alike |
 | Mapterhorn terrain | Per source: the Cyprus DTM is CC BY 4.0, GLO-30 carries the Copernicus notice | Credit both |
 | Panoramax photos | CC BY-SA 4.0 | Credit; derived textures are share-alike |
@@ -347,7 +379,8 @@ INSPIRE download services are the paid ones, is not supported by DLS's own docum
 metadata marks the Buildings and Addresses downloads "Free of charge" and its INSPIRE page says
 the services carry no charge
 ([INSPIRE page](https://portal.dls.moi.gov.cy/en/enimerosi/odigia-inspire/diadikasia-ylopoiisis-odigias-inspire-sto-dls-portal/)).
-No download service was called to test it.
+No WFS download service was called to test it. The plain file folder for elevation was listed
+on 27 November 2026 with the owner's go-ahead (section 3.1, "The open folder").
 
 **The letter that settles it** (to `INSPIRE@dls.moi.gov.cy` and the portal administrator), in
 four questions:
@@ -584,14 +617,22 @@ with `lib/city3d/` are #31's; the plan assumes it lands first.
   then disagree by a few metres) or the step adds a small PNG pyramid of Nicosia cut from the
   DLS model, which also removes the dependency on a third party's server. The second is the
   right end state.
+- **As built** ([#38](https://github.com/CYENS/smart-nicosia-api-exploration/pull/38)): the server reads the same WebP tiles with Pillow, at two levels: about
+  16 m a pixel for far views and about 2 m within 600 m of where someone stands. On the page
+  the tiles are declared at 256 px for terrain, because MapLibre 5 draws the ground in pieces
+  twice the declared size and a 512 px declaration cost 83 ms a frame on integrated graphics
+  against 52 ms; declared at 256 it is 54 ms. The twin still leans on Mapterhorn's server; its
+  own tiles cut from the DLS files remain the right end state. The 1 m model stops at the
+  buffer zone: checked tile by tile, the ground north of about 35.174 N in the old town is the
+  smooth 30 m fill.
 - **Plugs in**: `TERRAIN_TILES` and the `terrain_tiles` entry in `chatbot/sources.py`; a
   freshness probe is not needed.
 - **Risks**: north of the line the 1 m model may be filled from GLO-30 (tiles answer there, but
   their source was not checked); the DLS ground heights on buildings (`H_MSL_m_1`) and the new
   terrain should agree better than today, which is worth a test.
-- **The letters, the same week**: the owner signs in to the DLS portal with CY Login and
-  downloads the DSM and DTM tiles for greater Nicosia (150 to 200 km2; at 1 GB a day this takes
-  days, so start with the walled city and one suburb), and sends the letter in section 3.8.
+- **The letters, the same week**: the DSM and DTM sheets for greater Nicosia are fetched from
+  DLS's open folder (27 sheets each, about 1.2 GB together; the walled city alone is three,
+  about 100 MB), with no login, and the owner sends the letter in section 3.8.
 
 ### Step 3. A measured city from the 2019 surface model (rung 4)
 
@@ -602,8 +643,9 @@ with `lib/city3d/` are #31's; the plan assumes it lands first.
 - **Serves**: rooftop solar by roof face (roadmap feature 12), shade with trees in it, the
   dangerous-building registers (170 records in the old town carry an estimated height today),
   heritage views of the walled city, and every demo.
-- **Data and licence**: DLS DSM at 50 cm and DTM at 1 m, 2019, free through the portal; licence
-  to be confirmed by the letter.
+- **Data and licence**: DLS DSM at 50 cm and DTM at 1 m, 2019, as GeoTIFF sheets in DLS's open
+  INSPIRE download folder; CC BY 4.0 by the data.gov.cy record that links it, which the letter
+  asks DLS to confirm.
 - **Stack**: an offline pipeline in `tools/` (Python, run once per download), not in the page:
   1. Height above ground = DSM minus DTM.
   2. Per footprint (DLS 3D outside the walls, cadastral outlines inside): robust statistics of
@@ -629,10 +671,9 @@ with `lib/city3d/` are #31's; the plan assumes it lands first.
   `chatbot/trees.py` gains a "measured" kind above "mapped"; a `dls_lidar_2019` entry in
   `chatbot/sources.py` and in `TOOL_SOURCES`; the inspector says for each building whether its
   shape is measured (2019), surveyed (2014) or estimated.
-- **Risks**: the e-service's product list is unconfirmed; the DSM covers "the city areas", whose
-  edge is unknown; the DSM is of 2019 and the footprints of 2014, so a new tower has heights and
-  no outline; fetching it needs a person with a CY Login; and the licence may forbid serving
-  derived tiles, in which case only the derived attributes (heights per building) are shown.
+- **Risks**: the grid of the surface model is unconfirmed until a sheet is opened (the sizes
+  fit 50 cm); the DSM is of 2019 and the footprints of 2014, so a new tower has heights and no
+  outline; and nothing is measured north of the buffer zone, where the sheets stop.
 
 ### Step 4. The whole city (rung 5)
 
@@ -720,8 +761,9 @@ which would also give facades).
 
 1. **DLS terms** for the photo and cadastre services and for portal downloads: the letter in
    section 3.8. Until then #31's photo is a private-use feature.
-2. **What the e-service really offers** (years, the DSM's extent, tile size, formats): one login
-   by the owner answers it, and step 3's size depends on it.
+2. **What the surface model's sheets hold** (the grid, the height reference, how gaps are
+   marked): opening one sheet from the open folder answers it. The e-service behind CY Login is
+   no longer on the path.
 3. **Is the "2019" tile cache the 2019 photo?** Its own description says "Cached OI 2014". A
    building finished between the two flights would show which; the 10 cm 2019 orthophoto from
    the portal settles it either way.
@@ -729,8 +771,9 @@ which would also give facades).
 5. **Frame times on the owner's laptop and phone**: the spike's method (redraw, read one pixel)
    can be run against the real page in ten minutes.
 6. **How DLS's download services are charged**: this repository's notes call them paid; DLS's
-   documents say free. Nothing was called to test it, and the house rule stands until DLS says
-   otherwise.
+   documents say free. No WFS download was called to test it, and the house rule stands until
+   DLS says otherwise. The plain file folders under `inspire_downloads/` are a different thing
+   (linked from data.gov.cy under CC BY 4.0), and the rule should name them as allowed.
 
 ## Sources
 

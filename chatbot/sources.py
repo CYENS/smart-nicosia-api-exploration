@@ -40,7 +40,8 @@ class Source:
         return asdict(self)
 
 
-GROUPS = ("City sensors", "Mobility", "Weather", "Map, places and routes", "Buildings", "This twin")
+GROUPS = ("City sensors", "Mobility", "Weather", "Map, places and routes", "Buildings", "This twin",
+          "Figures the scenarios assume")
 
 SOURCES: tuple[Source, ...] = (
     Source(
@@ -109,12 +110,16 @@ SOURCES: tuple[Source, ...] = (
         "Map, places and routes", url="https://openfreemap.org",
         refresh="Tiles as you move the map"),
     Source(
-        "terrain_tiles", "Terrain Tiles", "the terrain tiles", "Mapzen, on the AWS Registry of Open Data "
-        "(from SRTM, EU-DEM and other public elevation models)",
-        "The height of the ground, for the terrain and its hillshade",
-        "Map, places and routes", url="https://registry.opendata.aws/terrain-tiles/",
-        refresh="Tiles as you move the map",
-        credit="Terrain: Mapzen, AWS Open Data"),
+        "terrain_tiles", "Ground heights (DLS terrain model, 2019)", "the DLS terrain model",
+        "Department of Lands and Surveys: a 1 m grid from its 2019 LiDAR flight, served as open "
+        "terrain tiles by Mapterhorn. North of the buffer zone the tiles are filled from Copernicus "
+        "GLO-30 (30 m)",
+        "The height of the ground: the terrain and its hillshade, the views from high places and "
+        "what hides what",
+        "Map, places and routes", url="https://www.data.gov.cy/el/dataset/ypsometria-inspire",
+        licence=CC_BY, licence_url="https://creativecommons.org/licenses/by/4.0/",
+        refresh="Tiles as you move the map; the server keeps each one it has read",
+        credit="Ground: DLS Cyprus 2019, CC BY 4.0"),
     Source(
         "valhalla", "Valhalla routing", "Valhalla", "The Valhalla project, on FOSSGIS's public server",
         "Walking and driving routes, how far you reach on foot, walks to and from the bus, the "
@@ -155,6 +160,22 @@ SOURCES: tuple[Source, ...] = (
         "kept as it arrived",
         "This twin",
         refresh="Records while a page is open; older history is filled in by the collector"),
+    Source(
+        "grid_co2", "CO2 per kWh of the Cyprus grid", "the grid's emission factor",
+        "Electricity Authority of Cyprus (EAC), and Ember",
+        "The CO2 the lamps' electricity emits: 0.627 kg per kWh sold in EAC's 2023 energy mix, about "
+        "0.49 in Ember's 2025 data as solar grows; the lighting scenario assumes 0.55 and shows the range",
+        "Figures the scenarios assume",
+        url="https://eac.com.cy/EN/EAC/Sustainability/Documents/%CE%95%CE%9D%CE%95%CE%A1%CE%93%CE%95%CE%99%CE%91%CE%9A%CE%9F%20%CE%9C%CE%95%CE%99%CE%93%CE%9C%CE%91%202023%20ENG.pdf",
+        refresh="A published yearly figure"),
+    Source(
+        "led_retrofit", "LED street lighting demonstrations", "the DOE's LED demonstrations",
+        "US Department of Energy GATEWAY programme, Pacific Northwest National Laboratory",
+        "How much less an LED street lamp draws than the sodium lamp it replaces: 26% to 57% in New "
+        "York City's 2011 demonstration",
+        "Figures the scenarios assume",
+        url="https://www.pnnl.gov/main/publications/external/technical_reports/PNNL-21036.pdf",
+        refresh="A published study"),
 )
 
 BY_ID: dict[str, Source] = {s.id: s for s in SOURCES}
@@ -189,6 +210,8 @@ TOOL_SOURCES: dict[str, tuple[str, ...]] = {
     "environment_surface": ("smart_nicosia", "open_meteo"),
     "find_high_places": ("terrain_tiles", "openstreetmap", "dls", "geocoding"),
     "view_from": ("terrain_tiles", "dls", "openstreetmap", "twin_memory"),
+    "run_scenario": ("twin_memory", "smart_nicosia"),
+    "compare_scenarios": ("twin_memory",),
 }
 
 _tool: ContextVar[str | None] = ContextVar("source_tool", default=None)

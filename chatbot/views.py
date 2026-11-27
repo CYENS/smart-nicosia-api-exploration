@@ -27,7 +27,7 @@ from collector.sun import solar_elevation
 from chatbot.dls import centroid, contains, lonlat_to_tile
 from chatbot.geo import norm
 from chatbot.settings import CACHE_DIR, NICOSIA_CENTER
-from chatbot.terrain import (SIZE, ZOOM, bearing_deg, compass, destination, distance_m,
+from chatbot.terrain import (FINE_ZOOM, SIZE, ZOOM, bearing_deg, compass, destination, distance_m,
                              line_of_sight, tile_xy)
 from chatbot.web import WebError
 
@@ -46,9 +46,10 @@ PLACE_TOP_M = 10.0
 IN_CENTRE_M = 450  # this close, a place is in the centre rather than looking at it
 MAX_HEIGHT_M = 300
 NIGHT_HOUR = 21
-STEP_M = 30.0  # line-of-sight samples, about one terrain pixel apart
+STEP_M = 30.0  # line-of-sight samples over far ground, about two terrain pixels apart
 ROOF_CHECK_M = 1500  # buildings near the eye are checked against the line of sight
 AROUND_EYE_M = 600  # the DLS tiles fetched around the eye (the page draws the same ones)
+FINE_M = AROUND_EYE_M  # this near the eye the ground is read from the fine terrain tiles
 # Places whose name says the public can look out from up high (an observatory floor, a rooftop
 # bar, a terrace).
 LOOKOUT_NAME = re.compile(
@@ -255,9 +256,11 @@ def resolve_when(ctx: ToolContext, text: str | None) -> When:
 
 
 def _roofs_near_line(ctx: ToolContext, terrain: Terrain, lat1: float, lon1: float,
-                     lat2: float, lon2: float, skip: set[int]) -> list[tuple[float, float, str]]:
+                     lat2: float, lon2: float, skip: set[int],
+                     fine: bool = True) -> list[tuple[float, float, str]]:
     """DLS buildings the line of sight crosses near the eye (cached tiles only: no request),
-    as (distance from the eye, top above sea level, what)."""
+    as (distance from the eye, top above sea level, what). With `fine`, those within FINE_M
+    stand on the ground of the fine terrain tiles, as the eye does."""
     if ctx.dls is None:
         return []
     total = distance_m(lat1, lon1, lat2, lon2)
@@ -287,22 +290,29 @@ def _roofs_near_line(ctx: ToolContext, terrain: Terrain, lat1: float, lon1: floa
         for w, s, e, n_, b in boxes:
             if w <= lon <= e and s <= lat <= n_ and contains(b["geometry"], lon, lat):
                 h = b["properties"]["h"]
-                out.append((d, terrain.elevation(lat, lon) + h, f"a {round(h)} m building"))
+                ground = terrain.elevation(lat, lon, FINE_ZOOM if fine and d <= FINE_M else ZOOM)
+                out.append((d, ground + h, f"a {round(h)} m building"))
                 break
     return out
 
 
 def sight(ctx: ToolContext, terrain: Terrain, eye: tuple[float, float, float],
           target: tuple[float, float, float], skip: set[int] | None = None,
-          roofs: bool = True, part_of_target_m: float = 0) -> dict:
+          roofs: bool = True, part_of_target_m: float = 0, fine: bool = True) -> dict:
     """Line of sight from an eye (lat, lon, metres above sea level) to the top of a target
     (lat, lon, metres above sea level), over the terrain and (with `roofs`) the DLS buildings
     near the eye whose tiles are cached. `skip` names buildings that are neither: the one the
-    eye stands on, the one looked at."""
+    eye stands on, the one looked at.
+
+    With `fine` the ground within FINE_M of the eye is read from the fine terrain tiles, and
+    the eye's own height must come from them too (`Terrain.elevation(..., FINE_ZOOM)`): a moat
+    or a bank a few metres across then hides what it really hides. Ranking many places passes
+    `fine=False` and stays on the coarse tiles throughout, which costs no fine tile per place."""
     lat1, lon1, eye_m = eye
     lat2, lon2, top_m = target
-    prof = terrain.profile(lat1, lon1, lat2, lon2, STEP_M)
-    near = _roofs_near_line(ctx, terrain, lat1, lon1, lat2, lon2, skip or set()) if roofs else []
+    prof = terrain.profile(lat1, lon1, lat2, lon2, STEP_M, fine_m=FINE_M if fine else 0.0)
+    near = (_roofs_near_line(ctx, terrain, lat1, lon1, lat2, lon2, skip or set(), fine)
+            if roofs else [])
     return line_of_sight(prof, eye_m, top_m, near, part_of_target_m)
 
 
@@ -399,7 +409,7 @@ def _pixel_lat_lon(gx: int, gy: int) -> tuple[float, float]:
 
 
 def hilltops(terrain: Terrain, lat: float, lon: float, radius_m: float,
-             block_px: int = 8) -> list[tuple[float, float, float]]:
+             block_px: int = 16) -> list[tuple[float, float, float]]:
     """The high ground of the terrain within `radius_m`: (lat, lon, metres above sea level) of
     each point that is the highest of its block (about 250 m across) and of the blocks around
     it, highest first."""
@@ -514,7 +524,7 @@ def find_high(ctx: ToolContext, terrain: Terrain, near: tuple[float, float], rad
             # Over the terrain only: the same answer whatever buildings happen to be cached.
             c["los"] = sight(ctx, terrain, (c["lat"], c["lon"], c["eye_m"]),
                              (CENTRE[0], CENTRE[1], centre_ground + CENTRE_TOP_M), skip,
-                             roofs=False, part_of_target_m=CENTRE_AREA_M)
+                             roofs=False, part_of_target_m=CENTRE_AREA_M, fine=False)
         c["score"] = _score(c["above_centre"], c["prom"], c["los"]["visible"], c["dist"])
     # High ground in a built-up area: the houses around it can hide what the terrain leaves in
     # sight. The DLS tile at each of the likeliest is fetched (once per area) and the line of
@@ -530,12 +540,30 @@ def find_high(ctx: ToolContext, terrain: Terrain, near: tuple[float, float], rad
         for c in likely:
             near = sight(ctx, terrain, (c["lat"], c["lon"], c["eye_m"]),
                          (CENTRE[0], CENTRE[1], centre_ground + CENTRE_TOP_M),
-                         part_of_target_m=CENTRE_AREA_M)
+                         part_of_target_m=CENTRE_AREA_M, fine=False)
             if not near["visible"] and near["blocked_by"]["what"] != "ground":
                 c["eye_blocked"] = near
                 c["score"] = round(c["score"] - 30, 1)
     rows.sort(key=lambda c: -c["score"])
-    return [_describe(ctx, c, rank) for rank, c in enumerate(rows[:limit], 1)]
+    rows = rows[:limit]
+    _say_fine_heights(terrain, rows)
+    return [_describe(ctx, c, rank) for rank, c in enumerate(rows, 1)]
+
+
+def _say_fine_heights(terrain: Terrain, rows: list[dict]) -> None:
+    """The heights said of the few places kept are read from the fine terrain tiles, as a view
+    from each of them will say them (the ranking above ran on the coarse ones). If the tiles
+    can't be had, the coarse heights stand."""
+    try:
+        centre = terrain.elevation(*CENTRE, FINE_ZOOM)
+        fine = [terrain.elevation(c["lat"], c["lon"], FINE_ZOOM) for c in rows]
+    except WebError as e:
+        log.info("fine terrain for high places failed: %s", e)
+        return
+    for c, ground in zip(rows, fine):
+        c["eye_m"] += ground - c["ground_m"]
+        c["ground_m"] = ground
+        c["above_centre"] = c["eye_m"] - (centre + EYE_M)
 
 
 def _describe(ctx: ToolContext, c: dict, rank: int) -> dict:
@@ -776,9 +804,10 @@ def view(ctx: ToolContext, terrain: Terrain, frm: Spot, *, toward: Spot | None =
     up, said, building = _eye_height(ctx, frm, height)
     if with_landmarks:
         _load_around(ctx, frm.lat, frm.lon)
-    ground = terrain.elevation(frm.lat, frm.lon)
+    # Where someone stands, and the centre they are measured against, from the fine tiles.
+    ground = terrain.elevation(frm.lat, frm.lon, FINE_ZOOM)
     eye_m = ground + up
-    centre_ground = terrain.elevation(*CENTRE)
+    centre_ground = terrain.elevation(*CENTRE, FINE_ZOOM)
     target = toward
     if target is None and bearing is None:
         if distance_m(frm.lat, frm.lon, *CENTRE) < IN_CENTRE_M:

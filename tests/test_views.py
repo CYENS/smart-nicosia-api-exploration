@@ -1,26 +1,52 @@
 """Views from high places: the terrain tiles, the line of sight, find_high_places and view_from,
-all offline (a real Terrarium tile from tests/fixtures, and a made-up landscape)."""
+all offline (two real terrain tiles from tests/fixtures, and a made-up landscape)."""
 
+import io
 import math
+import re
 import struct
 import zlib
 from datetime import datetime, timezone
 
+import numpy as np
 import pytest
+from PIL import Image
 
 from chatbot import views as V
 from chatbot.dls import centroid, lonlat_to_tile
 from chatbot.geo import norm
 from chatbot.settings import Settings
 from chatbot.store import SessionStore
-from chatbot.terrain import (SIZE, ZOOM, Terrain, curvature_drop, decode_png, destination,
-                             line_of_sight, terrarium)
+from chatbot.terrain import (FINE_STEP_M, FINE_ZOOM, SIZE, ZOOM, Terrain, curvature_drop,
+                             decode_png, destination, distance_m, line_of_sight, terrarium)
 from chatbot.tools import run_tool
 from chatbot.tools.base import ToolContext
 from chatbot.web import WebError
 from conftest import FIXTURES
 
-TILE = (FIXTURES / "terrarium_12_2427_1620.png").read_bytes()  # the centre of Nicosia, z12
+# The 2019 DLS terrain model as Mapterhorn's tiles serve it: Nicosia at the far level, and the
+# south of the old town with its walls and moat at the fine one.
+TILE = (FIXTURES / "terrain_12_2427_1620.webp").read_bytes()
+FINE_TILE = (FIXTURES / "terrain_15_19420_12960.webp").read_bytes()
+MOAT = (35.16947, 33.36058)  # the floor of the moat by Eleftheria Square
+BASTION = (35.16954, 33.36090)  # the top of the D'Avila bastion, 30 m east of it
+
+
+def fixture_tiles(fetched: list | None = None):
+    """A fetch that answers the two tiles above and fails the test for any other."""
+    tiles = {(ZOOM, 2427, 1620): TILE, (FINE_ZOOM, 19420, 12960): FINE_TILE}
+
+    def fetch(url):
+        m = re.fullmatch(r"https://tiles\.mapterhorn\.com/(\d+)/(\d+)/(\d+)\.webp", url)
+        assert m, url
+        key = tuple(int(v) for v in m.groups())
+        if key not in tiles:
+            pytest.fail(f"asked for a tile the test has no fixture for: {url}")
+        if fetched is not None:
+            fetched.append(key)
+        return tiles[key]
+
+    return fetch
 
 
 # -- the tiles -------------------------------------------------------------------------------------
@@ -65,25 +91,74 @@ def test_png_rows_decode_with_every_filter():
 def test_terrarium_pixels_are_metres_above_sea_level():
     # 128 * 256 + 150 + 128 / 256 - 32768 = 150.5 m
     png = encode_png([[(128, 150, 128), (127, 255, 0)]], [1])
-    assert terrarium(png) == [150.5, -1.0]
+    assert list(terrarium(png)) == [150.5, -1.0]
+    # The tiles come as lossless WebP; every step of 1/256 m survives the 32-bit floats.
+    webp = io.BytesIO()
+    Image.frombytes("RGB", (2, 1), bytes((128, 150, 128, 255, 255, 255))).save(webp, "WEBP", lossless=True)
+    assert list(terrarium(webp.getvalue())) == [150.5, 32767 + 255 / 256]
+    with pytest.raises(ValueError):
+        terrarium(b"<html>not found</html>")
 
 
 def test_the_centres_tile_decodes_to_nicosias_ground(tmp_path):
     fetched = []
-
-    def fetch(url):
-        fetched.append(url)
-        assert url.endswith(f"/terrarium/{ZOOM}/2427/1620.png")
-        return TILE
-
     heights = terrarium(TILE)
     assert len(heights) == SIZE * SIZE and -10 < min(heights) and max(heights) < 400
-    t = Terrain(Settings(), cache_dir=tmp_path, fetch=fetch)
+    t = Terrain(Settings(), cache_dir=tmp_path, fetch=fixture_tiles(fetched))
     centre = t.elevation(*V.CENTRE)
-    assert 140 < centre < 165  # Eleftheria Square stands about 150 m up
+    assert 140 < centre < 150  # the old town's streets stand about 145 m up
     # Kept on disk as it came: another Terrain reads it without asking again.
     again = Terrain(Settings(), cache_dir=tmp_path, fetch=lambda url: pytest.fail("fetched twice"))
-    assert again.elevation(*V.CENTRE) == centre and len(fetched) == 1
+    assert again.elevation(*V.CENTRE) == centre and fetched == [(ZOOM, 2427, 1620)]
+
+
+def test_the_fine_tiles_show_the_moat(tmp_path):
+    fetched = []
+    t = Terrain(Settings(), cache_dir=tmp_path, fetch=fixture_tiles(fetched))
+    moat, bastion = t.elevation(*MOAT, FINE_ZOOM), t.elevation(*BASTION, FINE_ZOOM)
+    assert 141 < moat < 144 and 150 < bastion < 152.5  # nine metres of wall, 30 m apart
+    assert fetched == [(FINE_ZOOM, 19420, 12960)]
+    # The far level, 16 m a pixel, rounds the same wall off.
+    assert t.elevation(*BASTION) - t.elevation(*MOAT) < bastion - moat
+    # A line of sight from the moat's floor: sampled every few metres from the fine tiles near
+    # the eye, and the bastion hides the old town's roofs.
+    prof = t.profile(*MOAT, *V.CENTRE, 30.0, fine_m=600)
+    total = distance_m(*MOAT, *V.CENTRE)
+    assert prof[0] == (0.0, moat) and prof[-1][0] == pytest.approx(total)
+    assert max(b[0] - a[0] for a, b in zip(prof, prof[1:])) <= FINE_STEP_M + 1e-6
+    los = line_of_sight(prof, moat + V.EYE_M, t.elevation(*V.CENTRE) + V.CENTRE_TOP_M)
+    assert not los["visible"] and los["blocked_by"]["what"] == "ground" and los["blocked_by"]["at_m"] < 60
+
+
+def test_a_line_of_sight_is_fine_near_the_eye_and_coarse_beyond(tmp_path):
+    asked = []
+
+    class Flat(Terrain):
+        def elevation(self, lat, lon, z=ZOOM):
+            asked.append(z)
+            return 150.0
+
+    t = Flat(Settings(), cache_dir=tmp_path, fetch=lambda url: pytest.fail(url))
+    far = destination(35.17, 33.36, 90, 3000)
+    prof = t.profile(35.17, 33.36, *far, 30.0, fine_m=600)
+    ds = [d for d, _ in prof]
+    assert ds == sorted(ds) and len(set(ds)) == len(ds) and ds[0] == 0 and ds[-1] == pytest.approx(3000, abs=1)
+    assert [z for d, z in zip(ds, asked) if d < 600] == [FINE_ZOOM] * 120
+    assert set(z for d, z in zip(ds, asked) if d >= 600) == {ZOOM}
+    assert max(b - a for a, b in zip(ds, ds[1:])) <= 30.0 + 1e-6
+    # Without a fine stretch it is the plain profile: both ends, every 30 m.
+    asked.clear()
+    assert [round(d) for d, _ in t.profile(35.17, 33.36, *far, 30.0)] == list(range(0, 3001, 30))
+    assert set(asked) == {ZOOM}
+
+
+def test_a_tile_of_the_wrong_size_is_refused_and_not_kept(tmp_path):
+    small = io.BytesIO()
+    Image.new("RGB", (256, 256), (128, 150, 0)).save(small, "WEBP", lossless=True)
+    t = Terrain(Settings(), cache_dir=tmp_path, fetch=lambda url: small.getvalue())
+    with pytest.raises(WebError, match="could not be read"):
+        t.elevation(*V.CENTRE)
+    assert not list(tmp_path.rglob("*.webp"))
 
 
 def test_a_failing_terrain_server_is_said_plainly(tmp_path):
@@ -133,13 +208,11 @@ STREET = (35.1600, 33.3615)  # 1.4 km south of the centre, a 20 m building just 
 MOUNTAIN = (35.3000, 33.4000)  # the Kyrenia range
 
 
-def ground(lat: float, lon: float) -> float:
-    h = 150.0
-    h += 60 * math.exp(-((lat - HILL[0]) ** 2 + ((lon - HILL[1]) * 0.82) ** 2) / (2 * 0.003 ** 2))
-    if 35.15 < lat < 35.20 and abs(lon - 33.33) < 0.0012:
-        h += 45
-    h += 750 * math.exp(-((lat - MOUNTAIN[0]) ** 2 + ((lon - MOUNTAIN[1]) * 0.82) ** 2) / (2 * 0.03 ** 2))
-    return h
+def ground(lat, lon):
+    """The made-up land, for one point or for a tile's rows and columns at once."""
+    h = 150.0 + 60 * np.exp(-((lat - HILL[0]) ** 2 + ((lon - HILL[1]) * 0.82) ** 2) / (2 * 0.003 ** 2))
+    h = h + np.where((lat > 35.15) & (lat < 35.20) & (np.abs(lon - 33.33) < 0.0012), 45.0, 0.0)
+    return h + 750 * np.exp(-((lat - MOUNTAIN[0]) ** 2 + ((lon - MOUNTAIN[1]) * 0.82) ** 2) / (2 * 0.03 ** 2))
 
 
 class FakeTerrain(Terrain):
@@ -147,15 +220,17 @@ class FakeTerrain(Terrain):
         super().__init__(Settings(), cache_dir=tmp_path, fetch=lambda url: pytest.fail(url))
         self._tiles = {}
 
+    def elevation(self, lat, lon, z=ZOOM):
+        # The made-up land is smooth: at the fine level its formula stands in for the tiles.
+        return float(ground(lat, lon)) if z == FINE_ZOOM else super().elevation(lat, lon, z)
+
     def tile(self, x, y, z=ZOOM):
         if (z, x, y) not in self._tiles:
             n = 2 ** z * SIZE
-            out = []
-            for py in range(SIZE):
-                lat = math.degrees(math.atan(math.sinh(math.pi * (1 - 2 * (y * SIZE + py + 0.5) / n))))
-                for px in range(SIZE):
-                    out.append(ground(lat, (x * SIZE + px + 0.5) / n * 360 - 180))
-            self._tiles[(z, x, y)] = out
+            rows = (y * SIZE + np.arange(SIZE) + 0.5) / n
+            lat = np.degrees(np.arctan(np.sinh(np.pi * (1 - 2 * rows))))[:, None]
+            lon = ((x * SIZE + np.arange(SIZE) + 0.5) / n * 360 - 180)[None, :]
+            self._tiles[(z, x, y)] = ground(lat, lon).ravel().tolist()
         return self._tiles[(z, x, y)]
 
 

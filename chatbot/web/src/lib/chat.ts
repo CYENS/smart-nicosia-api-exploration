@@ -13,6 +13,7 @@ import { closeInspector, inspectId, inspectingRef } from "@/lib/inspector"
 import { useLayout } from "@/lib/layout"
 import { applyMapUi, mapContext, removeLayer, resetForNewChat } from "@/lib/map/engine"
 import { turnCard } from "@/lib/registries/turn-cards"
+import { openScenarioRun } from "@/lib/scenarios/open"
 import { applyViewCommand, viewContext } from "@/lib/view"
 import type { VisualPayload } from "@/lib/visual"
 
@@ -40,6 +41,8 @@ export const TOOL_LABELS: Record<string, string> = {
   create_watch: "Preparing the watch",
   sun_and_shade: "Reading the sun and shade", environment_surface: "Drawing the environment surface",
   find_high_places: "Finding high places with a view", view_from: "Flying you to the view",
+  list_scenarios: "Reading the scenario lab", run_scenario: "Running the scenario",
+  compare_scenarios: "Comparing the two runs", open_scenario: "Opening it in the scenario lab",
 }
 
 export function toolLabel(name: string) {
@@ -191,6 +194,8 @@ function handleEvent(turnId: string, ev: any) {
         applyViewCommand(ev)
       } else if (ev.action === "inspect") {
         inspectId(String(ev.id), { at: ev.at ?? undefined, fly: ev.fly !== false })
+      } else if (ev.action === "scenario") {
+        openScenarioRun(String(ev.run), ev.compare ? String(ev.compare) : null)
       } else if (turnCard(ev.action)) {
         updateTurn(turnId, (t) => ({ ...t, parts: [...t.parts, { kind: "card", card: ev.action, data: ev }] }))
       } else {
