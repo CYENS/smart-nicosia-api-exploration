@@ -10,7 +10,7 @@ import { nicosiaTime } from "@/lib/map/engine"
 import { moonName } from "@/lib/map/sky"
 import { setBusesOn, setRoadsOn } from "@/lib/mobility/map"
 import { useMobility, watchSummary } from "@/lib/mobility/store"
-import { AIR_BANDS, AIR_WORDS, airWords, cap, fmtCount, parkingWord, useSky, useStrip } from "@/lib/readouts"
+import { AIR_BANDS, AIR_WORDS, airWords, cap, fmtCount, parkingWord, skyWord, useSky, useStrip } from "@/lib/readouts"
 import { registerTopic, selectTopic, type TopicLink } from "@/lib/registries/topics"
 import { openWorkspace, useWorkspace } from "@/lib/registries/workspaces"
 import { setSystemLayer, systemLayerOn, useSystemLayers } from "@/lib/system-layers"
@@ -207,7 +207,7 @@ function OutsideSummary() {
   const w = strip?.weather
   const air = strip?.air
   const words = airWords(air)
-  const weather = w ? `${cap(w.sky)}, ${Math.round(w.temp_c)}°C` : null
+  const weather = w ? `${skyWord(w)}, ${Math.round(w.temp_c)}°C` : null
   const lead = [weather, words ? `${past ? "the air was" : "the air is"} ${words.toLowerCase()}` : null].filter(Boolean).join(", ")
   const light = `${sky.dark ? "Light at" : "Dark at"} ${nicosiaTime(sky.next.at)}${sky.dark ? `, ${moonName(sky.moon.phase).toLowerCase()}` : ""}`
   const caqi = air && !air.unknown && air.caqi !== undefined ? `Air quality index ${air.caqi} across ${fmtCount(air.stations)} stations` : null

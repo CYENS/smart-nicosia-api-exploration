@@ -160,7 +160,7 @@ export function weatherLight(base: Light, c: Conditions, sky: Sky): Light {
       ...base,
       position: [base.position[0], base.position[1], lerp(base.position[2], 30, s * 0.7)],
       color,
-      intensity: base.intensity * (1 - 0.6 * s) * (1 - 0.25 * c.dust),
+      intensity: base.intensity * (1 - 0.5 * s) * (1 - 0.25 * c.dust),
     }
   }
   let color = mixHex(base.color, "#b7bac6", s)
@@ -242,7 +242,8 @@ export type Ground = {
   shadow: number // how much a cloud's shadow darkens the ground (0: no shadows to see)
   cover: number // the share of the ground under cloud shadow
   shadowTint: RGB // shade is cooler than sunlight
-  haze: RGB; hazeK: number; hazeMax: number // haze into the distance
+  haze: RGB; hazeK: number; hazeMax: number // haze into the distance, seen from above (per view)
+  extinction: number // the same haze per metre, for a camera at eye level (3.912 / visibility)
   mist: number // how patchy the haze is (drifting banks of mist)
   clouds: number // clouds seen in the sky of a tilted view (their opacity)
   cloudCover: number
@@ -251,7 +252,7 @@ export type Ground = {
 
 const NO_GROUND: Ground = {
   on: false, dim: 0, veil: [0, 0, 0], veilA: 0, shadow: 0, cover: 0, shadowTint: [0, 0, 0],
-  haze: [0, 0, 0], hazeK: 0, hazeMax: 0, mist: 0, clouds: 0, cloudCover: 0, cloudLit: [1, 1, 1], cloudBase: [0, 0, 0],
+  haze: [0, 0, 0], hazeK: 0, hazeMax: 0, extinction: 0, mist: 0, clouds: 0, cloudCover: 0, cloudLit: [1, 1, 1], cloudBase: [0, 0, 0],
 }
 
 // The sun's height as a share of a fully lit day: 0 below the horizon, 1 from 15° up.
@@ -268,7 +269,7 @@ export function groundFor(c: Conditions, sky: Sky, skySpec: SkySpec): Ground {
   // dust and fog, faintly: the night map keeps its contrast for the data on it.
   const washes: [RGB, number][] = night || !day
     ? [[rgb("#4a3a2a"), c.dust * 0.08], [rgb(skySpec["fog-color"]), c.fog * 0.1]]
-    : [[rgb("#aeb7c2"), greyOf(c) * 0.07 * up], [rgb("#8f99a5"), c.rain * 0.1], [rgb("#d2b57e"), c.dust * 0.17], [rgb(skySpec["fog-color"]), c.fog * 0.14]]
+    : [[rgb("#c6ced8"), greyOf(c) * 0.06 * up], [rgb("#8f99a5"), c.rain * 0.1], [rgb("#d2b57e"), c.dust * 0.17], [rgb(skySpec["fog-color"]), c.fog * 0.14]]
   let veilA = 0
   let veil: RGB = [0, 0, 0]
   for (const [col, a] of washes) {
@@ -280,11 +281,15 @@ export function groundFor(c: Conditions, sky: Sky, skySpec: SkySpec): Ground {
   // Cloud shadows: only with the sun up, and only while the clouds come and go; under a full
   // deck the whole city is in shade, an even dimming. Fog hides them.
   const shadowCover = s
-  const shadow = 0.24 * up * smoothstep(0.08, 0.3, shadowCover) * (1 - c.fog * 0.8)
+  const shadow = 0.15 * up * smoothstep(0.08, 0.3, shadowCover) * (1 - c.fog * 0.8)
 
   // Haze: the air's own colour, the same as the sky's at the horizon, so ground and sky meet.
   const hazeK = 3.4 * Math.pow(c.fog, 1.25) + 1.3 * c.dust
   const hazeMax = (night ? 0.6 : 0.82) * smoothstep(0, 0.15, Math.max(c.fog, c.dust))
+  // At eye level the haze is the real one: Koschmieder's 3.912 / visibility, the visibility back
+  // from the fog amount, and dust taking the view down to some 6 km at its thickest.
+  const visibility = 10 ** (Math.log10(20000) - c.fog * (Math.log10(20000) - Math.log10(150)))
+  const extinction = 3.912 / visibility + (c.dust * 3.912) / 6000
 
   // Clouds in a tilted view's sky: lit white-grey by day, glowing warm at sunset, faintly lit
   // by the city at night.
@@ -293,7 +298,7 @@ export function groundFor(c: Conditions, sky: Sky, skySpec: SkySpec): Ground {
   const cloudLit = mixRgb(mixRgb(rgb(lit), rgb(base), c.rain * 0.7), rgb("#d9bf8c"), day ? c.dust * 0.5 : 0)
   return {
     on: true,
-    dim: day ? c.rain * 0.1 + c.wet * 0.03 : 0,
+    dim: day ? c.rain * 0.08 + c.wet * 0.02 : 0,
     veil, veilA,
     shadow,
     cover: shadowCover,
@@ -301,6 +306,7 @@ export function groundFor(c: Conditions, sky: Sky, skySpec: SkySpec): Ground {
     haze: rgb(skySpec["fog-color"]),
     hazeK,
     hazeMax,
+    extinction,
     mist: smoothstep(0.15, 0.6, c.fog) * 0.45,
     clouds: smoothstep(0.08, 0.35, c.cloud) * (1 - c.fog * 0.7) * 0.9,
     cloudCover: c.cloud,
