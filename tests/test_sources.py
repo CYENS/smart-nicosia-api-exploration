@@ -4,7 +4,7 @@ visuals that carry their sources to the page, and /api/sources (which never asks
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from types import SimpleNamespace
 
 import pytest
@@ -134,9 +134,14 @@ def fake_agent(**over):
         sources={"nicosia": {"copy": "seed", "count": 711, "as_of": "2026-10-20", "live_error": "no BUILDINGS"},
                  "limassol": {"copy": "live", "count": 173, "as_of": "2026-11-26"}})
     snap = SimpleNamespace(status="live", fetched_at=1795680100.0, error=None, vehicles=[{}] * 3)
+    # The road feed's last read failed; the copy from the read before still counts.
+    road_now = datetime.fromtimestamp(1795680300.0, timezone.utc)
+    road_health = {"read_at": 1795680200.0, "read_ok_at": 1795680000.0,
+                   "error": "the national traffic feed didn't answer", "newest": road_now - timedelta(minutes=10),
+                   "published": None, "stalled": False}
     mobility = SimpleNamespace(
         fleet=SimpleNamespace(last=snap),
-        roads=SimpleNamespace(last_live=lambda: (1795680200.0, "the national traffic feed didn't answer")),
+        roads=SimpleNamespace(health=lambda: road_health, now=lambda: road_now),
         source=SimpleNamespace(current=None, error=None, loaded_at=0.0),
         timetable=NoFetch(), summary=NoFetch(), snapshot=NoFetch())
     agent = SimpleNamespace(settings=Settings(), city=SimpleNamespace(overview=NoFetch()), registers=registers,
@@ -175,7 +180,7 @@ def test_sources_route_before_anything_was_read(monkeypatch):
     monkeypatch.setattr(overview, "_cache", {})
     agent = fake_agent()
     agent.mobility.fleet.last = None
-    agent.mobility.roads.last_live = lambda: None
+    agent.mobility.roads.health = lambda: None
     by_id = {s["id"]: s for s in body_of(agent)["sources"]}
     for sid in ("smart_nicosia", "open_meteo", "bus_live", "road_speeds"):
         assert by_id[sid]["status"]["state"] == "waiting", sid
@@ -184,7 +189,7 @@ def test_sources_route_before_anything_was_read(monkeypatch):
 def test_a_failing_probe_leaves_the_rest(monkeypatch):
     monkeypatch.setattr(overview, "_cache", {})
     agent = fake_agent(registers=SimpleNamespace(ready=True, fetched_at=0.0, sources=None))
-    agent.mobility.roads.last_live = NoFetch()  # raises: that source shows no state, the list stands
+    agent.mobility.roads.health = NoFetch()  # raises: that source shows no state, the list stands
     by_id = {s["id"]: s for s in body_of(agent)["sources"]}
     assert by_id["road_speeds"]["status"] is None
     assert by_id["bus_live"]["status"]["state"] == "live"

@@ -11,7 +11,8 @@ from chatbot.geo import haversine_m
 from chatbot.mobility import planner
 from chatbot.mobility.gtfs import TZ, line_order, slice_shape
 from chatbot.mobility.realtime import delay_text
-from chatbot.mobility.roads import LEGEND, parse_moment, segment_feature, slowest
+from chatbot.mobility.roads import (LEGEND, STALLED_LEGEND, parse_moment, segment_feature, since_words,
+                                    slowest, usually_slowest)
 from chatbot.store import point
 from chatbot.tools.base import (NEAR, LocationNotShared, ToolContext, ToolError, ToolSet, local_now,
                                 my_location, obj, resolve_point)
@@ -378,7 +379,9 @@ def _line(coords: list[list[float]], mode: str, color: str, label: str) -> dict:
       "share_of_free_flow, state, usual_kmh for this hour where the memory has weeks of it) "
       "and a layer_ref of every segment coloured by speed (show it with style 'route'); the "
       "data_ref is linked to the map by id, for a sorted bar of each road's speed against its "
-      "free flow. Segment ids (road-12) open in the inspector.",
+      "free flow. Segment ids (road-12) open in the inspector. status 'stalled' means the feed "
+      "answers but its detectors have sent nothing new (note, last_measured_at): no speed is "
+      "live then, and the layer shows each road's usual speed for this hour instead.",
       obj({"road": {"type": "string", "description": "A road or site name, e.g. 'Griva', 'Makariou', 'Athalassas'."},
            **NEAR,
            "at": {"type": "string", "description": "A past local moment, ISO (2026-11-26T08:30): "
@@ -417,9 +420,12 @@ def h_get_road_speeds(ctx: ToolContext, a: dict) -> dict:
                             "cover the main avenues only")
     picked = {r["id"] for r in chosen}
     feats = [segment_feature(segs[r["id"]], r) for r in rows if r["id"] in picked]
+    stalled = out["status"] == "stalled"
     when = at.astimezone(TZ).strftime("%a %H:%M") if at else now.astimezone(TZ).strftime("%H:%M")
-    title = f"Road speeds, {when}" + (f": {a['road']}" if a.get("road") else "")
-    ref = ctx.store.add_layer("road_speeds", feats, geometry="route", title=title, legend=LEGEND,
+    title = (f"Usual road speeds for {when} (the detectors have stalled)" if stalled else f"Road speeds, {when}") \
+        + (f": {a['road']}" if a.get("road") else "")
+    ref = ctx.store.add_layer("road_speeds", feats, geometry="route", title=title,
+                              legend=STALLED_LEGEND if stalled else LEGEND,
                               value_fields=["speed_kmh", "share"])
     ctx.store.layers[ref]["meta"]["live"] = {"kind": "roads", "at": at.isoformat() if at else None}
     ranked = slowest(chosen, len(chosen))
@@ -448,4 +454,20 @@ def h_get_road_speeds(ctx: ToolContext, a: dict) -> dict:
     if not any(r["usual_kmh"] for r in chosen):
         res["usual_note"] = "the twin's memory has no earlier weeks of road speeds yet, so no usual"
     res["_summary"] = f"{res['measured']} roads measured, {counts.get('Very slow', 0) + counts.get('Slow', 0)} slow"
+    if stalled:
+        # The feed answers, but the detectors behind it have sent nothing new: no speed is now.
+        usual_rows = usually_slowest(chosen, len(chosen))
+        res |= {
+            "status": "stalled", "source": "stalled: nothing live", "last_measured_at": out["last_measured_at"],
+            "note": out["note"] + " Road speeds have no live reading until they send again.",
+            "usual_shown": len(usual_rows),
+            "usually_slowest": [{"id": r["id"], "name": r["name"], "road": r["road"], "usual_kmh": r["usual_kmh"],
+                                 "usual_days": r["usual_days"], "free_flow_kmh": r["free_flow_kmh"],
+                                 "usual": r["usual_label"]} for r in usual_rows[:limit]],
+            "map_note": ("the map draws each road at its usual speed for this hour and weekday, dotted, "
+                         "never as a reading" if usual_rows else
+                         "the twin's memory knows too little of this hour on this weekday to show the "
+                         "usual speeds, so every road reads no reading"),
+            "_summary": f"detectors stalled since {since_words(datetime.fromisoformat(out['last_measured_at']), now)}",
+        }
     return res

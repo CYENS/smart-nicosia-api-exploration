@@ -26,7 +26,7 @@ from datetime import datetime, timezone
 from chatbot.mobility import planner
 from chatbot.mobility.gtfs import Timetable, TimetableSource, line_order
 from chatbot.mobility.realtime import Fleet, Snapshot
-from chatbot.mobility.roads import Roads, slowest
+from chatbot.mobility.roads import Roads, slowest, usually_slowest
 from chatbot.web import WebError
 
 log = logging.getLogger(__name__)
@@ -157,6 +157,9 @@ class Mobility:
             counts = Counter(r["state"] for r in rows)
             out["roads"] = {"status": sp["status"], "measured": sp["measured"], "total": sp["total"],
                             "by_state": dict(counts), "slowest": slowest(rows, 5), "error": sp.get("error")}
+            if sp["status"] == "stalled":  # when the detectors last sent, and the usual instead
+                out["roads"] |= {"last_measured_at": sp["last_measured_at"], "note": sp["note"],
+                                 "usual": sp["usual"], "usually_slowest": usually_slowest(rows, 5)}
         except Exception as e:  # noqa: BLE001
             out["roads"] = {"status": "unavailable", "error": str(e)[:200]}
         return out

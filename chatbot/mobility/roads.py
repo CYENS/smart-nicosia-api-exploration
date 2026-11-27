@@ -14,6 +14,14 @@ A speed means little without the road's own free-flow speed, which the feed does
   limits and road classes, no traffic), fetched once per road and cached;
 - in the minute before that estimate exists, assumed: the urban limit, 50 km/h.
 Speed against free flow puts each road in a band: moving freely, busy, slow, very slow.
+
+The feed can stall: it keeps answering, with a fresh publication time, while the detectors behind
+it have sent nothing new, so every path carries the same old measurement time (on 26 November
+2026 they stopped at 23:42 and the feed republished that reading for days). That is its own
+status, "stalled", never "no readings": the speeds say when the last measurement was, and each
+road falls back to its usual speed for this hour of this weekday from the memory, marked as the
+usual (`usual_state`), never as a reading. A road the memory knows too little about stays "no
+reading".
 """
 
 from __future__ import annotations
@@ -52,6 +60,7 @@ MEASURED_MIN = 288  # a day of 5-minute readings before free flow is the road's 
 FREE_FLOW_Q = 0.85
 FREE_FLOW_DAYS = 28
 USUAL_WEEKS = 8
+USUAL_MIN_DAYS = 2  # a stalled feed's roads show their usual only from two or more such days
 
 BANDS = (  # (state, label, lowest share of free flow)
     ("moving", "Moving freely", 0.75),
@@ -66,6 +75,11 @@ BAND_LABELS = {s: label for s, label, _ in BANDS} | {"no_reading": "No reading"}
 SPEED_COLORS = {"moving": "#718295", "busy": "#bd6350", "slow": "#f17458",
                 "very_slow": "#ff9a71", "no_reading": "#424e5e"}
 LEGEND = {BAND_LABELS[s]: SPEED_COLORS[s] for s in ("moving", "busy", "slow", "very_slow", "no_reading")}
+# While the feed is stalled the map draws the usual speeds dotted, in the muted ink, not the
+# live ramp: nothing on it can pass for a reading.
+USUAL_COLOR = "#8798b0"
+USUAL_LABEL = "Usual for this hour"
+STALLED_LEGEND = {USUAL_LABEL: USUAL_COLOR, BAND_LABELS["no_reading"]: SPEED_COLORS["no_reading"]}
 
 
 def band(speed: float | None, free: float | None) -> str:
@@ -73,6 +87,26 @@ def band(speed: float | None, free: float | None) -> str:
         return "no_reading"
     share = speed / free
     return next(s for s, _, lo in BANDS if share >= lo)
+
+
+def since_words(t: datetime, now: datetime) -> str:
+    """When something last happened, as people say it: '14:05' today, 'Thursday 23:42' this
+    week, '19 November 23:42' before."""
+    local, today = t.astimezone(TZ), now.astimezone(TZ).date()
+    if local.date() == today:
+        return local.strftime("%H:%M")
+    if 0 < (today - local.date()).days < 7:
+        return local.strftime("%A %H:%M")
+    return f"{local.day} {local:%B %H:%M}"
+
+
+def stalled_note(last: datetime, now: datetime) -> str:
+    return f"The national road detectors have sent nothing new since {since_words(last, now)}."
+
+
+def is_stalled(newest: datetime | None, now: datetime) -> bool:
+    """The feed's newest measurement is older than a reading counts for."""
+    return newest is not None and (now - newest).total_seconds() > STALE_S
 
 
 @dataclass
@@ -227,6 +261,11 @@ class Roads:
         self._reference_running = False
         self._usual: dict[tuple, tuple[float, dict]] = {}
         self.error: str | None = None
+        # What the last good fetch found: when, its newest measurement and its publication time.
+        self._read_at: float | None = None
+        self._read_ok_at: float | None = None
+        self.newest: datetime | None = None
+        self.published: datetime | None = None
 
     # -- the inventory ---------------------------------------------------------------------
 
@@ -268,11 +307,6 @@ class Roads:
 
     # -- live readings ---------------------------------------------------------------------
 
-    def last_live(self) -> tuple[float, str | None] | None:
-        """(fetched at, error) of the latest live reading, without fetching; None before it."""
-        hit = self._live
-        return (hit[0], hit[2]) if hit else None
-
     def live(self) -> tuple[float, dict[str, parse.TravelTimeRow], str | None]:
         """(fetched at, the latest reading per path id, error). One fetch every LIVE_TTL_S."""
         now = time.time()
@@ -283,6 +317,7 @@ class Roads:
             hit = self._live
             if hit and now - hit[0] < self.live_ttl_s:
                 return hit
+            self._read_at = now
             try:
                 rows = parse.parse_nap(self.fetch_text(LIVE_URL))
             except Exception as e:  # noqa: BLE001 - keep what we had, say why
@@ -292,9 +327,26 @@ class Roads:
                 self._live = (now - self.live_ttl_s + 60, old, err)  # try again in a minute
                 return self._live
             if self.memory is not None and self.memory.recorder is not None:
+                # A stalled feed repeats one measurement: the memory keeps it once (its key is
+                # the path and the measurement time), so it never weighs on the usual.
                 self.memory.recorder.travel_times(rows)
+            self._read_ok_at = now
+            self.newest = max((r.measured_at for r in rows), default=None)
+            self.published = next((r.publication_time for r in rows if r.publication_time), None)
             self._live = (now, {r.segment_id: r for r in rows}, None)
             return self._live
+
+    def health(self) -> dict | None:
+        """The feed as the last fetch left it, without fetching: when it was read and whether
+        that worked, its newest measurement and publication time, and whether it is stalled
+        (answering, but with nothing measured in the last 30 minutes). None before any read."""
+        hit = self._live
+        if hit is None:
+            return None
+        now = self.now()
+        return {"read_at": self._read_at or hit[0], "read_ok_at": self._read_ok_at, "error": hit[2],
+                "newest": self.newest, "published": self.published,
+                "stalled": hit[2] is None and is_stalled(self.newest, now)}
 
     # -- free flow and the usual -------------------------------------------------------------
 
@@ -452,9 +504,11 @@ class Roads:
         segs = self.segments()
         now = self.now()
         error = None
+        newest = None
         if at is None:
             fetched, live, error = self.live()
             readings = {sid: (r.speed_kmh, r.travel_time_s, r.measured_at) for sid, r in live.items()}
+            newest = max((r.measured_at for r in live.values()), default=None)
             moment = now
         else:
             try:
@@ -464,6 +518,8 @@ class Roads:
             except Exception as e:  # noqa: BLE001 - Unavailable: missing, busy or broken
                 return {"status": "unavailable", "error": str(e), "segments": [], "at": at}
             moment = at
+        # The feed answered, but its newest measurement is old: the detectors have stalled.
+        stalled = at is None and error is None and is_stalled(newest, now)
         usual = self.usual([s.nap_id for s in segs], moment)
         out = []
         for s in segs:
@@ -477,6 +533,8 @@ class Roads:
             free, how = self.free_flow(s)
             state = band(speed, free)
             u = usual.get(s.nap_id)
+            # While stalled, the usual for this hour stands in on the map, as the usual.
+            usual_state = band(u[0], free) if stalled and u and u[1] >= USUAL_MIN_DAYS else None
             out.append({
                 "id": s.id, "name": s.name, "road": s.road, "short": s.short,
                 "speed_kmh": round(speed, 1) if speed is not None else None,
@@ -485,15 +543,24 @@ class Roads:
                 "share_of_free_flow": round(speed / free, 2) if speed is not None and free else None,
                 "state": state, "state_label": BAND_LABELS[state],
                 "usual_kmh": u[0] if u else None, "usual_days": u[1] if u else 0,
+                "usual_state": usual_state,
+                "usual_label": f"Usually {BAND_LABELS[usual_state].lower()}" if usual_state else None,
                 "measured_at": measured.astimezone(TZ).isoformat(timespec="minutes") if measured else None,
                 "length_m": round(s.length_m),
             })
         with_speed = [r for r in out if r["speed_kmh"] is not None]
         status = "live" if at is None else "recorded"
-        if not with_speed:
+        if stalled:
+            status = "stalled"
+        elif not with_speed:
             status = "unavailable" if (error or at is not None) else "no_readings"
-        return {"status": status, "error": error, "segments": out, "at": moment,
-                "measured": len(with_speed), "total": len(out)}
+        res = {"status": status, "error": error, "segments": out, "at": moment,
+               "measured": len(with_speed), "total": len(out)}
+        if stalled:
+            res |= {"last_measured_at": newest.astimezone(TZ).isoformat(timespec="minutes"),
+                    "note": stalled_note(newest, now),
+                    "usual": sum(1 for r in out if r["usual_state"])}
+        return res
 
 
 def _geom_key(s: Segment) -> str:
@@ -510,14 +577,27 @@ def segment_feature(s: Segment, row: dict | None) -> dict:
     row = row or {}
     state = row.get("state", "no_reading")
     speed = row.get("speed_kmh")
+    usual_state = row.get("usual_state")  # set only while the feed is stalled
+    props = {"id": s.id, "label": f"{round(speed)} km/h" if speed is not None else "",
+             "state": state, "color": SPEED_COLORS[state], "entity_kind": "road_segment",
+             "speed_kmh": speed, "free_flow_kmh": row.get("free_flow_kmh"),
+             "share": row.get("share_of_free_flow"), "name": s.name,
+             "popup": f"{s.name}\n" + (f"{round(speed)} km/h, {BAND_LABELS[state].lower()}"
+                                       if speed is not None else "No reading")}
+    if usual_state:
+        props |= {"usual_state": usual_state, "usual_kmh": row.get("usual_kmh"), "color": USUAL_COLOR,
+                  "popup": f"{s.name}\nNo reading. {row.get('usual_label')} at this hour "
+                           f"({round(row['usual_kmh'])} km/h)"}
     return {"type": "Feature", "geometry": {"type": "LineString", "coordinates": [list(c) for c in s.coords]},
-            "properties": {"id": s.id, "label": f"{round(speed)} km/h" if speed is not None else "",
-                           "state": state, "color": SPEED_COLORS[state], "entity_kind": "road_segment",
-                           "speed_kmh": speed, "free_flow_kmh": row.get("free_flow_kmh"),
-                           "share": row.get("share_of_free_flow"), "name": s.name,
-                           "popup": f"{s.name}\n" + (f"{round(speed)} km/h, {BAND_LABELS[state].lower()}"
-                                                     if speed is not None else "No reading")}}
+            "properties": props}
 
 
-__all__ = ["Roads", "Segment", "band", "slowest", "segment_feature", "parse_moment", "LEGEND",
-           "SPEED_COLORS", "BAND_LABELS"]
+def usually_slowest(rows: list[dict], n: int = 5) -> list[dict]:
+    """While the feed is stalled: the roads usually furthest below their free flow at this hour."""
+    have = [r for r in rows if r.get("usual_state") and r["free_flow_kmh"]]
+    return sorted(have, key=lambda r: r["usual_kmh"] / r["free_flow_kmh"])[:n]
+
+
+__all__ = ["Roads", "Segment", "band", "slowest", "usually_slowest", "segment_feature", "parse_moment",
+           "LEGEND", "STALLED_LEGEND", "SPEED_COLORS", "BAND_LABELS", "since_words", "stalled_note",
+           "is_stalled"]

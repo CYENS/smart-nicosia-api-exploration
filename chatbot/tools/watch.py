@@ -28,7 +28,8 @@ SEVERITY_LEGEND = {"high severity": SEVERITY_COLORS["high"],
                    "medium severity": SEVERITY_COLORS["medium"],
                    "low severity": SEVERITY_COLORS["low"]}
 CATEGORY = {"outage": "outage", "lit_by_day": "lighting", "lamp_power": "power",
-            "parking_sensor": "parking", "bins": "bins", "air": "air", "city_alarm": "other"}
+            "parking_sensor": "parking", "bins": "bins", "air": "air", "city_alarm": "other",
+            "data_feed": "feed"}
 ALL_METRICS = sorted({m for ms in METRICS.values() for m in ms})
 ALL_STATES = sorted({s for ss in STATES.values() for s in ss})
 
@@ -65,7 +66,7 @@ def _features(rows: list[dict], details: list[dict]) -> list[dict]:
       "twin's own detectors over its memory (lamps dark at night, lamps lit by day, lamps "
       "drawing power out of line with similar lamps on their street, parking bays stuck "
       "occupied for days, bins whose fill jumps or that stop reporting, air stations gone "
-      "quiet) and from the city's own alarms, grouped by place and time: three lamps on one "
+      "quiet, the national road detectors' feed stalling) and from the city's own alarms, grouped by place and time: three lamps on one "
       "street going silent together are one probable power cut, not three faults. Each has an "
       "id (INC-12), a severity (high, medium, low), a status (open, acknowledged, snoozed, "
       "resolved), a place, when it began, whether it is still happening and the devices "
