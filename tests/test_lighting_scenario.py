@@ -286,3 +286,24 @@ def test_the_run_tool_returns_kpis_a_layer_and_the_series(store, tmp_path):
     assert res["details"]["flagged_lamps"] == 2
     run_ = lab.get(res["run_id"])
     assert run_["label"] == "Dim to 50% 01:00 to 05:00" and run_["saved"]
+
+
+def test_the_brief_prints_the_question_ranges_backtest_assumptions_and_sources(store, tmp_path):
+    from chatbot.scenarios import brief
+
+    lab = Lab(make_ctx(store, tmp_path))
+    a = lab.run("lighting", {"dim": True}, "last_14_days")
+    b = lab.run("lighting", {"switch_by_sun": True}, "last_14_days")
+    page = brief.brief_html(a, b)
+    assert lighting.LIGHTING.question in page
+    assert "Dim to 50% 01:00 to 05:00" in page and "By the sun" in page
+    assert "Grid emission factor" in page and "0.47 to 0.63" in page  # an assumption and its range
+    assert "the sensors measured" in page and "Learnt only until" in page  # the backtest
+    assert "What moves the result" in page and "<svg" in page  # the tornado
+    assert "Safety check" in page and "Makariou" in page
+    assert "CO2 per kWh of the Cyprus grid" in page  # a source
+    assert "\u2014" not in page and "\u2013" not in page  # no em or en dashes
+    assert brief.change_words({"delta": -2280, "delta_low": -3790, "delta_high": -2145, "digits": 0,
+                               "unit": "EUR", "better": "lower", "scenario": 1}) == "saves 2,280 EUR (2,145 to 3,790)"
+    csv = brief.series_csv(a).splitlines()
+    assert csv[0] == "run,scenario,metric,time,variant,value" and len(csv) > 100
