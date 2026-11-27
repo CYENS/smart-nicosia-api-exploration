@@ -87,10 +87,11 @@ SOURCES: tuple[Source, ...] = (
         credit="Radar: RainViewer"),
     Source(
         "openstreetmap", "OpenStreetMap", "OpenStreetMap", "OpenStreetMap contributors",
-        "Streets, places and their opening hours, and the data under the base map",
+        "Streets, places and their opening hours, the trees of the 3D city, and the data under "
+        "the base map",
         "Map, places and routes", url="https://www.openstreetmap.org/copyright",
         licence=ODBL, licence_url="https://opendatacommons.org/licenses/odbl/",
-        refresh="The places index is rebuilt weekly"),
+        refresh="The places index is rebuilt weekly, the trees monthly"),
     Source(
         "overture", "Overture Maps places", "Overture Maps", "Overture Maps Foundation, from Meta, "
         "Microsoft, Foursquare, AllThePlaces and others",
@@ -136,11 +137,20 @@ SOURCES: tuple[Source, ...] = (
         credit="Places: from the web"),
     Source(
         "dls", "Department of Lands and Surveys (DLS)", "the DLS", "Republic of Cyprus",
-        "Every building in 3D at its height and floors, the plots they stand on, and the shade "
-        "they cast",
+        "Every building in 3D at its height and floors with its roof type, the plots they stand "
+        "on, the outlines of the old town's houses, and the shade they cast",
         "Buildings", url="https://eservices.dls.moi.gov.cy/inspire/",
         refresh="Fetched once per area, then kept",
         credit="Buildings: DLS Cyprus"),
+    Source(
+        "dls_imagery", "DLS aerial photos", "the DLS aerial photos", "Department of Lands and Surveys, "
+        "Republic of Cyprus",
+        "The aerial photo of 2019 on the ground (about 7.5 cm a pixel), and the black and white "
+        "photos of 1993 and 1963 to compare the city with",
+        "Buildings", url="https://eservices.dls.moi.gov.cy/arcgis/rest/services/BASEMAPS",
+        licence="No terms of use stated by DLS: to be confirmed with DLS before public use",
+        refresh="Tiles fetched once as you move the map, then kept",
+        credit="Aerial photo: DLS Cyprus"),
     Source(
         "registers", "Dangerous-building registers", "the ΕΟΑ registers", "District local government organisations (ΕΟΑ) "
         "of Nicosia, Limassol, Larnaca and Famagusta",
@@ -188,6 +198,8 @@ TOOL_SOURCES: dict[str, tuple[str, ...]] = {
     "environment_surface": ("smart_nicosia", "open_meteo"),
     "find_high_places": ("terrain_tiles", "openstreetmap", "dls", "geocoding"),
     "view_from": ("terrain_tiles", "dls", "openstreetmap", "twin_memory"),
+    "find_trees": ("openstreetmap",),
+    "show_aerial_photo": ("dls_imagery",),
 }
 
 _tool: ContextVar[str | None] = ContextVar("source_tool", default=None)

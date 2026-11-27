@@ -31,7 +31,7 @@ const CAMERA = new RegExp(`@${NUM},${NUM},${NUM}z(?:,${NUM}p)?(?:,${NUM}b)?`)
 const WALL = "(\\d{4}-\\d\\d-\\d\\dT\\d\\d:\\d\\d)"
 const AT = new RegExp(`(?:^|/)t/${WALL}(?:/|$)`)
 const RANGE = new RegExp(`(?:^|/)r/${WALL}_${WALL}(?:/|$)`)
-const VS = new RegExp(`(?:^|/)vs/(?:(-\\d{1,2})d|${WALL})(?:/|$)`)
+const VS = new RegExp(`(?:^|/)vs/(?:(-\\d{1,2})d|${WALL}|photo(1963|1993))(?:/|$)`)
 const DAY = 24 * 3600e3
 const VIEW = new RegExp(`(?:^|/)v/${NUM},${NUM},${NUM}h,${NUM}b,${NUM}p(?:/vn/([^/]{1,120}))?`)
 
@@ -66,7 +66,8 @@ export function parseHash(hash: string): Link {
   const range: [number, number] | null = from !== null && to !== null && to > from ? [from, to] : null
   const v = VS.exec(h)
   let compare: Compare | null = null
-  if (v?.[1]) compare = { offset: Math.max(-62, Number(v[1])) * DAY }
+  if (v?.[3]) compare = { photo: v[3] as "1963" | "1993" }
+  else if (v?.[1]) compare = { offset: Math.max(-62, Number(v[1])) * DAY }
   else if (v?.[2] && moment(v[2]) !== null) compare = { at: moment(v[2])! }
   const clock = at !== null || range || compare ? { at, range, compare } : null
   let view: ViewLink | null = null
@@ -89,7 +90,8 @@ export function formatHash({ camera, entity, clock, view }: Link): string {
   if (clock?.range) parts.push(`r/${toWall(clock.range[0])}_${toWall(clock.range[1])}`)
   if (clock?.compare) {
     const c = clock.compare
-    if ("offset" in c && c.offset % DAY === 0) parts.push(`vs/${Math.round(c.offset / DAY)}d`)
+    if ("photo" in c) parts.push(`vs/photo${c.photo}`)
+    else if ("offset" in c && c.offset % DAY === 0) parts.push(`vs/${Math.round(c.offset / DAY)}d`)
     else {
       const t = "offset" in c ? compareAt() : c.at
       if (t !== null) parts.push(`vs/${toWall(t)}`)

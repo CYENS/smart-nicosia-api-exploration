@@ -13,6 +13,7 @@ import { closeInspector, inspectId, inspectingRef } from "@/lib/inspector"
 import { useLayout } from "@/lib/layout"
 import { applyMapUi, mapContext, removeLayer, resetForNewChat } from "@/lib/map/engine"
 import { turnCard } from "@/lib/registries/turn-cards"
+import { applyPhotoCommand } from "@/lib/map/past-photo"
 import { applyViewCommand, viewContext } from "@/lib/view"
 import type { VisualPayload } from "@/lib/visual"
 
@@ -40,6 +41,7 @@ export const TOOL_LABELS: Record<string, string> = {
   create_watch: "Preparing the watch",
   sun_and_shade: "Reading the sun and shade", environment_surface: "Drawing the environment surface",
   find_high_places: "Finding high places with a view", view_from: "Flying you to the view",
+  find_trees: "Counting the trees", show_aerial_photo: "Laying out the aerial photo",
 }
 
 export function toolLabel(name: string) {
@@ -189,6 +191,8 @@ function handleEvent(turnId: string, ev: any) {
         applyClockCommand(ev)
       } else if (ev.action === "view") {
         applyViewCommand(ev)
+      } else if (ev.action === "photo") {
+        applyPhotoCommand(ev)
       } else if (ev.action === "inspect") {
         inspectId(String(ev.id), { at: ev.at ?? undefined, fly: ev.fly !== false })
       } else if (turnCard(ev.action)) {

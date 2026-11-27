@@ -4,7 +4,7 @@
    the workspaces; what the answers drew; and your position. A sheet that leaves the map usable
    beside it: the right column on a desktop, a bottom sheet on a phone. Esc or the close button
    gives the keyboard back to whatever opened it. */
-import { MoonIcon, NavigationIcon, SquareIcon, SunIcon, SunMoonIcon, XIcon, LocateFixedIcon } from "lucide-react"
+import { ImageIcon, LocateFixedIcon, MapIcon, MoonIcon, NavigationIcon, SquareIcon, SunIcon, SunMoonIcon, XIcon } from "lucide-react"
 import { useMemo, type KeyboardEvent, type ReactNode } from "react"
 
 import { useCameraAngles, set3dView } from "@/components/shell/map-controls"
@@ -24,6 +24,8 @@ import { useGeometry } from "@/lib/geometry"
 import { closeLayers, layersHandedOff, layersOpener, setLayersGroup, useLayersSheet } from "@/lib/layers-sheet"
 import { GAP, PHONE_GAP, STRIP_H, useLayout } from "@/lib/layout"
 import type { Basemap } from "@/lib/map/basemap"
+import { setGround, useGround, type Ground } from "@/lib/map/ground"
+import { setTreesOn, useTrees } from "@/lib/city3d/trees"
 import { skyAt } from "@/lib/map/sky"
 import {
   RAMP, REGISTERS_REF, flyRoute, fmt, forgetMyLocation, locateMe, nicosiaTime, removeLayer, setBasemapMode,
@@ -56,6 +58,10 @@ function MapSection() {
   const skyNow = useMapUi((s) => s.skyNow)
   const sky = useMemo(() => (clockAt === null ? skyNow : skyAt(new Date(clockAt))), [clockAt, skyNow])
   const { pitch } = useCameraAngles()
+  const ground = useGround((s) => s.ground)
+  const groundLoading = useGround((s) => s.loading)
+  const trees = useTrees()
+  const cityOn = useMapUi((s) => s.city.on)
   return (
     <Section title="Map">
       <FieldGroup className="gap-4">
@@ -80,12 +86,46 @@ function MapSection() {
               : mode === "night" ? "Night, whatever the time" : "Day, whatever the time"}
           </FieldDescription>
         </Field>
+        <Field>
+          <FieldLabel id="ground-label">Ground</FieldLabel>
+          <ToggleGroup
+            aria-labelledby="ground-label"
+            variant="outline"
+            size="sm"
+            spacing={0}
+            className="w-full"
+            value={[ground]}
+            onValueChange={(v) => { if (v[0] && v[0] !== ground) setGround(v[0] as Ground) }}
+          >
+            <ToggleGroupItem value="map" className="flex-1"><MapIcon />Map</ToggleGroupItem>
+            <ToggleGroupItem value="photo" className="flex-1"><ImageIcon />Aerial photo</ToggleGroupItem>
+          </ToggleGroup>
+          <FieldDescription aria-live="polite">
+            {ground === "map"
+              ? "The base map's streets and fields"
+              : groundLoading ? "Loading the photo for this area" : "The DLS aerial photo of 2019, dimmed after dark"}
+          </FieldDescription>
+        </Field>
         <Field orientation="horizontal">
           <FieldContent>
             <FieldLabel htmlFor="ls-3d">3D buildings</FieldLabel>
             <FieldDescription>Tilt the map so the buildings stand up</FieldDescription>
           </FieldContent>
           <Switch id="ls-3d" checked={pitch > 10} onCheckedChange={(on) => set3dView(on)} />
+        </Field>
+        <Field orientation="horizontal">
+          <FieldContent>
+            <FieldLabel htmlFor="ls-trees">Trees</FieldLabel>
+            <FieldDescription aria-live="polite">
+              {!trees.on
+                ? "Simple 3D trees from OpenStreetMap, with the 3D city"
+                : trees.status === "loading" ? "OpenStreetMap's trees are still loading"
+                  : trees.status === "unavailable" ? "OpenStreetMap's trees couldn't be read; try again later"
+                    : !cityOn ? "Shown with the 3D city (Buildings below)"
+                      : `${fmt(trees.mapped)} mapped and ${fmt(trees.estimated)} estimated in parks, woods and orchards`}
+            </FieldDescription>
+          </FieldContent>
+          <Switch id="ls-trees" checked={trees.on} onCheckedChange={(on) => setTreesOn(on)} />
         </Field>
       </FieldGroup>
     </Section>

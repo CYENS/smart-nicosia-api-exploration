@@ -1,12 +1,13 @@
 /* Compare: a swipe across the map. Right of the line, the city at the clock's moment; left of
-   it, the compared moment (the same time last week, yesterday, or a moment held). The handle is
+   it, the compared moment (the same time last week, yesterday, or a moment held), or the DLS
+   aerial photo of 1993 or 1963 (lib/map/past-photo.ts). The handle is
    a Base UI slider (the primitive under shadcn's Slider) whose control spans the open map: drag
    the handle, or focus it and use the arrow keys, Page Up and Down, Home and End. Only the
    handle takes the pointer, so the map still pans everywhere else. */
 import { Slider as SliderPrimitive } from "@base-ui/react/slider"
 import { ChevronsLeftRightIcon } from "lucide-react"
 
-import { compareAt, compareName, fmtMoment, setSwipe, useClock } from "@/lib/clock"
+import { compareAt, compareName, comparePhoto, fmtMoment, setSwipe, useClock } from "@/lib/clock"
 import { useGeometry } from "@/lib/geometry"
 
 function Tag({ children, side }: { children: React.ReactNode; side: "left" | "right" }) {
@@ -23,18 +24,21 @@ function Tag({ children, side }: { children: React.ReactNode; side: "left" | "ri
 export function CompareSwipe() {
   const g = useGeometry()
   const other = useClock((s) => compareAt(s))
+  const photo = useClock((s) => comparePhoto(s))
   const compare = useClock((s) => s.compare)
   const at = useClock((s) => s.at)
   const now = useClock((s) => s.now)
   const swipe = useClock((s) => s.swipe)
-  if (other === null) return null
+  if (other === null && photo === null) return null
 
   const left = g.rail + g.insets.left
   const width = Math.max(1, g.vw - left - g.insets.right)
   const top = g.insets.top
   const bottom = g.insets.bottom + 8
   const name = compareName(compare, other)
-  const thenLabel = name === "last week" || name === "yesterday" ? `${name.replace(/^./, (c) => c.toUpperCase())}, ${fmtMoment(other)}` : fmtMoment(other)
+  const thenLabel = photo ? `Aerial photo, ${photo}`
+    : other === null ? ""
+      : name === "last week" || name === "yesterday" ? `${name.replace(/^./, (c) => c.toUpperCase())}, ${fmtMoment(other)}` : fmtMoment(other)
   const nowLabel = at === null ? `Now, ${fmtMoment(now)}` : fmtMoment(at)
   const pct = Math.round(swipe * 100)
 

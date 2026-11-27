@@ -26,6 +26,7 @@ if TYPE_CHECKING:
     from chatbot.mobility import Mobility
     from chatbot.moments import Moments
     from chatbot.terrain import Terrain
+    from chatbot.trees import Trees
     from chatbot.watch import Watcher
     from chatbot.webplaces import WebPlaces
 
@@ -74,6 +75,7 @@ class ToolContext:
     # Sun and shade, air and noise surfaces and the weather (chatbot/environment).
     environment: Environment | None = None
     terrain: Terrain | None = None  # the ground's height (chatbot/terrain.py)
+    trees: Trees | None = None  # OpenStreetMap's trees (chatbot/trees.py)
 
 
 # -- schema helpers -----------------------------------------------------------------------------

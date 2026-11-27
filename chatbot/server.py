@@ -51,6 +51,15 @@ def _warm_up(agent: Agent) -> None:
             break
 
 
+def _trees(agent: Agent) -> None:
+    """OpenStreetMap's trees for the 3D city: read once a month, retried while Overpass is busy."""
+    for pause in (5, 60, 180, 600, 1800):
+        time.sleep(pause)
+        agent.trees.refresh_if_needed()
+        if agent.trees.ready and not agent.trees.error:
+            break
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     load_dotenv(ROOT / ".env")
@@ -71,6 +80,7 @@ async def lifespan(app: FastAPI):
     log.info("twin's memory: %s (recording %s, full collection %s)", memory.path,
              "on" if memory.recorder else "off", "on" if settings.collect else "off")
     threading.Thread(target=_warm_up, args=(agent,), daemon=True).start()
+    threading.Thread(target=_trees, args=(agent,), daemon=True).start()
     # Overture's places: a newer release is looked for at most monthly (a minute or two to cut).
     threading.Thread(target=overture.watch, daemon=True).start()
     # The registers refresh daily; the first build (parcels, then 3D heights) takes ~2 minutes.

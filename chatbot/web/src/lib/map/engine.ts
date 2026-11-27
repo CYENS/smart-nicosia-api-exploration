@@ -7,6 +7,9 @@ import { LocateFixedIcon, type LucideIcon } from "lucide-react"
 import { create } from "zustand"
 
 import { BASE_SOURCE, BASE_SOURCE_URLS, BASEMAP_URLS, baseLayers, type Basemap } from "@/lib/map/basemap"
+import { addRoofs, attachRoofs, detachRoofs, hideRoofs, housesOf, prepareBuilding, setRoofLook } from "@/lib/city3d/city"
+import { CITY_HEIGHTS_DAY, CITY_HEIGHTS_NIGHT, rampFor, type Look } from "@/lib/city3d/look"
+import { attachTrees, detachTrees, loadTrees, setTreesNight } from "@/lib/city3d/trees"
 import { lightFor, nicosiaWallToDate, skyAt, skyFor, type Sky } from "@/lib/map/sky"
 import { kindOfId } from "@/lib/entities"
 import { clickableLayer, handleEmptyClick, resolveClick, type InspectTarget } from "@/lib/registries/map-clicks"
@@ -80,9 +83,8 @@ const HOME = { center: [33.3615, 35.1725] as [number, number], zoom: 14.2, pitch
 export const REGISTERS_REF = "eoa_registers"
 
 // The DLS 3D city stays dark slate and lightens only as it climbs: the skyline reads at a glance,
-// and the assistant's layers (red registers, blue routes) still stand out against it.
-const CITY_HEIGHTS_NIGHT = [0, "#1a2840", 6, "#203250", 12, "#2a4064", 20, "#37547f", 35, "#5577a6", 60, "#93b3dc"]
-const CITY_HEIGHTS_DAY = [0, "#e5e7eb", 6, "#cbd5e1", 12, "#93c5fd", 20, "#3b82f6", 35, "#1d4ed8", 60, "#312e81"]
+// and the assistant's layers (red registers, blue routes) still stand out against it. With the
+// aerial photo, and in a view, it looks as it is instead (lib/city3d/look.ts).
 const CITY_SRC = "city3d::src"
 const CITY_MIN_ZOOM = 14.5
 const CITY_RADIUS = 3 // tiles around the centre (each ~500 m), so pitched views stay bounded
@@ -268,7 +270,7 @@ export function initMap(container: HTMLElement, camera?: Camera | null) {
   map.on("touchcancel", cancelPress)
   map.on("movestart", cancelPress)
   ;(window as any).__map = map // a hook for scripted demos and browser tests (e.g. map.project)
-  ;(window as any).__twin = { state, clock } // and what the map draws, for the same
+  ;(window as any).__twin = { state, clock, setCity3d, setBasemapMode } // and what the map draws, for the same
   // Zoom, the 3D view and the compass are the page's own (components/shell/map-controls.tsx);
   // the scale sits with the credits in the bottom-right corner.
   map.addControl(new maplibregl.ScaleControl({ unit: "metric" }), "bottom-right")
@@ -418,6 +420,7 @@ async function swapBasemap() {
   setUi({ basemap: to })
   placeOnBase()
   applyTheme()
+  paintCity()
   applySky()
   if (viewFocus) applyViewBuildings()
 }
@@ -449,6 +452,17 @@ function firstBaseLayer(type: string) {
 // The base map's first label layer: a feature's lines go under it, so street names stay on top.
 export function firstLabelLayer() {
   return firstBaseLayer("symbol")
+}
+
+// Where something that covers the ground goes (the aerial photo, lib/map/ground.ts): over the
+// base map's fields and streets, under its labels and 3D buildings, the streets' glow and
+// everything the twin draws.
+export function groundSlot() {
+  return map.getLayersOrder().find((id) => {
+    if (!isBase(id)) return true
+    const type = map.getLayer(id)?.type
+    return type === "symbol" || type === "fill-extrusion" || id.endsWith("street-glow")
+  })
 }
 
 // Paint that differs between the two base maps: both values are kept while a layer is on the
@@ -1258,12 +1272,34 @@ export async function showLayer(spec: LayerSpec, prefetched: FC | null = null) {
 // that a 'buildings_3d' layer redraws are hidden here (no z-fighting); an old-town block that
 // only holds a register plot turns into a translucent ghost, so the plot shows inside it.
 
-function cityPaint(id: string, opacity: number): any {
-  const byHeight = (heights: unknown[]) => ["interpolate", ["linear"], ["get", "h"], ...heights]
+// The walls stop at the eave where a roof sits on them (`_w`, from lib/city3d/roofs.ts).
+function cityPaint(opacity: number): any {
   return {
-    ...forBase(id, { "fill-extrusion-color": { night: byHeight(CITY_HEIGHTS_NIGHT), day: byHeight(CITY_HEIGHTS_DAY) } }),
-    "fill-extrusion-height": ["get", "h"], "fill-extrusion-base": 0, "fill-extrusion-opacity": opacity,
+    "fill-extrusion-color": cityColor(),
+    "fill-extrusion-height": ["coalesce", ["get", "_w"], ["get", "h"]], "fill-extrusion-base": 0, "fill-extrusion-opacity": opacity,
   }
+}
+
+// The city as it looks (the aerial photo is on the ground: lib/map/ground.ts) or the twin's
+// heights; a view always shows it as it looks.
+let cityReal = false
+function cityLook(): Look {
+  return { night: useMapUi.getState().basemap === "night", real: cityReal || !!viewFocus }
+}
+function cityColor(): any {
+  return ["interpolate", ["linear"], ["get", "h"], ...rampFor(cityLook())]
+}
+function paintCity() {
+  if (!styleReady) return
+  for (const id of ["city3d::fill", "city3d::ghost"]) if (map.getLayer(id)) map.setPaintProperty(id, "fill-extrusion-color", cityColor())
+  // As it looks, walls are solid: the photo showing through them would tint them.
+  if (map.getLayer("city3d::fill")) map.setPaintProperty("city3d::fill", "fill-extrusion-opacity", cityLook().real ? 1 : 0.92)
+  setRoofLook(cityLook())
+  setTreesNight(cityLook().night)
+}
+export function setCityRealistic(on: boolean) {
+  cityReal = on
+  paintCity()
 }
 
 function addCityLayer() {
@@ -1272,15 +1308,21 @@ function addCityLayer() {
   }
   // Below any layer the assistant drew, so its buildings and markers stay on top (but over a
   // street's glow, which lies on the ground).
-  const before = map.getStyle().layers.find((l) => l.id.includes("::") && !l.id.startsWith("city3d::") && !l.id.endsWith("::street-glow"))?.id
-  if (!map.getLayer("city3d::fill")) map.addLayer({ id: "city3d::fill", type: "fill-extrusion", source: CITY_SRC, minzoom: CITY_MIN_ZOOM - 0.5, paint: cityPaint("city3d::fill", 0.92) }, before)
-  if (!map.getLayer("city3d::ghost")) map.addLayer({ id: "city3d::ghost", type: "fill-extrusion", source: CITY_SRC, minzoom: CITY_MIN_ZOOM - 0.5, filter: ["in", ["id"], ["literal", []]], paint: cityPaint("city3d::ghost", 0.28) }, before)
+  const before = map.getStyle().layers.find((l) => l.id.includes("::") && !/^(city3d|ground)::/.test(l.id) && !l.id.endsWith("::street-glow"))?.id
+  if (!map.getLayer("city3d::fill")) map.addLayer({ id: "city3d::fill", type: "fill-extrusion", source: CITY_SRC, minzoom: CITY_MIN_ZOOM - 0.5, paint: cityPaint(0.92) }, before)
+  if (!map.getLayer("city3d::ghost")) map.addLayer({ id: "city3d::ghost", type: "fill-extrusion", source: CITY_SRC, minzoom: CITY_MIN_ZOOM - 0.5, filter: ["in", ["id"], ["literal", []]], paint: cityPaint(0.28) }, before)
+  // The roofs over the walls, and under whatever the answers drew.
+  attachRoofs(map, before)
+  attachTrees(map, before) // and the trees among them
+  paintCity()
   setBaseBuildings(false)
   syncCityClaims()
   bindCityPopup()
 }
 
 function removeCityLayer() {
+  detachTrees(map)
+  detachRoofs(map)
   for (const id of ["city3d::ghost", "city3d::fill"]) if (map.getLayer(id)) map.removeLayer(id)
   if (map.getSource(CITY_SRC)) map.removeSource(CITY_SRC)
   setBaseBuildings(true)
@@ -1305,8 +1347,12 @@ function syncCityClaims() {
   }
   // While looking out from a building, the eye stands in it: it isn't drawn around the camera.
   if (viewFocus?.hide) claimed.add(viewFocus.hide)
-  map.setFilter("city3d::fill", ["!", ["in", ["id"], ["literal", [...claimed, ...ghosts]]]])
+  // An old-town block split into its houses (chatbot/oldtown.py) is drawn as the houses; when an
+  // answer redraws the block, its houses go with it.
+  const gone = [...claimed, ...ghosts]
+  map.setFilter("city3d::fill", ["all", ["!", ["has", "split"]], ["!", ["in", ["id"], ["literal", [...gone, ...housesOf(gone)]]]]])
   map.setFilter("city3d::ghost", ["in", ["id"], ["literal", [...ghosts].filter((g) => !claimed.has(g))]])
+  hideRoofs(gone)
 }
 
 function cityTilesInView() {
@@ -1350,10 +1396,11 @@ function pumpCity() {
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`))))
       .then((fc: FC) => {
         CITY.tiles.add(key)
+        loadTrees(x, y)
         const add = fc.features.filter((f) => !CITY.ids.has(f.id!))
-        for (const f of add) { CITY.ids.add(f.id!); CITY.features.push(f) }
+        for (const f of add) { CITY.ids.add(f.id!); CITY.features.push(f); prepareBuilding(f) }
         if (add.length) (map.getSource(CITY_SRC) as GeoJSONSource | undefined)?.updateData({ add: add as any })
-        if (add.length) cityChanged()
+        if (add.length) { addRoofs(add); syncCityClaims(); cityChanged() }
       })
       .catch(() => { /* leave it unloaded; the next move retries it */ })
       .finally(() => { CITY.inflight.delete(key); cityStatus(); pumpCity() })
@@ -1381,7 +1428,8 @@ function cityStatus() {
 // The DLS buildings loaded so far (each with its roof height `h`), and a call whenever more
 // arrive or the 3D city is switched: for what is drawn from them, like their shadows.
 export function cityBuildings(): { on: boolean; features: Feature[] } {
-  return { on: CITY.on, features: CITY.features }
+  // An old-town block split into houses counts as its houses.
+  return { on: CITY.on, features: CITY.features.filter((f) => !f.properties?.split) }
 }
 const citySinks = new Set<() => void>()
 export function onCityChange(fn: () => void) {
@@ -1597,7 +1645,8 @@ function shownFeatures(entry: Entry): Feature[] {
 }
 
 // Where the swipe is on the canvas, in px: a share of the part of the map the panels leave open.
-function swipeX() {
+// Where the compare swipe divides the map, in the canvas's pixels (lib/map/past-photo.ts too).
+export function swipeX() {
   const p = map.getPadding()
   const w = map.getCanvas().clientWidth
   const left = p.left ?? 0, right = p.right ?? 0
@@ -2335,11 +2384,31 @@ function syncViewLights() {
   }, firstLabelLayer())
 }
 
-// The DLS buildings in a view: stone by day, as they look, rather than coloured by height.
-const VIEW_STONE = ["interpolate", ["linear"], ["get", "h"], 0, "#e9e4da", 20, "#ddd6c8", 60, "#cbc2b0"]
+// One-way arrows and road shields, repeated along every street. At eye level the base map's
+// z14 tiles are laid out for zoom 20 or more, and one of them would place tens of thousands of
+// these, past what MapLibre holds in a tile. They say nothing from the street anyway: in a view
+// they rest, and come back as they were after it.
+const viewHiddenSymbols = new Map<string, string>()
+
+function applyViewSymbols() {
+  for (const l of map.getStyle()?.layers || []) {
+    if (l.type !== "symbol" || !isBase(l.id)) continue
+    const layout = (l.layout ?? {}) as Record<string, unknown>
+    const alongLines = JSON.stringify(layout["symbol-placement"] ?? "point").includes("line")
+    if (!alongLines || !layout["icon-image"]) continue
+    if (viewFocus) {
+      if (!viewHiddenSymbols.has(l.id)) viewHiddenSymbols.set(l.id, String(layout.visibility ?? "visible"))
+      map.setLayoutProperty(l.id, "visibility", "none")
+    } else if (viewHiddenSymbols.has(l.id)) {
+      map.setLayoutProperty(l.id, "visibility", viewHiddenSymbols.get(l.id)!)
+    }
+  }
+  if (!viewFocus) viewHiddenSymbols.clear()
+}
 
 function applyViewBuildings() {
   if (!styleReady) return
+  applyViewSymbols()
   for (const l of map.getStyle()?.layers || []) {
     if (l.type !== "fill-extrusion" || !isBase(l.id)) continue
     const id = l.id
@@ -2368,11 +2437,8 @@ function applyViewBuildings() {
     }
   }
   if (!viewFocus) viewSaved.clear()
-  if (map.getLayer("city3d::fill")) {
-    const day = useMapUi.getState().basemap === "day"
-    map.setPaintProperty("city3d::fill", "fill-extrusion-color",
-      viewFocus && day ? VIEW_STONE : ["interpolate", ["linear"], ["get", "h"], ...cityHeights()])
-  }
+  // The DLS buildings in a view: as they look (stone and tiles by day), not coloured by height.
+  paintCity()
 }
 
 // Place the camera for the view: an eye-level camera from lib/view.ts.
