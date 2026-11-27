@@ -18,14 +18,17 @@ from collector.http import ApiError
 from chatbot import sources
 from chatbot.settings import TIMEZONE
 from chatbot.tools import (buildings, charts, city, clock, entities, environment, maps, memory,
-                           mobility, places, roadreports, routes, scenarios, views, watch)
+                           mobility, places, routes, scenarios, views, watch)
 from chatbot.tools.base import Handler, LocationNotShared, Tool, ToolContext, ToolError
 from chatbot.web import WebError
 
 log = logging.getLogger(__name__)
 
 DOMAINS = (city, places, routes, buildings, maps, charts, memory, entities, clock, mobility,
-           watch, environment, views, scenarios, roadreports)
+           watch, environment, views, scenarios)
+# Road reports (closures, jams, roadworks): a domain of its own, at the end.
+from chatbot.tools import roadreports  # noqa: E402
+DOMAINS += (roadreports,)
 
 TOOLS: list[Tool] = [t for domain in DOMAINS for t in domain.TOOLS]
 TOOL_DEFS: list[dict] = [t.definition for t in TOOLS]

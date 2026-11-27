@@ -16,9 +16,7 @@ this chat has fetched), weeks deep where it has been recording. query_history an
 read it; replays use it too, and the city API fills gaps in the last 72 hours.
 - Live mobility from the Cyprus National Access Point: every bus on the road (GTFS-RT, joined \
 to the NPT, Intercity and Pame Express timetables), departures from every stop, and speeds on \
-Nicosia's main roads from Bluetooth travel-time detectors, and road reports: closures, jams, \
-accidents and hazards Waze drivers report, roadworks and diversions the Public Works \
-Department enters.
+Nicosia's main roads from Bluetooth travel-time detectors.
 - Places from OpenStreetMap (museums, cafés, pharmacies, toilets, drinking water, parks...) \
 and from Overture Maps (about 9,500 businesses and services OSM lacks: studios, schools, \
 clinics, clubs, shops, offices), Valhalla routing, and the Open-Meteo weather and air-quality \
