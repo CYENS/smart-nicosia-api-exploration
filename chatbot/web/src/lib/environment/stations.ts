@@ -119,7 +119,8 @@ function addLayers(map: MlMap) {
   if (!map.getLayer(VALUES)) {
     map.addLayer({
       id: VALUES, type: "symbol", source: SRC,
-      layout: { "text-field": ["get", "value"], "text-font": FONT_BOLD, "text-size": 12, "text-offset": [0, -1.5], "text-allow-overlap": true },
+      // Below the dot: a surface's own value for the same station sits above it.
+      layout: { "text-field": ["get", "value"], "text-font": FONT_BOLD, "text-size": 12, "text-offset": [0, 1.55], "text-allow-overlap": true },
       paint: {
         ...themedPaint(VALUES, { "text-color": { night: "#e4ebf4", day: "#0e1828" }, "text-halo-color": { night: "#0e1828", day: "#ffffff" } }),
         "text-halo-width": 1.6,

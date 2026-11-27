@@ -53,6 +53,7 @@ function summaryLine(d: StationsData | null, past: boolean) {
   const parts = []
   if (t && tr) parts.push(`${tr.value.toFixed(1)} °C at ${t.name}${past ? "" : `, ${ago(tr.age_min)}`}`)
   if (air) parts.push(air)
+  if (!tr) parts.push(past ? "no Met reading recorded then" : "no Met reading yet")
   return parts.join("; ")
 }
 
@@ -165,22 +166,27 @@ function ComparisonList({ rows, title, empty, open }: { rows: Comparison[]; titl
     <section aria-label={title} className="flex flex-col gap-2">
       <h3 className="text-[12.5px] text-muted-foreground">{title}</h3>
       {rows.length === 0 ? <p className="text-[12.5px] leading-snug text-muted-foreground">{empty}</p> : (
-        <ul className="flex flex-col gap-1.5">
+        <ul className="-mx-2 flex flex-col">
           {rows.map((c) => {
+            // A station lists its city sensors by name; a sensor its metrics (the text names the station).
             const id = open === "sensor" ? c.sensor_id : c.reference_id
-            const name = open === "sensor" ? c.sensor : c.reference
+            const head = open === "sensor" ? c.sensor : c.label
             const off = c.bias_pct !== undefined ? Math.abs(c.bias_pct) : c.bias !== undefined ? Math.abs(c.bias) * 10 : null
             return (
-              <li key={`${c.sensor_id}-${c.metric}`} className="flex items-start gap-2 text-[13px] leading-snug">
-                <span className="mt-1.5 size-2 shrink-0 rounded-full" aria-hidden="true"
-                  style={{ background: off === null ? "var(--muted-foreground)" : off < 10 ? "#4fbf8f" : off < 25 ? "#e0b43a" : "#ff8a3d" }} />
-                <span>
-                  <span className="font-medium">{c.label}</span>{" "}
-                  <button type="button" className="underline-offset-2 hover:underline focus-visible:underline focus-visible:outline-none" onClick={(e) => inspect({ id }, { opener: e.currentTarget })}>
-                    {name}
-                  </button>
-                  <span className="text-muted-foreground">: {c.text ?? c.note}</span>
-                </span>
+              <li key={`${c.sensor_id}-${c.metric}`}>
+                <button
+                  type="button"
+                  className="flex w-full items-start gap-2 rounded-md px-2 py-1.5 text-left text-[13px] leading-snug hover:bg-raised focus-visible:bg-raised focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none"
+                  onClick={(e) => inspect({ id }, { opener: e.currentTarget })}
+                  aria-label={`${head}: ${c.text ?? c.note}. Open ${open === "sensor" ? c.sensor : c.reference}`}
+                >
+                  <span className="mt-1.5 size-2 shrink-0 rounded-full" aria-hidden="true"
+                    style={{ background: off === null ? "var(--muted-foreground)" : off < 10 ? "#4fbf8f" : off < 25 ? "#e0b43a" : "#ff8a3d" }} />
+                  <span>
+                    <span className="font-medium">{head}</span>
+                    <span className="text-muted-foreground">: {c.text ?? c.note}</span>
+                  </span>
+                </button>
               </li>
             )
           })}
