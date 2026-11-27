@@ -264,6 +264,17 @@ def _grid(agent) -> dict:
     return status("live", h["fetched_at"].timestamp(), note)
 
 
+def _hazards(feed: str) -> Callable:
+    """Earthquakes, warnings or fire danger, as the hazard feeds' last read left them."""
+    def probe(agent) -> dict:
+        hz = getattr(agent, "hazards", None)
+        if hz is None:
+            return status(None)
+        state, at, note = hz.feed_state(feed)
+        return status(state, at, note)
+    return probe
+
+
 PROBES: dict[str, Callable] = {
     "met_stations": lambda a: _station_feed(a, "met"),
     "eea_air": lambda a: _station_feed(a, "eea"),
@@ -293,6 +304,9 @@ PROBES: dict[str, Callable] = {
     "nap_bolt": _inventories("scooter_zone"),
     "nextbike_live": _nextbike_live,
     "tso_grid": _grid,
+    "emsc": _hazards("earthquakes"),
+    "meteoalarm": _hazards("warnings"),
+    "effis": _hazards("fire"),
 }
 
 
