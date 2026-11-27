@@ -102,7 +102,7 @@ def _road_reports(source: str) -> Callable:
         st = rep.state[source]
         if st.parsed is None:
             if st.error:
-                return status("unavailable", st.tried_at, f"the last read failed: {st.error}")
+                return status("unavailable", st.tried_at, st.error)
             return status("waiting", note="read while road reports are on the map or the watch listens")
         problem = st.fresh_problem(source, rep.now())
         n = len(st.parsed.reports)

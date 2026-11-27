@@ -93,24 +93,26 @@ export function ReportRows({ items, label, beside }: { items: ReportItem[]; labe
   )
 }
 
+const cap = (s: string | null | undefined) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : undefined)
+
 // What the reports say, in a sentence, now or at the clock's moment; null while loading.
 export function useReportsLine(): { lead: string; detail?: string; tone?: "signal" } | null {
   const status = useReports((s) => s.status)
   const body = useReports((s) => s.body)
   const error = useReports((s) => s.error)
   const past = useClock((s) => s.at !== null)
-  if (status === "error" && !body) return { lead: "The road report feeds aren't answering. Try again in a minute.", detail: error ?? undefined, tone: "signal" }
+  if (status === "error" && !body) return { lead: "The road report feeds aren't answering. Try again in a minute.", detail: cap(error), tone: "signal" }
   if (!body) return null
   const m = body.meta
   if (m.status === "unknown") return { lead: "The twin's memory holds no road reports for this moment.", detail: "It records them while a page or the watch reads them." }
-  if (m.status === "unavailable") return { lead: "The road report feeds aren't answering. Try again in a minute.", detail: m.error ?? undefined, tone: "signal" }
+  if (m.status === "unavailable") return { lead: "The road report feeds aren't answering. Try again in a minute.", detail: cap(m.error), tone: "signal" }
   if (!m.total) return { lead: past ? "No road reports then." : "No road reports in Greater Nicosia right now." }
   const jam = m.newest_jam
   const jams = m.counts.jam ?? 0
   const recent = m.recent_words
   let lead: string
   if (jams && jam?.age) {
-    lead = past ? `${jams} jam${jams === 1 ? " was" : "s were"} reported then, the latest ${jam.age.replace(" ago", "")} before.`
+    lead = past ? `${jams} jam${jams === 1 ? " was" : "s were"} reported then, the latest ${jam.age}.`
       : `Waze drivers report ${jams === 1 ? "a jam" : `${jams} jams`} now, the latest ${jam.age}.`
   } else if (recent && !past) {
     lead = `${recent.charAt(0).toUpperCase()}${recent.slice(1)} reported in the last 30 minutes.`
