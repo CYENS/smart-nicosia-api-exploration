@@ -34,6 +34,7 @@ import "@/lib/mobility" // buses, stops and road speeds: their workspace, kinds,
 import "@/lib/reports" // road reports: closures, jams, accidents and roadworks on the map, the Traffic card and Layers
 import "@/lib/facilities" // car parks, chargers, bike stations, scooter zones and racks: kinds, layers, Parking card
 import "@/lib/watch" // the incident inbox, its Layers row, marks on the clock, toasts from the live stream
+import "@/lib/hazards" // earthquakes, weather warnings and fire danger: Layers row, Outside line, incident extents
 import "@/lib/environment" // sun, shade, terrain, air, noise and weather: workspace, spot, layers
 import "@/lib/streets" // speed limits, slow zones, signals, crossings, cycleways, bus lanes, cameras
 import "@/lib/scenarios" // the Scenario lab: its workspace, split map, sections and saved runs

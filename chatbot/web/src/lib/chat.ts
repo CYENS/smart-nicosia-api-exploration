@@ -53,6 +53,7 @@ export const TOOL_LABELS: Record<string, string> = {
   find_bikes: "Finding bikes, scooters and racks",
   measured_stations: "Reading the measuring stations", compare_with_reference: "Comparing the sensors with the official stations",
   get_grid: "Reading the island's grid",
+  get_hazards: "Reading the earthquake, warning and fire danger feeds",
 }
 
 export function toolLabel(name: string) {
