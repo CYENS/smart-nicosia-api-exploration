@@ -22,6 +22,12 @@ place far from every station is never surer than a station itself.
 CAQI is the stations' own index (the model has no such scale) and noise is only measured, so
 both are stations only and fade to nothing between stations; noise is very local (a street, a
 square) and fades within a few hundred metres.
+
+Reference stations (the Department of Meteorology's thermometers, the national network's air
+stations: chatbot/environment/stations.py) are ground truth where they stand. They come first
+when the model's level is corrected (its mean miss is theirs alone when there is one), and each
+station carries its own error, so the uncertainty near a reference station is the instrument's
+and near a city sensor the sensor's: it narrows only near a reference station.
 """
 
 from __future__ import annotations
@@ -80,6 +86,15 @@ METRICS: dict[str, Metric] = {
                              (math.inf, "Very hot"))),
 }
 EU_BANDS_NOTE = "bands of the European Air Quality Index (EEA) for one hour"
+# A reference instrument's error: a share of the reading and a floor, in the metric's unit (a
+# Met thermometer to about 0.2 °C; the network's analysers to about a tenth of the reading).
+REFERENCE_ERROR = {"no2": (0.1, 1.0), "o3": (0.1, 1.0), "pm10": (0.15, 1.0), "pm2_5": (0.15, 1.0),
+                   "temperature_c": (0.0, 0.2)}
+
+
+def reference_error(metric: str, value: float) -> float:
+    share, floor = REFERENCE_ERROR.get(metric, (0.1, 0.5))
+    return max(floor, share * abs(value))
 
 
 def band_of(metric: Metric, value: float | None) -> str | None:
@@ -101,6 +116,8 @@ class Station:
     lon: float
     value: float
     model: float | None = None  # the background at the station
+    reference: bool = False  # an official instrument (Met station, the national air network)
+    error: float | None = None  # its own error; None: the metric's sensor error
 
 
 class Field:
@@ -119,12 +136,16 @@ class Field:
         # The regional model often misses a city's level as a whole (CAMS cells are 10 km wide):
         # when two or more stations agree, it is shifted by their mean miss first, so the
         # surface doesn't fall off a cliff between the stations and the countryside.
+        # Reference stations are ground truth: when there is one, the miss is theirs alone.
         self.bias = 0.0
         if self.has_model:
-            raw = [s.value - m for s in self.stations
+            raw = [(s.value - m, s.reference) for s in self.stations
                    if (m := bilinear(AIR_LATS, AIR_LONS, self.model[self.var], s.lat, s.lon)) is not None]
-            if len(raw) >= 2:
-                self.bias = statistics.fmean(raw)
+            refs = [d for d, ref in raw if ref]
+            if refs:
+                self.bias = statistics.fmean(refs)
+            elif len(raw) >= 2:
+                self.bias = statistics.fmean(d for d, _ in raw)
         for s in self.stations:
             s.model = self.background(s.lat, s.lon)
         residuals = [s.value - s.model for s in self.stations if s.model is not None]
@@ -157,13 +178,16 @@ class Field:
         acc = 0.0
         apart = 1.0  # prod (1 - g_i)
         nearest = None
+        near_w: list[tuple[float, float | None]] = []  # (g_i, the station's own error)
         for s in self.stations:
             sx, sy = self._xy(s.lat, s.lon)
             d = math.hypot(x - sx, y - sy)
             v = 1 / (d * d + NUGGET_M ** 2)
             vsum += v
             acc += v * (s.value - (s.model if s.model is not None else s.value))
-            apart *= 1 - math.exp(-d * d / (2 * self.metric.reach_m ** 2))
+            g = math.exp(-d * d / (2 * self.metric.reach_m ** 2))
+            apart *= 1 - g
+            near_w.append((g, s.error))
             if nearest is None or d < nearest[1]:
                 nearest = (s, d)
         bg = self.background(lat, lon)
@@ -172,9 +196,16 @@ class Field:
         conf = 1 - apart if self.stations else 0.0
         value = bg + (conf * acc / vsum if vsum else 0.0)
         sensor = max(self.metric.floor, self.metric.sensor * abs(value))
-        sigma = math.sqrt(sensor ** 2 + (1 - conf) * self.spread ** 2)
+        # The error of the stations near the point, weighted by how near: an instrument's own
+        # near a reference station, a city sensor's near one, the nearest's far from all.
+        gsum = sum(g for g, _ in near_w)
+        if gsum > 1e-12:
+            near = math.sqrt(sum(g * (sensor if e is None else e) ** 2 for g, e in near_w) / gsum)
+        else:
+            near = sensor if nearest is None or nearest[0].error is None else nearest[0].error
+        sigma = math.sqrt(near ** 2 + (1 - conf) * max(self.spread, near) ** 2)             if any(e is not None for _, e in near_w) else math.sqrt(sensor ** 2 + (1 - conf) * self.spread ** 2)
         return {"value": value, "uncertainty": sigma, "confidence": conf,
-                "nearest": {"id": nearest[0].id, "name": nearest[0].name,
+                "nearest": {"id": nearest[0].id, "name": nearest[0].name, "reference": nearest[0].reference,
                             "metres": round(nearest[1])} if nearest else None}
 
     def grid(self) -> dict:
@@ -222,12 +253,17 @@ def _nan(v: float | None) -> float:
 
 
 def stations_from(readings: list[dict], key: str) -> list[Station]:
-    """Stations with a reading of `key`, from [{id, name, lat, lon, <key>: value}]."""
+    """Stations with a reading of `key`, from [{id, name, lat, lon, <key>: value}], a
+    reference station marked {"reference": true} (its error the instrument's) and a city
+    sensor's own error, where measured, as {"error": ...}."""
     out = []
     for r in readings:
         v = r.get(key)
         if isinstance(v, (int, float)) and r.get("lat") is not None and r.get("lon") is not None:
-            out.append(Station(r["id"], r.get("name") or r["id"], r["lat"], r["lon"], float(v)))
+            ref = bool(r.get("reference"))
+            err = reference_error(key, float(v)) if ref else r.get("error")
+            out.append(Station(r["id"], r.get("name") or r["id"], r["lat"], r["lon"], float(v),
+                               reference=ref, error=err))
     return out
 
 
