@@ -76,7 +76,8 @@ async def lifespan(app: FastAPI):
     # down again only once it has changed), recorded in the memory for the clock.
     agent.environment.measured.start()
     agent.grid.start()  # the island's grid, read as the operator publishes it
-    agent.hazards.start()  # earthquakes, weather warnings and fire danger
+    if os.environ.get("CHATBOT_HAZARDS", "1").strip().lower() not in ("0", "false", "no", "off"):
+        agent.hazards.start()  # earthquakes, warnings and fire danger (CHATBOT_HAZARDS=0: from the memory only)
     if settings.collect:
         start_collector(memory)
     log.info("twin's memory: %s (recording %s, full collection %s)", memory.path,

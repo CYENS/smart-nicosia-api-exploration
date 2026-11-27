@@ -292,7 +292,7 @@ def test_a_felt_quake_pages_and_its_aftershocks_join_it(memory, clock, feeds, tm
     new = next(c for c in changes if c["change"] == "new")["incident"]
     assert new["category"] == "Earthquake" and new["severity"] == "high" and new["active"]
     assert new["title"] == "M5.2 earthquake in the Paphos district, 91 km south-west of Nicosia, and 4 more"
-    assert new["place"] == "In the Paphos district, 91 km south-west of Nicosia"
+    assert new["place"] == "in the Paphos district, 91 km south-west of Nicosia"
     assert new["kinds"] == {"earthquake": 5} and new["source"] == "emsc"
     loop.run_until_complete(asyncio.sleep(0))
     event = q.get_nowait()  # the page toasts a new high-severity incident

@@ -152,7 +152,7 @@ def _strongest(members: list[dict]) -> dict:
 def _quake_place(members: list[dict]) -> dict:
     m = _strongest(members)
     w = (m.get("extra") or {}).get("where") or "near Cyprus"
-    return {"label": cap(w), "phrase": w, "street": None, "lat": m.get("lat"), "lon": m.get("lon")}
+    return {"label": w, "phrase": w, "street": None, "lat": m.get("lat"), "lon": m.get("lon")}  # read mid-sentence
 
 
 def _mag(m: dict) -> float:
@@ -228,7 +228,7 @@ def warnings(obs: Observed) -> list[Detection] | None:
             ev.append(Evidence(h.start, "in force from here", h.id, "event"))
         if d.get("withdrawn_at") and h.end is not None:
             ev.append(Evidence(h.end, "left Meteoalarm's feed before its expiry: withdrawn or replaced", h.id))
-        elif h.end is not None:
+        elif h.end is not None and h.end <= obs.now:  # an expiry still to come isn't evidence yet
             ev.append(Evidence(h.end, "expired", h.id))
         out.append(Detection(
             "weather_warning", "warning", h.id, "warning", issued, end,

@@ -13,7 +13,7 @@ import "@/lib/hazards/map"
 import {
   HAZARD_FAMILIES, LEVEL_COLOR, FIRE_COLOR, loadHazards, startHazardsStore, useHazards, needHazards, type HazardsAt,
 } from "@/lib/hazards/store"
-import { flyToBounds, removeLayer, showLayer, useMapUi, type FC } from "@/lib/map/engine"
+import { KIND_ZOOM, flyToBounds, removeLayer, showLayer, useMapUi, type FC } from "@/lib/map/engine"
 import { registerSystemLayer } from "@/lib/registries/layers"
 import { matches, registerSearchProvider } from "@/lib/registries/search"
 import { registerTopicSection } from "@/lib/registries/topics"
@@ -28,6 +28,9 @@ const SEVERITY_COLOR: Record<string, string> = { high: "#ff5a4e", medium: "#f5a5
 KINDS.earthquake = { label: "Earthquake", icon: ActivityIcon, chip: "danger" }
 KINDS.warning = { label: "Weather warning", icon: CloudAlertIcon, chip: "danger" }
 KINDS.fire_danger = { label: "Fire danger", icon: FlameIcon, chip: "danger" }
+KIND_ZOOM.earthquake = 9 // the epicentre with the coast around it, not a street
+KIND_ZOOM.warning = 10.5
+KIND_ZOOM.fire_danger = 10.5
 
 function fc(d: Pick<HazardsAt, "features" | "meta">): FC {
   return { type: "FeatureCollection", features: d.features, meta: { hazards: d.meta } }
