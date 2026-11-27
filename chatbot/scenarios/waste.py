@@ -264,8 +264,7 @@ class Waste(Scenario):
         clon = statistics.mean(p[1] for p in mids)
         centre = min(mids, key=lambda p: (p[0] - clat) ** 2 + (p[1] - clon) ** 2)
         depots["bins_centre"] = (DEPOTS["bins_centre"][0], centre)
-        cache = (ctx.cache_dir / "waste") if ctx.cache_dir else (CACHE_DIR / "scenarios" / "waste")
-        source = MatrixSource(ctx.settings.valhalla_url, ctx.settings.user_agent, cache)
+        source = MatrixSource(ctx.settings.valhalla_url, ctx.settings.user_agent, _cache(ctx))
         points = list(dict.fromkeys(mids))
         matrices = {k: source.matrix(at, points) for k, (_, at) in depots.items()}
         estimated = max(m.estimated for m in matrices.values())
@@ -420,18 +419,19 @@ class Waste(Scenario):
         layer = result.layers.get("route")
         if not layer:
             return
-        data = None
+        source = MatrixSource(ctx.settings.valhalla_url, ctx.settings.user_agent, _cache(ctx))
         for f in layer["features"]:
             pts = [tuple(c) for c in f["properties"].get("_stops", [])]
-            if len(pts) < 2:
+            if len(pts) < 2 or f["properties"].get("road"):
                 continue
-            if data is None:
-                data = MatrixSource(ctx.settings.valhalla_url, ctx.settings.user_agent,
-                                    (ctx.cache_dir / "waste") if ctx.cache_dir
-                                    else (CACHE_DIR / "scenarios" / "waste"))
-            f["geometry"]["coordinates"] = data.route_line(pts)
+            line = source.route_line(pts)
+            if line is None:
+                break  # Valhalla can't answer: keep the straight lines between stops
+            f["geometry"]["coordinates"] = line
             f["properties"]["road"] = True
-        layer["meta"]["note"] = "Road lines from Valhalla's heavy truck profile."
+        road = all(f["properties"].get("road") for f in layer["features"])
+        layer["meta"]["note"] = ("Road lines from Valhalla's heavy truck profile." if road else
+                                 "Straight lines between stops, in the order the truck visits them.")
 
     def label(self, params: dict) -> str:
         n = int(params["rounds_per_week"])
@@ -525,7 +525,7 @@ class Waste(Scenario):
         used = dict.fromkeys(f["properties"]["state"] for f in feats)
         return {"type": "FeatureCollection", "features": feats,
                 "meta": {"title": f"Rounds on {t:%a} {t.day} {t:%b}", "variant": "scenario",
-                         "geometry": "line", "chat": True,
+                         "geometry": "route", "chat": True,
                          "legend": {s: ROUTE_COLORS[s] for s in used if s in ROUTE_COLORS},
                          "legend_labels": {s: ROUTE_LABELS[s] for s in used if s in ROUTE_LABELS},
                          "value_field": "km", "unit": "km"}}
@@ -564,6 +564,10 @@ class Waste(Scenario):
              "unit": "times the average", "x": "category", "kind": "bar"},
         ]
         return rows, charts
+
+
+def _cache(ctx: ScenarioContext):
+    return (ctx.cache_dir / "waste") if ctx.cache_dir else (CACHE_DIR / "scenarios" / "waste")
 
 
 def _date(t_ms: int) -> str:

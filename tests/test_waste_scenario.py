@@ -392,7 +392,7 @@ def test_a_run_gives_kpis_with_ranges_layers_series_and_a_backtest(tmp_path, off
                                                    for f in feats)
     assert next(f for f in feats if f["properties"]["id"] == "YW1056")["properties"]["state"] == "never_emptied"
     route = res.layers["route"]
-    assert route["meta"]["geometry"] == "line" and route["meta"]["chat"] is True
+    assert route["meta"]["geometry"] == "route" and route["meta"]["chat"] is True
     assert all(f["geometry"]["type"] == "LineString" for f in route["features"])
     assert {r["metric"] for r in res.series} >= {"full_hours", "collections", "truck_km", "fill_by_hour"}
     assert {c["metric"] for c in res.charts} == {r["metric"] for r in res.series}
@@ -418,14 +418,39 @@ def test_policies_trade_hours_full_against_kilometres(tmp_path, offline):
     assert daily["full_hours"]["baseline"] == weekly["full_hours"]["baseline"]
 
 
-def test_finish_draws_the_route_on_the_roads(tmp_path, offline, monkeypatch):
+def test_finish_draws_the_route_on_the_roads_once_per_run(tmp_path, offline, monkeypatch):
     ctx = waste_ctx(tmp_path)
     res, params = run(WASTE, ctx, {}, Period.parse("last_30_days", ctx.now()))
-    monkeypatch.setattr(MatrixSource, "route_line",
-                        lambda self, stops: [[lon + 0.0001, lat] for lat, lon in stops])
+    route = res.layers["route"]
+    assert not any(f["properties"]["road"] for f in route["features"])  # offline: straight
+    assert route["meta"]["note"].startswith("Straight lines")
+    asked = []
+
+    def road(self, stops):
+        asked.append(len(stops))
+        return [[lon + 0.0001, lat] for lat, lon in stops]
+
+    monkeypatch.setattr(MatrixSource, "route_line", road)
     WASTE.finish(ctx, res, params)
-    f = res.layers["route"]["features"][0]
-    assert f["properties"]["road"] is True and f["geometry"]["coordinates"][0][0] != f["properties"]["_stops"][0][1]
+    f = route["features"][0]
+    assert f["properties"]["road"] is True and route["meta"]["note"].startswith("Road lines")
+    assert f["geometry"]["coordinates"][0][0] != f["properties"]["_stops"][0][1]
+    assert len(asked) == len(route["features"])
+
+
+def test_run_scenario_hands_the_chat_the_route_as_well(tmp_path, offline):
+    from chatbot.store import SessionStore
+    from chatbot.tools import ToolContext, run_tool
+
+    tctx = ToolContext(Settings(), None, None, None, SessionStore(), lambda e: None, "c1",
+                       scenarios=Lab(waste_ctx(tmp_path)))
+    out, err = run_tool(tctx, "run_scenario", {"scenario": "waste", "params": {"policy": "fixed",
+                                                                               "rounds_per_week": 2}})
+    assert not err, out
+    assert out["layer_ref"] in tctx.store.layers and out["layer_refs"]["route"] in tctx.store.layers
+    assert tctx.store.layers[out["layer_refs"]["route"]]["meta"]["geometry"] == "route"
+    assert out["kpis"][0]["id"] == "full_hours" and out["backtest"]["kind"] == "out_of_sample"
+    assert set(out["data_refs"]) >= {"full_hours", "truck_km"}
 
 
 def test_too_short_a_memory_says_so(tmp_path, offline):

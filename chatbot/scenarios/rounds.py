@@ -161,9 +161,9 @@ class MatrixSource:
         path = self.dir / f"waste_line_{_key(list(stops))}.json"
         return json.loads(path.read_text()) if path.exists() else None
 
-    def route_line(self, stops: Sequence[tuple[float, float]]) -> list[list[float]]:
+    def route_line(self, stops: Sequence[tuple[float, float]]) -> list[list[float]] | None:
         """The road line through (lat, lon) stops in order, as [[lon, lat], ...], from Valhalla
-        in pieces of ROUTE_LOCATIONS and kept on disk; straight segments when it can't answer."""
+        in pieces of ROUTE_LOCATIONS and kept on disk; None when it can't answer."""
         from chatbot.routing import decode_polyline6
 
         if len(stops) < 2:
@@ -186,7 +186,7 @@ class MatrixSource:
                 time.sleep(REQUEST_GAP_S / 2)
         except (WebError, KeyError, ValueError, TypeError) as e:
             log.warning("waste rounds: Valhalla route unavailable (%s); straight lines", e)
-            return [[lon, lat] for lat, lon in stops]
+            return None
         self.dir.mkdir(parents=True, exist_ok=True)
         path.write_text(json.dumps(coords))
         return coords

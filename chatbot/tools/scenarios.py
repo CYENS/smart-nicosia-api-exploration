@@ -63,7 +63,8 @@ def h_list_scenarios(ctx: ToolContext, a: dict) -> dict:
       "on the period against what the sensors measured, with its error); the sensitivity of "
       "the headline KPI to each assumption; a data_ref of the series (rows: metric, time, "
       "variant, value; data_refs has one per metric) and a layer_ref of what changes on the "
-      "map. Unset parameters take their defaults. open_scenario shows the run in the lab.",
+      "map (layer_refs has the scenario's other map layers, such as a route). Unset parameters "
+      "take their defaults. open_scenario shows the run in the lab.",
       obj({"scenario": {"type": "string", "description": "A scenario id from list_scenarios."},
            "params": {"type": "object", "description": "Parameters by name (see list_scenarios)."},
            "period": PERIOD}, ["scenario"]))
@@ -103,6 +104,17 @@ def h_run_scenario(ctx: ToolContext, a: dict) -> dict:
             f"scenario_{run_['scenario']}", layer["features"],
             geometry=meta.get("geometry", "point"), title=meta.get("title", run_["label"]),
             legend=meta.get("legend"), value_fields=[meta["value_field"]] if meta.get("value_field") else None,
+            sources=sources)
+    # Other layers a scenario marks for the chat (a route, say) get their own refs.
+    for name, extra in res.get("layers", {}).items():
+        emeta = extra.get("meta", {})
+        if name == "change" or not emeta.get("chat") or not extra.get("features"):
+            continue
+        out.setdefault("layer_refs", {})[name] = ctx.store.add_layer(
+            f"scenario_{run_['scenario']}_{name}", extra["features"],
+            geometry=emeta.get("geometry", "point"), title=emeta.get("title", name),
+            legend=emeta.get("legend"),
+            value_fields=[emeta["value_field"]] if emeta.get("value_field") else None,
             sources=sources)
     out["_summary"] = f"{run_['label']}: run {run_['id']}"
     return out
