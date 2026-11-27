@@ -394,6 +394,7 @@ def test_a_run_gives_kpis_with_ranges_layers_series_and_a_backtest(tmp_path, off
     assert next(f for f in feats if f["properties"]["id"] == "YW1056")["properties"]["state"] == "never_emptied"
     route = res.layers["route"]
     assert route["meta"]["geometry"] == "route" and route["meta"]["chat"] is True
+    assert route["meta"]["variant"] is None and route["meta"]["show"] is True  # over both sides
     assert all(f["geometry"]["type"] == "LineString" for f in route["features"])
     assert {r["metric"] for r in res.series} >= {"full_hours", "collections", "truck_km", "fill_by_hour"}
     assert {c["metric"] for c in res.charts} == {r["metric"] for r in res.series}

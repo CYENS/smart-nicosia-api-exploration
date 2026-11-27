@@ -78,7 +78,7 @@ PARAMS = {
                            "before the next round.", "x-group": "policy"},
         "rounds_per_week": {
             "type": "integer", "default": 5, "minimum": 1, "maximum": 7, "x-step": 1,
-            "x-unit": "days a week", "title": "Round days a week",
+            "x-unit": "a week", "title": "Round days",
             "description": "Days the trucks go out, spread over the week: 1 is Monday; 2 Monday "
                            "and Thursday; 3 Monday, Wednesday and Friday; 4 Monday, Tuesday, "
                            "Thursday and Friday; 5 Monday to Friday; 6 Monday to Saturday; 7 "
@@ -538,7 +538,7 @@ class Waste(Scenario):
                     "order": [s.bin_id for s in trip.stops], "_stops": [list(p) for p in stops]}})
         used = dict.fromkeys(f["properties"]["state"] for f in feats)
         return {"type": "FeatureCollection", "features": feats,
-                "meta": {"title": f"Rounds on {t:%a} {t.day} {t:%b}", "variant": "scenario",
+                "meta": {"title": f"Rounds on {t:%a} {t.day} {t:%b}", "variant": None, "show": True,
                          "geometry": "route", "chat": True,
                          "legend": {s: ROUTE_COLORS[s] for s in used if s in ROUTE_COLORS},
                          "legend_labels": {s: ROUTE_LABELS[s] for s in used if s in ROUTE_LABELS},

@@ -30,6 +30,7 @@ type WasteDetails = {
 }
 
 const STREAM: Record<string, string> = { glass: "Glass", underground: "Underground" }
+const plural = (n: number, word: string) => `${n} ${n === 1 ? word : `${word}s`}`
 
 function details(run: ScenarioRun): WasteDetails | null {
   const d = run.result.details as Partial<WasteDetails> | undefined
@@ -49,7 +50,7 @@ function Rounds({ run }: { run: ScenarioRun; compare: ScenarioRun | null }) {
   const drawnLabel = d.days.scenario.find((x) => x.date === d.route_date)?.label
   return (
     <div className="flex flex-col gap-3">
-      <div className="grid gap-2.5 sm:grid-cols-2">
+      <div className="flex flex-col gap-2.5">
         <Field>
           <FieldLabel id={ids.side} className="text-[12.5px] font-normal text-muted-foreground">Show</FieldLabel>
           <ToggleGroup
@@ -66,14 +67,14 @@ function Rounds({ run }: { run: ScenarioRun; compare: ScenarioRun | null }) {
           <FieldLabel htmlFor={ids.day} className="text-[12.5px] font-normal text-muted-foreground">Day</FieldLabel>
           <Select value={day?.date ?? ""} onValueChange={(v) => setPicked(v as string)} disabled={!days.length}>
             <SelectTrigger id={ids.day} size="sm" className="w-full">
-              <SelectValue>{day ? `${day.label}: ${day.stops} stops, ${fmtNum(day.km, 1)} km` : "No rounds"}</SelectValue>
+              <SelectValue>{day ? `${day.label}: ${plural(day.stops, "stop")}, ${fmtNum(day.km, 1)} km` : "No rounds"}</SelectValue>
             </SelectTrigger>
             <SelectContent>
               {days.map((x) => (
                 <SelectItem key={x.date} value={x.date}>
                   <span className="flex w-full justify-between gap-3">
                     <span>{x.label}</span>
-                    <span className="font-readout text-muted-foreground tabular-nums">{x.stops} stops, {fmtNum(x.km, 1)} km</span>
+                    <span className="font-readout text-muted-foreground tabular-nums">{plural(x.stops, "stop")}, {fmtNum(x.km, 1)} km</span>
                   </span>
                 </SelectItem>
               ))}
@@ -105,8 +106,8 @@ function DayView({ day, drawn }: { day: Day; drawn: boolean }) {
   return (
     <div className="flex flex-col gap-3">
       <p className="font-readout text-[13px] tabular-nums" aria-live="polite">
-        {day.label}: {day.trucks} {day.trucks === 1 ? "truck" : "trucks"}, {day.trips.length} {day.trips.length === 1 ? "trip" : "trips"},{" "}
-        {day.stops} stops, {fmtNum(day.km, 1)} km, {fmtNum(day.hours, 1)} driver hours
+        {day.label}: {plural(day.trucks, "truck")}, {plural(day.trips.length, "trip")}, {plural(day.stops, "stop")},{" "}
+        {fmtNum(day.km, 1)} km, {fmtNum(day.hours, 1)} driver hours
       </p>
       {day.trips.map((t) => (
         <div key={t.n} className="flex flex-col gap-1">
