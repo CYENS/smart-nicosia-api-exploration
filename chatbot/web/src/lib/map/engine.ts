@@ -97,6 +97,12 @@ const CITY_LAYER = "buildings"
 const CITY_DRAW_ZOOM = 12.5 // it fades in from here
 const OSM_HEIGHTS_NIGHT = [0, "#3b4354", 12, "#475165", 40, "#5b667b"]
 const OSM_HEIGHTS_DAY = [0, "#dedbd5", 12, "#d2cec6", 40, "#c2bdb4"]
+// With "Heights and the 3D city" off, the same tiles are the map's everyday 3D buildings, painted
+// as the base maps paint their own (lib/map/basemap.ts for Night, OpenFreeMap's Liberty for Day)
+// and fading in where theirs did, from z14.
+const PLAIN_HEIGHTS_NIGHT = [0, "#17253c", 15, "#1d2e4a", 40, "#263b5c"]
+const PLAIN_DAY = "hsl(35, 8%, 85%)"
+const PLAIN_FROM_ZOOM = 13.6
 
 // ---------------------------------------------------------------------------------------------
 // What React shows: layers with their legends, the 3D city, the registers and the time-lapse.
@@ -321,7 +327,7 @@ export function initMap(container: HTMLElement, camera?: Camera | null) {
     styleReady = true
     addWalls()
     addAmbientLamps()
-    if (CITY.on) addCityLayer()
+    addCityLayer() // the 3D buildings, whether coloured by height or not
     for (const entry of state.layers.values()) addToMap(entry)
     weatherHooks.place()
     syncHighlight()
@@ -426,7 +432,7 @@ async function swapBasemap() {
   const ground = map.getLayersOrder()[0]
   const prefix = newPrefix(to)
   for (const l of named(layers, prefix)) {
-    const hide = l.type === "fill-extrusion" && CITY.on // the 3D city stands in for them
+    const hide = l.type === "fill-extrusion" // the city's tiles stand in for them
     map.addLayer((hide ? { ...l, layout: { ...l.layout, visibility: "none" } } : l) as LayerSpecification, ground)
   }
   await nextFrame() // MapLibre takes up the new layers, and starts on the tiles, with its next frame
@@ -1334,19 +1340,35 @@ export async function showLayer(spec: LayerSpec, prefetched: FC | null = null) {
 }
 
 // ---------------------------------------------------------------------------------------------
-// The DLS 3D city: every building in view at its real height (from the Department of Lands and
-// Surveys), coloured by height, near and far. It replaces the base map's own 3D buildings while
-// on; where the DLS has none (north of the buffer zone) its tiles hold OpenStreetMap's, in grey.
-// Buildings that a 'buildings_3d' layer redraws are hidden here (no z-fighting); an old-town block
-// that only holds a register plot turns into a translucent ghost, so the plot shows inside it.
+// The 3D buildings: every building in view, near and far, at its DLS height (from the Department
+// of Lands and Surveys), and OpenStreetMap's where the DLS has none (north of the buffer zone).
+// They are always there, in place of the base map's own 3D buildings (which drop out a couple of
+// km away in a tilted view: the base map's tiles hold buildings from z13 only). "Heights and the
+// 3D city" (`CITY.on`) colours them by height, OpenStreetMap's in grey; off, they look as the base
+// map's did. Buildings that a 'buildings_3d' layer redraws are hidden here (no z-fighting); an
+// old-town block that only holds a register plot turns into a translucent ghost, so the plot
+// shows inside it.
 
 function cityPaint(id: string, opacity: number): any {
   const byHeight = (heights: unknown[]) => ["interpolate", ["linear"], ["get", "h"], ...heights]
   const color = (dls: unknown[], osm: unknown[]) => ["case", ["==", ["get", "src"], "osm"], byHeight(osm), byHeight(dls)]
+  const from = CITY.on ? CITY_DRAW_ZOOM : PLAIN_FROM_ZOOM
   return {
-    ...forBase(id, { "fill-extrusion-color": { night: color(CITY_HEIGHTS_NIGHT, OSM_HEIGHTS_NIGHT), day: color(CITY_HEIGHTS_DAY, OSM_HEIGHTS_DAY) } }),
+    ...forBase(id, {
+      "fill-extrusion-color": CITY.on
+        ? { night: color(CITY_HEIGHTS_NIGHT, OSM_HEIGHTS_NIGHT), day: color(CITY_HEIGHTS_DAY, OSM_HEIGHTS_DAY) }
+        : { night: byHeight(PLAIN_HEIGHTS_NIGHT), day: PLAIN_DAY },
+    }),
     "fill-extrusion-height": ["get", "h"], "fill-extrusion-base": ["coalesce", ["get", "b"], 0],
-    "fill-extrusion-opacity": ["interpolate", ["linear"], ["zoom"], CITY_DRAW_ZOOM, 0, CITY_DRAW_ZOOM + 0.6, opacity],
+    "fill-extrusion-opacity": ["interpolate", ["linear"], ["zoom"], from, 0, from + 0.6, CITY.on ? opacity : opacity - 0.04],
+  }
+}
+
+// Paint the buildings for "Heights and the 3D city" being on or off.
+function paintCityLayers() {
+  for (const [id, opacity] of [["city3d::fill", 0.92], ["city3d::ghost", 0.28]] as const) {
+    if (!map.getLayer(id)) continue
+    for (const [k, v] of Object.entries(cityPaint(id, opacity))) map.setPaintProperty(id, k, v)
   }
 }
 
@@ -1362,7 +1384,7 @@ function addCityLayer() {
   if (!map.getLayer("city3d::fill")) map.addLayer({ id: "city3d::fill", type: "fill-extrusion", ...tiles, paint: cityPaint("city3d::fill", 0.92) }, before)
   if (!map.getLayer("city3d::ghost")) map.addLayer({ id: "city3d::ghost", type: "fill-extrusion", ...tiles, filter: idsIn([]), paint: cityPaint("city3d::ghost", 0.28) }, before)
   weatherHooks.place() // the 3D city stands under the weather, with the ground
-  setBaseBuildings(false)
+  hideBaseBuildings()
   syncCityClaims()
   bindCityPopup()
 }
@@ -1374,16 +1396,10 @@ function idsIn(ids: Iterable<unknown>): any {
   return list.length ? ["match", ["id"], list, true, false] : ["boolean", false]
 }
 
-function removeCityLayer() {
-  for (const id of ["city3d::ghost", "city3d::fill"]) if (map.getLayer(id)) map.removeLayer(id)
-  if (map.getSource(CITY_SRC)) map.removeSource(CITY_SRC)
-  setBaseBuildings(true)
-}
-
-// The base map's own (OpenStreetMap) 3D buildings.
-function setBaseBuildings(visible: boolean) {
+// The base map's own (OpenStreetMap) 3D buildings: the city's tiles stand in for them.
+function hideBaseBuildings() {
   for (const l of map.getStyle()?.layers || []) {
-    if (l.type === "fill-extrusion" && !l.id.includes("::")) map.setLayoutProperty(l.id, "visibility", visible ? "visible" : "none")
+    if (l.type === "fill-extrusion" && !l.id.includes("::")) map.setLayoutProperty(l.id, "visibility", "none")
   }
 }
 
@@ -1521,15 +1537,15 @@ export function setCity3d(on: boolean) {
   CITY.on = on
   cityStatus()
   whenStyleReady(() => {
+    addCityLayer()
+    paintCityLayers()
     if (on) {
-      addCityLayer()
       if (viewFocus) applyViewBuildings()
       else if (map.getPitch() < 40 && map.getZoom() >= CITY_MIN_ZOOM) map.easeTo({ pitch: 55, duration: 900 })
       refreshCity()
       void watchCityFill()
     } else {
       CITY.queue = []
-      removeCityLayer()
     }
     cityStatus()
     cityChanged()
@@ -2406,10 +2422,9 @@ export function resetForNewChat() {
 
 // ---------------------------------------------------------------------------------------------
 // Looking out from a spot (lib/view.ts owns the view; here is what the map does for it). The 3D
-// city's tiles come out to the horizon (the DLS buildings, and OpenStreetMap's beyond them); with
-// the city off, the base map's own buildings do (from z13 tiles, at their full height). Answer
-// layers don't refit the camera meanwhile, and any other camera move (the assistant's, the
-// inspector's, a link's) ends the view first.
+// city's tiles come out to the horizon (the DLS buildings, and OpenStreetMap's beyond them), and
+// the base map's own buildings stay hidden. Answer layers don't refit the camera meanwhile, and
+// any other camera move (the assistant's, the inspector's, a link's) ends the view first.
 
 export type ViewFocus = { lon: number; lat: number; radiusM: number; hide?: number }
 let viewFocus: ViewFocus | null = null
@@ -2480,13 +2495,13 @@ function applyViewBuildings() {
       map.setLayerZoomRange(id, VIEW_BUILDINGS_MINZOOM, saved.maxzoom)
       map.setFilter(id, saved.filter)
       map.setPaintProperty(id, "fill-extrusion-height", ["coalesce", ["get", "render_height"], 6])
-      map.setLayoutProperty(id, "visibility", CITY.on ? "none" : "visible") // the 3D city stands in for them
+      map.setLayoutProperty(id, "visibility", "none") // the city's tiles stand in for them
     } else if (viewSaved.has(id)) {
       const saved = viewSaved.get(id)!
       map.setLayerZoomRange(id, saved.minzoom, saved.maxzoom)
       map.setFilter(id, saved.filter)
       map.setPaintProperty(id, "fill-extrusion-height", saved.height)
-      map.setLayoutProperty(id, "visibility", CITY.on ? "none" : "visible")
+      map.setLayoutProperty(id, "visibility", "none")
     }
   }
   if (!viewFocus) viewSaved.clear()
