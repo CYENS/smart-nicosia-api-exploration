@@ -5,6 +5,7 @@ import { DotLegend } from "@/components/topics/builtin"
 import { RoadLegend } from "@/components/mobility/parts"
 import { cityHeights, cityOsmGrey, setCity3d, setNightLights, showRegisters, useMapUi } from "@/lib/map/engine"
 import { setBusesOn, setRoadsOn } from "@/lib/mobility/map"
+import { stalledShort } from "@/lib/mobility/stalled"
 import { useMobility } from "@/lib/mobility/store"
 import { AIR_WORDS, airWords, fmtCount, parkingWord, useSky, useStrip } from "@/lib/readouts"
 import { registerSystemLayer } from "@/lib/registries/layers"
@@ -135,6 +136,7 @@ registerSystemLayer({
     const r = useMobility((s) => s.roads)
     const { strip, past } = useStrip()
     if (r.on && (r.status === "loading" || r.status === "idle")) return <>Reading the road detectors</>
+    if (r.on && r.status === "stalled") return <span className="text-signal">{stalledShort(r.lastMeasuredAt)}</span>
     if (r.on && r.status === "unavailable") return <>{past ? "The twin's memory has no road speeds for that moment" : "The national traffic feed isn't answering. Try again in a minute"}</>
     const worst = strip?.slowest_road
     if (worst && !past) return <>Slowest: {worst.name}, {Math.round(worst.speed_kmh)} km/h</>

@@ -22,6 +22,10 @@ Detectors:
 - air_silent: an air station with no report for 3 hours.
 - city_alarm / city_event: the city's own alarms (active, from getAlarms) and its event feed
   (toastDesc: lost connections, full bins, air warnings, screens without heartbeats).
+- road_feed_stalled: the national road detectors' feed answering with nothing new for 30
+  minutes (its newest measurement is old), until a fresh one comes. Like a device's silence it
+  counts only while someone is looking: the feed must have been read in the last 15 minutes,
+  else the detector says nothing either way.
 """
 
 from __future__ import annotations
@@ -60,6 +64,8 @@ JUMP_WITHIN = timedelta(hours=3)
 BIN_SILENT_AFTER = timedelta(hours=12)
 AIR_SILENT_AFTER = timedelta(hours=3)
 MIN_COVERED = 0.9  # silence counts only where the memory covers this much of it
+FEED_STALLED_AFTER = timedelta(minutes=30)  # roads.STALE_S: a measurement counts this long
+FEED_LOOKED_WITHIN = timedelta(minutes=15)  # a feed read longer ago than this says nothing
 POWER_FULL_LEVEL = 90.0  # compare lamps at full level only (dimmed lamps draw less)
 POWER_CLASS_RATIO = 1.3  # powers within 30% of each other are one class of lamp
 POWER_OFF_BY = 0.3  # a lamp this far from the nearest class of 3+ lamps is out of line
@@ -209,6 +215,9 @@ class Observed:
     alarms: list[dict] = field(default_factory=list)  # active (or recently seen) city alarms
     live: dict[str, Interpretation] = field(default_factory=dict)  # device -> live verdict
     notes: list[str] = field(default_factory=list)
+    # Feeds the twin reads that aren't devices, as their last read left them (never fetched for
+    # this): source id -> Roads.health() (read_ok_at, error, newest, published).
+    feeds: dict[str, dict] = field(default_factory=dict)
 
     def of_type(self, device_type: str) -> list[Place]:
         return [p for p in self.devices.values() if p.type == device_type]
@@ -579,6 +588,42 @@ def air_silent(obs: Observed) -> list[Detection]:
                    "reading")
 
 
+# -- feeds ---------------------------------------------------------------------------------------
+
+ROAD_FEED = "source-road_speeds"  # the page opens it in the data sources panel
+
+
+def road_feed_stalled(obs: Observed) -> list[Detection] | None:
+    """The road detectors' feed answering with an old measurement: one detection while it is
+    stalled, none once a fresh measurement comes. None (can't tell, so nothing ends) when the
+    feed hasn't been read lately or its last read failed."""
+    h = obs.feeds.get("road_speeds")
+    if not h or h.get("error") or not h.get("read_ok_at") or h.get("newest") is None:
+        return None
+    read = datetime.fromtimestamp(h["read_ok_at"], tz=timezone.utc)
+    if obs.now - read > FEED_LOOKED_WITHIN:
+        return None
+    newest: datetime = h["newest"]
+    if obs.now - newest <= FEED_STALLED_AFTER:
+        return []
+    start = newest + FEED_STALLED_AFTER
+    since = when(newest, obs.now)
+    published = h.get("published")
+    ev = [Evidence(newest, "the newest measurement in the feed", ROAD_FEED),
+          Evidence(start, f"nothing new for {span(FEED_STALLED_AFTER)}: counted as stalled", ROAD_FEED,
+                   "detection"),
+          Evidence(read, "the feed still answers" + (f", published {hhmm(published)}," if published else "")
+                   + f" with the measurement of {since}", ROAD_FEED)]
+    return [Detection(
+        "road_feed_stalled", "feed", ROAD_FEED, "feed", start, None, "medium",
+        f"nothing new since {since}", ev, label="National road detectors",
+        extra={"silent_since": _ms(newest), "source": "road_speeds",
+               "story": (f"The national road speeds feed (traffic4cyprus.org.cy) still answers, but "
+                         f"its Bluetooth detectors have sent nothing new since {since}, so no road "
+                         "has a live speed. Where the twin knows a road's usual speed for the hour, "
+                         "the map shows that, dotted, until they send again.")})]
+
+
 # -- the city's own alarms -----------------------------------------------------------------------
 
 # What each kind of city message means here: (family, severity, short words).
@@ -715,19 +760,23 @@ def _guess_type(device: str) -> str:
 DETECTORS = ((lamps_dark, "lamp_dark"), (lamps_by_day, "lamp_day"), (lamps_power, "lamp_power"),
              (parking_stuck, "parking_stuck"), (bins_jump, "bin_jump"),
              (bins_silent, "bin_silent"), (air_silent, "air_silent"),
-             (city_events, "city_event"), (city_alarms, "city_alarm"))
+             (city_events, "city_event"), (city_alarms, "city_alarm"),
+             (road_feed_stalled, "road_feed_stalled"))
 RULES = tuple(rule for _, rule in DETECTORS)
 
 
 def detect(obs: Observed) -> tuple[list[Detection], set[str]]:
     """Every detector over one window: (detections, the rules whose detector ran). A detector
-    that fails is logged and skipped, and its rule left out, so nothing it found before is
-    taken as over."""
+    that fails, or returns None because it can't tell this time, is skipped and its rule left
+    out, so nothing it found before is taken as over."""
     out: list[Detection] = []
     ran: set[str] = set()
     for fn, rule in DETECTORS:
         try:
-            out += fn(obs)
+            found = fn(obs)
+            if found is None:
+                continue
+            out += found
             ran.add(rule)
         except Exception:  # noqa: BLE001 - one broken detector must not hide the others
             log.exception("detector %s failed", fn.__name__)

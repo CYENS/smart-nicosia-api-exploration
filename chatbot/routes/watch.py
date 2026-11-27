@@ -20,7 +20,7 @@ from chatbot.watch.watches import WatchError
 router = APIRouter()
 
 STATUSES = ("unresolved", "open", "acknowledged", "snoozed", "resolved", "all")
-FAMILIES = ("outage", "lighting", "power", "parking", "bins", "air", "other")
+FAMILIES = ("outage", "lighting", "power", "parking", "bins", "air", "other", "feed")
 
 
 def watcher_of(request: Request) -> Watcher:

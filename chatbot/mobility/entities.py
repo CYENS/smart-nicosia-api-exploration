@@ -272,11 +272,6 @@ def build_line(ents, eid: str, near) -> dict | None:
 # -- road segments ---------------------------------------------------------------------------
 
 
-def road_row(m, seg, at: datetime | None = None) -> dict | None:
-    rows = m.roads.speeds(at)["segments"]
-    return next((r for r in rows if r["id"] == seg.id), None)
-
-
 def build_road(ents, eid: str, near, at: datetime | None = None) -> dict | None:
     m = _mobility(ents)
     if m is None:
@@ -284,7 +279,10 @@ def build_road(ents, eid: str, near, at: datetime | None = None) -> dict | None:
     seg = m.roads.segment(eid)
     if seg is None:
         return None
-    row = road_row(m, seg, at) or {}
+    sp = m.roads.speeds(at)
+    rows = {r["id"]: r for r in sp["segments"]}
+    row = rows.get(seg.id) or {}
+    stalled = sp["status"] == "stalled"  # the feed answers, the detectors have sent nothing new
     now = at or _now(ents)
     state_value = row.get("state", "no_reading")
     measured = datetime.fromisoformat(row["measured_at"]) if row.get("measured_at") else None
@@ -293,6 +291,8 @@ def build_road(ents, eid: str, near, at: datetime | None = None) -> dict | None:
     label = BAND_LABELS[state_value]
     if speed is not None and free:
         label += f", {round(100 * speed / free)}% of free flow"
+    if stalled:
+        label = "No reading: the detectors have stalled"
     state = _state(state_value, label, SPEED_COLORS[state_value], ROAD_TONES[state_value], measured, now)
     # Free flow and the usual sit on the speed meter (the road section); the model reads them below.
     readings = []
@@ -307,7 +307,7 @@ def build_road(ents, eid: str, near, at: datetime | None = None) -> dict | None:
     opposite = next((s for s in m.roads.segments() if s.from_site == seg.to_site and s.to_site == seg.from_site), None)
     relations = []
     if opposite:
-        orow = road_row(m, opposite, at) or {}
+        orow = rows.get(opposite.id) or {}
         relations.append({"relation": "opposite", "label": "The other way", "id": opposite.id,
                           "kind": "road_segment", "name": opposite.name,
                           "detail": f"{round(orow['speed_kmh'])} km/h" if orow.get("speed_kmh") is not None else "no reading",
@@ -332,9 +332,12 @@ def build_road(ents, eid: str, near, at: datetime | None = None) -> dict | None:
                   "url": ROAD_PAGE, "as_of": row.get("measured_at")}],
         as_of=row.get("measured_at"),
         road={"speed_kmh": speed, "free_flow_kmh": free, "free_flow": how, "usual_kmh": row.get("usual_kmh"),
-              "share": row.get("share_of_free_flow")},
+              "usual_days": row.get("usual_days", 0), "share": row.get("share_of_free_flow"),
+              **({"stalled": True, "last_measured_at": sp["last_measured_at"], "note": sp["note"]}
+                 if stalled else {})},
         _for_model={"free_flow_kmh": free, "free_flow_from": how, "usual_kmh_this_hour": row.get("usual_kmh"),
-                    "share_of_free_flow": row.get("share_of_free_flow")})
+                    "share_of_free_flow": row.get("share_of_free_flow"),
+                    **({"feed": "stalled: no live speed", "note": sp["note"]} if stalled else {})})
 
 
 def road_at(ents, entity: dict, at: datetime) -> dict:
