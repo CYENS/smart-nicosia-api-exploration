@@ -719,7 +719,9 @@ class RoadReports:
         """A feed's state, read again when due (its TTL after a good fetch, sooner after a failure)."""
         f, st = self.feeds[source], self.state[source]
         due = (time.time() - st.tried_at) >= (f.ttl_s if st.error is None else RETRY_S[source])
-        if not (force or due):
+        # Not due, and read before: answer at once. A first read under way is waited for, so no
+        # reader takes "not read yet" for an answer.
+        if not (force or due) and (st.parsed is not None or st.error is not None):
             return st
         with self._locks[source]:
             st = self.state[source]
