@@ -84,6 +84,11 @@ def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     cfg = load_config(args.config, db_path=args.db)
 
+    if args.command in ("budget", "status"):
+        from collector.controls import effective
+
+        cfg = effective(cfg)  # the cadences and switches the admin page set, as a pass uses them
+
     if args.command == "budget":
         from collector.scheduler import estimate_budget, render_budget
 

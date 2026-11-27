@@ -21,6 +21,7 @@ from fastapi.staticfiles import StaticFiles
 from chatbot.agent import Agent
 from chatbot.city import CityData
 from chatbot.citytiles import CityTiles
+from chatbot.collectors import Collectors
 from chatbot.dls import DLS
 from chatbot.eoa import Registry
 from chatbot.geo import Places
@@ -81,10 +82,15 @@ async def lifespan(app: FastAPI):
     if os.environ.get("CHATBOT_HAZARDS", "1").strip().lower() not in ("0", "false", "no", "off"):
         agent.hazards.start()  # earthquakes, warnings and fire danger (CHATBOT_HAZARDS=0: from the memory only)
     agent.sky.start()
-    if settings.collect:
-        start_collector(memory)
+    # The full collector runs on a thread here while collection is on: CHATBOT_COLLECT sets the
+    # default, and the admin page (/admin) starts, pauses and steers it from then on.
+    collectors = Collectors(memory, collect_default=settings.collect,
+                            record_default=settings.record)
+    app.state.collectors = collectors
+    collectors.start()
     log.info("twin's memory: %s (recording %s, full collection %s)", memory.path,
-             "on" if memory.recorder else "off", "on" if settings.collect else "off")
+             "on" if collectors.recording() else "off",
+             "on" if collectors.collecting() else "off")
     threading.Thread(target=_warm_up, args=(agent,), daemon=True).start()
     threading.Thread(target=agent.streets.warm_up, daemon=True, name="streets-warm-up").start()
     # Overture's places: a newer release is looked for at most monthly (a minute or two to cut).
@@ -92,6 +98,7 @@ async def lifespan(app: FastAPI):
     # The registers refresh daily; the first build (parcels, then 3D heights) takes ~2 minutes.
     threading.Thread(target=registers.refresh_if_needed, daemon=True).start()
     yield
+    collectors.stop()
     app.state.city_tiles.stop()
     agent.sky.stop()
     agent.watcher.stop()
@@ -100,33 +107,6 @@ async def lifespan(app: FastAPI):
     agent.hazards.stop()
     if memory.recorder is not None:
         memory.recorder.stop()
-
-
-def start_collector(memory: Memory) -> None:
-    """Run the full collector (collector/scheduler.py) in this process, with its own cadences
-    and request budget. A `collector run` elsewhere holds the run lock, and then this one
-    skips its passes rather than polling twice."""
-    from dataclasses import replace
-
-    from collector.config import load_config
-    from collector.scheduler import estimate_budget, run_pass
-
-    cfg = replace(load_config(), db_path=memory.path, log_file=None)
-    per_day = sum(b.requests_per_day for b in estimate_budget(cfg) if b.nokia)
-    log.info("full collection on: about %d city API requests a day (budget %d)", per_day,
-             cfg.daily_request_budget)
-    memory.collecting = True
-
-    def loop() -> None:
-        while True:
-            started = time.monotonic()
-            try:
-                run_pass(cfg)
-            except Exception:  # noqa: BLE001 - the next pass tries again
-                log.exception("collector pass failed")
-            time.sleep(max(1.0, 30.0 - (time.monotonic() - started)))
-
-    threading.Thread(target=loop, name="twin-collector", daemon=True).start()
 
 
 def password_ok(authorization: str | None, password: str) -> bool:
@@ -169,8 +149,10 @@ app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 
 @app.get("/")
+@app.get("/admin")
 def index() -> FileResponse:
-    # Always revalidated: it names the hashed bundles of the current build.
+    # Always revalidated: it names the hashed bundles of the current build. The same page draws
+    # the admin page at /admin (src/main.tsx picks by path).
     return FileResponse(STATIC_DIR / "index.html", headers={"Cache-Control": "no-cache"})
 
 
