@@ -71,8 +71,8 @@ def build_report(ents, eid: str, near, at: datetime | None = None) -> dict | Non
         when = when_text(r, status, now) if r.source == "traffic_events" else age
         state = {"value": r.kind, "label": f"{r.label}" + (f", {when}" if when else ""), "color": r.color,
                  "tone": TONES[r.kind]}
-    state |= {"stale": False, "reason": None, "local": None, "as_of": _iso(r.since),
-              "age_s": round((now - r.since).total_seconds()) if r.since else None}
+    # The label says how old it is; no "last report" age beside it (that reads as the feed's).
+    state |= {"stale": False, "reason": None, "local": None, "as_of": None, "age_s": None}
     readings = []
     d = r.details
     if d.get("length_m"):
@@ -82,7 +82,7 @@ def build_report(ents, eid: str, near, at: datetime | None = None) -> dict | Non
         readings.append({"key": "speed_kmh", "label": "Speed in the jam", "value": d["speed_kmh"], "unit": "km/h"})
     if d.get("delay_s") is not None:
         readings.append({"key": "delay_min", "label": "Delay", "value": round(d["delay_s"] / 60, 1), "unit": "min"})
-    if r.since and status != "planned":
+    if r.since and status != "planned" and r.source != "traffic_events":  # works say their dates instead
         days = (now - r.since).total_seconds() / 86400
         if days >= 2:
             readings.append({"key": "age_days", "label": "Reported", "value": round(days), "unit": "days ago"})
@@ -99,16 +99,16 @@ def build_report(ents, eid: str, near, at: datetime | None = None) -> dict | Non
                           "distance_m": round(haversine_m(r.lat, r.lon, x.lat, x.lon)), "lon": x.lon, "lat": x.lat})
     relations += ents.places_within(r.lat, r.lon, 150, limit=2)
     works = r.source == "traffic_events"
+    # The operators' own words (Greek, and English where they gave it) are in `report`, for the
+    # inspector's "As published" section, which marks their language.
     attrs = [
         E.attr("What", r.label),
         E.attr("Street", r.street),
         E.attr("Starts" if works else "Reported", _day(r.since)),
         E.attr("Ends", _day(r.until)),
-        E.attr("As published", r.text if works else None),
-        E.attr("In English", d.get("text_en")),
         E.attr("Lanes affected", d.get("affectedLanes")),
         E.attr("Closed points", d.get("points") if (d.get("points") or 0) > 1 else None),
-        E.attr("Waze type", r.text if r.source == "waze_alerts" else None),
+        E.attr("Waze type", (d.get("subtype") or d.get("type")) if r.source == "waze_alerts" else None),
         E.attr("Jam level", f"{d['level']} of 5" if d.get("level") is not None else None),
         E.attr("Record", d.get("record")),
         E.attr("Seen by the twin", f"{_day(r.first_seen)} to {_day(r.last_seen)}" if r.first_seen and r.last_seen else None),

@@ -189,6 +189,34 @@ def test_every_reader_shares_one_fetch_and_a_failure_keeps_the_last_copy(monkeyp
     assert feeds.calls.count(WAZE_TRAFFIC_URL) == 2
 
 
+def test_a_reader_during_the_first_read_waits_for_it():
+    """The watch and a page asking at once: the second waits for the first's fetch, rather than
+    taking "not read yet" for the answer (which the page would then show and keep)."""
+    import threading
+
+    started, release = threading.Event(), threading.Event()
+    feeds = Feeds()
+
+    def slow(url):
+        if url == WAZE_ALERTS_URL:
+            started.set()
+            release.wait(5)
+        return feeds(url)
+
+    r = RoadReports(slow, now=lambda: NOW)
+    first = threading.Thread(target=r.feed, args=("waze_alerts",))
+    first.start()
+    assert started.wait(5)
+    got = {}
+    second = threading.Thread(target=lambda: got.setdefault("st", r.feed("waze_alerts")))
+    second.start()
+    release.set()
+    first.join(5)
+    second.join(5)
+    assert got["st"].parsed is not None and len(got["st"].parsed.reports) == 22
+    assert feeds.calls.count(WAZE_ALERTS_URL) == 1
+
+
 def test_a_feed_that_answers_with_old_news_is_stale(monkeypatch):
     # Published just now (it answers 200), but its newest report is 9 hours old.
     later = ALERTS.replace("2026-11-27T21:35:53.505339+02:00", "2026-11-28T06:35:00+02:00")
