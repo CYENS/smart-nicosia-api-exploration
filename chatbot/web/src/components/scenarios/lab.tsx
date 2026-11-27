@@ -11,7 +11,7 @@ import {
   Assumptions, Backtest, Charts, CompareSelect, KpiCards, MapViewControls, Notes, ParamForm, SavedRuns, Tornado,
 } from "@/components/scenarios/parts"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { Button } from "@/components/ui/button"
+import { Button, buttonVariants } from "@/components/ui/button"
 import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from "@/components/ui/empty"
 import { Field, FieldLabel } from "@/components/ui/field"
 import { Kbd } from "@/components/ui/kbd"
@@ -30,6 +30,7 @@ import {
   briefUrl, csvUrl, defOf, loadSaved, loadScenarios, resetValues, runScenario, setPeriod, setScenario,
   useLab, type LabTab,
 } from "@/lib/scenarios/store"
+import type { ScenarioRun } from "@/lib/registries/scenarios"
 import { cn } from "@/lib/utils"
 
 // What had the keyboard when the lab opened: leaving gives it back.
@@ -114,6 +115,15 @@ function SetUp() {
   )
 }
 
+// Two runs compared with different assumptions: say which, since part of the gap comes from them.
+function Differences({ run, compare }: { run: ScenarioRun; compare: ScenarioRun }) {
+  const rows = run.result.assumptions
+    .filter((a) => run.params[a.id] !== compare.params[a.id])
+    .map((a) => `${a.label} ${String(run.params[a.id])} against ${String(compare.params[a.id])} ${a.unit}`)
+  if (!rows.length) return null
+  return <p className="text-[12.5px] leading-snug text-sodium">The runs differ in their assumptions too: {rows.join("; ")}.</p>
+}
+
 function Results({ toSetUp }: { toSetUp: () => void }) {
   const run = useLab((s) => s.run)
   const compare = useLab((s) => s.compare)
@@ -139,6 +149,7 @@ function Results({ toSetUp }: { toSetUp: () => void }) {
       <div className="flex flex-col gap-1">
         <p className="text-[14px] leading-snug font-semibold">{compare ? `A: ${run.label}` : run.label}</p>
         {compare && <p className="text-[14px] leading-snug font-semibold text-[#6cb4ff]">B: {compare.label}</p>}
+        {compare && <Differences run={run} compare={compare} />}
         <p className="text-[12.5px] text-muted-foreground">
           Against today's policy, learnt from {run.period.label.toLowerCase()}. Ranges span the assumptions' plausible values.
           {!run.saved && " This run isn't saved: the twin's memory couldn't be written."}
@@ -169,12 +180,12 @@ function Results({ toSetUp }: { toSetUp: () => void }) {
       <Section title="Compare and share" id="lab-share">
         <CompareSelect run={run} />
         <div className="flex flex-wrap gap-2">
-          <Button variant="outline" size="sm" render={<a href={briefUrl(run, compare)} target="_blank" rel="noopener" />}>
+          <a className={buttonVariants({ variant: "outline", size: "sm" })} href={briefUrl(run, compare)} target="_blank" rel="noopener">
             <FileTextIcon data-icon="inline-start" />Decision brief
-          </Button>
-          <Button variant="outline" size="sm" render={<a href={csvUrl(run)} download />}>
+          </a>
+          <a className={buttonVariants({ variant: "outline", size: "sm" })} href={csvUrl(run)} download>
             <DownloadIcon data-icon="inline-start" />Data (CSV)
-          </Button>
+          </a>
           <Button variant="outline" size="sm" onClick={() => {
             void navigator.clipboard?.writeText(link).then(() => { setCopied(true); setTimeout(() => setCopied(false), 1800) })
           }}>

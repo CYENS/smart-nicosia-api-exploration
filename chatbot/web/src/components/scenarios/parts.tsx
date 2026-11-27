@@ -193,7 +193,11 @@ function KpiCard({ k, other, labels }: { k: Kpi; other?: Kpi | null; labels?: [s
       <span className="text-[12px] leading-tight text-muted-foreground">{k.label}</span>
       <span className={cn("font-readout text-[17px] leading-tight font-semibold tabular-nums", good && "text-[#86efac]", bad && "text-signal")}>
         {changeWords(k)}
-        {k.delta_pct !== null && k.delta !== 0 && <span className="ml-1 text-[12.5px] font-normal text-muted-foreground">{fmtSigned(k.delta_pct, 1)}%</span>}
+        {k.delta_pct !== null && k.delta !== 0 && (
+          <span className="ml-1 text-[12.5px] font-normal whitespace-nowrap text-muted-foreground">
+            {fmtNum(k.delta_pct, 1)}% {k.delta_pct < 0 ? "less" : "more"}
+          </span>
+        )}
       </span>
       {range && <span className="font-condensed text-[12px] text-muted-foreground tabular-nums">{range} across the assumptions</span>}
       <RangeBar k={k} />
@@ -204,7 +208,7 @@ function KpiCard({ k, other, labels }: { k: Kpi; other?: Kpi | null; labels?: [s
       {other && labels && (
         <span className="font-condensed text-[12px] tabular-nums">
           <span className="text-muted-foreground">{labels[1]} </span>{fmtNum(other.scenario, other.digits)} {other.unit}
-          {other.delta !== null && <span className="text-muted-foreground">, {changeWords(other).toLowerCase()}</span>}
+          {other.delta !== null && <span className="text-muted-foreground">, {changeWords(other).replace(/^./, (c) => c.toLowerCase())}</span>}
         </span>
       )}
       {k.note && <span className="mt-0.5 text-[11.5px] leading-snug text-muted-foreground">{k.note}</span>}
@@ -255,9 +259,9 @@ export function MapViewControls({ run, compare }: { run: ScenarioRun; compare: S
           size="sm"
           className="flex w-full flex-wrap"
         >
-          {split && <ToggleGroupItem value="split" className="flex-1 data-pressed:border-sodium/60 data-pressed:bg-sodium/12 data-pressed:text-sodium">{compare ? "A and B, split" : "Today and scenario"}</ToggleGroupItem>}
+          {split && <ToggleGroupItem value="split" className="h-auto min-h-8 flex-1 py-1 whitespace-normal data-pressed:border-sodium/60 data-pressed:bg-sodium/12 data-pressed:text-sodium">{compare ? "A and B, split" : "Today and scenario"}</ToggleGroupItem>}
           {views.map(([n, l]) => (
-            <ToggleGroupItem key={n} value={n} className="flex-1 data-pressed:border-sodium/60 data-pressed:bg-sodium/12 data-pressed:text-sodium">{l.meta.title}</ToggleGroupItem>
+            <ToggleGroupItem key={n} value={n} className="h-auto min-h-8 flex-1 py-1 whitespace-normal data-pressed:border-sodium/60 data-pressed:bg-sodium/12 data-pressed:text-sodium">{l.meta.title}</ToggleGroupItem>
           ))}
         </ToggleGroup>
       )}
@@ -342,10 +346,10 @@ function chartSpec(rows: SeriesRow[], def: { x: string; kind?: string; unit: str
     { field: "value", title: def.unit, format: ",.2f" }]
   const data = { values: rows }
   if (def.kind === "bar") {
-    return { $schema: "https://vega.github.io/schema/vega-lite/v5.json", width: "container", data,
+    return { width: "container", data,
       mark: { type: "bar" }, encoding: { x, xOffset: { field: "label", sort: variants }, y, color, tooltip } }
   }
-  return { $schema: "https://vega.github.io/schema/vega-lite/v5.json", width: "container", data,
+  return { width: "container", data,
     mark: { type: "line", interpolate: def.x === "time" ? "step-after" : "linear", point: def.x === "date" ? { size: 18 } : false },
     encoding: { x, y, color, tooltip } }
 }
@@ -385,7 +389,7 @@ export function Charts({ run, compare }: { run: ScenarioRun; compare: ScenarioRu
       {charts.length > 1 && (
         <ToggleGroup value={[def.metric]} onValueChange={(v) => { if (v[0]) setMetric(v[0]) }} aria-label="Which chart" variant="outline" size="sm" className="flex w-full flex-wrap">
           {charts.map((c) => (
-            <ToggleGroupItem key={c.metric} value={c.metric} className="flex-1 data-pressed:border-sodium/60 data-pressed:bg-sodium/12 data-pressed:text-sodium">
+            <ToggleGroupItem key={c.metric} value={c.metric} className="h-auto min-h-8 flex-1 py-1 whitespace-normal data-pressed:border-sodium/60 data-pressed:bg-sodium/12 data-pressed:text-sodium">
               {c.metric === "night_kw" ? "A night" : c.metric === "monthly_mwh" ? "The year" : c.metric === "backtest_kwh" ? "Backtest" : c.title}
             </ToggleGroupItem>
           ))}
@@ -398,6 +402,14 @@ export function Charts({ run, compare }: { run: ScenarioRun; compare: ScenarioRu
 }
 
 // -- assumptions and their sensitivity --------------------------------------------------------------
+
+// An assumption's sweep in words: "saves 1,509 to 2,975 EUR", "adds 10 to 30 lamp-hours".
+function effect(a: number, b: number, unit: string, digits: number) {
+  if (a === b) return "no effect"
+  if (a < 0 && b < 0) return `saves ${fmtNum(a, digits)} to ${fmtNum(b, digits)} ${unit}`
+  if (a >= 0 && b >= 0) return `adds ${fmtNum(a, digits)} to ${fmtNum(b, digits)} ${unit}`
+  return `${fmtSigned(a, digits)} to ${fmtSigned(b, digits)} ${unit}`
+}
 
 // How far each assumption alone, across its plausible range, moves the headline change: a bar
 // per assumption from its low end to its high end, the line where it stands as set.
@@ -423,7 +435,7 @@ export function Tornado({ run }: { run: ScenarioRun }) {
               <span className="flex items-baseline justify-between gap-2 text-[12.5px]">
                 <span className="truncate">{s.label}</span>
                 <span className="shrink-0 font-condensed text-muted-foreground tabular-nums">
-                  {a === b ? "no effect" : `${fmtSigned(s.at_low, kpi?.digits ?? 0)} to ${fmtSigned(s.at_high, kpi?.digits ?? 0)} ${s.unit}`}
+                  {effect(s.at_low!, s.at_high!, s.unit, kpi?.digits ?? 0)}
                 </span>
               </span>
               <span className="relative block h-2.5 rounded-sm bg-raised" aria-hidden="true">

@@ -830,7 +830,9 @@ def _notes(data: Data, params: dict, ph: dict, cands: list[str], summary: dict) 
         quiet = summary["quiet_streets"]
         notes.append(f"Streets dark in the window: {', '.join(quiet) if quiet else 'none'}, judged by "
                      f"cameras' counts over the last {FOOTFALL_DAYS} days. "
-                     + (f"{len(summary['streets_without_camera'])} streets have no camera and "
+                     + (f"{len(summary['streets_without_camera'])} "
+                        + ("street has" if len(summary["streets_without_camera"]) == 1 else "streets have")
+                        + " no camera and "
                         + ("were switched off as asked." if params["include_unmeasured"] else "stay lit.")
                         if summary["streets_without_camera"] else ""))
     if params["retrofit"] and not cands:

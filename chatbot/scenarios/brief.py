@@ -85,8 +85,8 @@ def _tornado(run_: dict) -> str:
     lo = min(min(s["at_low"], s["at_high"], base) for s in sens)
     hi = max(max(s["at_low"], s["at_high"], base) for s in sens)
     span = (hi - lo) or 1
-    w, label_w, row_h = 640, 230, 30
-    plot = w - label_w - 70
+    w, label_w, row_h, value_w = 760, 200, 30, 230
+    plot = w - label_w - value_w - 10
 
     def x(v):
         return label_w + (v - lo) / span * plot
@@ -98,14 +98,58 @@ def _tornado(run_: dict) -> str:
         bars.append(
             f"<text x='{label_w - 8}' y='{y + 15}' text-anchor='end' class='lbl'>{e(s['label'])}</text>"
             f"<rect x='{x(a):.1f}' y='{y + 4}' width='{max(1.5, x(b) - x(a)):.1f}' height='16' rx='2' class='bar'/>"
-            f"<text x='{x(b) + 6:.1f}' y='{y + 16}' class='val'>{num(a)} to {num(b)} "
-            f"({num(s['value_low'], 2)} to {num(s['value_high'], 2)})</text>")
+            f"<text x='{w - value_w + 6}' y='{y + 16}' class='val'>{e(_effect(s))}</text>")
     height = 20 + len(sens) * row_h
     return (f"<svg viewBox='0 0 {w} {height + 16}' role='img' aria-label='How each assumption moves the "
             f"change in {e(sens[0]['kpi'])}' class='chart'>"
             f"<line x1='{x(base):.1f}' x2='{x(base):.1f}' y1='4' y2='{height}' class='base'/>"
-            f"<text x='{x(base):.1f}' y='{height + 13}' text-anchor='middle' class='val'>as set: {num(base)}"
-            f" {e(sens[0]['unit'])}</text>{''.join(bars)}</svg>")
+            f"<text x='{x(base):.1f}' y='{height + 13}' text-anchor='middle' class='val'>as set: {e(_amount(base, sens[0]['unit']))}"
+            f"</text>{''.join(bars)}</svg>")
+
+
+def _amount(v: float | None, unit: str) -> str:
+    """A change in words: 'saves 1,719 EUR' for a fall, 'adds 30 EUR' for a rise."""
+    if v is None:
+        return "n/a"
+    return f"{'saves' if v < 0 else 'adds' if v > 0 else 'no change,'} {num(v)} {unit}".replace("no change, 0 ", "no change ")
+
+
+def _effect(s: dict) -> str:
+    """An assumption's sweep: 'saves 1,719 to 2,751 EUR (0.2 to 0.32)'."""
+    a, b = s["at_low"], s["at_high"]
+    if a == b:
+        return "no effect"
+    if a < 0 and b < 0:
+        text = f"saves {num(a)} to {num(b)} {s['unit']}"
+    elif a >= 0 and b >= 0:
+        text = f"adds {num(a)} to {num(b)} {s['unit']}"
+    else:
+        text = f"{_amount(a, s['unit'])} to {_amount(b, s['unit'])}"
+    return f"{text} ({_plain(s['value_low'])} to {_plain(s['value_high'])})"
+
+
+def _plain(v) -> str:
+    """A setting as written: 10, not 10.00; 0.55, not 0.6."""
+    if v is None:
+        return "n/a"
+    return f"{v:,.0f}" if float(v).is_integer() else f"{v:,.2f}".rstrip("0").rstrip(".")
+
+
+def _differences(runs: list[dict]) -> str:
+    """When two runs are compared, the parameters they don't share."""
+    if len(runs) < 2:
+        return ""
+    a, b = runs[0], runs[1]
+    labels = {x["id"]: (x["label"], x.get("unit", "")) for x in a["result"].get("assumptions") or []}
+    rows = []
+    for k in sorted(set(a["params"]) | set(b["params"])):
+        if a["params"].get(k) != b["params"].get(k) and k in labels:
+            name, unit = labels[k]
+            rows.append(f"{name}: {_plain(a['params'].get(k))} against {_plain(b['params'].get(k))} {unit}".strip())
+    if not rows:
+        return ""
+    return ("<p class='small'>The two runs also differ in their assumptions, so part of the difference "
+            f"comes from them: {e('; '.join(rows))}.</p>")
 
 
 def _night_chart(run_: dict) -> str:
@@ -134,8 +178,8 @@ def _night_chart(run_: dict) -> str:
 
 def _assumptions(run_: dict) -> str:
     rows = "".join(
-        f"<tr><th scope='row'>{e(a['label'])}</th><td class='n'>{num(a['value'], 2)} {e(a['unit'])}</td>"
-        f"<td class='n'>{num(a['low'], 2)} to {num(a['high'], 2)}</td><td>{e(a['source'])}</td></tr>"
+        f"<tr><th scope='row'>{e(a['label'])}</th><td class='n'>{_plain(a['value'])} {e(a['unit'])}</td>"
+        f"<td class='n'>{_plain(a['low'])} to {_plain(a['high'])}</td><td>{e(a['source'])}</td></tr>"
         for a in run_["result"]["assumptions"])
     return ("<table><thead><tr><th>Assumption</th><th>As set</th><th>Plausible range</th><th>Where it comes "
             f"from</th></tr></thead><tbody>{rows}</tbody></table>")
@@ -168,7 +212,7 @@ def _safety(run_: dict) -> str:
         for r in rows:
             by_street.setdefault(r["street"], []).append(r)
         items = "".join(
-            f"<li><b>{e(s)}</b>: {len(v)} lamps, "
+            f"<li><b>{e(s)}</b>: {len(v)} {'lamp' if len(v) == 1 else 'lamps'}, "
             f"{e(', '.join(sorted({x for r in v for x in r['reasons']})).lower())}"
             + (f", {num(max(r['people_an_hour'] or 0 for r in v), 1)} people an hour" if any(r["people_an_hour"] for r in v) else "")
             + "</li>" for s, v in sorted(by_street.items(), key=lambda kv: -len(kv[1])))
@@ -209,7 +253,7 @@ td.n { text-align: right; white-space: nowrap; }
 .chart .bar { fill: #c77b16; } .chart .base { stroke: #15202e; stroke-dasharray: 3 3; }
 .chart .today { fill: none; stroke: #8a96a6; stroke-width: 2; } .chart .scen { fill: none; stroke: #c77b16; stroke-width: 2.5; }
 .k-today { fill: #8a96a6; font-weight: 600; } .k-scen { fill: #c77b16; font-weight: 600; }
-.tools { margin: 16px 0; } .tools a, .tools button { font: inherit; margin-right: 12px; }
+.tools { margin: 16px 0; } ul.small a { word-break: break-all; } .tools a, .tools button { font: inherit; margin-right: 12px; }
 @media print { .tools { display: none; } body { margin: 0; max-width: none; } h2 { break-after: avoid; } table, svg { break-inside: avoid; } }
 """
 
@@ -218,20 +262,22 @@ def brief_html(run_: dict, other: dict | None = None) -> str:
     runs = [run_] + ([other] if other else [])
     res = run_["result"]
     question = (res.get("details") or {}).get("question") or ""
+    method, main = "", ""
     try:
         from chatbot.scenarios import registry
         scen = registry.get(run_["scenario"])
         question = question or scen.question
-        method = scen.method
+        method, main = scen.method, scen.main_kpi
     except Exception:  # noqa: BLE001 - a run of a scenario that no longer exists still prints
-        method = ""
+        pass
     title = run_.get("scenario_title") or run_["scenario"]
     created = datetime.fromisoformat(run_["created"]).astimezone(TZ).strftime("%d %b %Y, %H:%M")
-    headline = next((k for k in res["kpis"] if k.get("delta") not in (None, 0)), res["kpis"][0] if res["kpis"] else None)
+    headline = next((k for k in res["kpis"] if k["id"] == main), None) or next(
+        (k for k in res["kpis"] if k.get("delta") not in (None, 0)), res["kpis"][0] if res["kpis"] else None)
     lead = ""
     if headline:
-        lead = (f"<p class='lead'><b>{e(run_['label'])}</b> {e(change_words(headline))} a year on "
-                f"{e(headline['label'].lower())}, against today's measured policy. Ranges span every combination "
+        lead = (f"<p class='lead'><b>{e(run_['label'])}</b>: {e(headline['label'].lower())}, "
+                f"{e(change_words(headline))}, against today's measured policy. Ranges span every combination "
                 "of the assumptions' plausible values.</p>")
     options = "".join(f"<li><b>{e(r['label'])}</b> (run {e(r['id'])}, learnt from {e(r['period']['label'].lower())})</li>"
                       for r in runs)
@@ -244,7 +290,7 @@ def brief_html(run_: dict, other: dict | None = None) -> str:
         f"<a href='series.csv' download>Download the data (CSV)</a></div>",
         f"<h2>The question</h2><p>{e(question)}</p>",
         f"<h2>Options compared</h2><ul><li><b>Today</b>, as the lamps measured it</li>{options}</ul>",
-        f"<h2>Results</h2>{lead}{_kpi_table(runs)}",
+        f"<h2>Results</h2>{lead}{_kpi_table(runs)}{_differences(runs)}",
     ]
     for r in runs:
         t = _tornado(r)

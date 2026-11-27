@@ -14,6 +14,7 @@ import { create } from "zustand"
 
 import { firstLabelLayer, flyToBounds, getMap, onStyleReady, SODIUM } from "@/lib/map/engine"
 import { registerClickHandler } from "@/lib/registries/map-clicks"
+import { useWorkspace } from "@/lib/registries/workspaces"
 import type { ScenarioFeature, ScenarioLayer, ScenarioRun } from "@/lib/registries/scenarios"
 import { useLab } from "@/lib/scenarios/store"
 
@@ -31,10 +32,12 @@ type LabMap = {
   overlays: Record<string, boolean> // overlay layers' switches
   swipe: number // where the swipe divides the open map, 0 to 1
   selected: string | null
-  active: boolean // the lab is the open workspace
 }
 
-export const useLabMap = create<LabMap>(() => ({ view: "split", overlays: {}, swipe: 0.5, selected: null, active: false }))
+export const useLabMap = create<LabMap>(() => ({ view: "split", overlays: {}, swipe: 0.5, selected: null }))
+
+// The lab draws only while it is the open workspace.
+const labOpen = () => useWorkspace.getState().active === "scenarios"
 
 export function variantLayers(run: ScenarioRun | null, variant: "baseline" | "scenario"): [string, ScenarioLayer][] {
   return Object.entries(run?.result.layers ?? {}).filter(([, l]) => l.meta?.variant === variant)
@@ -68,9 +71,10 @@ function swipeX() {
 
 function features(): ScenarioFeature[] {
   const { run, compare } = useLab.getState()
-  const { view, overlays, active } = useLabMap.getState()
-  if (!run || !active) return []
+  const { view, overlays } = useLabMap.getState()
+  if (!run || !labOpen()) return []
   const out: ScenarioFeature[] = []
+  const shownOverlays = (r: ScenarioRun) => plainLayers(r).overlays.filter(([name]) => overlays[name] ?? true)
   if (view === "split") {
     const map = getMap()
     const x = swipeX()
@@ -82,12 +86,13 @@ function features(): ScenarioFeature[] {
     const right = compare ? variantLayers(compare, "scenario") : variantLayers(run, "scenario")
     for (const [, l] of left) out.push(...l.features.filter(side))
     for (const [, l] of right) out.push(...l.features.filter((f) => !side(f)))
+    // An overlay belongs to a run, not to today: on the run's side of the swipe only.
+    if (compare) for (const [, l] of shownOverlays(run)) out.push(...l.features.filter(side))
+    for (const [, l] of shownOverlays(compare ?? run)) out.push(...l.features.filter((f) => !side(f)))
   } else {
     const l = run.result.layers[view]
     if (l) out.push(...l.features)
-  }
-  for (const [name, l] of plainLayers(run).overlays) {
-    if (overlays[name] ?? true) out.push(...l.features)
+    for (const [, l2] of shownOverlays(run)) out.push(...l2.features)
   }
   return out
 }
@@ -141,7 +146,7 @@ export function redraw() {
     const map = getMap()
     if (!map) return
     const { run } = useLab.getState()
-    if (!run || !useLabMap.getState().active) {
+    if (!run || !labOpen()) {
       remove()
       return
     }
@@ -170,6 +175,26 @@ function bounds(fs: ScenarioFeature[]): [number, number, number, number] | null 
 export function frameRun() {
   const b = bounds(allFeatures())
   if (b && getMap()) flyToBounds(b)
+}
+
+// Frame the run once the panels have settled (a phone's sheet sets the map's padding as it opens),
+// unless it is already in view: a shared link keeps the camera it was shared with.
+let frameTimer = 0
+function frameSoon() {
+  clearTimeout(frameTimer)
+  frameTimer = window.setTimeout(() => {
+    const map = getMap()
+    const b = bounds(allFeatures())
+    if (!map || !b || !labOpen()) return
+    const view = map.getBounds()
+    const cx = (b[0] + b[2]) / 2, cy = (b[1] + b[3]) / 2
+    const inView = view.contains([cx, cy]) && map.getZoom() >= 13
+    const p = map.project([cx, cy])
+    const pad = map.getPadding()
+    const canvas = map.getCanvas()
+    const clear = p.y > (pad.top ?? 0) && p.y < canvas.clientHeight - (pad.bottom ?? 0)
+    if (!inView || !clear) frameRun()
+  }, 450)
 }
 
 // -- for the lab's panel and a scenario's own sections -----------------------------------------
@@ -217,12 +242,13 @@ export function flyToScenarioFeature(id: string) {
 }
 
 export function enterLabMap() {
-  useLabMap.setState({ active: true })
-  if (useLab.getState().run) frameRun()
+  if (useLab.getState().run) frameSoon()
+  redraw()
 }
 
 export function leaveLabMap() {
-  useLabMap.setState({ active: false, selected: null })
+  useLabMap.setState({ selected: null })
+  redraw()
 }
 
 // -- clicks: a lamp (or any device) opens in the inspector -------------------------------------------
@@ -252,11 +278,12 @@ export function startLabMap() {
         overlays: Object.fromEntries(overlays.map(([k]) => [k, true])),
         view: s.run && useLabMap.getState().view !== "split" && !s.run.result.layers[useLabMap.getState().view] ? "split" : useLabMap.getState().view,
       })
-      if (s.run && s.run !== prev.run && useLabMap.getState().active) frameRun()
+      if (s.run && s.run !== prev.run && labOpen()) frameSoon()
       redraw()
     }
   })
   useLabMap.subscribe(redraw)
+  useWorkspace.subscribe((s, prev) => { if (s.active !== prev.active) redraw() })
   const wait = () => {
     const map = getMap()
     if (!map) {
@@ -265,7 +292,7 @@ export function startLabMap() {
     }
     onStyleReady(redraw)
     map.on("style.load", redraw)
-    map.on("move", () => { if (useLabMap.getState().view === "split" && useLabMap.getState().active) redraw() })
+    map.on("move", () => { if (useLabMap.getState().view === "split" && labOpen()) redraw() })
   }
   wait()
 }
