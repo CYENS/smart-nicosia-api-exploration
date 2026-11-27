@@ -40,6 +40,11 @@ def _measured(ents):
     return getattr(env, "measured", None)
 
 
+def _iso(local: str | None) -> str | None:
+    """'2026-11-27T22:00' (Nicosia) -> '2026-11-27T22:00+02:00', as the page reads times."""
+    return datetime.fromisoformat(local).replace(tzinfo=S.TZ).isoformat(timespec="minutes") if local else None
+
+
 def _age_text(minutes: int | None) -> str:
     if minutes is None:
         return ""
@@ -79,7 +84,7 @@ def _state(row: dict, now: datetime) -> dict:
         value, color, tone = (band or "unknown").lower().replace(" ", "_"), BAND_COLORS.get(band, WEATHER_COLOR), BAND_TONES.get(band, "muted")
         label = f"{band}: {reading_text(row, key)}" if band else reading_text(row, key)
     return {"value": value, "label": label, "color": color, "tone": tone, "stale": False,
-            "reason": CADENCE[kind], "local": None, "as_of": row["as_of"],
+            "reason": CADENCE[kind], "local": None, "as_of": _iso(row["reported"]),
             "age_s": row["age_min"] * 60 if row["age_min"] is not None else None}
 
 
@@ -138,17 +143,16 @@ def build_station(ents, eid: str, near, at: datetime | None = None) -> dict | No
             attributes.append(E.attr("Rain in the last hour", f"{rain:g} mm"))
     centre_m = S.haversine_m(S.CENTRE[0], S.CENTRE[1], info.lat, info.lon)
     attributes.append(E.attr("From Eleftheria Square", S._dist(centre_m)))
-    compared = []
     try:
-        compared = comparisons(ents, info.id, at)
+        every = comparisons(ents, info.id, at)
     except Exception:  # noqa: BLE001 - the station stands without its comparison
-        compared = []
+        every = []
+    compared = every
     relations = []
-    seen = set()
-    for c in compared:
-        if c["sensor_id"] in seen and "bias" not in c:
-            continue
-        seen.add(c["sensor_id"])
+    # One line per city sensor, on the station's headline (NO2, or temperature): the inspector's
+    # own section and the model read the rest.
+    compared = [c for c in compared if c["metric"] == HEADLINE[info.kind]]
+    for c in sorted(compared, key=lambda c: ("bias" not in c, c["distance_m"])):
         relations.append({"relation": "compared", "label": f"City sensor, {c['label']}", "id": c["sensor_id"],
                           "kind": "air_station", "name": c["sensor"], "distance_m": c["distance_m"],
                           "detail": c.get("text") or c.get("note")})
@@ -160,26 +164,26 @@ def build_station(ents, eid: str, near, at: datetime | None = None) -> dict | No
                           "distance_m": round(S.haversine_m(info.lat, info.lon, o.lat, o.lon))})
     if info.kind == "weather_station":
         sources = [{"source": "met_stations", "name": "Department of Meteorology", "detail": S.CREDIT_MET,
-                    "url": S.MET_PAGE, "as_of": row["as_of"]}]
+                    "url": S.MET_PAGE, "as_of": _iso(row["reported"])}]
     else:
         sources = [{"source": "eea_air", "name": "National air quality network, through the EEA",
                     "detail": "hourly means, not yet verified; EEA, CC BY 4.0", "url": S.EEA_PAGE,
-                    "as_of": row["as_of"]}]
+                    "as_of": _iso(row["reported"])}]
     if at is not None:
         sources.insert(0, {"source": "twin_memory", "name": "The twin's memory",
-                           "detail": f"readings recorded up to {at.astimezone(S.TZ):%H:%M}", "as_of": row["as_of"]})
+                           "detail": f"readings recorded up to {at.astimezone(S.TZ):%H:%M}", "as_of": _iso(row["reported"])})
     entity = E.new_entity(
         info.id, info.kind, info.name, subtitle=info.detail,
         geometry=E.point_geom(info.lon, info.lat), center=[info.lon, info.lat],
         state=_state(row, now), readings=_readings(row), attributes=attributes, relations=relations,
-        sources=sources, as_of=row["as_of"], has_series=True)
+        sources=sources, as_of=_iso(row["reported"]), has_series=True)
     entity["station"] = {k: v for k, v in row.items() if not k.startswith("_")}
-    entity["comparison"] = compared
+    entity["comparison"] = every
     entity["_for_model"] = {
         "measured": {k: f"{r['value']:g} {r['unit']} at {r['as_of'][11:16]}".strip() for k, r in row["readings"].items()},
         "operator": OPERATOR[info.kind], "cadence": CADENCE[info.kind],
         "city_sensors_compared": [{"sensor": c["sensor"], "id": c["sensor_id"], "metric": c["metric"],
-                                   "says": c.get("text") or c.get("note")} for c in compared],
+                                   "says": c.get("text") or c.get("note")} for c in every],
     }
     entity["_source_ids"] = [sources[-1]["source"], *(["twin_memory"] if at is not None else [])]
     return entity
