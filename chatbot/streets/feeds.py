@@ -220,6 +220,11 @@ def english(name: str | None) -> str | None:
     return t
 
 
+def hyphens(text: str | None) -> str | None:
+    """The publisher's own names keep their words, with plain hyphens for their dashes."""
+    return text.replace("–", "-").replace("—", "-") if text else text
+
+
 def smart_title(text: str) -> str:
     """'MAKARIOU III - TECH. SCHOOL' -> 'Makariou III - Tech. School' (Roman numerals kept)."""
     if not text.isupper():
@@ -421,7 +426,7 @@ def parse_cycleways(xml_text: str) -> list[dict]:
             continue
         names = _lang_values(r, "name")
         el = names.get("el") or next(iter(names.values()), None)
-        out.append({"id": f"cycle-{ident}", "n": ident, "name": cycle_name(el), "name_el": el,
+        out.append({"id": f"cycle-{ident}", "n": ident, "name": cycle_name(el), "name_el": hyphens(el),
                     "lines": lines})
     return out
 
@@ -438,7 +443,7 @@ def parse_bus_lanes(xml_text: str) -> list[dict]:
         en = (status.get("en") or "").strip().lower()
         out.append({"id": f"buslane-{ident}", "n": ident,
                     "name": english(names.get("en")) or latin(names.get("el")) or "Bus lane",
-                    "name_el": names.get("el"),
+                    "name_el": hyphens(names.get("el")),
                     "status": "active" if en == "active" else "future" if en == "future" else en or "unknown",
                     "lines": lines})
     return out
@@ -471,7 +476,7 @@ def parse_cameras(xml_text: str) -> list[dict]:
         street = re.sub(r"\s+\b[NSEW]B\b", "", where[0]).strip() if where else None
         lon, lat, dec = pts[0]
         out.append({"id": f"ecam-{ident}", "n": ident, "code": m.group("code") if m else None,
-                    "name": name, "name_el": CAMERA.sub(r"\g<name>", el) if el else None,
+                    "name": name, "name_el": hyphens(CAMERA.sub(r"\g<name>", el)) if el else None,
                     "street": street, "at": where[1].strip() if len(where) > 1 else None,
                     "direction": bound, "type": _first(r, "equipmentType"),
                     "unit": unit.group(1) if unit else None,
