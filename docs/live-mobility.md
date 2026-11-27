@@ -56,3 +56,65 @@ backwards. With reduced motion each report is shown as it comes. Roads are drawn
 the left of their direction of travel (Cyprus drives on the left), so both directions of an
 avenue show. Their colours are a neutral for roads that flow and one warm hue that brightens
 as they slow, stepped for each base map; the line widens too, so colour never carries it alone.
+
+## The buses in 3D
+
+From near city zoom (z13.4) each bus is a small low-poly 3D bus in its line's colour, facing
+where it heads, with its line number in a pill just above it. It is modelled on the buses Cyprus
+Public Transport runs in Nicosia (King Long U12 and B12, Yutong E12): a continuous dark window
+band, caps over the front and rear of the roof, a lower panel that rises toward the back, a pod
+on the roof, a big windscreen under a destination display, and the doors on the left. No logos
+or lettering: the body takes the line's colour, glass, wheels and trim stay constant, and the
+open bus turns sodium.
+
+![The model, in Cyprus Public Transport's own colours](screenshots/bus-models/blender-three-quarter.jpg)
+![As the map tints it, by line](screenshots/bus-models/blender-lines.jpg)
+
+- **Size.** A true-size bus is a speck at city zoom, so it is drawn at a steady size on screen
+  (26 px long at z13.4, 34 px at z15, 42 px at z16.5) and reaches true size near z18. Farther
+  out the plain dots stay: there a model would be noise.
+- **Depth.** The buses share the depth buffer with the 3D city, so at street zoom a bus hides
+  behind the buildings in front of it. While a bus is drawn larger than life it would sink into
+  the blocks beside its street, so the parts that are behind something show as a faint
+  silhouette, fading out as the bus comes down to true size.
+- **Numbers.** The pill floats half a bus length above the bus, so it covers neither the bus
+  nor its neighbours' at any pitch or bearing; where pills would overlap, MapLibre leaves some
+  out (the open bus's first) rather than stack them. They show from z13.4, earlier than before.
+- **Clicks.** A custom layer isn't hit-tested by MapLibre, so the dot layer stays under the
+  model, transparent and as big as the bus, for the pointer and clicks; a click opens the bus
+  whose middle is nearest the pointer.
+- **Fallback.** Without WebGL2, or if the model or its code doesn't load, the dots, arrows and
+  pills are drawn as before.
+
+The renderer is `chatbot/web/src/lib/mobility/bus-model.ts`: a MapLibre custom layer that draws
+every bus in one instanced WebGL2 call (two while some are behind buildings), loaded the first
+time buses are shown, so the first page load doesn't grow. It reads the model from
+`chatbot/web/src/assets/models/bus.glb` (379 triangles, 25 KB, flat shaded, no textures; glTF
+axes: +Y up, +Z forward, -X to the bus's right; metres; the origin on the ground under the
+middle). A three.js layer would have worked too, but for one small mesh drawn a few hundred
+times it would have added a second renderer of about 150 KB that shares MapLibre's GL state.
+
+### Rebuilding the model
+
+The model is built by a Blender script, so it can be changed in code and built again (Blender
+4.2 or later; 5.0 built the file in the repository). From the repository root:
+
+```bash
+"C:/Program Files/Blender Foundation/Blender 5.0/blender.exe" --background --factory-startup \
+    --python tools/bus_model/build_bus.py
+```
+
+It writes `bus.glb` and renders the previews in `docs/screenshots/bus-models/` (`-- --no-previews`
+skips them; `-- --out PATH --previews DIR` writes elsewhere). The dimensions, livery bands and
+material colours are constants at the top of the script. Material names matter to the map:
+`body` and `accent` take the line's colour, `lights` and `tail` are drawn unlit, and the shell
+(`body`, `accent`, `glass`, `trim`, `lights`, `tail`) must stay convex, since the silhouette pass
+draws it alone.
+
+### Testing with a full street
+
+The live feed goes quiet in the evening. `tools/bus_model/busy_feed.py` writes an `/api/buses`
+body from the timetable at a moment (by default the Monday morning peak), about 90 buses within
+12 km of the old town, or about 180 with `--also` for a second moment. Replay it in a browser
+test by fulfilling `/api/buses` with the file (Playwright's `page.route`), after setting each
+bus's `reported` to now so the page moves them on.
