@@ -98,8 +98,7 @@ class Streets:
                 self.feeds.get(key)
             except Exception as e:  # noqa: BLE001 - one feed failing leaves the others
                 log.warning("street inventory %s: %s", key, e)
-        if self.network.get(wait_s=0) is None:
-            self.network.load_now()
+        self.network.get(wait_s=240)  # starts the load (the copy on disk, or Overpass) and waits
         self.limits(wait=True)
 
     # -- the inventories ---------------------------------------------------------------------------
