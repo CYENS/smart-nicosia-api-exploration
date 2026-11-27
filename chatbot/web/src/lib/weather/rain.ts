@@ -93,6 +93,9 @@ export class RainOverlay {
     this.canvas.className = "weather-rain"
     this.canvas.setAttribute("aria-hidden", "true")
     Object.assign(this.canvas.style, { position: "absolute", inset: "0", width: "100%", height: "100%", pointerEvents: "none", display: "none" })
+    // A lost context (a GPU reset, the laptop waking) takes the program with it: build it again.
+    this.canvas.addEventListener("webglcontextlost", (e) => { e.preventDefault(); this.stop(); this.gl = null; this.prog = null })
+    this.canvas.addEventListener("webglcontextrestored", () => this.set(this.rain, !this.still))
   }
 
   // Laid over the map's canvas, before its markers, so those stay on top.
@@ -104,7 +107,7 @@ export class RainOverlay {
   private init() {
     if (this.gl) return true
     const gl = this.canvas.getContext("webgl", { premultipliedAlpha: true, alpha: true, antialias: false })
-    if (!gl) return false
+    if (!gl || gl.isContextLost()) return false
     try {
       this.prog = program(gl, VERT, FRAG)
     } catch (e) {
@@ -144,7 +147,7 @@ export class RainOverlay {
     this.canvas.style.display = show ? "block" : "none"
     if (!show) { this.stop(); return }
     if (this.still) { this.stop(); this.draw(performance.now()) }
-    else if (!this.raf) this.loop()
+    else if (!this.raf) { this.frames = []; this.loop() }
   }
 
   // The map moved: the rain's camera with it (a still frame is drawn again).
@@ -155,7 +158,7 @@ export class RainOverlay {
 
   private loop = () => {
     this.raf = requestAnimationFrame((t) => {
-      if (this.last) {
+      if (this.last && !document.hidden) {
         this.frames.push(t - this.last)
         if (this.frames.length > 120) this.frames.shift()
       }

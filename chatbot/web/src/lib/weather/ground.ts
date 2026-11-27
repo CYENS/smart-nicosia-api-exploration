@@ -104,8 +104,9 @@ void main() {
   vec3 src = vec3(0.0);
   float keep = 1.0; // the pixel becomes what was drawn times keep, plus src
 
-  if (dir.z < -0.0001 && o.z > u_ground) {
-    vec2 g = o.xy + dir.xy * ((u_ground - o.z) / dir.z);
+  if (dir.z < -0.0001) {
+    float plane = min(u_ground, o.z - 1.0); // with terrain the eye can stand below the centre's ground
+    vec2 g = o.xy + dir.xy * ((plane - o.z) / dir.z);
     float m = 1.0 - u_dim;
     float va = u_veil.a;
     vec3 vc = u_veil.rgb;
@@ -325,7 +326,7 @@ export function wetRoads(): maplibregl.LineLayerSpecification {
 // The weather goes over the ground and the buildings (the base map's own layers but its labels,
 // the 3D city, the lamps' pools, the relief) and under everything else: the labels, the walls and
 // all the twin draws. Run again whenever layers come or go below it.
-const SCENERY = /^city3d::|(^|::)lamps-(pool|bulb)$|(^|::)street-glow$|^env-hillshade$/
+const SCENERY = /^city3d::|(^|::)lamps-(pool|bulb)$|(^|::)street-glow$|^env-(hillshade|shadows)$/
 const isBase = (id: string) => /^(night|day)\.\d+\//.test(id)
 
 export function placeWeather(map: MlMap, layer: GroundLayer) {

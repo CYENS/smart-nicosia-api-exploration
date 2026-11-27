@@ -95,7 +95,7 @@ function retarget() {
   target = next
   from = s.shown
   easeStart = performance.now()
-  if (!moving() || !getMap()) { set({ shown: target }); apply(); return }
+  if (!moving() || !getMap()) { cancelAnimationFrame(easeRaf); easeRaf = 0; set({ shown: target }); apply(); return }
   if (!easeRaf) easeRaf = requestAnimationFrame(step)
 }
 
@@ -170,7 +170,7 @@ function drift() {
   if (g.shadow <= 0 && g.mist <= 0 && !(g.clouds > 0 && map.getPitch() > 55)) return
   const pxM = (156543 * Math.cos((map.getCenter().lat * Math.PI) / 180)) / 2 ** map.getZoom()
   const pxPerS = Math.max(((f.windKmh / 3.6) * 4) / pxM, 0.5)
-  const fps = Math.min(get().quality === "lite" ? 4 : 12, Math.max(1, pxPerS))
+  const fps = Math.min(get().quality === "lite" ? 3 : 8, Math.max(1, pxPerS))
   driftTimer = window.setTimeout(() => { map.triggerRepaint(); drift() }, 1000 / fps)
 }
 document.addEventListener("visibilitychange", () => drift())
@@ -193,17 +193,22 @@ export function onRadar(fn: () => boolean) {
 }
 
 // The quality fallback: judged from the rain's frames (the costliest moving part) every few
-// seconds while it falls.
+// seconds while it falls. Slow twice in a row (not the first seconds, when the map is still
+// loading) goes to lite; quick twice in a row goes back.
+let slow = 0
 window.setInterval(() => {
   const f = rain.frames
-  if (f.length < 90 || get().quality === "lite") return
+  if (f.length < 120) return
   const sorted = [...f].sort((a, b) => a - b)
   const median = sorted[Math.floor(sorted.length / 2)]
-  if (median > 25) {
-    set({ quality: "lite" })
-    rain.quality = 0.5
-    apply()
-  }
+  const lite = get().quality === "lite"
+  slow = (lite ? median < 18 : median > 25) ? slow + 1 : 0
+  if (slow < 2) return
+  slow = 0
+  set({ quality: lite ? "full" : "lite" })
+  rain.quality = lite ? 1 : 0.5
+  rain.frames = []
+  apply()
 }, 4000)
 
 // -- start ---------------------------------------------------------------------------------------
@@ -229,7 +234,7 @@ export function startWeatherMap() {
     if (s.strip !== p.strip) retarget()
     else if (s.at !== p.at) apply() // the sky moved under the same weather
   })
-  reduce.addEventListener("change", () => { set({ shown: target }); apply() })
+  reduce.addEventListener("change", () => { cancelAnimationFrame(easeRaf); easeRaf = 0; set({ shown: target }); apply() })
   retarget()
   ;(window as unknown as { __weather: unknown }).__weather = {
     state: get,
