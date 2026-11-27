@@ -84,7 +84,7 @@ export function activeSourceIds(): string[] {
   const ids: string[] = []
   for (const l of ui.layers) ids.push(...(l.sources ?? []))
   if (ui.nightLights) ids.push("smart_nicosia")
-  if (ui.city.on) ids.push("dls")
+  if (ui.city.on) ids.push("dls", "openstreetmap") // OpenStreetMap's buildings where the DLS has none
   if (ui.terrain) ids.push("terrain_tiles")
   if (ui.registers.on) ids.push("registers", "dls")
   if (mob.buses.on) ids.push("bus_live", "bus_timetable")
