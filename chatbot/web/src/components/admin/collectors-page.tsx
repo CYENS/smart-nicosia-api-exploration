@@ -6,13 +6,14 @@
    each row says where its data comes from in one "From ..." link, and Read more opens "How
    it's collected" (how-sheet.tsx). Changes need the admin password: without it the page reads
    but can't change anything. The data and the changes go through lib/collectors.ts. */
-import { ArrowLeftIcon, CircleAlertIcon, CircleCheckIcon, LockIcon, LockOpenIcon, TriangleAlertIcon } from "lucide-react"
-import { Fragment, useEffect, useState, type FormEvent } from "react"
+import { ArrowLeftIcon, ArrowRightIcon, CircleAlertIcon, CircleCheckIcon, LockIcon, LockOpenIcon, TriangleAlertIcon } from "lucide-react"
+import { Fragment, useEffect, useState } from "react"
 import { toast } from "sonner"
 
 import { HowSheet } from "@/components/admin/how-sheet"
 import { Dot, JobRow, type Tone } from "@/components/admin/job-row"
 import { SourceLink } from "@/components/admin/source-link"
+import { UnlockButton } from "@/components/admin/unlock"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription,
@@ -20,30 +21,22 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty"
-import { Field, FieldContent, FieldDescription, FieldError, FieldLabel } from "@/components/ui/field"
-import { Input } from "@/components/ui/input"
+import { Field, FieldContent, FieldDescription, FieldLabel } from "@/components/ui/field"
 import { Item, ItemContent, ItemDescription, ItemGroup, ItemMedia, ItemSeparator, ItemTitle } from "@/components/ui/item"
 import { Progress } from "@/components/ui/progress"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Spinner } from "@/components/ui/spinner"
 import { Switch } from "@/components/ui/switch"
 import { Toaster } from "@/components/ui/sonner"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import {
   ago, clockTime, loadCollectors, lockChanges, number, setCollecting, setRecording, startPolling,
-  unlockChanges, useCollectors, type CollectorsReport,
+  useCollectors, type CollectorsReport,
 } from "@/lib/collectors"
 
 // Changes need the admin password. Locked: a button to enter it (kept for this tab only).
 // Unlocked: a button to forget it. No password on the server: the page says it is read only.
 function AdminLock({ r }: { r: CollectorsReport }) {
-  const [open, setOpen] = useState(false)
-  const [password, setPassword] = useState("")
-  const [wrong, setWrong] = useState(false)
-  const [busy, setBusy] = useState(false)
-
   if (!r.admin.configured) {
     return (
       <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -60,55 +53,7 @@ function AdminLock({ r }: { r: CollectorsReport }) {
       </Button>
     )
   }
-
-  async function submit(e: FormEvent) {
-    e.preventDefault()
-    if (busy || !password) return
-    setBusy(true)
-    const ok = await unlockChanges(password)
-    setBusy(false)
-    if (ok) {
-      setOpen(false)
-      setPassword("")
-      setWrong(false)
-      toast.success("Changes unlocked for this tab")
-    } else setWrong(true)
-  }
-
-  return (
-    <>
-      <Button variant="outline" size="sm" onClick={() => setOpen(true)}>
-        <LockIcon data-icon="inline-start" />
-        Unlock changes
-      </Button>
-      <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) { setPassword(""); setWrong(false) } }}>
-        <DialogContent className="sm:max-w-sm">
-          <form onSubmit={submit} className="flex flex-col gap-4">
-            <DialogHeader>
-              <DialogTitle>Unlock changes</DialogTitle>
-              <DialogDescription>Starting, pausing and changing collectors needs the admin password.</DialogDescription>
-            </DialogHeader>
-            <Field data-invalid={wrong || undefined}>
-              <FieldLabel htmlFor="admin-password">Admin password</FieldLabel>
-              <Input
-                id="admin-password" type="password" autoComplete="current-password" autoFocus
-                value={password} onChange={(e) => { setPassword(e.target.value); setWrong(false) }}
-                aria-invalid={wrong || undefined}
-              />
-              {wrong ? <FieldError>That password isn't right.</FieldError> : <FieldDescription>Kept for this tab only.</FieldDescription>}
-            </Field>
-            <DialogFooter>
-              <DialogClose render={<Button variant="outline" type="button" />}>Cancel</DialogClose>
-              <Button type="submit" aria-disabled={busy || !password || undefined}>
-                {busy && <Spinner data-icon="inline-start" />}
-                Unlock
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
-    </>
-  )
+  return <UnlockButton what="Starting, pausing and changing collectors needs the admin password." />
 }
 
 function collectionState(r: CollectorsReport): { tone: Tone; title: string; text: string } {
@@ -272,7 +217,15 @@ function Jobs({ r }: { r: CollectorsReport }) {
         const gid = `group-${group.toLowerCase().replace(/[^a-z]+/g, "-")}`
         return (
           <section key={group} aria-labelledby={gid} className="flex flex-col gap-2">
-            <h2 id={gid} className="font-medium">{group}</h2>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <h2 id={gid} className="font-medium">{group}</h2>
+              {group === "Traffic and roads" && (
+                <Button variant="link" size="sm" nativeButton={false} render={<a href="/#review" />} className="h-auto px-0">
+                  Review the counting cameras
+                  <ArrowRightIcon data-icon="inline-end" />
+                </Button>
+              )}
+            </div>
             <ItemGroup className="gap-0 rounded-xl bg-card ring-1 ring-foreground/10">
               {jobs.map((j, i) => (
                 <Fragment key={j.name}>

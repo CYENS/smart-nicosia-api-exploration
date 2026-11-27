@@ -145,10 +145,15 @@ class ApiError extends Error {
   }
 }
 
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const headers: Record<string, string> = {}
+// The admin password's header, when this tab has one: for any admin request (the camera
+// walkthrough's saves too).
+export function adminHeaders(): Record<string, string> {
   const password = adminPassword() ?? memoryPassword
-  if (password) headers["X-Admin-Password"] = password
+  return password ? { "X-Admin-Password": password } : {}
+}
+
+async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const headers: Record<string, string> = { ...adminHeaders() }
   // Every change goes as JSON, even one with nothing to say.
   if (init?.method && init.method !== "GET") headers["Content-Type"] = "application/json"
   let res: Response
