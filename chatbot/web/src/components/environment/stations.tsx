@@ -193,13 +193,17 @@ function ComparisonList({ rows, title, empty, open }: { rows: Comparison[]; titl
 type StationEntity = Entity & { comparison?: Comparison[] }
 
 function StationSection({ entity }: SectionProps) {
-  const rows = ((entity as StationEntity).comparison ?? []).filter((c) => c.bias !== undefined || c.hours > 0)
   const weather = (entity.kind as string) === "weather_station"
+  // The station's headline (temperature, or NO₂), one line per city sensor; the sensor's own
+  // inspector tells the rest.
+  const rows = ((entity as StationEntity).comparison ?? [])
+    .filter((c) => c.metric === (weather ? "temperature_c" : "no2") && (c.bias !== undefined || c.hours > 0))
+    .sort((a, b) => a.distance_m - b.distance_m)
   return (
     <ComparisonList
       rows={rows}
       open="sensor"
-      title={weather ? "City sensors' temperature against this station" : "City sensors against this station"}
+      title={weather ? "City sensors' temperature against this station, past 7 days" : "City sensors' NO₂ against this station, past 7 days"}
       empty={weather
         ? "No city sensor is compared with this station yet: the twin records the Met readings from when it starts reading them, and needs a day of both."
         : "No city sensor has this as its nearest official station, or the twin's memory doesn't yet hold enough hours of both."}

@@ -417,3 +417,21 @@ def test_the_stations_endpoint_follows_the_clock(env):
     assert not next(s for s in past["stations"] if s["id"] == "met-LEFKOSIA")["known"]
     assert next(s for s in past["stations"] if s["id"] == "aq-CY0004A")["known"]
     assert routes.compare(req, sensor=None, station=None, at=None, days=7)["rows"]
+
+
+def test_a_busy_memory_is_said_and_not_kept(measured, memory, monkeypatch):
+    from chatbot.memory import Unavailable
+
+    measured.refresh_eea()
+    ref = measured.stored(["aq-CY0004A"], ["no2"], NOW - timedelta(days=7), NOW)
+    add_city_sensor(memory, SENSOR[0], [("NO2", ts, v) for _, _, ts, v in ref])
+    real = memory.readings
+
+    def busy(*a, **k):
+        raise Unavailable("busy", "the memory is busy saving")
+    monkeypatch.setattr(memory, "readings", busy)
+    first = next(r for r in measured.compare([SENSOR], ("no2",)) if r["metric"] == "no2")
+    assert "busy" in first["note"]
+    monkeypatch.setattr(memory, "readings", real)
+    again = next(r for r in measured.compare([SENSOR], ("no2",)) if r["metric"] == "no2")
+    assert again["bias_pct"] == 0 and again["hours"] == len(ref)
