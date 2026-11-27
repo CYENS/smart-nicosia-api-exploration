@@ -5,6 +5,7 @@ draws them with its own renderer (lib/hazards/map.ts), which claims a layer by `
 
 from __future__ import annotations
 
+from chatbot.geo import haversine_m
 from chatbot.hazards import feeds as F
 
 SEVERITY_COLORS = {"high": "#ff5a4e", "medium": "#f5a524", "low": "#8798b0", "minor": "#5d6f88"}
@@ -14,6 +15,7 @@ LEVEL_COLORS = {"yellow": "#e8c547", "orange": "#ff8a3d", "red": "#ff5a4e"}
 FIRE_COLORS = {"low": "#8798b0", "moderate": "#9fb0c6", "high": "#f5a524", "very_high": "#ff8a3d",
                "extreme": "#ff5a4e", "very_extreme": "#c81e3c"}
 FELT_COLORS = {2: "#8798b0", 3: "#e8c547", 4: "#f5a524", 5: "#ff5a4e"}
+FELT_SHOWN_KM = 160.0  # felt reports drawn within this of Nicosia: the island and its coasts
 
 
 def felt_color(i: float) -> str:
@@ -68,8 +70,10 @@ def features(m: dict, *, incidents: dict[str, str] | None = None, felt: bool = T
             out.append(district)
     quakes = sorted(m.get("earthquakes") or [], key=lambda q: q["start"])
     for q in quakes:
-        if felt:
+        if felt:  # those felt around the island: far ones (Türkiye, Lebanon) would pull the camera away
             for c in (q.get("felt") or {}).get("cells") or []:
+                if haversine_m(F.NICOSIA[0], F.NICOSIA[1], c["lat"], c["lon"]) > FELT_SHOWN_KM * 1000:
+                    continue
                 out.append({"type": "Feature", "geometry": {"type": "Point", "coordinates": [c["lon"], c["lat"]]},
                             "properties": {"kind": "felt", "quake": q["id"], "n": c["n"], "i": c["i"],
                                            "color": felt_color(c["i"])}})

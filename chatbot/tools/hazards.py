@@ -30,7 +30,9 @@ def quake_row(q: dict, incidents: dict[str, str]) -> dict:
             "depth_km": q.get("depth_km"), "distance_km": q.get("distance_km"), "direction": q.get("direction"),
             "where": q.get("where"), "located_by": q.get("located_by"),
             "felt_reports": felt.get("count"), "felt_near_nicosia": felt.get("near_nicosia"),
-            "felt_near_intensity": felt.get("near_intensity"),
+            "felt_near_described": (f"{F.INTENSITY_WORDS.get(felt['near_intensity'])} (intensity "
+                                    f"{F.ROMAN.get(felt['near_intensity'])}, the median report)"
+                                    if felt.get("near_intensity") else None),
             "raises_incident": sev != "minor", "severity_here": sev,
             "incident": incidents.get(q["id"]), "lat": q.get("lat"), "lon": q.get("lon")}
 
