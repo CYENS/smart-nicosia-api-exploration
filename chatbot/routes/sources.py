@@ -315,6 +315,56 @@ def _visit_cyprus(agent) -> dict:
     return status("live", cal.fetched_at or None, note)
 
 
+def _adsb(agent) -> dict:
+    sky = getattr(agent, "sky", None)
+    hit = sky.aircraft.health() if sky is not None else None
+    if hit is None:
+        return status("waiting", note="read while the aircraft layer is on the map")
+    if hit.get("error"):
+        at = hit.get("read_ok_at") or hit.get("read_at")
+        return status("stale" if hit.get("read_ok_at") else "unavailable", at, hit["error"])
+    return status("live", hit.get("read_ok_at"),
+                  f"{hit['count']} aircraft within 40 nm (partial community coverage)")
+
+
+def _iss(agent) -> dict:
+    sky = getattr(agent, "sky", None)
+    hit = sky.iss.health() if sky is not None else None
+    if hit is None:
+        return status("waiting", note="read for the Outside card and City Clock ISS marks")
+    if hit.get("error"):
+        at = hit.get("read_ok_at") or hit.get("read_at")
+        return status("stale" if hit.get("read_ok_at") else "unavailable", at, hit["error"])
+    epoch = hit.get("tle_epoch")
+    return status("live", hit.get("read_ok_at"), f"TLE epoch {epoch}" if epoch else None)
+
+
+def _cynap_its(agent) -> dict:
+    sky = getattr(agent, "sky", None)
+    hit = sky.its.health() if sky is not None else None
+    if hit is None:
+        return status("waiting", note="read when PWD traffic detectors and CCTV are on the map")
+    if hit.get("error"):
+        has_sites = bool(hit.get("cctv") or hit.get("detectors"))
+        at = hit.get("read_ok_at") if has_sites else hit.get("read_at")
+        return status("stale" if has_sites else "unavailable", at, hit["error"])
+    return status("live", hit.get("read_ok_at"),
+                  f"{hit['cctv']} CCTV and {hit['detectors']} detector sites in Nicosia")
+
+
+def _swarco(agent) -> dict:
+    sky = getattr(agent, "sky", None)
+    hit = sky.its.swarco_health() if sky is not None else None
+    if hit is None:
+        return status("waiting", note="checked when the PWD ITS inventory is read")
+    if hit.get("error"):
+        return status("unavailable", hit.get("read_at"), hit["error"])
+    if hit.get("has_values"):
+        return status("live", hit.get("read_at"), f"{hit['measured_count']} live flow values arriving")
+    return status("stalled", hit.get("read_at"),
+                  f"{hit.get('site_refs', 0)} site references published, no measured values yet")
+
+
 PROBES: dict[str, Callable] = {
     "met_stations": lambda a: _station_feed(a, "met"),
     "eea_air": lambda a: _station_feed(a, "eea"),
@@ -326,6 +376,10 @@ PROBES: dict[str, Callable] = {
     "waze_alerts": _road_reports("waze_alerts"),
     "traffic_events": _road_reports("traffic_events"),
     "waze_traffic": _road_reports("waze_traffic"),
+    "cynap_its": _cynap_its,
+    "swarco_traffic": _swarco,
+    "adsb_lol": _adsb,
+    "celestrak_iss": _iss,
     "registers": _registers,
     "twin_memory": _memory,
     "overture": _overture,

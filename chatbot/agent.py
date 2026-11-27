@@ -42,6 +42,7 @@ from chatbot.routing import Router
 from chatbot.scenarios import Lab, ScenarioContext
 from chatbot.scenarios.lab import default_cache_dir
 from chatbot.settings import TIMEZONE, Settings
+from chatbot.sky import SkyService
 from chatbot.store import SessionStore
 from chatbot.streets import Streets
 from chatbot.streets import entities as _street_kinds  # noqa: F401 - registers the street kinds
@@ -217,6 +218,9 @@ class Agent:
         # Tonight in Nicosia: duty pharmacies, Visit Cyprus events, open-now OSM places.
         self.tonight = Tonight(settings, self.places, memory, router)
         self.entities.tonight = self.tonight
+        # Living sky (aircraft, ISS visible passes) and CyNAP PWD ITS sites + bus archive.
+        self.sky = SkyService(settings, memory=memory, mobility=self.mobility)
+        self.entities.sky = self.sky
         self.tools = TOOL_DEFS + ([WEB_SEARCH] if settings.web_search else [])
         self.conversations: dict[str, Conversation] = {}
 
@@ -266,7 +270,7 @@ class Agent:
                                watcher=self.watcher, environment=self.environment,
                                terrain=self.terrain,
                                scenarios=self.scenarios, lidar=self.lidar,
-                               streets=self.streets, tonight=self.tonight)
+                               streets=self.streets, tonight=self.tonight, sky=self.sky)
         conv.messages.append({"role": "user", "content": [
             {"type": "text", "text": format_context(context, self.city.now()) + text}]})
 

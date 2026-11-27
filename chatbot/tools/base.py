@@ -28,6 +28,7 @@ if TYPE_CHECKING:
     from chatbot.moments import Moments
     from chatbot.scenarios.lab import Lab
     from chatbot.streets import Streets
+    from chatbot.sky.service import SkyService
     from chatbot.terrain import Terrain
     from chatbot.tonight.service import Tonight
     from chatbot.watch import Watcher
@@ -82,6 +83,7 @@ class ToolContext:
     lidar: Flight | None = None  # buildings as the 2019 LiDAR flight measured them (chatbot/lidar.py)
     streets: Streets | None = None  # the street rules: limits, zones, crossings (chatbot/streets)
     tonight: Tonight | None = None  # duty pharmacies, city events, open-now places (chatbot/tonight)
+    sky: SkyService | None = None  # aircraft, ISS passes, CyNAP ITS sites, bus archive (chatbot/sky)
 
 
 # -- schema helpers -----------------------------------------------------------------------------

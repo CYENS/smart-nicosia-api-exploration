@@ -39,8 +39,10 @@ def _warm_up(agent: Agent) -> None:
     """Load the slow, cacheable things in the background so the first question is quick."""
     # The traffic cameras (one request, kept 6 h) let search and the inspector find them by name.
     # The bus timetable loads in the background (about 5 MB the first time, then from disk).
+    # ISS passes and the CyNAP ITS site inventory warm Clock track marks, search and Swarco status.
     for step in (agent.mobility.warm_up, agent.city.overview, agent.city.traffic_cameras,
-                 agent.tonight.warm_up, lambda: vega_lite_validator(agent.settings)):
+                 agent.tonight.warm_up, agent.sky.iss.summary, agent.sky.its.geojson,
+                 lambda: vega_lite_validator(agent.settings)):
         try:
             step()
         except Exception as e:  # noqa: BLE001 - best effort
@@ -78,6 +80,7 @@ async def lifespan(app: FastAPI):
     agent.grid.start()  # the island's grid, read as the operator publishes it
     if os.environ.get("CHATBOT_HAZARDS", "1").strip().lower() not in ("0", "false", "no", "off"):
         agent.hazards.start()  # earthquakes, warnings and fire danger (CHATBOT_HAZARDS=0: from the memory only)
+    agent.sky.start()
     if settings.collect:
         start_collector(memory)
     log.info("twin's memory: %s (recording %s, full collection %s)", memory.path,
@@ -90,6 +93,7 @@ async def lifespan(app: FastAPI):
     threading.Thread(target=registers.refresh_if_needed, daemon=True).start()
     yield
     app.state.city_tiles.stop()
+    agent.sky.stop()
     agent.watcher.stop()
     agent.environment.measured.stop()
     agent.grid.stop()

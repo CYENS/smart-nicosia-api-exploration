@@ -37,6 +37,7 @@ import "@/lib/watch" // the incident inbox, its Layers row, marks on the clock, 
 import "@/lib/hazards" // earthquakes, weather warnings and fire danger: Layers row, Outside line, incident extents
 import "@/lib/environment" // sun, shade, terrain, air, noise and weather: workspace, spot, layers
 import "@/lib/streets" // speed limits, slow zones, signals, crossings, cycleways, bus lanes, cameras
+import "@/lib/sky" // aircraft over Nicosia, visible ISS passes, and PWD CCTV & loop detectors
 import "@/lib/scenarios" // the Scenario lab: its workspace, split map, sections and saved runs
 import "@/lib/weather" // the weather of the clock's moment on the map: light, sky, cloud, rain, haze
 // After the environment: "What's here?" is the spot's menu item and icon, and its card holds the
