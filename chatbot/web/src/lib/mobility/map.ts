@@ -225,6 +225,7 @@ function frame(ts: number) {
   const now = Date.now()
   for (const t of tracks.values()) step(t, now, dt)
   const fc = busFeatures()
+  shownBuses = fc.features
   const src = map.getSource(BUS_SRC) as GeoJSONSource | undefined
   if (src) src.setData(fc)
   if (modelState === "ready" && map.getLayer(BUS_MODEL)) {
@@ -234,6 +235,22 @@ function frame(ts: number) {
     }))
   }
   followOpenBus(ts)
+}
+
+// A click on a bus opens the one whose middle is nearest the pointer on screen: each bus's hit
+// area is as big as the bus, so where buses crowd several of them lie under the pointer.
+let shownBuses: any[] = []
+function nearestBus(at: [number, number]): { id: string; at: [number, number] } | null {
+  const map = getMap()
+  const p = map.project(at)
+  let best: { id: string; at: [number, number] } | null = null
+  let bestD = Infinity
+  for (const ft of shownBuses) {
+    const q = map.project(ft.geometry.coordinates)
+    const d = Math.hypot(q.x - p.x, q.y - p.y)
+    if (d < bestD) { bestD = d; best = { id: String(ft.properties.id), at: ft.geometry.coordinates } }
+  }
+  return best
 }
 
 // -- buses in 3D ----------------------------------------------------------------------------------
@@ -627,6 +644,7 @@ registerClickHandler({
   priority: 12,
   layers: (l) => l.startsWith("mob::") || l.includes("::mob-roads"),
   resolve: (f, at) => {
+    if (f.layer.id === "mob::bus-dot") return nearestBus(at) // the hit areas of a crowd overlap
     const id = f.properties?.id
     if (!id) return null
     const center = f.geometry.type === "Point" ? (f.geometry.coordinates as [number, number]) : at
