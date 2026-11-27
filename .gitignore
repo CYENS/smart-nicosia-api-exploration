@@ -9,6 +9,7 @@ data/*.duckdb
 data/*.duckdb.wal
 data/*.lock
 data/*.log*
+data/collector_controls.json
 collector.toml
 
 # Chatbot: secrets and caches

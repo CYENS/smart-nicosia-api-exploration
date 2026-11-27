@@ -54,8 +54,8 @@ def _source(source_id: str) -> dict:
     s = SOURCE_BY_ID.get(source_id)
     if s is None:
         return {"id": source_id, "name": source_id}
-    return {"id": s.id, "name": s.name, "publisher": s.publisher, "url": s.url,
-            "licence": s.licence, "licence_url": s.licence_url}
+    return {"id": s.id, "name": s.name, "short": s.short, "publisher": s.publisher,
+            "gives": s.gives, "url": s.url, "licence": s.licence, "licence_url": s.licence_url}
 
 
 class Collectors:
@@ -74,6 +74,7 @@ class Collectors:
         self._hold_until = 0.0  # monotonic time before which the queue waits
         self._pass_now = True
         self._passing = False
+        self._last_pass_end: datetime | None = None
         self.current: str | None = None  # the job running in this process right now
         self.current_since: datetime | None = None
         self.last_pass: dict = {}
@@ -180,6 +181,9 @@ class Collectors:
                               "message": f"{type(e).__name__}: {e}"}
         finally:
             self._passing = False
+            # Runs that started before this are this server's own (the run lock keeps any
+            # other collector out while a pass is on); a newer one is another collector's.
+            self._last_pass_end = db.utcnow()
 
     def client(self) -> Client:
         if self._client is None:
@@ -343,8 +347,12 @@ class Collectors:
         other_per_day = sum(b.requests_per_day for b in budget_lines.values() if not b.nokia)
         nokia_24h = sum(v for k, v in per_job_24h.items() if JOBS.get(k) is None or JOBS[k].nokia)
         elsewhere_now = not self._passing and scheduler.lock_held_elsewhere(self.base)
-        recorder = (self.memory.recorder.status() if self.memory.recorder is not None
-                    else {"on": False})
+        mine_until = self._last_pass_end
+        other = newest_run if newest_run and (mine_until is None or newest_run > mine_until) else None
+        recorder = {"on": False}
+        if self.memory.recorder is not None:
+            recorder = self.memory.recorder.status()
+            recorder["last_flush"] = _iso(self.memory.recorder.last_flush)  # with its offset
         recorder["recording"] = self.recording(page)
         return {
             "now": _iso(now),
@@ -352,8 +360,9 @@ class Collectors:
             "decided_on_page": page.collecting is not None,
             "collect_default": self.collect_default,
             "elsewhere_now": elsewhere_now,
-            "last_run_anywhere": _iso(newest_run),
-            "recent_run_anywhere": bool(newest_run and now - newest_run < RECENT),
+            # The newest run this server didn't make: Task Scheduler, Docker, another server.
+            "other_collector_last_run": _iso(other),
+            "other_collector_recent": bool(other and now - other < RECENT),
             "last_pass_here": self.last_pass or None,
             "running": current,
             "queued": queued,
