@@ -32,6 +32,7 @@ import { startCredits } from "@/lib/map/credits"
 import { initMap, setInsets } from "@/lib/map/engine"
 import "@/lib/mobility" // buses, stops and road speeds: their workspace, kinds, layers and commands
 import "@/lib/watch" // the incident inbox, its Layers row, marks on the clock, toasts from the live stream
+import "@/lib/hazards" // earthquakes, weather warnings and fire danger: Layers row, Outside line, incident extents
 import "@/lib/environment" // sun, shade, terrain, air, noise and weather: workspace, spot, layers
 import "@/lib/scenarios" // the Scenario lab: its workspace, split map, sections and saved runs
 import "@/lib/weather" // the weather of the clock's moment on the map: light, sky, cloud, rain, haze
