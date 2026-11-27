@@ -178,6 +178,10 @@ have line_name ''. object_type 0 people, 1 bike, 2 car, 3 motorcycle, 4 bus, 5 t
 granularity 'FIVE_MIN' or 'ONE_HOUR' (filter on one).
 - travel_times(segment_id, segment_name, from_site, to_site, measured_at, travel_time_s, \
 speed_kmh): national Bluetooth road segments, no coordinates.
+- station_readings(station, key, ts, value, source): the Met Department's weather stations \
+(station 'met-LEFKOSIA', keys temperature_c, humidity_pct, rain_10min_mm, wind_ms, radiation_wm2, \
+...) every 10 minutes, and the reference air stations ('aq-CY0004A' traffic, 'aq-CY0006A' \
+residential; keys no2, o3, pm10, ts the start of the hour); may not exist before the first read.
 - coverage(device_type, device, source, start_ts, end_ts): stretches the store holds every \
 reading for ('' = all devices of the type).
 - job_runs(job, started_at, finished_at, status, requests, rows_written, message)."""

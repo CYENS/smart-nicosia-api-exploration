@@ -8,7 +8,7 @@ from datetime import date, datetime, timezone
 
 from fastapi import APIRouter, HTTPException, Query, Request
 
-from chatbot.environment.service import TZ
+from chatbot.environment.service import SOURCES, TZ
 from chatbot.environment.surfaces import METRICS
 from chatbot.routes import agent_of
 from chatbot.routes.live import AT, moment
@@ -51,6 +51,45 @@ def wind(request: Request, at: str | None = AT) -> dict:
 def radar(request: Request) -> dict:
     """The rain radar's frames of the last two hours, with their tile addresses."""
     return agent_of(request).environment.radar()
+
+
+@router.get("/api/environment/stations")
+def stations(request: Request, at: str | None = AT) -> dict:
+    """The measuring stations (the Met Department's weather stations and the national air
+    network's reference stations) with their readings at a moment, from what the twin has read
+    and recorded (never asking the services), the rain of the last hour at each Met station, and
+    where it comes from."""
+    when = moment(request, at)
+    m = agent_of(request).environment.measured
+    rows = m.readings_at(when)
+    rain = m.rain_last_hour(when)
+    for r in rows:
+        if r["id"] in rain:
+            r["rain_last_hour_mm"] = rain[r["id"]]
+    return {"at": when.astimezone(TZ).strftime("%Y-%m-%dT%H:%M") if when else None, "stations": rows,
+            "feeds": {"met": _feed(m.met_status), "eea": _feed(m.eea_status)},
+            "sources": [SOURCES["met_stations"], SOURCES["eea_air"]]}
+
+
+def _feed(st) -> dict:
+    return {"read_at": st.read_at and datetime.fromtimestamp(st.read_at, tz=timezone.utc).astimezone(TZ).isoformat(timespec="minutes"),
+            "ok": st.error is None and st.ok_at is not None, "error": st.error}
+
+
+@router.get("/api/environment/compare")
+def compare(request: Request, sensor: str | None = Query(None, max_length=60),
+            station: str | None = Query(None, max_length=40), at: str | None = AT,
+            days: int = Query(7, ge=1, le=28)) -> dict:
+    """How the city's air sensors compare with the reference stations over the past days: one
+    sensor's (sensor=), those compared with one station (station=), or all."""
+    when = moment(request, at)
+    env = agent_of(request).environment
+    rows = env.measured.compare(env.city_sensors(), days=days, end=when)
+    if sensor:
+        rows = [r for r in rows if r["sensor_id"].lower() == sensor.lower()]
+    if station:
+        rows = [r for r in rows if r["reference_id"].lower() == station.lower()]
+    return {"days": days, "rows": rows}
 
 
 def _day(text: str | None, request: Request) -> date:

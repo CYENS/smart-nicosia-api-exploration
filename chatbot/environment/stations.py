@@ -62,8 +62,10 @@ EEA_KEEP_DAYS = 35  # how far back an EEA file is read into the memory the first
 EEA_REREAD_DAYS = 3  # afterwards: unverified hours can still change
 KNOT_MS = 0.514444
 # How long a reading speaks for after its time: a 10-minute reading for half an hour, an hourly
-# mean for three hours (the EEA files run two to three hours behind now).
-LOOKBACK = {"weather_station": timedelta(minutes=30), "reference_air_station": timedelta(hours=3)}
+# mean (stamped at its hour's start) for three hours after its hour ends (the EEA files run two
+# to three hours behind now).
+LOOKBACK = {"weather_station": timedelta(minutes=30), "reference_air_station": timedelta(hours=4)}
+HOUR_MS = 3_600_000
 # The newest an hourly mean may be to anchor a surface at a moment: its own hour or the one
 # before. Older, it says what the air was, not what it is.
 SURFACE_LAG = timedelta(hours=2)
@@ -614,6 +616,8 @@ class Measured:
 
     def _row(self, s: StationInfo, vals: dict[str, tuple[int, float]], when: datetime) -> dict:
         order = WEATHER_ORDER if s.kind == "weather_station" else AIR_ORDER
+        hourly = s.kind == "reference_air_station"
+        ends = HOUR_MS if hourly else 0  # an hourly mean's age counts from the end of its hour
         readings = {}
         for k in [*order, *sorted(set(vals) - set(order))]:
             if k not in vals:
@@ -621,9 +625,9 @@ class Measured:
             ts, v = vals[k]
             label, unit, dec = READING_INFO.get(k, (k, "", 1))
             item = {"value": round(v, dec) if dec else round(v), "unit": unit, "label": label,
-                    "as_of": _local(ts), "age_min": max(0, round((_ms(when) - ts) / 60000))}
-            if s.kind == "reference_air_station":
-                item["until"] = _local(ts + 3_600_000)  # an hourly mean: the hour it covers
+                    "as_of": _local(ts), "age_min": max(0, round((_ms(when) - ts - ends) / 60000))}
+            if hourly:
+                item["until"] = _local(ts + HOUR_MS)  # the hour it covers
             readings[k] = item
         if "wind_ms" in readings:
             readings["wind_ms"]["kmh"] = round(readings["wind_ms"]["value"] * 3.6)
@@ -632,7 +636,51 @@ class Measured:
                 "lat": s.lat, "lon": s.lon, "type": s.type or None, "source": s.source,
                 "known": bool(readings), "readings": readings,
                 "as_of": _local(newest) if newest else None,
-                "age_min": max(0, round((_ms(when) - newest) / 60000)) if newest else None}
+                "age_min": max(0, round((_ms(when) - newest - ends) / 60000)) if newest else None}
+
+    def summary(self, at: datetime | None) -> dict | None:
+        """What the instruments say at a moment, in one place: the centre's thermometer (the
+        nearest Met station that has one), the rain of the last hour, the wind at 10 m, the sun
+        meter and the traffic station's newest hour. None when nothing is known."""
+        rows = {r["id"]: r for r in self.readings_at(at)}
+
+        def first(key: str, order: tuple[str, ...]) -> tuple[dict, dict] | None:
+            for sid in order:
+                r = rows.get(sid)
+                if r and key in r["readings"]:
+                    return r, r["readings"][key]
+            return None
+
+        met_order = tuple(met_id(c) for c in ("LEFKOSIA", "ATHALASSA", "VISITOR", "MAMMARI"))
+        out: dict = {}
+        t = first("temperature_c", met_order)
+        if t:
+            out["temperature"] = {"station": t[0]["name"], "id": t[0]["id"], "value_c": t[1]["value"],
+                                  "as_of": t[1]["as_of"], "age_min": t[1]["age_min"]}
+            h = t[0]["readings"].get("humidity_pct")
+            if h:
+                out["temperature"]["humidity_pct"] = h["value"]
+        rain = self.rain_last_hour(at)
+        if rain:
+            sid = next((s for s in met_order if s in rain), next(iter(rain)))
+            out["rain_last_hour"] = {"station": rows[sid]["name"] if sid in rows else sid, "id": sid,
+                                     "mm": rain[sid], "wettest_mm": max(rain.values())}
+        w = first("wind_ms", met_order)
+        if w:
+            d = w[0]["readings"].get("wind_from_deg")
+            out["wind"] = {"station": w[0]["name"], "id": w[0]["id"], "kmh": w[1]["kmh"],
+                           "from_deg": d["value"] if d else None, "as_of": w[1]["as_of"]}
+        s = first("radiation_wm2", met_order)
+        if s:
+            out["sunshine"] = {"station": s[0]["name"], "id": s[0]["id"], "w_m2": s[1]["value"], "as_of": s[1]["as_of"]}
+        for code in ("CY0004A", "CY0006A"):
+            r = rows.get(f"aq-{code}")
+            if r and r["readings"]:
+                out.setdefault("air", []).append(
+                    {"station": r["name"], "id": r["id"],
+                     **{k: {"value": v["value"], "hour": f"{v['as_of'][11:16]} to {v['until'][11:16]}",
+                            "age_min": v["age_min"]} for k, v in r["readings"].items()}})
+        return out or None
 
     def series(self, sid: str, key: str, end: datetime | None, hours: int = 24) -> list[tuple[int, float]]:
         until = end or self.now()

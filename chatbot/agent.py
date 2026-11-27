@@ -26,6 +26,7 @@ from chatbot.city import CityData
 from chatbot.dls import DLS
 from chatbot.entities import Entities
 from chatbot.environment import spot as _spot  # noqa: F401 - registers the spot kind
+from chatbot.environment import station_kinds as _station_kinds  # noqa: F401 - the measuring stations
 from chatbot.environment.service import Environment
 from chatbot.eoa import Registry
 from chatbot.followups import TagFilter, merge_actions

@@ -344,7 +344,7 @@ def test_the_tool_list_keeps_its_order():
         "set_city_time",
         "get_buses", "get_departures", "plan_transit", "get_road_speeds",
         "list_incidents", "explain_incident", "create_watch",
-        "sun_and_shade", "environment_surface",
+        "sun_and_shade", "environment_surface", "measured_stations", "compare_with_reference",
         "find_high_places", "view_from",
         "list_scenarios", "run_scenario", "compare_scenarios", "open_scenario",
         "get_speed_limits", "find_slow_zones", "find_crossings", "get_cycle_network", "get_bus_lanes",
