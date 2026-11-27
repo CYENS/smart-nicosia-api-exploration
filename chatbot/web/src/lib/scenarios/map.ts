@@ -12,7 +12,7 @@
 import type { GeoJSONSource } from "maplibre-gl"
 import { create } from "zustand"
 
-import { firstLabelLayer, flyToBounds, getMap, onStyleReady, SODIUM } from "@/lib/map/engine"
+import { flyToBounds, getMap, onStyleReady, SODIUM } from "@/lib/map/engine"
 import { registerClickHandler } from "@/lib/registries/map-clicks"
 import { useWorkspace } from "@/lib/registries/workspaces"
 import type { ScenarioFeature, ScenarioLayer, ScenarioRun } from "@/lib/registries/scenarios"
@@ -103,14 +103,15 @@ function ensure() {
   const empty = { type: "FeatureCollection", features: [] } as any
   map.addSource(SRC, { type: "geojson", data: empty })
   map.addSource(SEL, { type: "geojson", data: empty })
-  const before = firstLabelLayer()
+  // On top of the base map, its buildings and roads included: a route stays readable, and the
+  // points and the ring go above it.
   const isLine = ["in", ["geometry-type"], ["literal", ["LineString", "MultiLineString"]]]
   map.addLayer({ id: "scn::line-casing", type: "line", source: SRC, filter: isLine as any,
     layout: { "line-cap": "round", "line-join": "round" },
-    paint: { "line-color": NIGHT, "line-width": ["interpolate", ["linear"], ["zoom"], 13, 4, 18, 9], "line-opacity": 0.7 } }, before)
+    paint: { "line-color": NIGHT, "line-width": ["interpolate", ["linear"], ["zoom"], 13, 4, 18, 9], "line-opacity": 0.7 } })
   map.addLayer({ id: "scn::line", type: "line", source: SRC, filter: isLine as any,
     layout: { "line-cap": "round", "line-join": "round" },
-    paint: { "line-color": ["coalesce", ["get", "color"], SODIUM], "line-width": ["interpolate", ["linear"], ["zoom"], 13, 2, 18, 5] } }, before)
+    paint: { "line-color": ["coalesce", ["get", "color"], SODIUM], "line-width": ["interpolate", ["linear"], ["zoom"], 13, 2, 18, 5] } })
   map.addLayer({ id: "scn::point", type: "circle", source: SRC, filter: ["==", ["geometry-type"], "Point"],
     paint: {
       "circle-color": ["coalesce", ["get", "color"], SODIUM],
@@ -230,15 +231,16 @@ export function flyToScenarioFeature(id: string) {
   const f = allFeatures().find((x) => x.properties.id === id)
   if (!f) return
   selectScenarioFeature(id)
+  // A point gets a small box around it: flyToBounds keeps the panels' padding, so on a phone it
+  // lands above the sheet, not behind it.
   const g = f.geometry as any
-  if (g.type === "Point") {
-    const map = getMap()
-    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches
-    map?.[reduce ? "jumpTo" : "easeTo"]({ center: g.coordinates, zoom: Math.max(map.getZoom(), 17.2), ...(reduce ? {} : { duration: 700 }) } as any)
-  } else {
-    const b = bounds([f])
-    if (b) flyToBounds(b)
-  }
+  const b = g.type === "Point"
+    ? [g.coordinates[0] - 0.0007, g.coordinates[1] - 0.0005, g.coordinates[0] + 0.0007, g.coordinates[1] + 0.0005] as [number, number, number, number]
+    : bounds([f])
+  if (b) flyToBounds(b)
+  // The feature lands in the middle of the open map: in the split, move the swipe aside so the
+  // handle doesn't cover it and it shows on the scenario's side.
+  if (useLabMap.getState().view === "split" && useLabMap.getState().swipe > 0.2) setSwipe(0.15)
 }
 
 export function enterLabMap() {

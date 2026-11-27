@@ -97,7 +97,10 @@ function SetUp() {
         </Alert>
       )}
       <div className="flex items-center gap-2">
-        <Button className="flex-1 bg-sodium text-night hover:bg-sodium/90" onClick={() => void runScenario()} disabled={running}>
+        <Button className="flex-1 bg-sodium text-night hover:bg-sodium/90" onClick={() => void runScenario().then((r) => {
+          // The keyboard carries on at the results: the run's title.
+          if (r) requestAnimationFrame(() => document.getElementById("lab-run-title")?.focus({ preventScroll: false }))
+        })} disabled={running}>
           {running ? <Spinner data-icon="inline-start" /> : <PlayIcon data-icon="inline-start" />}
           {running ? "Running on the twin's memory" : "Run"}
         </Button>
@@ -109,7 +112,7 @@ function SetUp() {
         </Tooltip>
       </div>
       <p className="text-[12px] leading-snug text-muted-foreground">
-        The assumptions (price, CO2 and the like) are on the results, with how much each moves the result.
+        The assumptions are on the results, each with its source and how much it moves the result.
       </p>
     </div>
   )
@@ -147,7 +150,9 @@ function Results({ toSetUp }: { toSetUp: () => void }) {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-col gap-1">
-        <p className="text-[14px] leading-snug font-semibold">{compare ? `A: ${run.label}` : run.label}</p>
+        <p id="lab-run-title" tabIndex={-1} className="rounded-sm text-[14px] leading-snug font-semibold outline-none focus-visible:ring-2 focus-visible:ring-ring/60">
+          {compare ? `A: ${run.label}` : run.label}
+        </p>
         {compare && <p className="text-[14px] leading-snug font-semibold text-[#6cb4ff]">B: {compare.label}</p>}
         {compare && <Differences run={run} compare={compare} />}
         <p className="text-[12.5px] text-muted-foreground">
