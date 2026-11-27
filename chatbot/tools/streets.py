@@ -165,6 +165,26 @@ def h_get_speed_limits(ctx: ToolContext, a: dict) -> dict:
         "how_sure": SURE_NOTE, "inventory": _age(st, "speed_limits"),
         "layer_ref": ref, "data_ref": data,
     }
+    if a.get("road") and not near:
+        # A name several streets share (Makariou in Nicosia, Lakatamia and Latsia): say which, so
+        # the answer can pick one or ask, and a place narrows it.
+        where: dict[str, list] = defaultdict(list)
+        for p in pieces:
+            mid = p["coords"][len(p["coords"]) // 2]
+            where[p["street"] or "unnamed street"].append((p["length_m"], mid))
+        matched = []
+        for name, parts in where.items():
+            total_m = sum(m for m, _ in parts)
+            lon = sum(c[0] * m for m, c in parts) / total_m
+            lat = sum(c[1] * m for m, c in parts) / total_m
+            matched.append({"street": name, "km": round(total_m / 1000, 1), "lat": round(lat, 4), "lon": round(lon, 4)})
+        matched.sort(key=lambda r: -r["km"])
+        if len(matched) > 1:
+            far = max(haversine_m(x["lat"], x["lon"], y["lat"], y["lon"]) for x in matched for y in matched)
+            res["matched_streets"] = matched[:8]
+            if far > 3000:
+                res["matched_note"] = ("several streets in different parts of Greater Nicosia share this name; the "
+                                       "figures cover all of them. Pass near_place to narrow it to one")
     if seg_info is not None:
         res["segment_posted_limit"] = seg_info
     elif a.get("segment"):
@@ -238,6 +258,36 @@ def h_find_slow_zones(ctx: ToolContext, a: dict) -> dict:
 # -- crossings, and how schools and stops are served --------------------------------------------------
 
 
+def rank_schools(schools: list[dict], q: str) -> list[dict]:
+    """Schools by how well their name fits: its id or exactly the name ('English School' finds
+    'English School' and 'The English School' before 'The English Nursery School'), then names
+    that start with it, then names holding its words, shorter names first."""
+    from chatbot.geo import norm
+    qn = norm(q).removeprefix("the ").strip()
+    ql = loose(qn)
+    ranked = []
+    for s in schools:
+        if s["id"].lower() == q.strip().lower():
+            return [s]
+        for name in (s["name"], s.get("name_local")):
+            n = norm(name).removeprefix("the ").strip()
+            if not n:
+                continue
+            if n == qn:
+                rank = 0
+            elif n.startswith(qn):
+                rank = 1
+            elif all(w in n.split() for w in qn.split()):
+                rank = 2
+            elif ql and ql in loose(n):
+                rank = 3
+            else:
+                continue
+            ranked.append((rank, len(n), s))
+            break
+    return [s for _, _, s in sorted(ranked, key=lambda t: (t[0], t[1]))]
+
+
 @tool("find_crossings",
       "Pedestrian crossings and traffic signals from the national inventories (Public Works "
       "Department), and how schools and bus stops are served by them. Call it for 'is there a "
@@ -260,14 +310,16 @@ def h_find_crossings(ctx: ToolContext, a: dict) -> dict:
     st = streets_of(ctx)
     limit = a.get("limit") or 12
     center = None
+    hits: list[dict] = []
+    others: list[dict] = []
     if a.get("school"):
         q = a["school"].strip()
-        hits = [s for s in st.schools() if s["id"].lower() == q.lower()] or \
-               [s for s in st.schools() if loose(q) in loose(s["name"]) or loose(q) in loose(s.get("name_local"))]
+        hits = rank_schools(st.schools(), q)
         if not hits:
             raise ToolError(f"no school called {q!r} in the twin's school list (OpenStreetMap and Overture); "
                             "try near_place with its address")
         s = hits[0]
+        others = [{"id": h["id"], "name": h["name"]} for h in hits[1:5]]
         center = (s["lat"], s["lon"], s["name"], float(a.get("radius_m") or 300))
     else:
         near = _near(ctx, a, 1500 if a.get("around") else 300)
@@ -302,6 +354,10 @@ def h_find_crossings(ctx: ToolContext, a: dict) -> dict:
            "inventory": _age(st, "crossings", "signals"), "layer_ref": ref, "data_ref": data}
     if not A.covered(st, lat, lon):
         res["coverage"] = "the national inventories hold nothing near here (they cover the Republic's streets only)"
+    if a.get("school"):
+        res["school"] = {"id": hits[0]["id"], "name": hits[0]["name"]}
+        if others:
+            res["other_schools_matching"] = others
     res["_summary"] = f"{len(xs)} crossings, {len(sg)} signals within {round(radius)} m"
     return res
 

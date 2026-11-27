@@ -382,3 +382,12 @@ def test_a_road_without_an_estimate_uses_its_posted_limit(tmp_path):
     assert r.free_flow(seg) == (30.0, "posted")
     r._reference = {"1": {"kmh": 41.0}}
     assert r.free_flow(seg) == (41.0, "estimated")  # a better estimate wins over the posted limit
+
+
+def test_school_names_match_best_first():
+    from chatbot.tools.streets import rank_schools
+    schools = [{"id": "school-n1", "name": "The English Nursery School"}, {"id": "school-w2", "name": "Pascal English School"},
+               {"id": "school-w3", "name": "English School"}, {"id": "school-w4", "name": "Philips English School"}]
+    assert [s["id"] for s in rank_schools(schools, "the English School")][:2] == ["school-w3", "school-w2"]
+    assert rank_schools(schools, "school-w4")[0]["id"] == "school-w4"
+    assert rank_schools(schools, "Lyceum") == []

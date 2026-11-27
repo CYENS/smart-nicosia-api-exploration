@@ -19,7 +19,7 @@ from datetime import datetime
 from chatbot import entities as E
 from chatbot.geo import haversine_m
 from chatbot.streets import analysis as A
-from chatbot.streets.feeds import DATASET_PAGE, FEEDS, LICENCE
+from chatbot.streets.feeds import DATASET_PAGE, FEEDS
 from chatbot.streets.layers import (BUS_LANE_COLOR, CAMERA_COLOR, CROSSING_COLOR, CYCLE_COLOR,
                                     SIGNAL_COLOR, TIER_LABELS, ZONE_COLOR, limit_color)
 from chatbot.streets.network import CLASS_LABELS, cumulative, project
