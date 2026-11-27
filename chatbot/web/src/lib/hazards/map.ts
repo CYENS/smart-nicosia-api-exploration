@@ -97,10 +97,15 @@ registerLayerRenderer({
     }
     add(map, { id: `${ref}::warn-fill`, type: "fill", source: src, filter: isKind("warning"),
       paint: { "fill-color": ["get", "color"], "fill-opacity": ["case", ["get", "in_force"], 0.1, 0.05] } }, ids, below)
+    // Outlines on a casing in the base map's own ground colour, so they read by day and by night.
+    const outlined = ["any", isKind("warning"), isKind("fire_district")] as ExpressionSpecification
+    add(map, { id: `${ref}::case`, type: "line", source: src, filter: outlined,
+      paint: { "line-width": 4.5, "line-opacity": 0.55, ...themedPaint(`${ref}::case`, {
+        "line-color": { night: "#0e1828", day: "#ffffff" } }) } }, ids)
     add(map, { id: `${ref}::warn-line`, type: "line", source: src, filter: isKind("warning"),
-      paint: { "line-color": ["get", "color"], "line-width": 1.6, "line-opacity": 0.9 } }, ids)
+      paint: { "line-color": ["get", "color"], "line-width": 2, "line-opacity": 0.95 } }, ids)
     add(map, { id: `${ref}::district`, type: "line", source: src, filter: isKind("fire_district"),
-      paint: { "line-color": ["get", "color"], "line-width": 1.3, "line-opacity": 0.8, "line-dasharray": [2, 1.6] } }, ids)
+      paint: { "line-color": ["get", "color"], "line-width": 2, "line-opacity": 0.9, "line-dasharray": [2, 1.4] } }, ids)
     add(map, { id: `${ref}::felt`, type: "circle", source: src, filter: isKind("felt"),
       paint: {
         "circle-color": ["get", "color"], "circle-opacity": 0.55, "circle-blur": 0.25,
@@ -120,7 +125,7 @@ registerLayerRenderer({
         "circle-stroke-width": ["match", ["get", "severity"], "high", 2.4, "minor", 1, 1.8],
       } }, ids)
     add(map, { id: `${ref}::mag`, type: "symbol", source: src, minzoom: 6.5,
-      filter: ["all", isKind("earthquake"), [">=", ["get", "mag"], 2.5]] as ExpressionSpecification,
+      filter: ["all", isKind("earthquake"), [">=", ["coalesce", ["get", "mag"], 0], 2.5]] as ExpressionSpecification,
       layout: { "text-field": ["get", "label"], "text-font": FONT, "text-size": 11.5, "text-anchor": "left",
         "text-offset": [0.9, 0], "text-allow-overlap": false },
       paint: { "text-halo-width": 1.4, ...themedPaint(`${ref}::mag`, {
