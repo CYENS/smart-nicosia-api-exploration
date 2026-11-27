@@ -199,7 +199,7 @@ const FOGGY: Record<Period, SkyColours> = {
   day: { sky: "#c3c9cf", horizon: "#dfe2e5", fog: "#e2e5e8" },
   golden: { sky: "#9a9898", horizon: "#cdbfb2", fog: "#cfc5bc" },
   twilight: { sky: "#3a3b45", horizon: "#6e6670", fog: "#4a4851" },
-  night: { sky: "#141922", horizon: "#2a2d33", fog: "#1d222b" },
+  night: { sky: "#1c1f27", horizon: "#3b3836", fog: "#2f3138" }, // a city's fog glows faintly with its lights
 }
 // Dust glows at the horizon: warm and pale by day, amber at dusk, brown at night.
 const DUSTY: Record<Period, SkyColours> = {
@@ -361,9 +361,13 @@ export function lampsFor(c: Conditions) {
 // How much direct sun reaches the ground, 0 to 1: 1 with the sun up in a clear sky, 0 at night
 // or under thick cloud, fog or rain. For shadows that should soften under cloud.
 export function sunlightFor(c: Conditions, sky: Sky) {
-  const up = smoothstep(-0.5, 6, sky.sun.altitude)
-  const through = (1 - c.shade) * (1 - 0.85 * c.fog) * (1 - 0.5 * c.dust)
-  return clamp01(up * through)
+  return clamp01(smoothstep(-0.5, 6, sky.sun.altitude) * clearSkyFor(c))
+}
+
+// The share of the sun's light that comes straight through the cloud, fog and dust, whatever
+// its height: 1 under a clear sky. How sharp the shadows are.
+export function clearSkyFor(c: Conditions) {
+  return clamp01((1 - c.shade) * (1 - 0.85 * c.fog) * (1 - 0.5 * c.dust))
 }
 
 // -- words ---------------------------------------------------------------------------------------------

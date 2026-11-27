@@ -21,7 +21,7 @@ import {
 } from "@/lib/map/engine"
 import { GroundLayer, WET_LAYER, placeWeather, type GroundFrame } from "@/lib/weather/ground"
 import {
-  CLEAR, conditionsOf, groundFor, isClear, lampsFor, mixConditions, rainFor, sunlightFor, weatherLight, weatherSky,
+  CLEAR, clearSkyFor, conditionsOf, groundFor, isClear, lampsFor, mixConditions, rainFor, sunlightFor, weatherLight, weatherSky,
   weatherWord, type Conditions, type Weather,
 } from "@/lib/weather/look"
 import { RainOverlay } from "@/lib/weather/rain"
@@ -61,6 +61,12 @@ const moving = () => !reduce.matches
 // weather off the map, the sky is taken as clear. For shadows that soften under cloud.
 export function sunlight() {
   return sunlightFor(get().shown, shownSky())
+}
+
+// How sharp shadows are under the weather the map shows: 1 under a clear sky (or with the
+// weather off), down towards 0 under thick cloud. The sun's height is left to the caller.
+export function clearSky() {
+  return clearSkyFor(get().shown)
 }
 
 export function setWeatherOn(on: boolean) {

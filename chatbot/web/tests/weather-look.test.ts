@@ -5,7 +5,7 @@ import { test } from "node:test"
 
 import { lightFor, skyAt, skyFor } from "../src/lib/map/sky.ts"
 import {
-  CLEAR, conditionsOf, fogAmount, groundFor, isClear, lampsFor, mixConditions, rainAmount, rainFor,
+  CLEAR, clearSkyFor, conditionsOf, fogAmount, groundFor, isClear, lampsFor, mixConditions, rainAmount, rainFor,
   sunlightFor, weatherLight, weatherSky, weatherWord, type Weather,
 } from "../src/lib/weather/look.ts"
 
@@ -43,6 +43,9 @@ test("overcast: flatter, cooler, dimmer light and a greyer sky", () => {
   const g = groundFor(c, NOON, s)
   assert.ok(g.on && g.veilA > 0 && g.shadow > 0 && g.cover > 0.8)
   assert.ok(sunlightFor(c, NOON) < 0.2 && sunlightFor(CLEAR, NOON) > 0.95)
+  // Shadows fade under cloud, whatever the sun's height; a clear sky leaves them sharp.
+  assert.ok(clearSkyFor(c) < 0.2 && clearSkyFor(CLEAR) === 1)
+  assert.ok(clearSkyFor(conditionsOf({ ...clear, cloud_pct: 100, cloud_high_pct: 100 })) > 0.6, "thin high cloud lets the sun through")
 })
 
 test("at night cloud hides the moon, and the sun never shines", () => {
