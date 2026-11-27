@@ -53,6 +53,8 @@ export type ScenarioLayer = {
   meta: {
     title: string; legend: Record<string, string>; variant?: "baseline" | "scenario" | null
     value_field?: string; unit?: string; geometry?: string; legend_labels?: Record<string, string>
+    show?: boolean // a layer without a variant drawn over both sides of the split by default
+    chat?: boolean // run_scenario also hands it to the chat as a layer_ref
   }
 }
 
