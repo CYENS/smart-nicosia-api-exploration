@@ -815,6 +815,24 @@ class Facilities:
                 log.warning("%s inventory unavailable: %s", k, e)
         return out
 
+    def warm(self, kinds=KINDS) -> None:
+        """Read the inventories not read yet, in the background (the inspector's neighbours and
+        Ctrl K use only what is read, so they never wait for six feeds)."""
+        missing = [k for k in kinds if k not in self._inv and k not in self._refreshing]
+        if not missing or "warm" in self._refreshing:
+            return
+        self._refreshing.add("warm")
+
+        def run() -> None:
+            try:
+                self.all(missing)
+            finally:
+                self._refreshing.discard("warm")
+        if self.background:
+            threading.Thread(target=run, daemon=True, name="nap-warm").start()
+        else:
+            run()
+
     @staticmethod
     def kind_of(fid: str) -> str | None:
         low = fid.strip().lower()

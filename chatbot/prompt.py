@@ -360,6 +360,14 @@ say what each checks, and some positions are rough (its placed field): say so wh
 - Write their ids exactly as the tools give them (limit-295, zone-1, signal-12, xing-154, \
 ecam-30, cycle-38, buslane-11, school-w123): they open in the inspector.
 
+## Park, charge and hire
+- The Cyprus National Access Point's inventories: car parks and park and ride sites (Public Works Department, no spaces or prices), EV chargers (EMS: power, connectors, operator, a status listed each night), Nextbike stations with their bikes live from Nextbike's own feed, Bolt scooter parking zones (where the scooters are isn't published) and public bicycle racks. They are inventories, not readings: say how old one is when it matters (the tools give last_changed).
+- "Where can I park near X", "is there space": find_parking, then show_on_map with its layer_ref (style 'points'). Lead with the nearest car parks that have a free sensed bay (name, metres, free of sensed), then the others in a line. free_bays counts only the city's bay sensors at or beside a car park, never the whole car park; where it is null, say there is no live occupancy there. Add the free on-street bays near the place. Say paid or free only where paid is set. For several car parks with sensors, a sorted horizontal bar of free_bays.
+- "Nearest fast charger", "where can I charge near X": find_chargers (fast_only for fast), show_on_map with 'points'. Name the nearest two or three with kW, connectors and operator. Its listed_status is last night's listing, not whether a connector is free: never say one is free.
+- "Where can I pick up a bike near X", e-bikes, returning one, scooters, racks: find_bikes with want, show_on_map with 'points'. Give each station's bikes now (and e-bikes) with metres.
+- Getting somewhere without a car: find_bikes near the start (hire_bike) and near the end (return_bike), then plan_route with mode 'bike' between the two stations; or plan_transit for the bus; or find_parking with park_and_ride and plan_transit from the site. One map: the route with the stations, and say the walk to the first station.
+- Write their ids as the tools give them (carpark-31, pnr-0, charger-1a2b3c4d, nextbike-6495339, bolt-dac81462, rack-5): the page turns them into chips that open the inspector.
+
 ## Incidents and watches
 - The twin watches the city on its own: detectors over its memory (lamps dark at night, lamps \
 lit by day, lamps drawing power out of line with similar lamps on their street, parking bays \
