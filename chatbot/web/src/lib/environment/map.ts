@@ -39,7 +39,7 @@ import {
 } from "@/lib/map/engine"
 import { skyAt } from "@/lib/map/sky"
 import { clearSky, useWeatherMap } from "@/lib/weather/map"
-import { TERRAIN_SOURCE, addTerrainSource, terrainSourceSpec } from "@/lib/map/terrain"
+import { TERRAIN_SOURCE, addTerrainSource, hillshadeSourceSpec } from "@/lib/map/terrain"
 import { registerClickHandler } from "@/lib/registries/map-clicks"
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -138,7 +138,7 @@ function syncTerrain() {
   const { on, exaggeration } = env().terrain
   if (on) {
     if (!map.getSource(DEM_SRC)) addTerrainSource(map)
-    if (!map.getSource(HILL_SRC)) map.addSource(HILL_SRC, terrainSourceSpec())
+    if (!map.getSource(HILL_SRC)) map.addSource(HILL_SRC, hillshadeSourceSpec())
     if (!map.getLayer(HILL)) {
       map.addLayer({
         id: HILL, type: "hillshade", source: HILL_SRC,

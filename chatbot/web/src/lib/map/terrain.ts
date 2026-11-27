@@ -6,8 +6,8 @@
 
    One module, so any feature can raise the ground: the view from a place (lib/view.ts) turns it
    on while looking out, and the environment twin draws its hillshade from the same tiles
-   (terrainSourceSpec). The server reads these tiles too (chatbot/terrain.py), so the heights the
-   assistant states and the ground the map draws agree.
+   (hillshadeSourceSpec). The server reads these tiles too (chatbot/terrain.py), so the heights
+   the assistant states and the ground the map draws agree.
 
    It stays off on the everyday map: Nicosia is flat (about 120 to 230 m), so raised ground adds
    little there while it costs a stream of height tiles and GPU time on every pan, and the flat
@@ -19,10 +19,11 @@ import { useMapUi } from "@/lib/map/engine"
 
 export const TERRAIN_SOURCE = "terrain::dem"
 export const TERRAIN_TILES = "https://tiles.mapterhorn.com/{z}/{x}/{y}.webp"
-// A 512 px tile at level 16 is about 1 m a pixel at Nicosia: the model's own grid. The tiles go
-// one level further, which would only cut the same heights finer.
-export const TERRAIN_TILE_SIZE = 512
+// The tiles are 512 px. Level 16 is about 1 m a pixel at Nicosia, the model's own grid (the
+// tiles go one level further, which would only cut the same heights finer); level 15, about 2 m,
+// is all a shaded relief shows.
 export const TERRAIN_MAX_ZOOM = 16
+export const HILLSHADE_MAX_ZOOM = 15
 // The credit the tiles ask for: Mapterhorn's page names every model under them, the DLS one and
 // Copernicus GLO-30 among them.
 export const TERRAIN_ATTRIBUTION =
@@ -31,12 +32,25 @@ export const TERRAIN_ATTRIBUTION =
 // real ones times this; groundAt gives them as drawn, which is what a camera must stand on.
 export const EXAGGERATION = 1.2
 
-// The one description of the height tiles, for every source that reads them (the terrain, the
-// environment's hillshade, an overlay map of its own).
+// The height tiles as the source of 3D terrain. They are declared at 256 px, half their size,
+// on purpose: MapLibre draws the ground in pieces twice the declared size with the same mesh in
+// each, so at 512 the pieces are 1024 px, the mesh half as fine, and a frame with terrain on
+// costs about half as much again on integrated graphics (83 ms against 52 ms, measured over the
+// walls). At 256 the ground costs what the old 30 m tiles did, with all 512 px of each tile
+// behind it.
 export function terrainSourceSpec(): RasterDEMSourceSpecification {
   return {
-    type: "raster-dem", tiles: [TERRAIN_TILES], tileSize: TERRAIN_TILE_SIZE, encoding: "terrarium",
+    type: "raster-dem", tiles: [TERRAIN_TILES], tileSize: 256, encoding: "terrarium",
     maxzoom: TERRAIN_MAX_ZOOM, attribution: TERRAIN_ATTRIBUTION,
+  }
+}
+
+// The same tiles for a hillshade layer, at their real size: one tile pixel a screen pixel, and
+// a quarter of the tiles to fetch and keep.
+export function hillshadeSourceSpec(): RasterDEMSourceSpecification {
+  return {
+    type: "raster-dem", tiles: [TERRAIN_TILES], tileSize: 512, encoding: "terrarium",
+    maxzoom: HILLSHADE_MAX_ZOOM, attribution: TERRAIN_ATTRIBUTION,
   }
 }
 
