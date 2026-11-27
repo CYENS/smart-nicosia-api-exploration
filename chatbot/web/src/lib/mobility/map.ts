@@ -48,6 +48,9 @@ export const ROAD_COLORS: Record<"night" | "day", Record<string, string>> = {
   night: { moving: "#718295", busy: "#bd6350", slow: "#f17458", very_slow: "#ff9a71", no_reading: "#424e5e" },
   day: { moving: "#798898", busy: "#db795b", slow: "#cb4930", very_slow: "#a9231e", no_reading: "#b4bcc8" },
 }
+// While the feed is stalled: each road's usual for this hour, dotted in the muted ink, so it
+// can't pass for the live ramp. Wider is usually slower.
+export const USUAL_COLORS = { night: "#8798b0", day: "#64748b" } as const
 export const ROAD_BANDS = [
   { state: "moving", label: "Moving freely", hint: "75% of free flow or more" },
   { state: "busy", label: "Busy", hint: "55% to 75%" },
@@ -492,14 +495,24 @@ function roadColor(base: "night" | "day"): any {
   return ["match", ["get", "state"], "moving", c.moving, "busy", c.busy, "slow", c.slow, "very_slow", c.very_slow, c.no_reading]
 }
 
+const USUAL_FACTOR: any = ["match", ["get", "usual_state"], "busy", 1.2, "slow", 1.45, "very_slow", 1.75, 1]
+const USUAL_WIDTH: any = ["interpolate", ["linear"], ["zoom"], 11, ["*", 1.3, USUAL_FACTOR], 14, ["*", 2.6, USUAL_FACTOR], 16, ["*", 4, USUAL_FACTOR], 18, ["*", 6, USUAL_FACTOR]]
+
 function addRoadLayers(map: MlMap, prefix: string, src: string, ids: string[]) {
   const before = firstLabelLayer()
   const measured: any = ["!=", ["get", "state"], "no_reading"]
   map.addLayer({
-    id: `${prefix}-none`, type: "line", source: src, filter: ["==", ["get", "state"], "no_reading"],
+    id: `${prefix}-none`, type: "line", source: src, filter: ["all", ["==", ["get", "state"], "no_reading"], ["!", ["has", "usual_state"]]],
     layout: { "line-cap": "butt", "line-join": "round" },
     paint: { ...themedPaint(`${prefix}-none`, { "line-color": { night: ROAD_COLORS.night.no_reading, day: ROAD_COLORS.day.no_reading } }),
              "line-width": ["interpolate", ["linear"], ["zoom"], 11, 1, 16, 2.5], "line-offset": OFFSET, "line-dasharray": [2, 2] },
+  }, before)
+  // A stalled feed: the usual for this hour, as round dots (never the live ramp, never solid).
+  map.addLayer({
+    id: `${prefix}-usual`, type: "line", source: src, filter: ["has", "usual_state"],
+    layout: { "line-cap": "round", "line-join": "round" },
+    paint: { ...themedPaint(`${prefix}-usual`, { "line-color": { night: USUAL_COLORS.night, day: USUAL_COLORS.day } }),
+             "line-width": USUAL_WIDTH, "line-offset": OFFSET, "line-dasharray": [0, 2], "line-opacity": 0.9 },
   }, before)
   map.addLayer({
     id: `${prefix}-casing`, type: "line", source: src, filter: measured,
@@ -513,11 +526,13 @@ function addRoadLayers(map: MlMap, prefix: string, src: string, ids: string[]) {
     paint: { ...themedPaint(`${prefix}-line`, { "line-color": { night: roadColor("night"), day: roadColor("day") } }),
              "line-width": WIDTH, "line-offset": OFFSET },
   }, before)
-  for (const id of [`${prefix}-none`, `${prefix}-casing`, `${prefix}-line`]) {
+  for (const id of [`${prefix}-none`, `${prefix}-usual`, `${prefix}-casing`, `${prefix}-line`]) {
     ids.push(id)
     bindOnce(map, id)
   }
 }
+
+const ROAD_LAYERS = ["mob::roads-none", "mob::roads-usual", "mob::roads-casing", "mob::roads-line"]
 
 let roadTimer: number | undefined
 let roadCtrl: AbortController | null = null
@@ -543,7 +558,8 @@ async function pollRoads() {
       const src = map.getSource(ROAD_SRC) as GeoJSONSource | undefined
       src?.setData(fc as any)
       setRoadState({ status: fc.meta.status as any, error: fc.meta.error, measured: fc.meta.measured, total: fc.meta.total,
-                     at: fc.meta.at, freeFlow: fc.meta.free_flow })
+                     at: fc.meta.at, freeFlow: fc.meta.free_flow,
+                     lastMeasuredAt: fc.meta.last_measured_at ?? null, usual: fc.meta.usual ?? 0 })
     } catch (e) {
       if ((e as Error).name !== "AbortError") setRoadState({ status: "unavailable", error: (e as Error).message })
     }
@@ -562,10 +578,10 @@ function syncRoads() {
         addRoadLayers(map, "mob::roads", ROAD_SRC, ids)
       }
       const visible = pastRoads.size ? "none" : "visible" // a recorded moment on the map stands in for now
-      for (const id of ["mob::roads-none", "mob::roads-casing", "mob::roads-line"]) if (map.getLayer(id)) map.setLayoutProperty(id, "visibility", visible)
+      for (const id of ROAD_LAYERS) if (map.getLayer(id)) map.setLayoutProperty(id, "visibility", visible)
       void pollRoads()
     } else {
-      for (const id of ["mob::roads-line", "mob::roads-casing", "mob::roads-none"]) if (map.getLayer(id)) map.removeLayer(id)
+      for (const id of [...ROAD_LAYERS].reverse()) if (map.getLayer(id)) map.removeLayer(id)
       if (map.getSource(ROAD_SRC)) map.removeSource(ROAD_SRC)
       window.clearTimeout(roadTimer)
       roadCtrl?.abort()

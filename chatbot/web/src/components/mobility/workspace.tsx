@@ -6,6 +6,7 @@ import { BusFrontIcon, CctvIcon, MessageSquareTextIcon, RouteIcon, XIcon } from 
 import { useEffect, useRef } from "react"
 
 import { LinePill, Row, RowList, SpeedMeter, useRoadColors } from "@/components/mobility/parts"
+import { StalledNote } from "@/components/mobility/stalled"
 import { MobilitySwitches } from "@/components/mobility/switches"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
@@ -19,7 +20,7 @@ import { useGeometry } from "@/lib/geometry"
 import { typing } from "@/lib/hooks"
 import { inspect } from "@/lib/inspector"
 import { GAP, STRIP_H, useLayout } from "@/lib/layout"
-import { useMobility, watchSummary } from "@/lib/mobility/store"
+import { useMobility, watchSummary, type RoadRow } from "@/lib/mobility/store"
 import { openWorkspace } from "@/lib/registries/workspaces"
 import { cn } from "@/lib/utils"
 
@@ -102,6 +103,33 @@ function Buses() {
   )
 }
 
+// The detectors have stalled: say when they last sent, and the roads usually slowest at this
+// hour, dotted and named as the usual, never as a speed now.
+function StalledRoads({ usual }: { usual: RoadRow[] }) {
+  return (
+    <div className="flex flex-col gap-2.5">
+      <StalledNote />
+      {usual.length > 0 && (
+        <RowList label="Usually slowest at this hour">
+          {usual.map((x) => (
+            <Row key={x.id} rowKey={x.id} className="flex-col flex-nowrap items-stretch gap-1.5" onSelect={() => open(x.id, { id: x.id })}
+              label={`${x.name}: usually ${Math.round(x.usual_kmh ?? 0)} of ${x.free_flow_kmh ? Math.round(x.free_flow_kmh) : "unknown"} km/h at this hour, not live`}>
+                <span className="flex w-full items-baseline gap-2">
+                  <span className="size-2 shrink-0 translate-y-[-1px] rounded-full border border-muted-foreground" aria-hidden="true" />
+                  <span className="min-w-0 flex-1 truncate text-[13px]">{x.name}</span>
+                  <span className="shrink-0 font-readout text-[13.5px] text-muted-foreground tabular-nums">
+                    usually {Math.round(x.usual_kmh ?? 0)}<span> of {x.free_flow_kmh ? Math.round(x.free_flow_kmh) : "?"} km/h</span>
+                  </span>
+                </span>
+                <SpeedMeter speed={null} free={x.free_flow_kmh} usual={x.usual_kmh} state="no_reading" label={`${x.name}: usual speed against free flow`} />
+            </Row>
+          ))}
+        </RowList>
+      )}
+    </div>
+  )
+}
+
 function Roads() {
   const summary = useMobility((s) => s.summary)
   const status = useMobility((s) => s.summaryStatus)
@@ -111,6 +139,7 @@ function Roads() {
   if (!r || r.status === "unavailable") {
     return <p className="text-[13px] text-muted-foreground">The national traffic feed isn't answering. Road speeds come back when it does.</p>
   }
+  if (r.status === "stalled") return <StalledRoads usual={r.usually_slowest ?? []} />
   const rows = r.slowest ?? []
   if (!rows.length) return <p className="text-[13px] text-muted-foreground">No road has a reading in the last 30 minutes.</p>
   return (

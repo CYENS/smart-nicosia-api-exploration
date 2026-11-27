@@ -11,7 +11,7 @@ from fastapi.responses import JSONResponse
 
 from chatbot import context
 from chatbot.mobility.gtfs import simplify
-from chatbot.mobility.roads import LEGEND, parse_moment, segment_feature
+from chatbot.mobility.roads import LEGEND, STALLED_LEGEND, parse_moment, segment_feature
 from chatbot.overview import cached
 from chatbot.routes import agent_of
 
@@ -92,11 +92,13 @@ def roads(request: Request, at: str | None = Query(None, max_length=40)) -> JSON
         raise HTTPException(502, f"the road inventory couldn't be read: {e}") from None
     out = m.roads.speeds(moment)
     feats = [segment_feature(segs[r["id"]], r) for r in out["segments"] if r["id"] in segs]
+    stalled = out["status"] == "stalled"  # the detectors' last time, and roads at their usual
     body = {"type": "FeatureCollection", "features": feats,
             "meta": {"status": out["status"], "error": out.get("error"), "measured": out.get("measured", 0),
-                     "total": out.get("total", len(feats)), "legend": LEGEND,
+                     "total": out.get("total", len(feats)), "legend": STALLED_LEGEND if stalled else LEGEND,
                      "at": out["at"].isoformat() if isinstance(out.get("at"), datetime) else None,
-                     "free_flow": sorted({r["free_flow"] for r in out["segments"]})}}
+                     "free_flow": sorted({r["free_flow"] for r in out["segments"]}),
+                     "last_measured_at": out.get("last_measured_at"), "usual": out.get("usual", 0)}}
     return JSONResponse(body, headers={"Cache-Control": "max-age=60" if moment is None else "max-age=600"})
 
 

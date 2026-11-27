@@ -57,6 +57,36 @@ the left of their direction of travel (Cyprus drives on the left), so both direc
 avenue show. Their colours are a neutral for roads that flow and one warm hue that brightens
 as they slow, stepped for each base map; the line widens too, so colour never carries it alone.
 
+## When the road feed stalls
+
+The national access point can keep answering, with a fresh publication time, while the
+Bluetooth detectors behind it send nothing new: every path then carries the same old
+measurement time. On 26 November 2026 they stopped at 23:42 and the feed republished that
+reading through the next day. The twin treats this as its own state, never as "no readings":
+
+- `Roads.speeds()` says `status: "stalled"`, with `last_measured_at` and a `note` in plain
+  words ("The national road detectors have sent nothing new since Thursday 23:42."). No road
+  has a speed then. `Roads.health()` gives the same without fetching (read time, error, newest
+  measurement, publication time).
+- Each road with a usual for this hour and weekday from two or more days of the memory gets a
+  `usual_state`; the map draws those roads as muted dots, wider where the road is usually
+  slower, and the legend calls them "Usual for this hour". A road the memory knows too little
+  about stays "No reading". Nothing usual is ever presented as a reading, and while the feed is
+  live the usual stays on the speed meter only.
+- The Traffic now card, the Layers row and its legend, the Mobility workspace, a road in the
+  inspector, `get_road_speeds` and the system prompt all say it.
+- The data sources panel judges the feed by its newest measurement: live, stale (the last read
+  failed but the copy still counts), stalled, or not answering.
+- The watch raises one "Data feed" incident (`road_feed_stalled`) while the feed is stalled
+  and the twin resolves it once a fresh measurement comes. It reads the feed as the page's last
+  fetch left it and never fetches for itself, so it says nothing either way when nobody has read
+  the feed for 15 minutes. Its member, `source-road_speeds`, opens the data sources panel.
+- The memory keeps a frozen reading once (`travel_times` is keyed on the path and the
+  measurement time), so a stall never weighs on free flow, the usual or a road's series.
+
+The feed is published by the Public Works Department through traffic4cyprus.org.cy; a long
+stall is theirs to fix.
+
 ## The buses in 3D
 
 From near city zoom (z13.4) each bus is a small low-poly 3D bus in its line's colour, facing

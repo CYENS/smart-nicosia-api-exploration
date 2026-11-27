@@ -18,11 +18,12 @@ import { cn } from "@/lib/utils"
 const DOT: Record<SourceState, string> = {
   live: "bg-sodium shadow-[0_0_6px_1px] shadow-sodium/50",
   stale: "border border-sodium/70 bg-transparent",
+  stalled: "border-2 border-signal bg-transparent",
   waiting: "border border-muted-foreground/70 bg-transparent",
   unavailable: "bg-signal",
 }
 const STATE_WORDS: Record<SourceState, string> = {
-  live: "Live", stale: "Older copy", waiting: "Not read yet", unavailable: "Not answering",
+  live: "Live", stale: "Older copy", stalled: "Stalled", waiting: "Not read yet", unavailable: "Not answering",
 }
 
 function day(iso: string): string {
@@ -38,6 +39,7 @@ function statusLine(st: SourceStatus): string | null {
     case "live": return [ago && `Read ${ago}`, st.note && upper(st.note), st.holds_from && `Holds history from ${day(st.holds_from)}`]
       .filter(Boolean).join(". ") || null
     case "stale": return upper([st.note, ago && `last read ${ago}`].filter(Boolean).join(", "))
+    case "stalled": return upper([st.note, ago && `last read ${ago}`].filter(Boolean).join(", "))
     case "waiting": return st.note ? `Not read yet: ${st.note}` : "Not read yet"
     case "unavailable": return st.note ? `Not answering: ${st.note}` : "Not answering"
     default: return null
