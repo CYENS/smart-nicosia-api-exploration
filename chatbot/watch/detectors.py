@@ -40,6 +40,7 @@ import logging
 import re
 import statistics
 from collections import defaultdict
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
@@ -219,6 +220,9 @@ class Observed:
     covered: dict[str, list[tuple[int, int]]]  # device -> ms stretches the memory covers
     events: list[tuple[int, str | None, str]] = field(default_factory=list)  # (ms, device, text)
     alarms: list[dict] = field(default_factory=list)  # active (or recently seen) city alarms
+    # What the detectors other modules register read for themselves (`register`), by name:
+    # "hazards" -> the earthquakes, warnings and fire danger days of the window.
+    more: dict[str, object] = field(default_factory=dict)
     live: dict[str, Interpretation] = field(default_factory=dict)  # device -> live verdict
     notes: list[str] = field(default_factory=list)
     # Feeds the twin reads that aren't devices, as their last read left them (never fetched for
@@ -310,6 +314,8 @@ def observe(memory: Memory | None, city: CityData | None, now: datetime, *,
         for device_type in ("Lighting", "Parking", "Wastebin", "smartsense"):
             for name, state in city.cached_states(device_type).items():
                 obs.live[name] = state.interp
+    for read in OBSERVERS:  # what the registered detectors need from the memory
+        read(memory, obs)
     return obs
 
 
@@ -890,3 +896,21 @@ def detect(obs: Observed) -> tuple[list[Detection], set[str]]:
 
 def member_json(members: list[dict]) -> str:
     return json.dumps(members, ensure_ascii=False, separators=(",", ":"))
+
+
+# -- detectors other modules add ------------------------------------------------------------------
+# A feature with detectors of its own (chatbot/watch/hazards.py) registers them here rather than
+# editing DETECTORS: `observer(memory, obs)` reads what they need into `obs.more` at the end of
+# observe(), and each detector is then a plain function of `obs` like the rest.
+
+OBSERVERS: list[Callable[[Memory, Observed], None]] = []
+
+
+def register(fn: Callable[[Observed], list[Detection] | None], rule: str,
+             observer: Callable[[Memory, Observed], None] | None = None) -> None:
+    global DETECTORS, RULES
+    if rule not in RULES:
+        DETECTORS = (*DETECTORS, (fn, rule))
+        RULES = tuple(r for _, r in DETECTORS)
+    if observer is not None and observer not in OBSERVERS:
+        OBSERVERS.append(observer)

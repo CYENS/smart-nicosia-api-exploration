@@ -76,6 +76,7 @@ async def lifespan(app: FastAPI):
     # down again only once it has changed), recorded in the memory for the clock.
     agent.environment.measured.start()
     agent.grid.start()  # the island's grid, read as the operator publishes it
+    agent.hazards.start()  # earthquakes, weather warnings and fire danger
     if settings.collect:
         start_collector(memory)
     log.info("twin's memory: %s (recording %s, full collection %s)", memory.path,
@@ -91,6 +92,7 @@ async def lifespan(app: FastAPI):
     agent.watcher.stop()
     agent.environment.measured.stop()
     agent.grid.stop()
+    agent.hazards.stop()
     if memory.recorder is not None:
         memory.recorder.stop()
 
