@@ -8,6 +8,9 @@ the inspector, so every page and every answer reads the same fetch of each feed:
 - `fleet`: the GTFS-RT vehicles joined to it (realtime.py), fetched at most every 30 s;
 - `roads`: the Bluetooth road segments with their speeds (roads.py), fetched at most every
   5 minutes and recorded into the twin's memory;
+- `reports`: road reports (reports.py): Waze drivers' closures, jams, hazards and accidents,
+  and the Public Works Department's roadworks and diversions, fetched every 3 to 15 minutes
+  and recorded into the twin's memory;
 - departures and walk-ride-walk trips (planner.py).
 """
 
@@ -26,6 +29,7 @@ from datetime import datetime, timezone
 from chatbot.mobility import planner
 from chatbot.mobility.gtfs import Timetable, TimetableSource, line_order
 from chatbot.mobility.realtime import Fleet, Snapshot
+from chatbot.mobility.reports import RoadReports
 from chatbot.mobility.roads import Roads, slowest, usually_slowest
 from chatbot.web import WebError
 
@@ -62,6 +66,9 @@ class Mobility:
         self.fleet = Fleet(fetch_live, lambda: self.source.get(20), now=self.now)
         self.roads = Roads(lambda url: self.fetch(url).decode("utf-8"), memory=memory,
                            router=router, now=self.now, cache_dir=cache_dir)
+        fetch_reports = fetch or (lambda url: fetch_bytes(url, ua, 20.0))
+        self.reports = RoadReports(lambda url: fetch_reports(url).decode("utf-8"), memory=memory,
+                                   now=self.now, roads=self.roads)
         self.memory = memory
         self._summary: tuple[float, dict] | None = None
         self._summary_running = False
@@ -165,7 +172,8 @@ class Mobility:
         return out
 
 
-# The mobility kinds of the twin's entities (bus, bus_stop, bus_line, road_segment).
+# The mobility kinds of the twin's entities (bus, bus_stop, bus_line, road_segment, road_report).
 from chatbot.mobility import entities as _kinds  # noqa: E402,F401
+from chatbot.mobility import report_entities as _reports  # noqa: E402,F401
 
 __all__ = ["Mobility", "TimetableLoading", "planner", "fetch_bytes"]

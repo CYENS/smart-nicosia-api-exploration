@@ -81,6 +81,7 @@ LINKS: dict[str, tuple[float | None, timedelta | None]] = {
     "parking": (60.0, None),  # neighbouring bays stuck together
     "bins": (40.0, timedelta(hours=6)),  # containers at one spot
     "air": (math.inf, timedelta(hours=2)),  # an episode over the city
+    "roads": (500.0, timedelta(hours=1)),  # a closure, an accident and the jams behind them
     "other": (0.0, timedelta(0)),  # never across devices
     "feed": (0.0, timedelta(0)),  # a data feed stalling is its own incident
 }
@@ -89,10 +90,11 @@ DEFAULT_SAME_GAP = timedelta(hours=8)
 
 CATEGORIES = {"outage": "Outage", "lighting": "Lit by day", "power": "Lamp power",
               "parking": "Parking sensor", "bins": "Bins", "air": "Air", "other": "City alarm",
-              "feed": "Data feed"}
+              "feed": "Data feed", "roads": "Roads"}
 NOUNS = {"Lighting": ("lamp", "lamps"), "Parking": ("bay", "bays"), "Wastebin": ("bin", "bins"),
          "smartsense": ("air station", "air stations"), "InfoPoints": ("info screen", "info screens"),
-         "Camera": ("camera", "cameras"), "feed": ("data feed", "data feeds")}
+         "Camera": ("camera", "cameras"), "feed": ("data feed", "data feeds"),
+         "road_report": ("road report", "road reports")}
 ACTIONS = ("acknowledge", "snooze", "unsnooze", "resolve", "reopen")
 DONE = {"acknowledge": "acknowledged", "snooze": "snoozed", "unsnooze": "unsnoozed",
         "resolve": "resolved", "reopen": "reopened"}
@@ -228,6 +230,8 @@ def compose(members: list[dict], place: dict) -> tuple[str, str, str]:
         lead = max(members, key=lambda m: (m.get("end") is None, m["start"]))
         story = (lead.get("extra") or {}).get("story") or f"{first['label']}: {lead['what']}."
         return f"{first.get('label') or one}: {lead['what']}", severity, story
+    if family == "roads":
+        return roads_story(list(devices.values()), severity, on)
     if n == 1:
         # One device: what is true of it now leads (the active finding, else the latest), the
         # rest of its story goes in the summary.
@@ -272,6 +276,36 @@ def compose(members: list[dict], place: dict) -> tuple[str, str, str]:
                 f"{n} of the city's air stations raised high CAQI within {spread}: a city-wide "
                 "episode (dust, smoke or traffic) is more likely than one street.")
     return (f"{n} alarms {on}", severity, f"{cap(kinds)} raised alarms {on}.")
+
+
+ROAD_NOUNS = {"closure": ("road closed", "roads closed"), "jam": ("jam", "jams"),
+              "accident": ("accident", "accidents")}
+
+
+def roads_story(reports: list[dict], severity: str, on: str) -> tuple[str, str, str]:
+    """A closure, an accident and the jams near them, as one incident: (title, severity, story)."""
+    kinds = Counter((m.get("extra") or {}).get("kind", "jam") for m in reports)
+    parts = []
+    for k in ("accident", "closure", "jam"):
+        if kinds.get(k):
+            one, many = ROAD_NOUNS[k]
+            parts.append(one if kinds[k] == 1 else f"{kinds[k]} {many}")
+    words = parts[0] if len(parts) == 1 else ", ".join(parts[:-1]) + " and " + parts[-1]
+    if len(reports) == 1:
+        m = reports[0]
+        where = f"on {m['street']}" if m.get("street") else on
+        return f"{cap(m['what'])} {where}", severity, \
+            f"{cap(m['what'])} {where} at {when(_dt(m['start']))}, by {_feed_name(m)}."
+    story = "; ".join(f"{m.get('label') or m['what']} at {when(_dt(m['start']))}"
+                      for m in sorted(reports, key=lambda m: m["start"]))
+    title = f"{cap(words)} {on}" if kinds.get("closure") or len(parts) > 1 else f"{cap(words)} reported {on}"
+    return title, severity, f"{cap(words)} {on} within an hour of each other: {story}."
+
+
+def _feed_name(m: dict) -> str:
+    feed = (m.get("extra") or {}).get("feed")
+    return {"waze_alerts": "Waze drivers", "waze_traffic": "Waze's jam lines",
+            "traffic_events": "the Public Works Department"}.get(feed or "", "a road report")
 
 
 def merge_evidence(members: list[dict]) -> list[dict]:

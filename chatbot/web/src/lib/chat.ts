@@ -37,6 +37,7 @@ export const TOOL_LABELS: Record<string, string> = {
   set_city_time: "Setting the city clock",
   get_buses: "Finding the buses on the road", get_departures: "Reading the departures",
   plan_transit: "Planning the bus trip", get_road_speeds: "Reading the road speeds",
+  get_road_reports: "Reading the road reports",
   locate_web_places: "Putting the web results on the map",
   list_incidents: "Reading the incident inbox", explain_incident: "Looking at what happened around it",
   create_watch: "Preparing the watch",
