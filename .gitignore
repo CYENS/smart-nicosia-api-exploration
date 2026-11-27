@@ -21,3 +21,6 @@ data/chatbot_cache/
 
 # Showcase video recordings (tools/tour)
 data/tour/
+
+# The DLS LiDAR sheets (chatbot/lidar.py fetches them; 1.2 GB for greater Nicosia)
+data/dls_lidar/

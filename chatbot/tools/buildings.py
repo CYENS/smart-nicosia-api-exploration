@@ -6,7 +6,7 @@ from __future__ import annotations
 import math
 from collections import Counter
 
-from chatbot import eoa
+from chatbot import eoa, lidar
 from chatbot.dls import area_m2
 from chatbot.geo import haversine_m, loose_match, norm
 from chatbot.store import STATE_COLORS, legend_for, point
@@ -257,8 +257,10 @@ def height_band(h: float) -> tuple[str, str]:
       "band, built-up share of the circle, the tallest buildings, any dangerous-register "
       "buildings among them, a layer_ref (show it with style 'buildings_3d': footprints "
       "extruded at real heights and coloured by height, dangerous ones red) and a data_ref "
-      "(one row per building) for charts. In the walled old town DLS models whole blocks "
-      "as one building.",
+      "(one row per building) for charts; where the 2019 LiDAR flight measured the building, "
+      "its row also has height_2019_m (the measured top) and change_since_2014 ('taller', "
+      "'lower' or 'gone') when the two differ by a floor or more. In the walled old town DLS "
+      "models whole blocks as one building.",
       obj({
           **{k: v for k, v in NEAR.items() if k != "radius_m"},
           "radius_m": {"type": "number", "minimum": 20, "maximum": 800,
@@ -305,6 +307,10 @@ def h_get_buildings_3d(ctx: ToolContext, a: dict) -> dict:
                                         p.get("a") and f"{p['a']:,.0f} m² footprint") if x)]
         if p.get("g") is not None:
             popup.append(f"ground {p['g']} m above sea level")
+        measured = ctx.lidar.measured.of(b["id"]) if ctx.lidar is not None else None
+        change = lidar.compare(p["h"], measured, p.get("a"))["state"] if measured else None
+        if measured:
+            popup.append(f"measured in 2019: {measured['top']:g} m at the top")
         if rec:
             popup.append(f"On the {eoa.EOAS[rec['eoa']]['name']} register: "
                          f"{eoa.STATUS_GR[rec['status']]} ({rec['id']})")
@@ -318,6 +324,8 @@ def h_get_buildings_3d(ctx: ToolContext, a: dict) -> dict:
             "id": f"B{b['id']}", "height_m": p["h"], "eave_m": p["e"], "floors": p.get("f"),
             "use": p.get("t"), "roof": p.get("r"), "volume_m3": p.get("v"),
             "footprint_m2": p.get("a"), "ground_m": p.get("g"), "distance_m": round(d),
+            "height_2019_m": measured["top"] if measured else None,
+            "change_since_2014": change if change in lidar.CHANGED else None,
             "height_band": band, "register": rec["status"] if rec else None,
             "register_id": rec["id"] if rec else None}.items() if v is not None})
 
@@ -351,4 +359,95 @@ def h_get_buildings_3d(ctx: ToolContext, a: dict) -> dict:
         res["note"] = ("inside the walls DLS models whole blocks as one building, so a block's "
                        "height is its tallest part")
     res["_summary"] = f"{len(near)} buildings, tallest {res['height_m']['max'] if rows else 0} m"
+    return res
+
+
+MAX_CHANGED = 4000
+
+
+@tool("find_height_changes",
+      "What changed between the 2014 building survey and the 2019 LiDAR flight, in greater "
+      "Nicosia: buildings of the DLS 3D model whose top, as the laser measured it in 2019, "
+      "differs from the surveyed roof height by a floor (3 m) or more. 'taller': a floor or "
+      "more was added, or it was rebuilt taller; 'lower': it lost height; 'gone': almost "
+      "nothing stands on the footprint any more (demolished or cleared). Everywhere the flight "
+      "covers, or near a place; filter by change, by how much, by footprint. Returns how many "
+      "buildings were measured and how many fell in each state, the matches counted by change, "
+      "the biggest ones, a layer_ref (show it with style 'buildings_3d': footprints at their "
+      "2019 height, the gone ones at the height they had, green taller, amber lower, red gone) "
+      "and a data_ref (one row per changed building: id, change, by_m, height_2014_m, "
+      "height_2019_m, standing_pct, use, floors, footprint_m2). It cannot see a building put up "
+      "after 2014 on empty ground (there is no footprint to measure), a measured top counts "
+      "whatever stands on the roof, and nothing north of the buffer zone was flown.",
+      obj({
+          **{k: v for k, v in NEAR.items() if k != "radius_m"},
+          "radius_m": {"type": "number", "minimum": 50, "maximum": 10000,
+                       "description": "Radius in metres around the place (default 1000)."},
+          "change": {"type": "string", "enum": list(lidar.CHANGED)},
+          "min_change_m": {"type": "number", "minimum": 3, "maximum": 100,
+                           "description": "Only buildings taller or lower by at least this."},
+          "min_footprint_m2": {"type": "number", "minimum": 0, "maximum": 100000,
+                               "description": "Leave out footprints smaller than this (default "
+                                              "50, which skips the sheds and garages that "
+                                              "went; 0 for every footprint)."},
+          "limit": {"type": "integer", "minimum": 1, "maximum": 30,
+                    "description": "How many of the biggest changes to list (default 10)."},
+      }))
+def h_find_height_changes(ctx: ToolContext, a: dict) -> dict:
+    flight = ctx.lidar
+    if flight is None or not flight.changes.rows:
+        raise ToolError("the 2019 LiDAR measurements aren't in this copy of the twin")
+    center = None
+    if a.get("near_place") or a.get("near_lat") is not None:
+        center = resolve_point(ctx, a.get("near_place"), a.get("near_lat"), a.get("near_lon"))
+        if not center:
+            raise ToolError("that place wasn't found; give near_lat and near_lon, or leave the "
+                            "place out for everywhere the flight covers")
+    radius = a.get("radius_m") or 1000
+    hits = []
+    for r in flight.changes.rows:
+        if a.get("change") and r["state"] != a["change"]:
+            continue
+        if r["state"] != "gone" and abs(r["by_m"]) < (a.get("min_change_m") or 0):
+            continue
+        if r["area_m2"] < a.get("min_footprint_m2", lidar.HOUSE_M2):
+            continue
+        d = haversine_m(center[0], center[1], r["lat"], r["lon"]) if center else None
+        if d is not None and d > radius:
+            continue
+        hits.append((r, d))
+    # The biggest first: what went by the height it had, the rest by how much they changed.
+    hits.sort(key=lambda h: -(h[0]["was_m"] if h[0]["state"] == "gone" else abs(h[0]["by_m"])))
+    capped = len(hits) > MAX_CHANGED
+    hits = hits[:MAX_CHANGED]
+    rows = [{k: v for k, v in {
+        "id": f"B{r['id']}", "change": r["state"], "by_m": r["by_m"], "height_2014_m": r["was_m"],
+        "height_2019_m": r["now_m"], "standing_pct": round(100 * r["built"]), "use": r.get("use"),
+        "floors": r.get("floors"), "footprint_m2": r["area_m2"],
+        "distance_m": round(d) if d is not None else None}.items() if v is not None}
+        for r, d in hits]
+    where = f"within {radius:g} m of {center[2]}" if center else "in greater Nicosia"
+    title = f"Buildings changed between 2014 and 2019 {where}"
+    by_change = Counter(r["change"] for r in rows)
+    layer = ctx.store.add_layer(
+        "height_changes", lidar.layer_features([r for r, _ in hits], STATE_COLORS),
+        geometry="buildings", title=title, legend=legend_for(list(by_change)),
+        value_fields=["height_m", "by_m"])
+    data = ctx.store.add_dataset("height_changes", rows, title=title, link={"key": "id"})
+    counts = flight.changes.counts
+    res = {
+        "area": ({"name": center[2], "lat": center[0], "lon": center[1], "radius_m": radius}
+                 if center else "greater Nicosia, south of the buffer zone"),
+        "measured_in_nicosia": {"buildings": sum(counts.values()), **counts},
+        "matching": len(rows), "capped_at": MAX_CHANGED if capped else None,
+        "by_change": dict(by_change.most_common()),
+        "biggest": rows[:a.get("limit") or 10],
+        "layer_ref": layer, "data_ref": data,
+        "source": "DLS surface and terrain models of the 2019 LiDAR flight (CC BY 4.0), against "
+                  "the DLS 3D buildings surveyed in 2014",
+        "note": "a change is a difference of 3 m or more between the two surveys on the same "
+                "footprint; buildings put up after 2014 on empty ground are not in it",
+    }
+    res["_summary"] = (f"{len(rows)} changed buildings {where}: " + ", ".join(
+        f"{n} {k}" for k, n in by_change.most_common())) if rows else f"No changed buildings {where}"
     return res

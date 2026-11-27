@@ -29,6 +29,8 @@ STATE_COLORS: dict[str, str] = {
     "from the web": "#e046f0", "on its street": "#c9a3d6",
     # High places with a view (find_high_places).
     "viewpoint": "#22d3ee", "public lookout": "#c084fc", "high ground": "#a3e635",
+    # Buildings as the 2019 flight found them against the 2014 survey (find_height_changes).
+    "taller": "#34d399", "lower": "#fbbf24", "gone": "#f43f5e",
 }
 
 

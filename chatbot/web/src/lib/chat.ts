@@ -30,6 +30,7 @@ export const TOOL_LABELS: Record<string, string> = {
   find_dangerous_buildings: "Reading the dangerous-building registers",
   where_am_i: "Working out where you are",
   get_buildings_3d: "Reading the DLS 3D buildings",
+  find_height_changes: "Comparing the 2014 survey with the 2019 laser flight",
   get_entity: "Looking it up in the twin", open_inspector: "Opening it in the inspector",
   map_fly_to: "Moving the map", map_callouts: "Adding callouts", map_clear: "Clearing the map",
   show_chart: "Drawing a chart", show_visual: "Drawing a custom visual", web_search: "Searching the web",

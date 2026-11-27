@@ -337,6 +337,7 @@ def test_the_tool_list_keeps_its_order():
         "get_traffic", "get_speed", "get_weather", "geocode", "find_places", "locate_web_places",
         "plan_route",
         "reachable_area", "find_dangerous_buildings", "where_am_i", "get_buildings_3d",
+        "find_height_changes",
         "show_on_map", "map_fly_to", "map_callouts", "map_clear", "show_chart", "show_visual",
         "query_history", "run_sql",
         "get_entity", "open_inspector",
