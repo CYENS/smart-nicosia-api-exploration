@@ -19,6 +19,7 @@
   --color-line: var(--line);
   --color-sodium: var(--sodium);
   --color-signal: var(--signal);
+  --color-amber: var(--amber);
 
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
@@ -75,6 +76,8 @@
   --line: rgb(138 160 190 / 0.16);
   --sodium: #ffae45;
   --signal: #ff5a4e;
+  /* A warning that is not yet an alarm (a medium-severity incident): amber, beside signal red. */
+  --amber: #f5a524;
 
   --background: var(--night);
   --foreground: #e4ebf4;
@@ -335,6 +338,24 @@
 }
 .me-btn:hover { background: #ffffff; }
 
+/* The dropped pin of "What's here?": sodium, standing on the point it asks about. The marker
+   element is MapLibre's (moved with `transform`), so the drop animates the svg inside it. */
+.spot-pin { width: 28px; height: 38px; pointer-events: none; }
+.spot-pin svg { display: block; overflow: visible; filter: drop-shadow(0 2px 3px rgb(0 0 0 / 0.55)); }
+.spot-pin path { fill: var(--sodium); stroke: var(--night); stroke-width: 1.5; }
+.spot-pin circle { fill: var(--night); }
+.spot-pin-drop svg { animation: spot-pin-drop 260ms cubic-bezier(0.3, 1.4, 0.6, 1) both; transform-origin: 50% 100%; }
+@keyframes spot-pin-drop {
+  from { transform: translateY(-14px) scale(0.85); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .spot-pin-drop svg { animation: none; }
+}
+
+/* The wind's particles ride over the map, under every panel; the map still takes the pointer. */
+.wind-canvas { position: absolute; inset: 0; pointer-events: none; }
+
 /* Map callouts the assistant places. The box sits inside MapLibre's marker element (which is
    absolutely positioned and moved with `transform`), so its own position and animation are
    free to use; `relative` anchors the arrow below. */
@@ -388,3 +409,14 @@
   font-size: 12.5px;
 }
 #vg-tooltip-element.vg-tooltip td.key { color: var(--muted-foreground); }
+
+/* A view from a place (lib/view.ts): dragging the map turns the head; the labels say what is in
+   sight, and dim what stands hidden behind something. */
+.is-viewing .maplibregl-canvas-container { cursor: grab; touch-action: none; }
+.is-viewing .maplibregl-canvas-container:active { cursor: grabbing; }
+.is-viewing .maplibregl-ctrl-scale { display: none; }
+.view-label { pointer-events: none; }
+.view-label .callout { max-width: 200px; }
+.view-label .callout.is-hidden { opacity: 0.72; border-color: var(--line); color: var(--muted-foreground); }
+.view-label .callout.is-hidden::after { border-color: var(--line); }
+@media (prefers-reduced-motion: reduce) { .view-label .callout { animation: none; } }

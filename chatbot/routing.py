@@ -16,7 +16,8 @@ from chatbot.web import WebError, get_json
 
 MODES = {"walk": "pedestrian", "drive": "auto", "bike": "bicycle", "wheelchair": "pedestrian"}
 PREFERENCES = ("fastest", "lit_streets", "quiet", "less_hills", "accessible",
-               "avoid_dangerous_buildings")
+               "avoid_dangerous_buildings", "shade")
+MAX_ALTERNATES = 2  # besides the best route: what Valhalla offers between two places
 MAX_TOUR_STOPS = 12
 MAX_ROUTE_LOCATIONS = 10  # what the public Valhalla instance takes in one route request
 # Points sit on one street when the walk between the two ends is about the straight line.
@@ -126,7 +127,26 @@ class Router:
         }
         if avoid:
             body["exclude_polygons"] = avoid
-        trip = self._call("route", body)["trip"]
+        return self._route_of(self._call("route", body)["trip"])
+
+    def alternatives(self, stops: list[tuple[float, float]], mode: str, prefer: list[str],
+                     n: int = MAX_ALTERNATES) -> list[dict]:
+        """The best route between two places and up to `n` real alternatives (Valhalla's
+        alternates: different streets, not detours through a point), best first."""
+        body = {
+            "locations": [{"lat": lat, "lon": lon, "type": "break"} for lat, lon in stops],
+            "costing": MODES[mode],
+            "costing_options": costing_options(mode, prefer),
+            "directions_options": {"units": "kilometers", "language": "en-US"},
+        }
+        if len(stops) == 2 and n > 0:
+            body["alternates"] = n
+        data = self._call("route", body)
+        trips = [data["trip"]] + [a["trip"] for a in data.get("alternates") or [] if a.get("trip")]
+        return [self._route_of(t) for t in trips]
+
+    @staticmethod
+    def _route_of(trip: dict) -> dict:
         coords: list[list[float]] = []
         legs = []
         for leg in trip["legs"]:

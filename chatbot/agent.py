@@ -25,6 +25,8 @@ import anthropic
 from chatbot.city import CityData
 from chatbot.dls import DLS
 from chatbot.entities import Entities
+from chatbot.environment import spot as _spot  # noqa: F401 - registers the spot kind
+from chatbot.environment.service import Environment
 from chatbot.eoa import Registry
 from chatbot.followups import TagFilter, merge_actions
 from chatbot.geo import Places
@@ -37,7 +39,9 @@ from chatbot.scenarios import Lab, ScenarioContext
 from chatbot.scenarios.lab import default_cache_dir
 from chatbot.settings import TIMEZONE, Settings
 from chatbot.store import SessionStore
+from chatbot.terrain import Terrain
 from chatbot.tools import TOOL_DEFS, WEB_SEARCH, ToolContext, run_tool
+from chatbot.watch import Watcher
 from chatbot.webplaces import WebPlaces
 
 log = logging.getLogger(__name__)
@@ -147,6 +151,10 @@ def format_context(context: dict | None, now: datetime) -> str:
         lines.append(f"asking_about: {subject}")
     if clock := city_clock((context or {}).get("clock")):
         lines.append(f"city_clock: {clock}")
+    if (seen := (context or {}).get("viewing")) and isinstance(seen, dict) and seen.get("name"):
+        lines.append(f"viewing: from {str(seen['name'])[:80]} ({seen.get('lat', 0):.5f}, "
+                     f"{seen.get('lon', 0):.5f}), {seen.get('eye_m', 0):.0f} m above sea level, "
+                     f"looking {seen.get('looking', '?')}")
     errors = (context or {}).get("visual_errors")
     if errors:
         lines.append("visual_errors: " + "; ".join(str(e)[:300] for e in errors[:3]))
@@ -172,6 +180,13 @@ class Agent:
         self.entities = Entities(city, places, dls, registers, memory,  # shared with the inspector
                                  mobility=self.mobility, web_places=self.web_places)
         self.moments = Moments(city, memory)  # the city at past moments, for the clock
+        self.entities.moments = self.moments  # "What's here?" reads parking and lamps from it
+        self.watcher = Watcher(city, memory)  # alerts, incidents and watches
+        self.entities.watcher = self.watcher  # incidents open by their id (INC-12)
+        # Sun and shade, air and noise surfaces, the wind and the rain radar.
+        self.environment = Environment(settings, city, self.moments, dls, memory)
+        self.entities.environment = self.environment
+        self.terrain = Terrain(settings)  # the ground's height, for views and lines of sight
         # The scenario lab: runs what-ifs on the memory and keeps the runs (chatbot/scenarios).
         self.scenarios = Lab(ScenarioContext(settings, memory, city, router, places, registers,
                                              self.mobility, cache_dir=default_cache_dir()))
@@ -221,6 +236,8 @@ class Agent:
                                user_location(context), memory=self.memory,
                                entities=self.entities, moments=self.moments,
                                mobility=self.mobility, web_places=self.web_places,
+                               watcher=self.watcher, environment=self.environment,
+                               terrain=self.terrain,
                                scenarios=self.scenarios)
         conv.messages.append({"role": "user", "content": [
             {"type": "text", "text": format_context(context, self.city.now()) + text}]})
