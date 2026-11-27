@@ -148,6 +148,48 @@ SOURCES: tuple[Source, ...] = (
         licence=CC_BY, licence_url="https://creativecommons.org/licenses/by/4.0/",
         refresh="Every 3 minutes at most; every 15 while it doesn't answer",
         credit="Jams: Waze via traffic4cyprus, CC BY 4.0"),
+    # Park, charge and hire (chatbot/mobility/facilities.py): one entry per publisher.
+    Source(
+        "nap_public_works", "Car parks, park and ride and bicycle racks", "the Public Works Department's inventory",
+        "Public Works Department, through the Cyprus National Access Point",
+        "Where the car parks, the park and ride sites and the public bicycle racks are. No spaces "
+        "or prices: a car park's free bays come from the city's sensors beside it, where it has any",
+        "Mobility", url="https://traffic4cyprus.org.cy/dataset/parking_areas",
+        licence=CC_BY, licence_url="https://creativecommons.org/licenses/by/4.0/",
+        refresh="Once a day at most; the inventory's own date is its last change",
+        credit="Car parks: Public Works Dept, CC BY 4.0"),
+    Source(
+        "nap_chargers", "Electric vehicle chargers", "the EV charger inventory",
+        "Department of Electrical and Mechanical Services, through the Cyprus National Access Point",
+        "Every public charging point with its power, connectors, operator, hours and the status "
+        "it is listed with each night (not whether a connector is free now)",
+        "Mobility", url="https://traffic4cyprus.org.cy/dataset/electricvehiclecharges",
+        licence=CC_BY, licence_url="https://creativecommons.org/licenses/by/4.0/",
+        refresh="Once a day at most",
+        credit="Chargers: EMS, CC BY 4.0"),
+    Source(
+        "nap_nextbike", "Nextbike stations", "the Nextbike station inventory",
+        "Nextbike Cyprus, through the Cyprus National Access Point",
+        "Where the Nextbike stations are, and how many docks some have",
+        "Mobility", url="https://traffic4cyprus.org.cy/dataset/nextbike",
+        licence=CC_BY, licence_url="https://creativecommons.org/licenses/by/4.0/",
+        refresh="Once a day at most",
+        credit="Bike stations: Nextbike, CC BY 4.0"),
+    Source(
+        "nextbike_live", "Nextbike live bikes (GBFS)", "Nextbike's live feed", "nextbike GmbH",
+        "The bikes standing at each Nextbike station now, how many are electric, and the free docks",
+        "Mobility", url="https://gbfs.nextbike.net/maps/gbfs/v2/nextbike_cy/gbfs.json",
+        licence="CC0 1.0", licence_url="https://creativecommons.org/publicdomain/zero/1.0/",
+        refresh="Every 2 minutes at most, while bike stations are on the map or asked about",
+        credit="Live bikes: Nextbike"),
+    Source(
+        "nap_bolt", "Bolt scooter zones", "Bolt's zone inventory", "Bolt, through the Cyprus National Access Point",
+        "The zones where Bolt's e-scooters are parked, with how many each holds. Where the scooters "
+        "are now isn't published",
+        "Mobility", url="https://traffic4cyprus.org.cy/dataset/bolt",
+        licence=CC_BY, licence_url="https://creativecommons.org/licenses/by/4.0/",
+        refresh="Once a day at most",
+        credit="Scooter zones: Bolt, CC BY 4.0"),
     Source(
         "open_meteo", "Open-Meteo", "Open-Meteo", "Open-Meteo",
         "The weather now and by the hour, sunrise and sunset, modelled air quality and dust (CAMS "
@@ -293,6 +335,9 @@ TOOL_SOURCES: dict[str, tuple[str, ...]] = {
     "plan_transit": ("bus_timetable", "bus_live", "valhalla", "overture"),
     "get_road_speeds": ("road_speeds",),
     "get_road_reports": ("waze_alerts", "traffic_events", "waze_traffic"),
+    "find_parking": ("nap_public_works", "smart_nicosia", "openstreetmap", "twin_memory"),
+    "find_chargers": ("nap_chargers",),
+    "find_bikes": ("nap_nextbike", "nextbike_live", "nap_bolt", "nap_public_works"),
     "list_incidents": ("twin_memory", "smart_nicosia"),
     "explain_incident": ("twin_memory", "smart_nicosia", "open_meteo"),
     "create_watch": ("smart_nicosia",),

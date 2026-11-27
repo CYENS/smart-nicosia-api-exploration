@@ -100,6 +100,7 @@ def inventory_source(fac: Facilities, kind: str) -> dict:
 
 
 def nearest_of_each(fac: Facilities, f: Facility, bikes=None) -> list[dict]:
+    fac.warm()
     out = []
     for kind in KINDS:
         if kind == f.kind:
@@ -595,16 +596,8 @@ def search_items(ents) -> list[dict]:
     if hit is not None and time.time() - hit[0] < 600:
         return hit[1]
     missing = [k for k in KINDS if fac.cached(k) is None]
-    if missing and not fac.search_cache.get("warming"):
-        fac.search_cache["warming"] = True
-
-        def warm() -> None:
-            try:
-                fac.all(missing)
-            finally:
-                fac.search_cache.pop("warming", None)
-        import threading
-        threading.Thread(target=warm, daemon=True, name="nap-warm").start()
+    if missing:
+        fac.warm(missing)
     items = []
     for kind in KINDS:
         inv = fac.cached(kind)

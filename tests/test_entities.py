@@ -349,7 +349,8 @@ def test_the_tool_list_keeps_its_order():
         "list_scenarios", "run_scenario", "compare_scenarios", "open_scenario",
         "get_speed_limits", "find_slow_zones", "find_crossings", "get_cycle_network", "get_bus_lanes",
         "find_enforcement_cameras",
-        "get_road_reports"]
+        "get_road_reports",
+        "find_parking", "find_chargers", "find_bikes"]
 
 
 def test_the_context_names_what_the_user_has_open():
