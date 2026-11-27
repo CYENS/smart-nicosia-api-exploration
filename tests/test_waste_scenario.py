@@ -474,6 +474,6 @@ def test_the_decision_brief_speaks_of_bins_not_lamps(tmp_path, offline):
     a = lab.run("waste", {"policy": "threshold"}, "last_30_days")
     b = lab.run("waste", {"policy": "fixed", "rounds_per_week": 2}, "last_30_days")
     html = brief.brief_html(a, b)
-    assert "the city's own pickups" in html and "lamp" not in html.lower()
+    assert "own pickups, replayed on the same model" in html and "lamp" not in html.lower()
     assert "Safety check" not in html and "out of sample" in html and "in sample" in html
     assert "—" not in html and "–" not in html
