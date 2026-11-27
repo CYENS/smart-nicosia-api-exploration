@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import gzip
 import json
 import socket
 import threading
@@ -66,3 +67,20 @@ def get_json(url: str, *, user_agent: str, params: dict | None = None,
     except ValueError:
         host = urllib.parse.urlsplit(url).netloc
         raise WebError(f"{host} returned invalid JSON: {body[:120]!r}") from None
+
+
+GZIP_MAGIC = bytes((0x1F, 0x8B))
+
+
+def get_bytes(url: str, *, user_agent: str, timeout: float = 30.0) -> bytes:
+    """The body as bytes (a vector tile, an image), unzipped if the server zipped it anyway."""
+    req = urllib.request.Request(url, headers={"User-Agent": user_agent})
+    host = urllib.parse.urlsplit(url).netloc
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            body = resp.read()
+    except urllib.error.HTTPError as e:
+        raise WebError(f"{host} answered HTTP {e.code}") from None
+    except (urllib.error.URLError, TimeoutError, socket.timeout, ConnectionError) as e:
+        raise WebError(f"{host} unreachable: {getattr(e, 'reason', e)}") from None
+    return gzip.decompress(body) if body[:2] == GZIP_MAGIC else body

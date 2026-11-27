@@ -3,7 +3,7 @@
    the registers, buses and the slowest road), at the clock's moment. */
 import { DotLegend } from "@/components/topics/builtin"
 import { RoadLegend } from "@/components/mobility/parts"
-import { cityHeights, setCity3d, setNightLights, showRegisters, useMapUi } from "@/lib/map/engine"
+import { cityHeights, cityOsmGrey, setCity3d, setNightLights, showRegisters, useMapUi } from "@/lib/map/engine"
 import { setBusesOn, setRoadsOn } from "@/lib/mobility/map"
 import { useMobility } from "@/lib/mobility/store"
 import { AIR_WORDS, airWords, fmtCount, parkingWord, useSky, useStrip } from "@/lib/readouts"
@@ -165,6 +165,7 @@ registerSystemLayer({
 })
 
 function HeightRamp() {
+  useMapUi((s) => s.basemap) // the colours follow the base map
   const heights = cityHeights()
   const stops: string[] = []
   for (let i = 0; i < heights.length; i += 2) stops.push(`${heights[i + 1]} ${Math.round((100 * (heights[i] as number)) / 60)}%`)
@@ -173,6 +174,10 @@ function HeightRamp() {
       <div className="h-2 rounded-full" style={{ background: `linear-gradient(90deg, ${stops.join(", ")})` }} />
       <div className="flex justify-between font-readout text-[12px] text-muted-foreground">
         <span>0 m</span><span>height to roof</span><span>60 m+</span>
+      </div>
+      <div className="flex items-center gap-2 text-[12px] text-muted-foreground">
+        <span aria-hidden className="size-2.5 shrink-0 rounded-[3px] ring-1 ring-border" style={{ background: cityOsmGrey() }} />
+        <span>Grey where the DLS has no data: OpenStreetMap's buildings</span>
       </div>
     </div>
   )

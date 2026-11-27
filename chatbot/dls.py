@@ -384,6 +384,31 @@ class DLS:
                 return self._mem[(x, y)]
         return self._read_tile(x, y)
 
+    def stored_tile(self, x: int, y: int) -> list[dict] | None:
+        """A tile from memory or disk however old (for drawing, an old copy beats none), or None
+        if DLS was never asked for it. Never fetched here."""
+        with self._mem_lock:
+            if (x, y) in self._mem:
+                return self._mem[(x, y)]
+        try:
+            return json.loads(self._tile_path(x, y).read_text(encoding="utf-8"))["features"]
+        except (OSError, ValueError, KeyError):
+            return None
+
+    def tile_fresh(self, x: int, y: int) -> bool:
+        """Whether a tile is cached and younger than TILE_TTL_S. Reads only the head of the file
+        (`{"fetched_at":...` comes first), so a whole city can be checked quickly."""
+        with self._mem_lock:
+            if (x, y) in self._mem:
+                return True
+        try:
+            with open(self._tile_path(x, y), "rb") as f:
+                head = f.read(64).decode("ascii", "replace")
+        except OSError:
+            return False
+        m = re.match(r'\{"fetched_at":\s*([0-9.eE+-]+)', head)
+        return bool(m) and time.time() - float(m.group(1)) <= TILE_TTL_S
+
     def building_by_id(self, oid: int, near: tuple[float, float] | None = None) -> dict | None:
         """One 3D building by its OBJECTID. With `near` (lon, lat, e.g. where it was clicked),
         the tile there and the cached tiles around it are looked through first; otherwise, or

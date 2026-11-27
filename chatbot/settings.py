@@ -44,6 +44,8 @@ class Settings:
     memory_path: Path = field(default_factory=lambda: ROOT / "data" / "smart_nicosia.duckdb")
     record: bool = True  # keep what the chatbot fetches in the memory (CHATBOT_RECORD)
     collect: bool = False  # also run the full collector in this process (CHATBOT_COLLECT)
+    # Read greater Nicosia's 3D buildings in the background, for the map (CHATBOT_CITY_FILL).
+    city_fill: bool = True
 
 
 def _flag(value: str | None, default: bool) -> bool:
@@ -72,4 +74,5 @@ def load_settings() -> Settings:
         memory_path=memory_path(),
         record=_flag(env.get("CHATBOT_RECORD"), True),
         collect=_flag(env.get("CHATBOT_COLLECT"), False),
+        city_fill=_flag(env.get("CHATBOT_CITY_FILL"), True),
     )

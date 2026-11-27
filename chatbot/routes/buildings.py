@@ -2,17 +2,72 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, HTTPException, Request
+import gzip
+
+from fastapi import APIRouter, HTTPException, Request, Response
 from fastapi.responses import JSONResponse
 
-from chatbot import lidar
-from chatbot.dls import TILE_ZOOM
+from chatbot import citytiles, lidar
+from chatbot.citytiles import CityTiles
+from chatbot.dls import CYPRUS_BBOX, TILE_ZOOM
 from chatbot.eoa import layer_features
+from chatbot.osm3d import OsmBuildings
 from chatbot.routes import agent_of
 from chatbot.store import STATE_COLORS, legend_for
 from chatbot.web import WebError
 
 router = APIRouter()
+
+# The 3D city is drawn from vector tiles, z12 to z16 (chatbot/citytiles.py): DLS buildings, and
+# OpenStreetMap's where the DLS has none. The z16 GeoJSON tiles further down carry every DLS
+# field, for what the page works out from the buildings near the eye (their shadows).
+
+
+def city_tiles_of(request: Request) -> CityTiles:
+    """The app's 3D city tiles (made on first use where the server didn't start them)."""
+    state = request.app.state
+    tiles = getattr(state, "city_tiles", None)
+    if tiles is None:
+        agent = agent_of(request)
+        tiles = state.city_tiles = CityTiles(agent.dls, OsmBuildings(agent.settings))
+    return tiles
+
+
+@router.get("/api/buildings3d.json")
+def buildings_3d_tilejson(request: Request) -> JSONResponse:
+    """The 3D city's vector tiles, as a TileJSON. The page names the tiles' address itself, with
+    its own origin (behind a proxy this server doesn't know it)."""
+    base = str(request.base_url).rstrip("/")
+    return JSONResponse({
+        "tilejson": "3.0.0", "name": "Nicosia 3D city",
+        "tiles": [f"{base}/api/buildings3d/{{z}}/{{x}}/{{y}}.mvt?v={citytiles.VERSION}"],
+        "minzoom": citytiles.MIN_ZOOM, "maxzoom": citytiles.MAX_ZOOM, "bounds": list(CYPRUS_BBOX),
+        "vector_layers": [{"id": citytiles.LAYER, "minzoom": citytiles.MIN_ZOOM,
+                           "maxzoom": citytiles.MAX_ZOOM,
+                           "fields": {"h": "Number", "b": "Number", "src": "String"}}],
+    }, headers={"Cache-Control": "public, max-age=300"})
+
+
+@router.get("/api/buildings3d/status")
+def buildings_3d_status(request: Request) -> JSONResponse:
+    """How far the 3D city has been read in the background (greater Nicosia's tiles)."""
+    return JSONResponse(city_tiles_of(request).status(), headers={"Cache-Control": "no-store"})
+
+
+@router.get("/api/buildings3d/{z}/{x}/{y}.mvt")
+def buildings_3d_tile(z: int, x: int, y: int, request: Request) -> Response:
+    """One vector tile of the 3D city. A tile still filling in comes back at once, with what
+    there is and a max-age of a few seconds, so MapLibre asks again."""
+    if not (citytiles.MIN_ZOOM <= z <= citytiles.MAX_ZOOM and 0 <= x < 2 ** z and 0 <= y < 2 ** z):
+        raise HTTPException(404, f"tiles are z{citytiles.MIN_ZOOM} to z{citytiles.MAX_ZOOM}")
+    tiles = city_tiles_of(request)
+    data, complete = tiles.tile(z, x, y)
+    headers = {"Cache-Control": f"public, max-age={tiles.max_age(complete)}", "Vary": "Accept-Encoding"}
+    if "gzip" in request.headers.get("accept-encoding", ""):
+        headers["Content-Encoding"] = "gzip"
+    else:
+        data = gzip.decompress(data)
+    return Response(data, media_type="application/vnd.mapbox-vector-tile", headers=headers)
 
 
 @router.get("/api/buildings3d/{z}/{x}/{y}")

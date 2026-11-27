@@ -88,10 +88,11 @@ SOURCES: tuple[Source, ...] = (
         credit="Radar: RainViewer"),
     Source(
         "openstreetmap", "OpenStreetMap", "OpenStreetMap", "OpenStreetMap contributors",
-        "Streets, places and their opening hours, and the data under the base map",
+        "Streets, places and their opening hours, the data under the base map, and the 3D "
+        "buildings where the DLS has none (north of the buffer zone), in grey",
         "Map, places and routes", url="https://www.openstreetmap.org/copyright",
         licence=ODBL, licence_url="https://opendatacommons.org/licenses/odbl/",
-        refresh="The places index is rebuilt weekly"),
+        refresh="The places index is rebuilt weekly; buildings are read again monthly"),
     Source(
         "overture", "Overture Maps places", "Overture Maps", "Overture Maps Foundation, from Meta, "
         "Microsoft, Foursquare, AllThePlaces and others",
