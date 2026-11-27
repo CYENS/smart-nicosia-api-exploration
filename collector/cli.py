@@ -8,6 +8,7 @@ import logging
 import logging.handlers
 import sys
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 
 from collector import db
 from collector.config import Config, load_config
@@ -77,6 +78,12 @@ def build_parser() -> argparse.ArgumentParser:
                     help="minimum seconds between request starts (default 0.5)")
     bf.add_argument("--reset", action="store_true",
                     help="ignore saved progress and re-page from --until")
+    bf.add_argument("--archive", help="where traffic_lines keeps its archive "
+                                      "(default: data/archive beside the database)")
+    bf.add_argument("--archive-only", action="store_true",
+                    help="traffic_lines: keep the archive, leave the database alone")
+    bf.add_argument("--from-archive", action="store_true",
+                    help="traffic_lines: load the archive into the database, no requests")
     return p
 
 
@@ -143,8 +150,13 @@ def main(argv: list[str] | None = None) -> int:
             concurrency=args.concurrency,
             delay_s=args.delay,
             reset=args.reset,
+            archive_dir=Path(args.archive) if args.archive else None,
+            archive_only=args.archive_only,
+            from_archive=args.from_archive,
         )
-        bad = set(opts.what) - {"events", "speed", "traffic", "telemetry"}
+        from collector.backfill import KNOWN_WHAT
+
+        bad = set(opts.what) - set(KNOWN_WHAT)
         if bad:
             print(f"unknown --what: {', '.join(sorted(bad))}", file=sys.stderr)
             return 2

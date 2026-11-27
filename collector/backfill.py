@@ -7,6 +7,11 @@
 - Traffic counts use group_by=stream in chunks of at most 30 days (longer ranges take 30-60 s or
   time out), plus one city-wide hourly request per day.
 - City speed uses generalReports in 7-day chunks.
+- Per-line hourly traffic (`traffic_lines`, asked for by name) uses group_by=stream one hour at
+  a time: each answer covers every line of every camera. Every answer is kept untouched in the
+  archive (collector/archive.py) as well as stored, so the history survives the API and a run
+  resumes by skipping archived hours. `archive_only` keeps the archive and leaves the database
+  alone; `from_archive` loads the archive into the database without a single request.
 """
 
 from __future__ import annotations
@@ -19,9 +24,10 @@ from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta
+from pathlib import Path
 from zoneinfo import ZoneInfo
 
-from collector import db, interpret, parse
+from collector import archive, db, interpret, parse
 from collector.config import Config
 from collector.http import ApiError, Client
 from collector.jobs import (
@@ -37,6 +43,7 @@ log = logging.getLogger(__name__)
 MAX_CONCURRENCY = 2
 DEFAULT_TYPES = ("Parking", "Lighting", "Wastebin", "smartsense", "InfoPoints", "Camera")
 WHAT = ("events", "speed", "traffic", "telemetry")
+KNOWN_WHAT = WHAT + ("traffic_lines",)  # traffic_lines only when asked for by name
 
 
 @dataclass
@@ -52,6 +59,9 @@ class BackfillOptions:
     reset: bool = False
     flush_rows: int = 20_000
     flush_seconds: float = 15.0
+    archive_dir: Path | None = None  # default: data/archive beside the database
+    archive_only: bool = False  # keep the archive, leave the database alone
+    from_archive: bool = False  # load the archive into the database: no requests
 
 
 @dataclass
@@ -86,11 +96,14 @@ def run_backfill(cfg: Config, opts: BackfillOptions, *, client: Client | None = 
                 break
             log_fn(f"== {what}")
             {"events": _events, "speed": _speed, "traffic": _traffic,
-             "telemetry": _telemetry}[what](cfg, opts, client, report, budget_left, log_fn)
+             "telemetry": _telemetry, "traffic_lines": _traffic_lines,
+             }[what](cfg, opts, client, report, budget_left, log_fn)
     finally:
         report.requests = client.stats.requests
         if budget_left() <= 0:
             report.stopped_by_budget = True
+        if opts.archive_only:  # the database is left alone
+            return report  # noqa: B012 - nothing to record where nothing was written
         with db.session(cfg.db_path, timezone_name=cfg.timezone) as con:
             con.execute(
                 """INSERT INTO job_runs (job, started_at, finished_at, status, requests,
@@ -207,6 +220,89 @@ def _traffic(cfg, opts, client, report, budget_left, log_fn):
             total += store_traffic(con, rows, db.utcnow())
     report.add("traffic_counts", total)
     log_fn(f"traffic: {total} rows")
+
+
+# -- per-line hourly traffic, with its archive -------------------------------------------------
+
+
+def archive_root(cfg: Config, opts: BackfillOptions) -> Path:
+    return Path(opts.archive_dir) if opts.archive_dir else cfg.db_path.parent / "archive"
+
+
+def _traffic_lines(cfg, opts, client, report, budget_left, log_fn):
+    tz = ZoneInfo(cfg.timezone)
+    root = archive_root(cfg, opts)
+    if opts.from_archive:
+        _load_archive(cfg, root, tz, report, log_fn)
+        return
+    now_ms = to_ms(db.utcnow())
+    first = to_ms(opts.since) // archive.HOUR_MS * archive.HOUR_MS
+    last = min(to_ms(opts.until), now_ms) // archive.HOUR_MS * archive.HOUR_MS  # only finished
+    done = set() if opts.reset else archive.archived_hours(root)
+    todo = [h for h in range(first, last, archive.HOUR_MS) if h not in done]
+    log_fn(f"traffic_lines: {len(todo)} hour(s) to fetch, {len(done)} already archived in {root}")
+    if not todo:
+        return
+    try:  # the line definitions as they are now, beside the counts
+        archive.snapshot_lines(root, tz, client.get_json("analytics"),
+                               client.get_json("object_types"), db.utcnow())
+    except ApiError as e:
+        report.errors.append(f"line definitions: {e}")
+    pending: list[parse.TrafficRow] = []
+    hours = rows_total = 0
+
+    def store() -> None:
+        nonlocal pending, rows_total
+        if pending and not opts.archive_only:
+            with db.session(cfg.db_path, timezone_name=cfg.timezone) as con:
+                rows_total += store_traffic(con, pending, db.utcnow())
+        pending = []
+
+    for h in todo:
+        if budget_left() <= 0:
+            break
+        params = {"va_ids": "[]", "group_by": "stream", "start_date": h,
+                  "end_date": h + archive.HOUR_MS - 1}
+        try:
+            payload = client.get_json("getTrafficReports", **params)
+        except ApiError as e:  # not archived, so the next run asks again
+            report.errors.append(f"traffic_lines {archive.local(h, tz):%Y-%m-%d %H:%M}: {e}")
+            continue
+        archive.append_hour(root, tz, h, params, payload, db.utcnow())
+        pending.extend(parse.parse_traffic_stream_hour(payload, archive.local(h, tz), tz))
+        hours += 1
+        if hours % 24 == 0:
+            store()
+            log_fn(f"traffic_lines: {hours} of {len(todo)} hours, up to "
+                   f"{archive.local(h, tz):%Y-%m-%d %H:%M}")
+    store()
+    report.add("traffic_line_hours", hours)
+    if not opts.archive_only:
+        report.add("traffic_counts", rows_total)
+    log_fn(f"traffic_lines: {hours} hour(s) archived, {rows_total} rows stored")
+
+
+def _load_archive(cfg, root, tz, report, log_fn):
+    """Store every archived hour in the database (rows already there are kept)."""
+    pending: list[parse.TrafficRow] = []
+    hours = total = 0
+    for _, rec in archive.read_hours(root):
+        start = rec.get("window_start_ms")
+        if start is None:
+            continue
+        pending.extend(parse.parse_traffic_stream_hour(rec.get("response") or {},
+                                                       archive.local(start, tz), tz))
+        hours += 1
+        if len(pending) >= 50_000:
+            with db.session(cfg.db_path, timezone_name=cfg.timezone) as con:
+                total += store_traffic(con, pending, db.utcnow())
+            pending = []
+    if pending:
+        with db.session(cfg.db_path, timezone_name=cfg.timezone) as con:
+            total += store_traffic(con, pending, db.utcnow())
+    report.add("traffic_line_hours", hours)
+    report.add("traffic_counts", total)
+    log_fn(f"traffic_lines: loaded {hours} archived hour(s) from {root}, {total} new rows")
 
 
 def _runs(days: list[date], max_len: int) -> list[tuple[date, date]]:
