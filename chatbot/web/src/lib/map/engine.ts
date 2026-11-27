@@ -103,6 +103,9 @@ const OSM_HEIGHTS_DAY = [0, "#dedbd5", 12, "#d2cec6", 40, "#c2bdb4"]
 const PLAIN_HEIGHTS_NIGHT = [0, "#17253c", 15, "#1d2e4a", 40, "#263b5c"]
 const PLAIN_DAY = "hsl(35, 8%, 85%)"
 const PLAIN_FROM_ZOOM = 13.6
+// Solid: a see-through extrusion is drawn twice (depth first, then colour), which made a view over
+// the whole city a third slower on an ordinary laptop's graphics (20.6 ms a frame against 15.6).
+const CITY_OPACITY = 1
 
 // ---------------------------------------------------------------------------------------------
 // What React shows: layers with their legends, the 3D city, the registers and the time-lapse.
@@ -1360,13 +1363,13 @@ function cityPaint(id: string, opacity: number): any {
         : { night: byHeight(PLAIN_HEIGHTS_NIGHT), day: PLAIN_DAY },
     }),
     "fill-extrusion-height": ["get", "h"], "fill-extrusion-base": ["coalesce", ["get", "b"], 0],
-    "fill-extrusion-opacity": ["interpolate", ["linear"], ["zoom"], from, 0, from + 0.6, CITY.on ? opacity : opacity - 0.04],
+    "fill-extrusion-opacity": ["interpolate", ["linear"], ["zoom"], from, 0, from + 0.6, opacity],
   }
 }
 
 // Paint the buildings for "Heights and the 3D city" being on or off.
 function paintCityLayers() {
-  for (const [id, opacity] of [["city3d::fill", 0.92], ["city3d::ghost", 0.28]] as const) {
+  for (const [id, opacity] of [["city3d::fill", CITY_OPACITY], ["city3d::ghost", 0.28]] as const) {
     if (!map.getLayer(id)) continue
     for (const [k, v] of Object.entries(cityPaint(id, opacity))) map.setPaintProperty(id, k, v)
   }
@@ -1381,7 +1384,7 @@ function addCityLayer() {
   // street's glow, which lies on the ground).
   const before = map.getStyle().layers.find((l) => l.id.includes("::") && !l.id.startsWith("city3d::") && !l.id.endsWith("::street-glow"))?.id
   const tiles = { source: CITY_SRC, "source-layer": CITY_LAYER, minzoom: CITY_DRAW_ZOOM } as const
-  if (!map.getLayer("city3d::fill")) map.addLayer({ id: "city3d::fill", type: "fill-extrusion", ...tiles, paint: cityPaint("city3d::fill", 0.92) }, before)
+  if (!map.getLayer("city3d::fill")) map.addLayer({ id: "city3d::fill", type: "fill-extrusion", ...tiles, paint: cityPaint("city3d::fill", CITY_OPACITY) }, before)
   if (!map.getLayer("city3d::ghost")) map.addLayer({ id: "city3d::ghost", type: "fill-extrusion", ...tiles, filter: idsIn([]), paint: cityPaint("city3d::ghost", 0.28) }, before)
   weatherHooks.place() // the 3D city stands under the weather, with the ground
   hideBaseBuildings()
