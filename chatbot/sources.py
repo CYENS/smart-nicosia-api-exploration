@@ -40,8 +40,8 @@ class Source:
         return asdict(self)
 
 
-GROUPS = ("City sensors", "Mobility", "Weather", "Map, places and routes", "Buildings", "Energy",
-          "This twin", "Figures the scenarios assume")
+GROUPS = ("City sensors", "Mobility", "Weather", "Hazards", "Map, places and routes", "Buildings",
+          "Energy", "This twin", "Figures the scenarios assume")
 
 SOURCES: tuple[Source, ...] = (
     Source(
@@ -352,6 +352,44 @@ SOURCES: tuple[Source, ...] = (
         "Figures the scenarios assume",
         url="https://www.pnnl.gov/main/publications/external/technical_reports/PNNL-21036.pdf",
         refresh="A published study"),
+    Source(
+        "emsc", "Earthquakes (EMSC, with the Geological Survey Department)", "EMSC",
+        "European-Mediterranean Seismological Centre (EMSC), carrying the solutions of the Cyprus "
+        "Geological Survey Department and other agencies",
+        "Earthquakes around Cyprus minutes after they happen: when, where, how strong and how deep, "
+        "and how many people reported feeling each one, and where (felt reports, CC BY 4.0)",
+        "Hazards", url="https://www.seismicportal.eu/fdsn-wsevent.html",
+        licence="Free with credit to EMSC and the agency; felt reports CC BY 4.0",
+        licence_url="https://creativecommons.org/licenses/by/4.0/",
+        refresh="Every 5 minutes while a page is open, every 15 otherwise",
+        credit="Earthquakes: EMSC, GSD Cyprus"),
+    Source(
+        "meteoalarm", "Weather warnings (Meteoalarm)", "Meteoalarm",
+        "Cyprus Department of Meteorology, through EUMETNET's Meteoalarm",
+        "The official weather warnings for Cyprus: yellow, orange or red, for heat, wind, rain, "
+        "thunderstorms and more, with their hours and their own words",
+        "Hazards", url="https://meteoalarm.org/en/live/region/CY",
+        licence="Meteoalarm's terms (equivalent to CC BY 4.0)",
+        licence_url="https://meteoalarm.org/en/live/page/redistribution-of-data",
+        refresh="Every 15 minutes",
+        credit="Warnings: Department of Meteorology, Meteoalarm"),
+    Source(
+        "effis", "Fire danger (EFFIS)", "EFFIS",
+        "European Forest Fire Information System, Copernicus Emergency Management Service",
+        "The fire danger forecast over the island and the Nicosia district (the fire weather index, "
+        "from low to very extreme), for today, the next two days and past days",
+        "Hazards", url="https://forest-fire.emergency.copernicus.eu/apps/effis_current_situation/",
+        licence="Copernicus: free with credit",
+        refresh="Every 3 hours; a past day once, then kept",
+        credit="Fire danger: EFFIS, Copernicus"),
+    Source(
+        "geoboundaries", "The island's and districts' outlines", "geoBoundaries",
+        "geoBoundaries (William & Mary geoLab), from OpenStreetMap",
+        "The outline of Cyprus and of its six districts: a warning's area, a quake's district and "
+        "the district fire danger is read over",
+        "Hazards", url="https://www.geoboundaries.org/",
+        licence=ODBL, licence_url="https://opendatacommons.org/licenses/odbl/",
+        refresh="A copy kept with the twin"),
 )
 
 BY_ID: dict[str, Source] = {s.id: s for s in SOURCES}
@@ -404,6 +442,7 @@ TOOL_SOURCES: dict[str, tuple[str, ...]] = {
     "measured_stations": ("met_stations", "eea_air", "twin_memory", "open_meteo"),
     "compare_with_reference": ("smart_nicosia", "eea_air", "met_stations", "twin_memory"),
     "get_grid": ("tso_grid", "oil_co2", "twin_memory", "openstreetmap"),
+    "get_hazards": ("emsc", "meteoalarm", "effis", "geoboundaries", "twin_memory"),
 }
 
 _tool: ContextVar[str | None] = ContextVar("source_tool", default=None)
