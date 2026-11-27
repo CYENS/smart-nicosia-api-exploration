@@ -5,6 +5,7 @@
 import { FlaskConicalIcon } from "lucide-react"
 
 import "@/components/scenarios/lighting"
+import "@/components/scenarios/waste-sections"
 import { ScenarioLab, rememberLabOpener } from "@/components/scenarios/lab"
 import { ScenarioSwipe } from "@/components/scenarios/parts"
 import { matches, registerSearchProvider, type SearchItem } from "@/lib/registries/search"

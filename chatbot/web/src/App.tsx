@@ -36,7 +36,6 @@ import "@/lib/scenarios" // the Scenario lab: its workspace, split map, sections
 // After the environment: "What's here?" is the spot's menu item and icon, and its card holds the
 // environment's "What's it like here?" too.
 import "@/lib/here" // "What's here?": any point of the map, its card, the click, press and Ctrl K
-import "@/components/scenarios/waste-sections" // the waste scenario's rounds and bins in the Scenario lab
 import { useWorkspace, useWorkspaceSide } from "@/lib/registries/workspaces"
 import { useView } from "@/lib/view"
 

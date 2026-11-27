@@ -478,3 +478,36 @@ def test_the_decision_brief_speaks_of_bins_not_lamps(tmp_path, offline):
     assert "own pickups, replayed on the same model" in html and "lamp" not in html.lower()
     assert "Safety check" not in html and "out of sample" in html and "in sample" in html
     assert "—" not in html and "–" not in html
+
+
+def test_the_lab_sections_data_links_to_the_map(tmp_path, offline):
+    """What chatbot/web/src/components/scenarios/waste-sections.tsx reads: every bin a row flies
+    to is a feature of the run's layers, the drawn day's trips are the route layer's lines, and
+    each day adds up."""
+    ctx = waste_ctx(tmp_path)
+    res, _ = run(WASTE, ctx, {"policy": "fixed", "rounds_per_week": 2}, Period.parse("last_30_days", ctx.now()))
+    d = res.details
+    on_map = {f["properties"]["id"] for layer in res.layers.values() for f in layer["features"]}
+    assert set(d) >= {"summary", "days", "route_date", "watch", "bigger"}
+    for side in ("scenario", "baseline"):
+        assert d["days"][side], side
+        for day in d["days"][side]:
+            assert day["stops"] == sum(len(t["stops"]) for t in day["trips"])
+            assert day["trucks"] == len({t["truck"] for t in day["trips"]})
+            assert [t["n"] for t in day["trips"]] == list(range(1, len(day["trips"]) + 1))
+            for t in day["trips"]:
+                etas = [s["eta"] for s in t["stops"]]
+                assert etas == sorted(etas) and t["start"] <= etas[0] and t["end"] >= etas[-1]
+                assert {s["id"] for s in t["stops"]} <= on_map
+                assert all(0 <= s["level"] <= 100 for s in t["stops"])
+    # fixed twice a week: every modelled bin on every round day
+    assert all(day["stops"] == res.details["summary"]["bins_modelled"] for day in d["days"]["scenario"])
+    drawn = next(x for x in d["days"]["scenario"] if x["date"] == d["route_date"])
+    assert drawn["stops"] == max(x["stops"] for x in d["days"]["scenario"])
+    route_ids = {f["properties"]["id"] for f in res.layers["route"]["features"]}
+    assert route_ids == {f"trip-{drawn['date']}-{t['n']}" for t in drawn["trips"]}
+    hours = [w["full_hours_baseline"] for w in d["watch"]]
+    assert hours == sorted(hours, reverse=True) and all(h > 0 for h in hours)
+    assert {w["id"] for w in d["watch"]} | {b["id"] for b in d["bigger"]} <= on_map
+    assert all(b["need_l"] > b["volume_l"] for b in d["bigger"])
+    assert sum(d["summary"]["not_modelled"].values()) + d["summary"]["bins_modelled"] == len(FIX["bins"])
