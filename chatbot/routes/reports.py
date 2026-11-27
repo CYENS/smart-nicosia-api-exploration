@@ -27,7 +27,7 @@ def _item(r: RoadReport, now) -> dict:
             "color": KIND_COLORS[r.kind], "source": r.source, "status": status,
             "since": local_text(r.since), "until": local_text(r.until),
             "age": when_text(r, status, now) if r.source == "traffic_events" else age_words(r.since, now),
-            "old": bool(r.since and now - r.since > OLD)}
+            "old": bool(r.since and now - r.since > OLD), "lon": r.lon, "lat": r.lat}
 
 
 def summary(reports: list[RoadReport], now) -> dict:
@@ -68,4 +68,7 @@ def road_reports(request: Request, at: str | None = AT) -> JSONResponse:
                      "label": label(when) if when else None, "feeds": feeds, "legend": LEGEND,
                      "kinds": {k: {"label": v[0], "one": v[1], "many": v[2], "color": KIND_COLORS[k]} for k, v in KINDS.items()},
                      **summary(reports, now)}}
-    return JSONResponse(body, headers={"Cache-Control": "max-age=60" if when is None else "max-age=300"})
+    # A feed not read yet (the server just started) is asked again soon: never keep that answer.
+    waiting = any(f.get("state") == "waiting" for f in feeds.values())
+    cache = "no-store" if waiting or got["status"] == "unavailable" else "max-age=60" if when is None else "max-age=300"
+    return JSONResponse(body, headers={"Cache-Control": cache})

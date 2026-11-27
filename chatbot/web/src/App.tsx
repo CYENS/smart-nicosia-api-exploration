@@ -31,6 +31,7 @@ import { useLayout } from "@/lib/layout"
 import { startCredits } from "@/lib/map/credits"
 import { initMap, setInsets } from "@/lib/map/engine"
 import "@/lib/mobility" // buses, stops and road speeds: their workspace, kinds, layers and commands
+import "@/lib/reports" // road reports: closures, jams, accidents and roadworks on the map, the Traffic card and Layers
 import "@/lib/watch" // the incident inbox, its Layers row, marks on the clock, toasts from the live stream
 import "@/lib/environment" // sun, shade, terrain, air, noise and weather: workspace, spot, layers
 import "@/lib/streets" // speed limits, slow zones, signals, crossings, cycleways, bus lanes, cameras
