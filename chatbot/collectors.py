@@ -15,21 +15,28 @@ collectors never poll at once: a pass holds the database's run lock, and the oth
 
 from __future__ import annotations
 
+import inspect
 import logging
+import os
+import re
+import subprocess
 import threading
 import time
 from dataclasses import replace
 from datetime import datetime, timedelta, timezone
-from typing import TYPE_CHECKING
+from pathlib import Path
+from typing import TYPE_CHECKING, Any
 
 import duckdb
 
 from collector import controls, db, scheduler, sun
-from collector.catalog import GROUPS, JOB_INFO, UNRECORDED
+from collector.catalog import COMMON_SETTINGS, GROUPS, JOB_INFO, SETTING_LABELS, UNRECORDED
 from collector.config import Config, load_config
 from collector.http import Client
-from collector.jobs import JOBS
+from collector.jobs import JOBS, KNOWN_COUNTS
+from collector.status import TABLES as STATUS_TABLES
 from chatbot.memory import Unavailable
+from chatbot.settings import ROOT
 from chatbot.sources import SOURCES
 
 if TYPE_CHECKING:
@@ -40,14 +47,80 @@ log = logging.getLogger(__name__)
 SOURCE_BY_ID = {s.id: s for s in SOURCES}
 RECENT = timedelta(minutes=15)  # a run this recent means some collector is at work
 RETRY_S = 5.0  # how long a Run now waits when another collector holds the database
+RUN_NOW_EVERY_S = 60.0  # Run now, once a minute per job at most
+# Where "View the code" links point (a constant: never read from git, whose remote can hold a token).
+REPO_URL = "https://github.com/CYENS/smart-nicosia-api-exploration"
+TIME_COLUMNS = {table: col for table, col in STATUS_TABLES if col}
 
 
 class UnknownJob(KeyError):
     pass
 
 
+class TooSoon(Exception):
+    """Run now was asked for the same job less than RUN_NOW_EVERY_S ago."""
+
+    def __init__(self, title: str, seconds: int):
+        super().__init__(f"{title} was asked to run less than a minute ago; "
+                         f"try again in {seconds} s")
+        self.seconds = seconds
+
+
 def _iso(t: datetime | None) -> str | None:
     return t.astimezone(timezone.utc).isoformat(timespec="seconds") if t else None
+
+
+def shown_path(path: Path) -> str:
+    """A file's path as the page shows it: from the project root, never the whole disk path
+    (that would name the account and the folders above the project)."""
+    try:
+        return Path(path).resolve().relative_to(ROOT.resolve()).as_posix()
+    except ValueError:
+        return Path(path).name
+
+
+def _shown_value(v: Any) -> Any:
+    if isinstance(v, Path):
+        return shown_path(v)
+    if isinstance(v, tuple):
+        return list(v)
+    return v
+
+
+def _git(*args: str) -> subprocess.CompletedProcess | None:
+    """git in the project, with fixed arguments only (nothing from a request reaches it)."""
+    try:
+        return subprocess.run(["git", *args], cwd=ROOT, capture_output=True, text=True,
+                              timeout=3)
+    except (OSError, subprocess.SubprocessError):
+        return None
+
+
+def running_commit() -> str | None:
+    """The commit this server runs: CHATBOT_COMMIT when a build has no .git, else git's HEAD."""
+    sha = (os.environ.get("CHATBOT_COMMIT") or "").strip()
+    if not sha:
+        out = _git("rev-parse", "HEAD")
+        sha = out.stdout.strip() if out and out.returncode == 0 else ""
+    return sha if re.fullmatch(r"[0-9a-f]{7,40}", sha) else None
+
+
+def code_location(cls: type) -> dict:
+    """Where a job's code is: its file from the project root, the line its class starts on, and
+    a GitHub link pinned to the running commit. Says when that commit isn't on GitHub yet, or
+    when the file has changed since it, because the link would then show other lines."""
+    path = shown_path(Path(inspect.getsourcefile(cls) or ""))
+    line = inspect.getsourcelines(cls)[1]
+    commit = running_commit()
+    on_github = changed = None
+    if commit:
+        out = _git("branch", "-r", "--contains", commit)
+        on_github = bool(out and out.returncode == 0 and out.stdout.strip())
+        out = _git("diff", "--quiet", commit, "--", path)
+        changed = bool(out and out.returncode == 1)
+    return {"path": path, "line": line, "commit": commit[:12] if commit else None,
+            "on_github": on_github, "changed_since_commit": changed,
+            "url": f"{REPO_URL}/blob/{commit or 'main'}/{path}#L{line}"}
 
 
 def _source(source_id: str) -> dict:
@@ -75,6 +148,7 @@ class Collectors:
         self._pass_now = True
         self._passing = False
         self._last_pass_end: datetime | None = None
+        self._asked_at: dict[str, float] = {}  # monotonic time of each job's last Run now
         self.current: str | None = None  # the job running in this process right now
         self.current_since: datetime | None = None
         self.last_pass: dict = {}
@@ -234,19 +308,115 @@ class Collectors:
         controls.update(self.path, lambda c: c.jobs.pop(name, None))
 
     def run_now(self, name: str) -> str:
-        """Queue a job to run at once, whether or not it is due or switched on."""
+        """Queue a job to run at once, whether or not it is due or switched on. Once a minute
+        per job at most: Run now must not be a way to hammer the city's API."""
         self._known(name)
         with self._cv:
             if name == self.current:
                 return "running"
-            if name not in self._queue:
-                self._queue.append(name)
+            if name in self._queue:
+                return "queued"
+            waited = time.monotonic() - self._asked_at.get(name, float("-inf"))
+            if waited < RUN_NOW_EVERY_S:
+                raise TooSoon(JOB_INFO[name].title if name in JOB_INFO else name,
+                              int(RUN_NOW_EVERY_S - waited) + 1)
+            self._asked_at[name] = time.monotonic()
+            self._queue.append(name)
             self._cv.notify_all()
         return "queued"
 
     def _known(self, name: str) -> None:
         if name not in JOBS or name not in self.base.jobs:
             raise UnknownJob(name)
+
+    # -- one job in depth ("How it's collected") ---------------------------------------------
+
+    def how(self, name: str, now: datetime | None = None) -> dict:
+        """One job in two layers. The plain words come from collector/catalog.py. Everything
+        technical is read now, never written twice: the job class's docstring and place in the
+        code, what it declares (calls, tables, settings), the settings in force, and the tables
+        and runs in the database. Only the listed settings are shown, never the environment,
+        and paths are shown from the project root."""
+        self._known(name)
+        now = now or db.utcnow()
+        job, info = JOBS[name], JOB_INFO[name]
+        cfg = self.config()
+        jc, base = cfg.jobs[name], self.base.jobs[name]
+
+        tables: list[dict] = []
+        runs: list[dict] = []
+        counts: dict[str, int] = {}
+        store_note = None
+        try:
+            with self.memory.reading(timeout=2.0) as con:
+                counts = dict(con.execute(
+                    "SELECT type, count(*) FROM devices WHERE in_inventory GROUP BY type"
+                ).fetchall())
+                known = {r[0] for r in con.execute(
+                    "SELECT table_name FROM information_schema.tables").fetchall()}
+                for t in job.writes:
+                    if t not in known:  # names come from the code, and must exist besides
+                        continue
+                    cols = con.execute(
+                        """SELECT column_name, data_type FROM information_schema.columns
+                           WHERE table_name = ? ORDER BY ordinal_position""", [t]).fetchall()
+                    entry = {"name": t, "columns": [{"name": c, "type": ty} for c, ty in cols],
+                             "rows": con.execute(f'SELECT count(*) FROM "{t}"').fetchone()[0],
+                             "oldest": None, "newest": None,
+                             "shared_with": [JOB_INFO[o].title for o, oj in JOBS.items()
+                                             if o != name and t in oj.writes and o in JOB_INFO]}
+                    col = TIME_COLUMNS.get(t)
+                    if col:
+                        lo, hi = con.execute(
+                            f'SELECT min("{col}"), max("{col}") FROM "{t}"').fetchone()
+                        entry["oldest"], entry["newest"] = _iso(lo), _iso(hi)
+                    tables.append(entry)
+                runs = [
+                    {"started": _iso(s), "status": st, "seconds": round((f - s).total_seconds(), 1)
+                     if f and s else None, "requests": rq, "rows": rw, "message": m or None}
+                    for s, f, st, rq, rw, m in con.execute(
+                        """SELECT started_at, finished_at, status, requests, rows_written, message
+                           FROM job_runs WHERE job = ? ORDER BY started_at DESC LIMIT 10""",
+                        [name]).fetchall()]
+        except FileNotFoundError:
+            store_note = "the twin's memory is empty: nothing has been recorded yet"
+        except Unavailable as e:
+            store_note = str(e)
+        except duckdb.Error as e:
+            store_note = f"the twin's memory can't be read: {_first_line(e)}"
+
+        budget = {b.job: b for b in scheduler.estimate_budget(cfg, counts or None, now)}[name]
+        settings = [
+            {"key": "every_minutes", "label": SETTING_LABELS["every_minutes"],
+             "value": jc.every_minutes, "default": base.every_minutes},
+            {"key": "enabled", "label": SETTING_LABELS["enabled"], "value": jc.enabled,
+             "default": base.enabled},
+            {"key": "night_only", "label": SETTING_LABELS["night_only"], "value": jc.night_only,
+             "default": base.night_only},
+        ] + [{"key": k, "label": SETTING_LABELS[k], "value": _shown_value(getattr(cfg, k)),
+              "default": None} for k in (*job.settings, *COMMON_SETTINGS)]
+        address = cfg.base_url if job.nokia else cfg.nap_url
+        return {
+            "name": name,
+            "title": info.title,
+            "summary": info.summary,
+            "how": info.how,
+            "records": info.records,
+            "uses": info.uses,
+            "source": _source(info.source),
+            "doc": inspect.getdoc(type(job)) or None,
+            "code": code_location(type(job)),
+            "calls": [{"endpoint": e, "method": "GET",
+                       "url": f"{address}/{e}" if job.nokia else address} for e in job.calls],
+            "cost": {"per_run": round(budget.requests_per_run, 1),
+                     "per_day": round(budget.requests_per_day),
+                     "why": job.cost_note(counts or KNOWN_COUNTS, cfg),
+                     "counts_against_budget": job.nokia},
+            "settings": settings,
+            "tables": tables,
+            "runs": runs,
+            "store_note": store_note,
+        }
 
     # -- the report --------------------------------------------------------------------------
 
@@ -258,7 +428,7 @@ class Collectors:
         with self._cv:
             current, current_since, queued = self.current, self.current_since, list(self._queue)
 
-        store: dict = {"path": str(self.memory.path), "status": "ok"}
+        store: dict = {"path": shown_path(self.memory.path), "status": "ok"}
         last: dict = {}
         per_job_24h: dict[str, int] = {}
         counts: dict[str, int] = {}
@@ -325,6 +495,7 @@ class Collectors:
             state = ("running" if name == current else "queued" if name in queued else None)
             jobs.append({
                 "name": name, **info.public(), "source": _source(info.source),
+                "tables": list(JOBS[name].writes),
                 "enabled": jc.enabled, "every_minutes": jc.every_minutes,
                 "night_only": jc.night_only,
                 "defaults": {"enabled": base.enabled, "every_minutes": base.every_minutes,
