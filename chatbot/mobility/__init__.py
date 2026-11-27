@@ -24,6 +24,7 @@ from collections import Counter
 from datetime import datetime, timezone
 
 from chatbot.mobility import planner
+from chatbot.mobility.facilities import Facilities
 from chatbot.mobility.gtfs import Timetable, TimetableSource, line_order
 from chatbot.mobility.realtime import Fleet, Snapshot
 from chatbot.mobility.roads import Roads, slowest
@@ -63,6 +64,9 @@ class Mobility:
         self.roads = Roads(lambda url: self.fetch(url).decode("utf-8"), memory=memory,
                            router=router, now=self.now, cache_dir=cache_dir)
         self.memory = memory
+        # Where people park, charge and hire: the national inventories and Nextbike's live bikes.
+        self.facilities = Facilities(lambda url: self.fetch(url).decode("utf-8"), now=self.now,
+                                     cache_dir=cache_dir)
         self._summary: tuple[float, dict] | None = None
         self._summary_running = False
         self.search_cache: dict = {}  # chatbot/mobility/entities.py keeps its search items here
@@ -164,5 +168,7 @@ class Mobility:
 
 # The mobility kinds of the twin's entities (bus, bus_stop, bus_line, road_segment).
 from chatbot.mobility import entities as _kinds  # noqa: E402,F401
+# Car parks, park and ride, chargers, bike stations, scooter zones and racks.
+from chatbot.mobility import facility_kinds as _facility_kinds  # noqa: E402,F401
 
 __all__ = ["Mobility", "TimetableLoading", "planner", "fetch_bytes"]
