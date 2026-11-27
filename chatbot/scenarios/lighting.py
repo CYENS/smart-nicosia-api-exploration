@@ -730,7 +730,7 @@ def evaluate(data: Data, params: dict) -> Result:
                    "meta": {"title": "What each lamp saves a year", "legend": dict(SAVING_BANDS),
                             "variant": None, "value_field": "kwh_saved", "unit": "kWh", "geometry": "point"}},
         "safety": {"type": "FeatureCollection", "features": street_feats + flag_feats,
-                   "meta": {"title": "Flagged by the safety check",
+                   "meta": {"title": "Flagged by the safety check", "show": True,
                             "legend": {**{v[0]: v[1] for v in SAFETY_STATES.values()}, "Flagged street": STREET_COLOR},
                             "variant": None, "value_field": "lamp_hours", "unit": "lamp-hours", "geometry": "mixed"}},
     }

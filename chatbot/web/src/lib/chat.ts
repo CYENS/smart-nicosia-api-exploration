@@ -13,6 +13,7 @@ import { closeInspector, inspectId, inspectingRef } from "@/lib/inspector"
 import { useLayout } from "@/lib/layout"
 import { applyMapUi, mapContext, removeLayer, resetForNewChat } from "@/lib/map/engine"
 import { turnCard } from "@/lib/registries/turn-cards"
+import { openScenarioRun } from "@/lib/scenarios/open"
 import { applyViewCommand, viewContext } from "@/lib/view"
 import type { VisualPayload } from "@/lib/visual"
 
@@ -193,6 +194,8 @@ function handleEvent(turnId: string, ev: any) {
         applyViewCommand(ev)
       } else if (ev.action === "inspect") {
         inspectId(String(ev.id), { at: ev.at ?? undefined, fly: ev.fly !== false })
+      } else if (ev.action === "scenario") {
+        openScenarioRun(String(ev.run), ev.compare ? String(ev.compare) : null)
       } else if (turnCard(ev.action)) {
         updateTurn(turnId, (t) => ({ ...t, parts: [...t.parts, { kind: "card", card: ev.action, data: ev }] }))
       } else {
