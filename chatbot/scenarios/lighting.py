@@ -29,6 +29,7 @@ from difflib import SequenceMatcher
 from pathlib import Path
 from typing import Any
 
+from chatbot.energy import carbon, quarter_shares
 from chatbot.geo import haversine_m
 from chatbot.scenarios import lighting_model as lm
 from chatbot.scenarios.base import Period, Result, Scenario, ScenarioContext, ScenarioError, kpi
@@ -121,12 +122,15 @@ PARAMS = {
             "x-source": "The lamps' own records: 101 lamps carry 0.20 EUR/kWh, 21 carry 0.32, the "
                         "other 118 none.",
             "description": "What a kWh costs the city."},
-        "co2_kg_kwh": {
-            "type": "number", "default": 0.55, "minimum": 0.47, "maximum": 0.63, "x-step": 0.01,
-            "x-unit": "kg CO2/kWh", "x-assumption": True, "title": "Grid emission factor",
-            "x-source": "EAC's 2023 energy mix: 0.627 kg per kWh sold. Ember's 2025 data: about "
-                        "0.49, falling as solar grows.",
-            "description": "CO2 emitted for each kWh the lamps draw from the Cyprus grid."},
+        "co2_conventional_kg_kwh": {
+            "type": "number", "default": 0.70, "minimum": 0.65, "maximum": 0.78, "x-step": 0.01,
+            "x-unit": "kg CO2/kWh", "x-assumption": True, "title": "CO2 per kWh from the oil-fired stations",
+            "x-source": "Ember: just under 3 Mt of power-sector CO2 for about 4.2 TWh of fossil "
+                        "generation in 2023; heavy fuel oil burnt at about 40% efficiency gives the "
+                        "same. The share of the lamps' power those stations supply is measured each "
+                        "quarter hour (the Transmission System Operator).",
+            "description": "CO2 the island's oil-fired stations emit for each kWh they generate. Wind "
+                           "and solar count as none."},
         "dim_power_floor_pct": {
             "type": "integer", "default": 10, "minimum": 0, "maximum": 25, "x-step": 1, "x-unit": "%",
             "x-assumption": True, "title": "Power kept when dimmed",
@@ -165,6 +169,8 @@ CAMERA_ON_STREET_M = 250
 CAMERA_ANY_M = 100
 FOOTFALL_DAYS = 30
 MIN_COUNTED_DAYS = 7  # a camera that counted on fewer days of the window doesn't measure its street
+GRID_MIN_DAYS = 2  # days of the grid's record that make its night shares measured
+GRID_WIDER_DAYS = 30  # when the period holds too few, the last 30 days of the record are used
 
 
 # -- reading the data --------------------------------------------------------------------------
@@ -199,6 +205,25 @@ class Data:
     cameras: list[dict] = field(default_factory=list)
     street_cameras: dict[str, list[dict]] = field(default_factory=dict)  # every camera on a street's lamps
     memo: dict = field(default_factory=dict)
+    # The oil-fired share of the island's demand by minute of the local day (0, 15, ...), the
+    # median over `grid_days` days the twin recorded the grid (chatbot/energy).
+    grid_share: dict[int, float] = field(default_factory=dict)
+    grid_days: int = 0
+
+    def oil_share(self, slots: list[float], watts: list[float]) -> tuple[float, bool]:
+        """The share of the lamps' power the oil-fired stations supply through a night, weighted
+        by what the lamps draw each quarter hour, and whether it was measured (else the yearly
+        fossil share stands in)."""
+        if self.grid_days >= GRID_MIN_DAYS and self.grid_share:
+            num = den = 0.0
+            for t, w in zip(slots, watts):
+                lt = datetime.fromtimestamp(t, TZ)
+                share = self.grid_share.get(lt.hour * 60 + lt.minute - lt.minute % 15)
+                if share is not None and w > 0:
+                    num, den = num + w * share, den + w
+            if den > 0:
+                return num / den, True
+        return carbon.YEARLY_FOSSIL_SHARE, False
 
     def street_people(self, street: str, t_from: str, t_to: str) -> float | None:
         """People an hour on a street between two clock times: its busiest camera's count, or
@@ -534,10 +559,18 @@ def prepare(ctx: ScenarioContext, period: Period) -> Data:
     modelled = [s for s in schedules.values() if s.watts]
     lit_now = statistics.mean(
         (n.sunrise + s.off_min * 60 - n.sunset - s.on_min * 60) / 3600 for s in modelled for n in nights_p[1:])
-    return Data(period, lamps, schedules, city, year, profile,
+    data = Data(period, lamps, schedules, city, year, profile,
                 {"full": full, "holdout": holdout, "mid": mid}, [k for k, s in schedules.items() if not s.watts],
                 notes, len(nights_p) - 1, lit_now, cameras,
                 {k: list(v.values()) for k, v in street_cameras.items()})
+    # The grid's oil-fired share through the night, as the twin recorded it over the period, or
+    # over the last 30 days when the period holds too little of it: it weights the lamps' CO2.
+    data.grid_share, data.grid_days = quarter_shares(ctx.memory, period.start, period.end)
+    if data.grid_days < GRID_MIN_DAYS:
+        wider = quarter_shares(ctx.memory, period.end - timedelta(days=GRID_WIDER_DAYS), period.end)
+        if wider[1] > data.grid_days:
+            data.grid_share, data.grid_days = wider
+    return data
 
 
 # -- a policy over a year ----------------------------------------------------------------------
@@ -682,7 +715,7 @@ def _street_line(points: list[tuple[float, float]]) -> list[list[float]]:
 
 def evaluate(data: Data, params: dict) -> Result:
     ph = physical(data, params)
-    price, factor = params["price_eur_kwh"], params["co2_kg_kwh"]
+    price, factor = params["price_eur_kwh"], params["co2_conventional_kg_kwh"]
     floor = params["dim_power_floor_pct"] / 100
     share = floor + (1 - floor) * params["dim_level"] / 100  # a dimmed lamp's share of full power
     led = params["led_power_pct"] / 100
@@ -703,10 +736,20 @@ def evaluate(data: Data, params: dict) -> Result:
     flagged = {lid: h for lid, h in ph["lamps"].items() if h["reasons"]}
     unknown = [lid for lid, h in ph["lamps"].items()
                if h["reduced_h"] > 0 and data.street_people(data.lamps[lid].street, "01:00", "01:30") is None]
+    # CO2: each quarter hour of the night at the grid's oil-fired share then, as the lamps draw.
+    base_w = [row[0] + row[1] for row in ph["profile"]]
+    scen_w = [row[2] + row[3] * led + (row[4] + row[5] * led) * share + row[6] for row in ph["profile"]]
+    oil_b, measured = data.oil_share(ph["slots"], base_w)
+    oil_s, _ = data.oil_share(ph["slots"], scen_w)
+    kg_b, kg_s = oil_b * factor, oil_s * factor
+    co2_note = (f"At the grid's carbon while the lamps burn: {kg_b:.2f} kg per kWh, the oil-fired share "
+                f"measured over {data.grid_days} days (Transmission System Operator)" if measured else
+                f"The twin hasn't recorded the grid yet: the 2023 yearly fossil share "
+                f"({carbon.YEARLY_FOSSIL_SHARE:.0%}) stands in, {kg_b:.2f} kg per kWh")
     kpis = [
         kpi("energy", "Energy a year", "MWh", e_base / 1000, e_scen / 1000, digits=1),
         kpi("cost", "Electricity cost a year", "EUR", e_base * price, e_scen * price, digits=0),
-        kpi("co2", "CO2 a year", "t", e_base * factor / 1000, e_scen * factor / 1000, digits=2),
+        kpi("co2", "CO2 a year", "t", e_base * kg_b / 1000, e_scen * kg_s / 1000, digits=2, note=co2_note),
         kpi("safety", "Dimmed or dark lamp-hours at flagged lamps", "lamp-hours a year", 0.0,
             sum(h["reduced_h"] for h in flagged.values()), digits=0,
             note=f"{len(flagged)} lamps near night pedestrians, a bus stop or a dangerous building"),
@@ -835,8 +878,19 @@ def evaluate(data: Data, params: dict) -> Result:
                      for lid in cands],
         "wattage_classes": [{"watts": w, "lamps": n} for w, n in sorted(watts.items())],
         "city_pattern": data.city,
+        "grid": {"oil_share_lit_hours": round(oil_b, 3), "kg_co2_kwh": round(kg_b, 3),
+                 "kg_co2_kwh_scenario": round(kg_s, 3), "measured": measured, "days": data.grid_days},
     }
     notes = _notes(data, params, ph, cands, summary)
+    if measured:
+        notes.append(f"CO2 weights each quarter hour of the night by the share of the island's demand "
+                     f"the oil-fired stations met then, measured over {data.grid_days} days: "
+                     f"{oil_b:.0%} while the lamps burn, so a kWh they draw emits about {kg_b:.2f} kg, "
+                     "more than a yearly average would say, since the sun is down.")
+    else:
+        notes.append(f"The twin has no record of the grid for this period, so the 2023 yearly fossil "
+                     f"share ({carbon.YEARLY_FOSSIL_SHARE:.0%}) stands in for the night's; at night "
+                     "it is higher, so the CO2 is likely understated.")
     return Result(kpis=kpis, layers=layers, series=series, charts=charts, details=details,
                   sources=list(LIGHTING.sources), notes=notes)
 
@@ -907,7 +961,8 @@ class Lighting(Scenario):
     params = PARAMS
     main_kpi = "cost"
     today = "as the lamps measured it"
-    sources = ("smart_nicosia", "twin_memory", "bus_timetable", "registers", "grid_co2", "led_retrofit")
+    sources = ("smart_nicosia", "twin_memory", "bus_timetable", "registers", "tso_grid", "oil_co2",
+               "grid_co2", "led_retrofit")
     method = ("Each lamp's power at full light and its standby come from its own power readings; its "
               "switching times, as minutes after sunset and sunrise, from the readings either side of "
               "each switch, else from its energy counter across the silent day, else from the lamps "
@@ -915,9 +970,14 @@ class Lighting(Scenario):
               "of the year before the period ends, with that date's sunset, sunrise and civil twilight. "
               "A dimmed lamp draws a fixed share of full power plus the rest in step with its light. "
               "Night footfall is the hour-of-day average of the city's people-counting cameras over 30 "
-              "days. Every KPI's range spans every combination of the assumptions' plausible values.")
+              "days. CO2 weights each quarter hour of the night by the oil-fired stations' "
+              "share of the island's demand then, as the twin recorded it from the Transmission "
+              "System Operator. Every KPI's range spans every combination of the assumptions' "
+              "plausible values.")
 
     def validated(self, params: dict | None) -> dict:
+        if isinstance(params, dict) and "co2_kg_kwh" in params:  # a run saved before the grid was measured
+            params = {k: v for k, v in params.items() if k != "co2_kg_kwh"}
         out = super().validated(params)
         for a, b, what in (("dim_from", "dim_to", "dimming"), ("off_from", "off_to", "switch-off")):
             if TIMES.index(out[b]) <= TIMES.index(out[a]):

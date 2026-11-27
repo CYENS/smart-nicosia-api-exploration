@@ -75,6 +75,7 @@ async def lifespan(app: FastAPI):
     # The measuring stations: the Met file every 10 minutes, the EEA files every 20 (each comes
     # down again only once it has changed), recorded in the memory for the clock.
     agent.environment.measured.start()
+    agent.grid.start()  # the island's grid, read as the operator publishes it
     if settings.collect:
         start_collector(memory)
     log.info("twin's memory: %s (recording %s, full collection %s)", memory.path,
@@ -89,6 +90,7 @@ async def lifespan(app: FastAPI):
     app.state.city_tiles.stop()
     agent.watcher.stop()
     agent.environment.measured.stop()
+    agent.grid.stop()
     if memory.recorder is not None:
         memory.recorder.stop()
 
