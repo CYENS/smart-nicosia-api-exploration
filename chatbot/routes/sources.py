@@ -148,6 +148,17 @@ def _radar(agent) -> dict:
     return status("live", at, f"newest frame {_iso(newest)[11:16]}" if newest else None)
 
 
+def _hazards(feed: str) -> Callable:
+    """Earthquakes, warnings or fire danger, as the hazard feeds' last read left them."""
+    def probe(agent) -> dict:
+        hz = getattr(agent, "hazards", None)
+        if hz is None:
+            return status(None)
+        state, at, note = hz.feed_state(feed)
+        return status(state, at, note)
+    return probe
+
+
 PROBES: dict[str, Callable] = {
     "smart_nicosia": lambda a: _cached("city"),
     "open_meteo": lambda a: _cached("weather"),
@@ -158,6 +169,9 @@ PROBES: dict[str, Callable] = {
     "twin_memory": _memory,
     "overture": _overture,
     "rainviewer": _radar,
+    "emsc": _hazards("earthquakes"),
+    "meteoalarm": _hazards("warnings"),
+    "effis": _hazards("fire"),
 }
 
 
