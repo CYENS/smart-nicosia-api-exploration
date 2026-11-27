@@ -187,13 +187,16 @@ def run_pass(
     """Run every due job once (or only `only`; `force` ignores cadence and night windows).
 
     The admin page's controls (collector/controls.py) apply on top of `cfg`: its job switches
-    and cadences, and its pause, which skips a scheduled pass but not one asked for by name.
+    and cadences, and its pause, which skips a scheduled pass but not one asked for by name. A
+    pause that comes during a scheduled pass stops it before its next job.
     `on_job` hears each job's name as it starts, and None when the pass ends."""
     unknown = [j for j in only or [] if j not in JOBS]
     if unknown:
         raise ValueError(f"unknown job(s): {', '.join(unknown)}; known: {', '.join(JOBS)}")
-    page = controls.load(controls.controls_path(cfg))
-    if page.collecting is False and only is None and not force:
+    controls_file = controls.controls_path(cfg)
+    scheduled = only is None and not force
+    page = controls.load(controls_file)
+    if page.collecting is False and scheduled:
         log.info("collection is paused on the admin page; skipping this pass")
         return []
     cfg = controls.apply(cfg, page)
@@ -212,7 +215,10 @@ def run_pass(
         else:
             names = [n for n in due_jobs(cfg, runs, now) if only is None or n in only]
         summaries = []
-        for name in names:
+        for i, name in enumerate(names):
+            if scheduled and i and controls.load(controls_file).collecting is False:
+                log.info("collection was paused on the admin page; stopping before %s", name)
+                break
             if on_job:
                 on_job(name)
             summaries.append(run_job(cfg, JOBS[name], client, now_fn()))

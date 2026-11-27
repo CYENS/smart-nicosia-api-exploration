@@ -35,8 +35,9 @@ def test_every_job_is_described_and_names_a_known_source():
     assert set(JOB_INFO) == set(JOBS) == set(DEFAULT_JOBS)
     for name, info in JOB_INFO.items():
         assert info.source in ids, name
-        assert info.title and info.records and info.uses and info.tables, name
-        for text in (info.title, info.records, info.uses):
+        assert info.title and info.summary and info.records and info.uses and info.tables, name
+        assert len(info.summary) <= 60 and not info.summary.endswith("."), name  # one short line
+        for text in (info.title, info.summary, info.records, info.uses):
             assert "—" not in text and "–" not in text and "--" not in text, name
     assert set(UNRECORDED) <= ids
 
@@ -79,6 +80,20 @@ def test_a_pass_obeys_the_page(cfg, client, city):  # noqa: F811
                                      c.jobs.update(events={"enabled": False})))
     ran = {s.job for s in scheduler.run_pass(cfg, client=client, now_fn=lambda: NOW)}
     assert "events" not in ran and "alarms" in ran
+
+
+def test_a_pause_stops_a_pass_already_under_way(cfg, client, city):  # noqa: F811
+    path = controls.controls_path(cfg)
+    started = []
+
+    def pause_after_the_first(name):
+        if name and not started:
+            controls.update(path, lambda c: setattr(c, "collecting", False))
+        if name:
+            started.append(name)
+
+    ran = scheduler.run_pass(cfg, client=client, now_fn=lambda: NOW, on_job=pause_after_the_first)
+    assert [s.job for s in ran] == started == ["devices"]  # the job under way finishes; no more
 
 
 # -- the service ---------------------------------------------------------------------------------
