@@ -131,6 +131,43 @@ def _radar(agent) -> dict:
     return status("live", at, f"newest frame {_iso(newest)[11:16]}" if newest else None)
 
 
+def _inventories(*kinds: str):
+    """Park, charge and hire: when the twin read each inventory, and how old it is."""
+    def probe(agent) -> dict:
+        from chatbot.mobility.facilities import PLURALS
+        from chatbot.mobility.facility_kinds import day, facilities_of
+
+        fac = facilities_of(agent.entities)
+        if fac is None:
+            return status(None)
+        invs = [(k, fac.cached(k)) for k in kinds]
+        read = [(k, i) for k, i in invs if i is not None]
+        if not read:
+            return status("waiting", note="read when the layer is on or the assistant asks")
+        parts = []
+        for k, i in read:
+            when = f"last changed {day(i.updated)}" if i.updated else f"republished {day(i.published)}"
+            parts.append(f"{i.public()['in_nicosia']:,} {PLURALS[k]} in Greater Nicosia, {when}")
+        errors = [i.error for _, i in read if i.error]
+        return status("stale" if errors else "live", max(i.read_at for _, i in read),
+                      "; ".join(errors[:1] + parts))
+    return probe
+
+
+def _nextbike_live(agent) -> dict:
+    from chatbot.mobility.facility_kinds import facilities_of
+
+    fac = facilities_of(agent.entities)
+    b = fac.last_bikes() if fac is not None else None
+    if b is None:
+        return status("waiting", note="read while bike stations are on the map")
+    if b.status == "unavailable":
+        return status("unavailable", b.fetched_at, b.error)
+    total = sum(s["bikes"] for s in b.stations.values())
+    return status(b.status, b.feed_time or b.fetched_at,
+                  b.error if b.status == "stale" else f"{total:,} bikes at {len(b.stations):,} stations in Cyprus")
+
+
 PROBES: dict[str, Callable] = {
     "smart_nicosia": lambda a: _cached("city"),
     "open_meteo": lambda a: _cached("weather"),
@@ -141,6 +178,11 @@ PROBES: dict[str, Callable] = {
     "twin_memory": _memory,
     "overture": _overture,
     "rainviewer": _radar,
+    "nap_public_works": _inventories("car_park", "park_and_ride", "bike_rack"),
+    "nap_chargers": _inventories("charger"),
+    "nap_nextbike": _inventories("bike_station"),
+    "nap_bolt": _inventories("scooter_zone"),
+    "nextbike_live": _nextbike_live,
 }
 
 
