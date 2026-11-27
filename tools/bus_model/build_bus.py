@@ -381,7 +381,8 @@ def setup_render(res=(900, 560)) -> bpy.types.Object:
         scene.render.engine = "BLENDER_EEVEE"
     scene.render.resolution_x, scene.render.resolution_y = res
     scene.render.film_transparent = False
-    scene.render.image_settings.file_format = "PNG"
+    scene.render.image_settings.file_format = "JPEG"
+    scene.render.image_settings.quality = 88
     sh = scene.display.shading
     sh.light = "STUDIO"
     sh.color_type = "MATERIAL"
@@ -424,10 +425,10 @@ def previews(ob, mats, out: Path) -> None:
     out.mkdir(parents=True, exist_ok=True)
     cam = setup_render()
     recolour(mats, CPT)
-    shoot(cam, out / "blender-three-quarter.png", (14.5, -16.5, 7.0), lens=55)  # front, left (doors)
-    shoot(cam, out / "blender-side.png", (30, 0, 1.6), target=(0, 0, 1.6), ortho=13.5)
-    shoot(cam, out / "blender-rear.png", (-12.0, 17.0, 6.0), lens=55)
-    shoot(cam, out / "blender-top.png", (0, 0, 40), target=(0, 0, 0), ortho=13.5)
+    shoot(cam, out / "blender-three-quarter.jpg", (14.5, -16.5, 7.0), lens=55)  # front, left (doors)
+    shoot(cam, out / "blender-side.jpg", (30, 0, 1.6), target=(0, 0, 1.6), ortho=13.5)
+    shoot(cam, out / "blender-rear.jpg", (-12.0, 17.0, 6.0), lens=55)
+    shoot(cam, out / "blender-top.jpg", (0, 0, 40), target=(0, 0, 0), ortho=13.5)
     cam.rotation_euler = (0, 0, math.radians(90))  # the top view lies along the picture
     bpy.ops.render.render(write_still=True)
     # As the map tints it: three buses in line colours, seen from the height of a pitched map.
@@ -449,7 +450,7 @@ def previews(ob, mats, out: Path) -> None:
                 slot.material = m
         copies.append(c)
     ob.hide_render = True
-    shoot(cam, out / "blender-lines.png", (19, -21, 14), target=(0, 0, 1.0), lens=50)
+    shoot(cam, out / "blender-lines.jpg", (19, -21, 14), target=(0, 0, 1.0), lens=50)
     ob.hide_render = False
     for c in copies:
         bpy.data.objects.remove(c)
