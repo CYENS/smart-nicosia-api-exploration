@@ -138,13 +138,18 @@ def test_a_counting_camera_has_its_last_24_hours_of_people(city, api, monkeypatc
     # request each, in a 24-hour window ending this hour; a quiet hour reads 0.
     monkeypatch.setattr(city, "traffic_cameras", lambda: [
         {"name": "Ledras Square", "analytics_id": 102, "lat": 35.1703, "lon": 33.36105,
-         "device_name": None, "status": "started", "location_source": "manual"}])
+         "device_name": None, "status": "started", "location_source": "manual",
+         "lines": json.dumps([{"id": 0, "name": "Ledras Square", "direction": 0,
+                               "count_type": 1, "types": [0, 1, 2, 3, 4, 5]}])}])
     days = {"2026-10-18": {"20:00": 300, "08:00": 999}, "2026-10-19": {"12:00": 450}}
 
-    def reports(p):
-        day = datetime.fromtimestamp(int(p["start_date"]) / 1000, tz=TZ).strftime("%Y-%m-%d")
-        return {"data": {"group_by": [{"key": h, "data": {"0": {"1": n, "2": 0, "total": n}}}
-                                      for h, n in days.get(day, {}).items()]}}
+    def reports(p):  # per line, one hour per request (group_by=stream over the hour)
+        start = datetime.fromtimestamp(int(p["start_date"]) / 1000, tz=TZ)
+        n = days.get(start.strftime("%Y-%m-%d"), {}).get(start.strftime("%H:%M"))
+        if not n:
+            return {"data": {"group_by": {}}}
+        return {"data": {"group_by": {start.strftime("%d-%m-%Y"): {
+            "102": {"Ledras Square": {"0": {"1": n, "2": 0, "total": n}}}}}}}
 
     api.on("getTrafficReports", reports)
     ents = Entities(city)
@@ -156,7 +161,11 @@ def test_a_counting_camera_has_its_last_24_hours_of_people(city, api, monkeypatc
     values = {p["t"]: p["v"] for p in s["points"]}
     assert values["2026-10-18T20:00"] == 300 and values["2026-10-19T12:00"] == 450
     assert values["2026-10-19T03:00"] == 0 and "2026-10-18T08:00" not in values  # outside
-    assert s["totals_24h"]["people"] == 750 and api.count("getTrafficReports") == 2
+    # One request per hour that has begun (the clock is on the hour, so 23), each serving
+    # every camera; finished hours are kept, so asking again sends nothing.
+    assert s["totals_24h"]["people"] == 750 and api.count("getTrafficReports") == 23
+    ents.series("Ledras Square")
+    assert api.count("getTrafficReports") == 23
 
 
 # -- buildings and places -------------------------------------------------------------------------

@@ -9,6 +9,7 @@ inside functions, because tools.py imports it while it is still being built.
 from __future__ import annotations
 
 import json
+import re
 import threading
 import time
 from collections import Counter
@@ -171,9 +172,12 @@ band, camera and screen state. Rows with new_state = 'full' are the moments bins
 - alarms(id, device, device_type, type, severity, status, start_ts, end_ts, clear_ts, \
 first_seen, last_seen).
 - traffic_counts(granularity, bucket_start, analytics_id, line_name, object_type, dir1, dir2, \
-total): camera counts, granularity 'day' or 'hour' (always filter on it). analytics_id 0 is \
-the whole city (line_name ''); a camera's days are per counting line, its hours (when kept) \
-have line_name ''. object_type 0 people, 1 bike, 2 car, 3 motorcycle, 4 bus, 5 truck.
+total): raw crossings of each camera's counting lines, granularity 'day' or 'hour' (always \
+filter on it). object_type 0 people, 1 bike, 2 car, 3 motorcycle, 4 bus, 5 truck. NEVER add \
+these up across line_name, cameras or analytics_id 0 (the whole city, itself a sum of every \
+line): one road user can cross several lines of one camera, and a line counts some road users \
+it isn't drawn for. For any total, ask get_traffic, which adds lines as the counting-lines \
+register allows; use this table only to show one line's own crossings.
 - traffic_cameras(analytics_id, name, lat, lon, device_name, status).
 - speeds(granularity, line_type, bucket_start, value): city-wide average speed in km/h, \
 granularity 'FIVE_MIN' or 'ONE_HOUR' (filter on one).
@@ -848,11 +852,21 @@ LON_COLS = ("lon", "lng", "longitude")
 ID_COLS = ("id", "device", "name", "camera")
 
 
+TRAFFIC_TOTAL = re.compile(r"\btraffic_counts\b", re.I)
+AGGREGATE = re.compile(r"\b(sum|avg|count|total_sum|list_sum|fsum|kahan_sum)\s*\(", re.I)
+
+
 def h_run_sql(ctx, a: dict) -> dict:
     T = _tools()
     mem = ctx.memory
     if mem is None:
         raise T.ToolError("the twin's memory is off in this copy (CHATBOT_RECORD=0)")
+    # Totals of raw line crossings count road users twice (a car crossing two of a camera's
+    # lines, the city-wide rows that are a sum of every line): get_traffic adds them up as the
+    # counting-lines register allows.
+    if TRAFFIC_TOTAL.search(a["sql"]) and AGGREGATE.search(a["sql"]):
+        raise T.ToolError("totals over traffic_counts would count road users twice; ask "
+                          "get_traffic, which adds counting lines only where they can't")
     started = time.monotonic()
     try:
         columns, types, rows, truncated = mem.run_sql(a["sql"], max_rows=a.get("max_rows") or 500)

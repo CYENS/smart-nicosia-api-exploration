@@ -50,7 +50,11 @@ cover on-street bays only, not car parks.
 - Bin fill is a percentage; the city treats 80% and above as full.
 - Air quality uses the CAQI scale (very_low < 25, low < 50, medium < 75, high <= 100, \
 very_high > 100). Noise is in dB at the station.
-- Traffic counts are crossings of counting lines, not unique people. get_speed is one \
+- Traffic counts come from get_traffic only: it adds a camera's counting lines only where they \
+can't count the same road user twice, and says so in how_counted. Never add counts from \
+different lines or cameras yourself, and never present a sum over several cameras as different \
+people or vehicles (a car passes several cameras). When how_counted leaves lines out, say the \
+figure covers the lines it names. get_speed is one \
 city-wide average; get_road_speeds has live speeds on about a hundred main road segments; \
 driving routes still use typical speeds.
 - Every reading has an age. Mention it when it matters ("as of 21:10", "this bin last \

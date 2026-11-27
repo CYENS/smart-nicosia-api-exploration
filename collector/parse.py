@@ -159,7 +159,10 @@ def local_midnight(day: date, tz: ZoneInfo) -> datetime:
 def parse_traffic_stream(payload: Mapping, tz: ZoneInfo) -> list[TrafficRow]:
     """group_by=stream: {data: {group_by: {"DD-MM-YYYY": {analytics_id: {line: {type: counts}}}}}}."""
     rows = []
-    for day_key, cams in (payload.get("data", {}).get("group_by") or {}).items():
+    groups = payload.get("data", {}).get("group_by") or {}
+    if not isinstance(groups, Mapping):  # an hour or day grouping: not per line
+        return rows
+    for day_key, cams in groups.items():
         day = datetime.strptime(day_key, "%d-%m-%Y").date()
         start = local_midnight(day, tz)
         for va_id, lines in cams.items():
@@ -169,6 +172,14 @@ def parse_traffic_stream(payload: Mapping, tz: ZoneInfo) -> list[TrafficRow]:
                         TrafficRow("day", start, int(va_id), line_name, int(obj_type), *_counts(counts))
                     )
     return rows
+
+
+def parse_traffic_stream_hour(payload: Mapping, hour_start: datetime, tz: ZoneInfo
+                              ) -> list[TrafficRow]:
+    """group_by=stream asked for one hour: the same per-line answer, keyed by its day, as rows
+    of that hour (granularity "hour", bucket_start the hour's start)."""
+    return [TrafficRow("hour", hour_start, r.analytics_id, r.line_name, r.object_type, r.dir1,
+                       r.dir2, r.total) for r in parse_traffic_stream(payload, tz)]
 
 
 def parse_traffic_buckets(
@@ -319,7 +330,8 @@ def parse_analytics(payload: Mapping) -> list[CameraFeed]:
         stream = a.get("stream") or {}
         lines = (a.get("module") or {}).get("lines") or []
         slim_lines = [
-            {k: line.get(k) for k in ("id", "name", "direction", "count_type", "types")}
+            {k: line.get(k) for k in ("id", "name", "direction", "count_type", "types",
+                                      "x1", "y1", "x2", "y2")}  # ends: fractions of the picture
             for line in lines
         ]
         feeds.append(

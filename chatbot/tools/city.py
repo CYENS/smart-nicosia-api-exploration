@@ -396,7 +396,10 @@ def add_traffic_replay(ctx: ToolContext, a: dict, res: dict) -> None:
       "'hour_of_day' for today or yesterday also returns a layer_ref that replays every "
       "camera hour by hour on the map (show it with 'columns_3d' and a value_field such as "
       "people) and a by_camera_data_ref (one row per camera and hour). With a camera "
-      "filter along one street, the layers also draw that street on the map.",
+      "filter along one street, the layers also draw that street on the map. Counts are "
+      "built per counting line and a camera's lines are added only where they can't count "
+      "the same road user twice (the counting-lines register); how_counted names the lines "
+      "left out and why. A sum over several cameras is not a count of different people.",
       obj({
           "period": {"type": "string", "enum": list(context.PERIODS)},
           "group_by": {"type": "string", "enum": ["day", "hour_of_day", "camera"]},
