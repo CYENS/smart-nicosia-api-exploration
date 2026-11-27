@@ -38,6 +38,7 @@ import {
   setCity3d, themedPaint, useMapUi, viewing, type LayerData,
 } from "@/lib/map/engine"
 import { skyAt } from "@/lib/map/sky"
+import { clearSky, useWeatherMap } from "@/lib/weather/map"
 import { TERRAIN_SOURCE, addTerrainSource } from "@/lib/map/terrain"
 import { registerClickHandler } from "@/lib/registries/map-clicks"
 
@@ -298,7 +299,7 @@ function drawShadows() {
   if (!map.getLayer(SHADOWS)) {
     addRaster(map, {
       id: SHADOWS, type: "raster", source: SHADOW_SRC,
-      paint: { ...themedPaint(SHADOWS, { "raster-opacity": { night: 0.55, day: 0.34 } }), "raster-fade-duration": 0, "raster-resampling": "linear" },
+      paint: { ...shadowPaint(), "raster-fade-duration": 0, "raster-resampling": "linear" },
     } as LayerSpecification)
   }
   map.setLayoutProperty(SHADOWS, "visibility", "visible")
@@ -961,9 +962,23 @@ export function openSpotAtCentre(opener?: HTMLElement | null) {
 
 let started = false
 
+// Under cloud the sun's light comes from the whole sky and the shadows fade; under thick cloud
+// or fog they all but go (lib/weather's clearSky, 1 with the weather off the map).
+function shadowPaint() {
+  const f = 0.12 + 0.88 * clearSky()
+  return themedPaint(SHADOWS, { "raster-opacity": { night: 0.55 * f, day: 0.34 * f } })
+}
+
 export function startEnvironmentMap() {
   if (started) return
   started = true
+  let lastClear = clearSky()
+  useWeatherMap.subscribe(() => {
+    const map = getMap()
+    if (Math.abs(clearSky() - lastClear) < 0.02 || !map?.getLayer(SHADOWS)) return
+    lastClear = clearSky()
+    map.setPaintProperty(SHADOWS, "raster-opacity", shadowPaint()["raster-opacity"])
+  })
   let clockTimer: number | undefined
   useClock.subscribe((st, prev) => {
     if (st.at === prev.at) return

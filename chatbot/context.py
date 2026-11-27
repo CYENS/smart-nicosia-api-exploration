@@ -38,25 +38,86 @@ def _ms(dt: datetime) -> int:
     return int(dt.timestamp() * 1000)
 
 
-def weather(s: Settings) -> dict:
+# What the map draws the weather from (lib/weather on the page): cloud by layer, how far one
+# sees, rain and snow, and the wind that carries them. Open-Meteo's names, now and by the hour.
+SKY_FIELDS = ("cloud_cover,cloud_cover_low,cloud_cover_mid,cloud_cover_high,visibility,"
+              "precipitation,rain,showers,snowfall,wind_speed_10m,wind_direction_10m,weather_code")
+WET_HOURS = 3  # rain this long ago still leaves the streets wet
+# The keys of the weather the map draws, as the strip passes them to the page.
+MAP_KEYS = ("cloud_pct", "cloud_low_pct", "cloud_mid_pct", "cloud_high_pct", "visibility_m",
+            "rain_mm", "snow_cm", "wet_mm", "wind_kmh", "wind_from_deg", "code", "dust_ugm3", "aod")
+
+
+def _num(row: dict, key: str) -> float | None:
+    v = row.get(key)
+    return v if isinstance(v, (int, float)) and not isinstance(v, bool) else None
+
+
+def _rain_mm(row: dict) -> float:
+    """What fell in the row's hour, in mm. Open-Meteo's sum and its parts can disagree (0.0
+    precipitation beside 0.2 of rain), so the larger."""
+    parts = sum(v for v in (_num(row, "rain"), _num(row, "showers")) if v)
+    return round(max(_num(row, "precipitation") or 0.0, parts), 2)
+
+
+def map_weather(row: dict, wet_mm: float | None = None) -> dict:
+    """The weather as the map draws it, from one Open-Meteo row (an hour, or now). `wet_mm` is
+    what fell over the last WET_HOURS hours, for wet streets after the rain has stopped."""
+    def whole(key: str) -> int | None:
+        v = _num(row, key)
+        return round(v) if v is not None else None
+
+    rain = _rain_mm(row)
+    return {
+        "cloud_pct": whole("cloud_cover"), "cloud_low_pct": whole("cloud_cover_low"),
+        "cloud_mid_pct": whole("cloud_cover_mid"), "cloud_high_pct": whole("cloud_cover_high"),
+        "visibility_m": whole("visibility"), "rain_mm": rain,
+        "snow_cm": _num(row, "snowfall") or 0.0,
+        "wet_mm": round(max(wet_mm if wet_mm is not None else rain, rain), 2),
+        "wind_kmh": _num(row, "wind_speed_10m"), "wind_from_deg": whole("wind_direction_10m"),
+        "code": whole("weather_code"),
+    }
+
+
+def _rows(hourly: dict) -> list[dict]:
+    """Open-Meteo's hourly columns as one dict per hour."""
+    keys = [k for k in hourly if k != "time"]
+    return [{"time": t, **{k: hourly[k][i] for k in keys}} for i, t in enumerate(hourly["time"])]
+
+
+def _wet(rows: list[dict], i: int) -> float:
+    """What fell over the WET_HOURS hours up to and including row i."""
+    return round(sum(_rain_mm(r) for r in rows[max(0, i - WET_HOURS + 1):i + 1]), 2)
+
+
+def weather(s: Settings, now: datetime | None = None) -> dict:
     lat, lon = NICOSIA_CENTER
     f = get_json(s.open_meteo_url, user_agent=s.user_agent, params={
         "latitude": lat, "longitude": lon, "timezone": TIMEZONE, "forecast_days": 2,
-        "current": "temperature_2m,apparent_temperature,relative_humidity_2m,precipitation,"
-                   "weather_code,wind_speed_10m,uv_index,is_day",
+        "past_days": 1,  # the hours just gone, for streets still wet after rain
+        "current": "temperature_2m,apparent_temperature,relative_humidity_2m,uv_index,is_day,"
+                   + SKY_FIELDS,
         "hourly": "temperature_2m,apparent_temperature,precipitation_probability,uv_index,"
-                  "weather_code",
+                  "weather_code,precipitation,rain,showers",
         "daily": "sunrise,sunset,temperature_2m_max,temperature_2m_min,uv_index_max",
     }, timeout=20)
     a = get_json(s.air_quality_url, user_agent=s.user_agent, params={
         "latitude": lat, "longitude": lon, "timezone": TIMEZONE,
-        "current": "european_aqi,pm10,pm2_5,dust,ozone,nitrogen_dioxide",
+        "current": "european_aqi,pm10,pm2_5,dust,aerosol_optical_depth,ozone,nitrogen_dioxide",
         "hourly": "dust,european_aqi", "forecast_days": 1,
     }, timeout=20)
     cur = f["current"]
-    now_local = datetime.now(TZ).replace(minute=0, second=0, microsecond=0)
+    now_local = (now or datetime.now(TZ)).astimezone(TZ).replace(minute=0, second=0, microsecond=0)
     hours = []
     h = f["hourly"]
+    # The hour now falls in is the row at its end (Open-Meteo sums the hour before each time).
+    rows = _rows(h)
+    end = (now_local + timedelta(hours=1)).strftime(HOUR_FMT)
+    i_now = next((i for i, r in enumerate(rows) if r["time"][:16] == end), None)
+    sky = map_weather(cur, _wet(rows, i_now) if i_now is not None else None)
+    if i_now is not None:  # rain falling now, as an hourly rate (`current` is a 15 min sum)
+        sky["rain_mm"] = max(sky["rain_mm"], _rain_mm(rows[i_now]))
+        sky["wet_mm"] = max(sky["wet_mm"], sky["rain_mm"])
     for i, t in enumerate(h["time"]):
         ts = datetime.fromisoformat(t).replace(tzinfo=TZ)
         if now_local <= ts < now_local + timedelta(hours=12):
@@ -71,10 +132,11 @@ def weather(s: Settings) -> dict:
         "source": "Open-Meteo (model forecast for central Nicosia)",
         "now": {
             "temp_c": cur["temperature_2m"], "feels_like_c": cur["apparent_temperature"],
-            "humidity_pct": cur["relative_humidity_2m"], "rain_mm": cur["precipitation"],
-            "wind_kmh": cur["wind_speed_10m"], "uv": cur["uv_index"],
+            "humidity_pct": cur["relative_humidity_2m"], "uv": cur["uv_index"],
             "sky": WEATHER_CODES.get(cur["weather_code"], str(cur["weather_code"])),
             "daylight": bool(cur["is_day"]),
+            **sky,
+            "dust_ugm3": a["current"].get("dust"), "aod": a["current"].get("aerosol_optical_depth"),
         },
         "next_12_hours": hours,
         "days": [{"date": d["time"][i], "sunrise": d["sunrise"][i][11:], "sunset": d["sunset"][i][11:],
@@ -94,18 +156,34 @@ WEATHER_PAST_DAYS = 62
 
 def weather_history(s: Settings) -> dict[str, dict]:
     """The modelled weather hour by hour over the last WEATHER_PAST_DAYS days (Open-Meteo), keyed
-    by local hour ('2026-11-21T21:00'), for the city clock. One request covers every moment the
-    clock can show, so callers cache it for an hour."""
+    by local hour ('2026-11-21T21:00'), for the city clock: the strip's word and temperature, and
+    what the map draws (map_weather). One request covers every moment the clock can show, so
+    callers cache it for an hour."""
     lat, lon = NICOSIA_CENTER
     f = get_json(s.open_meteo_url, user_agent=s.user_agent, params={
         "latitude": lat, "longitude": lon, "timezone": TIMEZONE, "forecast_days": 1,
-        "past_days": WEATHER_PAST_DAYS, "hourly": "temperature_2m,weather_code,is_day",
+        "past_days": WEATHER_PAST_DAYS, "hourly": "temperature_2m,is_day," + SKY_FIELDS,
     }, timeout=20)
-    h = f["hourly"]
-    return {t[:16]: {"temp_c": h["temperature_2m"][i],
-                     "sky": WEATHER_CODES.get(h["weather_code"][i], str(h["weather_code"][i])),
-                     "daylight": bool(h["is_day"][i])}
-            for i, t in enumerate(h["time"]) if h["temperature_2m"][i] is not None}
+    rows = _rows(f["hourly"])
+    return {r["time"][:16]: {"temp_c": r["temperature_2m"],
+                             "sky": WEATHER_CODES.get(r["weather_code"], str(r["weather_code"])),
+                             "daylight": bool(r["is_day"]), **map_weather(r, _wet(rows, i))}
+            for i, r in enumerate(rows) if r["temperature_2m"] is not None}
+
+
+def dust_history(s: Settings) -> dict[str, dict]:
+    """Saharan dust (CAMS, through Open-Meteo's air quality API) hour by hour over the same days,
+    keyed by local hour: the dust near the ground and the aerosol optical depth, the haze it
+    makes in the sky. One request, cached for an hour like weather_history."""
+    lat, lon = NICOSIA_CENTER
+    a = get_json(s.air_quality_url, user_agent=s.user_agent, params={
+        "latitude": lat, "longitude": lon, "timezone": TIMEZONE, "forecast_days": 1,
+        "past_days": WEATHER_PAST_DAYS, "hourly": "dust,aerosol_optical_depth",
+    }, timeout=20)
+    h = a["hourly"]
+    return {t[:16]: {"dust_ugm3": h["dust"][i], "aod": h["aerosol_optical_depth"][i]}
+            for i, t in enumerate(h["time"])
+            if h["dust"][i] is not None or h["aerosol_optical_depth"][i] is not None}
 
 
 def _period_bounds(period: str, now: datetime) -> tuple[datetime, datetime, list[date]]:

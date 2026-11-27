@@ -9,6 +9,7 @@ import { useMemo, type KeyboardEvent, type ReactNode } from "react"
 
 import { useCameraAngles, set3dView } from "@/components/shell/map-controls"
 import { FromSources } from "@/components/sources/from-sources"
+import { WeatherField } from "@/components/weather-field"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { Button } from "@/components/ui/button"
 import { Field, FieldContent, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field"
@@ -87,6 +88,7 @@ function MapSection() {
           </FieldContent>
           <Switch id="ls-3d" checked={pitch > 10} onCheckedChange={(on) => set3dView(on)} />
         </Field>
+        <WeatherField />
       </FieldGroup>
     </Section>
   )
