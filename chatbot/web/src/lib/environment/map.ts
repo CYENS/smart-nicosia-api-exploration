@@ -1,8 +1,8 @@
 /* The environment twin on the map.
 
-   Terrain. AWS's keyless Terrarium elevation tiles raise the ground (the 3D city stands on it:
-   MapLibre sets each building on the terrain at its centre) and shade the relief, lit from where
-   the sun is at the clock's moment.
+   Terrain. The DLS terrain model of 2019 (1 m, as open height tiles: lib/map/terrain.ts) raises
+   the ground (the 3D city stands on it: MapLibre sets each building on the terrain at its
+   centre) and shades the relief, lit from where the sun is at the clock's moment.
 
    Shadows. Every DLS building in view casts its shadow on flat ground for the clock's moment:
    the footprint swept away from the sun by height / tan(sun altitude). All of them are filled at
@@ -39,7 +39,7 @@ import {
 } from "@/lib/map/engine"
 import { skyAt } from "@/lib/map/sky"
 import { clearSky, useWeatherMap } from "@/lib/weather/map"
-import { TERRAIN_SOURCE, addTerrainSource } from "@/lib/map/terrain"
+import { TERRAIN_SOURCE, addTerrainSource, terrainSourceSpec } from "@/lib/map/terrain"
 import { registerClickHandler } from "@/lib/registries/map-clicks"
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -59,7 +59,6 @@ const SUN_OUTLINE = "env-sunhours-outline"
 const SUN_AREA_SRC = "env-sunhours-area"
 const RADAR_SRC = "env-radar-src"
 const RADAR = "env-radar"
-const DEM_TILES = ["https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png"]
 const EARTH = 40_075_016.686
 const MAX_SHADOW_M = 420
 const SHADOW_MIN_ZOOM = 14
@@ -126,10 +125,6 @@ function drop(map: MlMap, layers: string[], sources: string[]) {
 
 // -- terrain -------------------------------------------------------------------------------------
 
-function demSource() {
-  return { type: "raster-dem" as const, tiles: DEM_TILES, tileSize: 256, maxzoom: 15, encoding: "terrarium" as const }
-}
-
 // The relief is lit from the sun while it is up, and from the north-west (the cartographers'
 // light) at night.
 function lightFrom() {
@@ -143,7 +138,7 @@ function syncTerrain() {
   const { on, exaggeration } = env().terrain
   if (on) {
     if (!map.getSource(DEM_SRC)) addTerrainSource(map)
-    if (!map.getSource(HILL_SRC)) map.addSource(HILL_SRC, demSource())
+    if (!map.getSource(HILL_SRC)) map.addSource(HILL_SRC, terrainSourceSpec())
     if (!map.getLayer(HILL)) {
       map.addLayer({
         id: HILL, type: "hillshade", source: HILL_SRC,
