@@ -56,6 +56,7 @@ export type Live = {
   bikesStatus: "live" | "stale" | "unavailable" | "past" | "idle"
   bikesError: string | null
   bikesAsOf: string | null
+  bikesHere: { stations: number; bikes: number; ebikes: number } | null // in Greater Nicosia
 }
 
 type Facilities = { kinds: Record<FacKind, KindState>; live: Live }
@@ -65,7 +66,7 @@ const idle = (): KindState => ({ on: false, status: "idle", error: null, meta: n
 export const useFacilities = create<Facilities>(() => ({
   kinds: Object.fromEntries(FAC_KINDS.map((k) => [k, idle()])) as Record<FacKind, KindState>,
   live: { status: "idle", error: null, at: null, bays: {}, baysAsOf: null, baysError: null, bikes: {},
-          bikesStatus: "idle", bikesError: null, bikesAsOf: null },
+          bikesStatus: "idle", bikesError: null, bikesAsOf: null, bikesHere: null },
 }))
 
 export function setKindState(kind: FacKind, patch: Partial<KindState>) {
@@ -114,7 +115,10 @@ export async function fetchKind(kind: FacKind, signal?: AbortSignal): Promise<Fa
 export type LiveBody = {
   at: string | null
   bays?: { car_parks: Record<string, Bays>; as_of: string | null; origin: string; error: string | null }
-  bikes?: { status: Live["bikesStatus"]; error?: string | null; as_of?: string; stations: Record<string, BikeLive>; note?: string }
+  bikes?: {
+    status: Live["bikesStatus"]; error?: string | null; as_of?: string; stations: Record<string, BikeLive>; note?: string
+    in_nicosia?: { stations: number; bikes: number; ebikes: number }
+  }
 }
 
 export function fetchLive(kinds: FacKind[], at: string | null, signal?: AbortSignal): Promise<LiveBody> {
