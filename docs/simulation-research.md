@@ -2,7 +2,9 @@
 
 Status: research and plan, 27 November 2026. Nothing in here is built. It follows
 [digital-twin-roadmap.md](digital-twin-roadmap.md) (feature 9, the Scenario lab) and builds on the
-lab's contract on the `scenario-lab` branch and the waste scenario on `waste-scenario`.
+lab's contract on the `scenario-lab` branch ([pull request 29](https://github.com/CYENS/smart-nicosia-api-exploration/pull/29)) and the waste scenario stacked on
+it (`waste-scenario`, [pull request 32](https://github.com/CYENS/smart-nicosia-api-exploration/pull/32)). Part 2 opens with the exact additions to that contract,
+checked against the code on those branches and timed on their two scenarios.
 
 The question: how can Nicosia's twin offer simulations that are interactive enough to explore in
 a meeting and trustworthy enough to act on, with the data the twin really has?
@@ -13,8 +15,8 @@ a meeting and trustworthy enough to act on, with the data the twin really has?
 question for a named office, with a model simple and open enough for staff to run and outsiders
 to check; the tools that spread let people change the thing itself and see a few plain
 consequences at once. Nobody has shown that complex urban models forecast better, and the ones
-built without an owner stall. At Nicosia's size every model worth building already runs in
-milliseconds to a second, so "instant" is plumbing, not research. The twin's rare advantage is
+built without an owner stall. At Nicosia's size every model worth building can answer in
+milliseconds, so "instant" is plumbing and one vectorised loop, not research. The twin's rare advantage is
 its sensor history: it can check its own predictions against what happened, which almost no city
 twin does. Its limits are just as clear: it sees bays, bins, lamps, footfall, streets and shade,
 and it does not see where traffic comes from, who rides the bus, or the air between seven
@@ -27,8 +29,8 @@ session; M: one feature session; L: more than one).
 
 | # | Idea | What someone can do | Decision value | Feasible with Nicosia's data | Effort |
 | --- | --- | --- | --- | --- | --- |
-| 1 | **An instant lab** | Drag a slider and see the numbers move, with the whole curve of the KPI behind the slider and a target line | High: turns every scenario from "run and wait" into exploring | Yes: one evaluation costs 4 to 28 ms in the spikes | M |
-| 2 | **Goal seek and the trade-off front** | Say "keep overflow under X" and get the cheapest policies that do, as dots on a cost against harm chart | High: answers the question officers actually ask | Yes: 24 policies for 86 bins in 28 ms coarse, 1 s exact | M |
+| 1 | **An instant lab** | Drag a slider and see the numbers move, with the whole curve of the KPI behind the slider and a target line | High: turns every scenario from "run and wait" into exploring | Yes for waste (28 ms an evaluation today); lighting needs its loop vectorised first (437 ms) | M |
+| 2 | **Goal seek and the trade-off front** | Say "keep overflow under X" and get the cheapest policies that do, as dots on a cost against harm chart | High: answers the question officers actually ask | Yes: the waste scenario's 168 policies take 5.4 s today, so the search streams | M |
 | 3 | **A prediction ledger and evidence grades** | Mark a run as done; the twin scores its prediction against the sensors weeks later; every number is labelled measured here, borrowed or assumed | High: the cheapest way to earn trust, and the twin's real advantage | Yes: the memory already holds what is needed | M |
 | 4 | **Record what the next models need** | Nothing visible yet: bus positions, Bluetooth travel times, hourly counts for every camera and a calendar of closures and events are kept from today | High later: gates closures and buses | Yes, and urgent: two feeds have no past | S |
 | 5 | **Edit the map: place a service, see who gains** | Move a pharmacy, a recycling point or a bus stop over the map and watch the 15-minute walking area and the people gained update under the pointer | High: siting is a decision the municipality owns | Yes: whole city in 48 ms, one added place in 0.2 ms | M |
@@ -51,23 +53,43 @@ WebGPU computing or copies of the models in the browser (the models are already 
 the round trip). Parking price response (no price data). Degrees of cooling from trees (shade is
 checkable, temperature is not). More 3D for its own sake.
 
-### Five findings from the twin's own data
+### What the proposals add to the lab's contract
+
+Four groups of additions, all optional with defaults, so the lighting and waste scenarios keep
+working untouched ([the contract section](#the-labs-contract-what-exists-and-what-to-add) has the
+signatures):
+
+| | For | Added to `chatbot/scenarios/` and the page |
+| --- | --- | --- |
+| C1 | Instant feedback | `Scenario.quick` and `budget_ms`; `run_steps`; `Lab.prepared`, `Lab.evaluate`, `Lab.sweep`; cacheable `GET` routes and a streamed run |
+| C2 | Inverse what-if and trade-offs | `x-when` with a value and `x-explore` in the schema; `Scenario.tradeoff`, `candidates`, `evaluate_many`; `explore` in the runner; the `find_policy` chat tool |
+| C3 | Changes drawn on the map | A `changes` array parameter with `x-edit`; `scenarios/changes.py`; `Scenario.probe`; `ScenarioContext.network` and `.environment`; the page registry `registries/map-edits.ts` |
+| C4 | Trust | `grade` and `basis` on a KPI, `x-grade` on an assumption, `switch_at` on a sensitivity row; `Scenario.observe` and the `scenario_outcomes` table |
+
+### Six findings from the twin's own data and code
 
 Measured for this document on a copy of the store ([Appendix A](#appendix-a-spikes)):
 
-1. **Sensed parking is not scarce, and a third of it is disabled bays.** Weekday occupancy peaks
+1. **The lab's two scenarios are one step from instant.** Both remember what they have computed
+   and answer a setting seen before in under 2 ms. A waste policy not seen before costs 28 ms; a
+   lighting policy 437 ms, because it walks every lamp through every night of the year in pure
+   Python. A whole run takes
+   0.5 to a few seconds, so sliders need a one-evaluation path, not a faster run.
+2. **Sensed parking is not scarce, and a third of it is disabled bays.** Weekday occupancy peaks
    at 55%; blocks are full 0.4% of the time. A queueing model is fast (4 ms a block) and ranks
    blocks correctly, but overstates "full" five times and does not beat a plain typical week.
-2. **Inverse questions are cheap.** A whole grid of collection policies takes 28 ms coarse and
-   1 s exact; the coarse pass ranks correctly but can name the wrong winner, so it must be
-   confirmed before it is stated.
-3. **NumPy matters and the browser does not.** NumPy is 9 to 31 times faster than the pure Python
+3. **Inverse questions are affordable, and worth asking.** The waste scenario's own 168 policies
+   take 5.4 s today; the same search written with arrays takes 28 ms coarse and 1 s exact. Eight
+   of the 168 are on the front, and today's rounds are far from it: 31 collections a week leave
+   1,204 bin-hours at capacity, where a daily forecast policy leaves 5 with 30 collections. A
+   coarse or partial pass can name the wrong winner, so the search is confirmed before it speaks.
+4. **NumPy matters and the browser does not.** NumPy is 9 to 31 times faster than the pure Python
    the scenario code uses today; JavaScript is the same order as NumPy.
-4. **Drawn changes can be answered from a street graph in memory.** The public routing server
+5. **Drawn changes can be answered from a street graph in memory.** The public routing server
    needs 230 ms for one question; a local graph answers a city-wide access question in 48 ms.
    Closing 1.2 km of Makariou changes almost nothing at free flow, which shows why routing alone
    cannot judge a closure.
-5. **Two feeds are not being kept.** The store holds 7 hours of Bluetooth travel times and no bus
+6. **Two feeds are not being kept.** The store holds 7 hours of Bluetooth travel times and no bus
    positions.
 
 ## How this document is organised
@@ -270,11 +292,13 @@ published answer around the tool. Evidence strength varies and is marked.
 
 ### 3. Making it instant
 
-**The short version.** At Nicosia's size the models are already fast: milliseconds to a second
-(spikes A2, A3, A5). The work is in the plumbing: answer a dragged slider inside 100 ms from a
-sweep prepared when the pointer went down, send small answers, drop stale ones, and confirm with
-an exact run on release. No surrogate model, no WebGPU and no second copy of the models in the
-browser is needed.
+**The short version.** At Nicosia's size the models can answer in milliseconds (spikes A2, A3,
+A5), and the lab's two real scenarios nearly do: a waste policy costs 28 ms, a lighting policy
+437 ms until one loop is vectorised, and both answer a setting they have seen in under 2 ms
+(spike A7). The rest is plumbing: answer a dragged slider inside 100 ms from a sweep prepared
+when the pointer went down, send small answers, drop stale ones, and confirm with an exact run
+on release. No surrogate model, no WebGPU and no second copy of the models in the browser is
+needed.
 
 #### 3.1 What "instant" has to mean
 
@@ -713,8 +737,315 @@ All of them build on the Scenario lab's contract (`chatbot/scenarios/base.py` on
 `scenario-lab` branch): a scenario prepares its data once per period, evaluates one set of
 parameters quickly and purely, and backtests today's policy against the sensors. Parameters are a
 JSON schema; those marked `x-assumption` carry a plausible range that the runner sweeps for KPI
-ranges and the sensitivity chart. Runs are kept in `scenario_runs`. Nothing below changes that
-contract; proposals 1, 2 and 3 add optional methods to it.
+ranges and the sensitivity chart. Runs are kept in `scenario_runs`. The next section lists, in
+one place, exactly what the proposals add to that contract (C1 to C4); the proposals then say
+what someone does with each addition.
+
+### The lab's contract: what exists, and what to add
+
+This section gathers, in one place, every addition the proposals make to the contract, written
+against the code as it stands on `scenario-lab` ([pull request 29](https://github.com/CYENS/smart-nicosia-api-exploration/pull/29)) and `waste-scenario`
+([pull request 32](https://github.com/CYENS/smart-nicosia-api-exploration/pull/32), stacked on it) on 27 November 2026. Every addition is optional and has a default, so
+the lighting and waste scenarios keep working untouched. Nothing here was changed on those
+branches.
+
+#### What exists
+
+| Piece | Where | What it does |
+| --- | --- | --- |
+| `Scenario.prepare(ctx, period)` | `chatbot/scenarios/base.py` | Reads what a period needs, once. The lab keeps it for 10 minutes |
+| `Scenario.evaluate(data, params)` | same | One set of parameters to a `Result`: KPIs, layers, series, charts, details, notes. Quick and pure |
+| `Scenario.backtest(ctx, data, params, period)` | same | Today's policy replayed against the sensors |
+| `Scenario.finish(ctx, result, params)` | same, added on `waste-scenario` | Once per run, for slow or networked touches (road lines for a route) |
+| `run(scenario, ctx, params, period)` | same | Evaluates, then every corner of up to six assumptions for the KPI ranges, then each assumption alone for the tornado, then backtest and finish |
+| Parameter schema | `Scenario.params` | JSON schema with `x-unit`, `x-step`, `x-group`, `x-when`, `x-enum-titles`, and `x-assumption` with `x-source` for assumptions |
+| `Lab.run`, `Lab.get`, `RunStore` | `chatbot/scenarios/lab.py` | Runs, keeps runs in `scenario_runs`, lists them |
+| Routes | `chatbot/routes/scenarios.py` | `GET /api/scenarios`, `POST /api/scenarios/{id}/run`, runs, a run's CSV and brief |
+| Chat tools | `chatbot/tools/scenarios.py` | `list_scenarios`, `run_scenario`, `compare_scenarios`, `open_scenario` (a `ui` command with `action: "scenario"`) |
+| Page | `chatbot/web/src/lib/registries/scenarios.ts` | The result's types, `registerScenarioSection`, `registerParamGroups`. The lab's workspace itself is not on the branch yet |
+
+What it costs today, measured with the branches' own code on a copy of the store
+([spike A7](#a7-the-labs-two-scenarios-as-they-run-today)):
+
+| | Lighting | Waste |
+| --- | --- | --- |
+| `prepare` | 1,350 ms | 318 ms |
+| `evaluate`, a policy it has not seen | 437 ms (up to 677) | 28 ms (up to 141) |
+| `evaluate`, a policy it has seen (the scenario remembers) | 1.5 ms | 1.8 ms |
+| Evaluations in one run | 43 | 77 |
+| A whole run | 0.5 s with a dimming policy | 0.7 to 1.4 s, plus `finish`'s routing calls |
+| Result as JSON | 264 kB | 160 kB |
+| A search over policies, each evaluated once | 85 dimming policies, a slice of its choices: 38 s | All 168 of its policies: 5.4 s |
+
+Two things follow. A run is too slow to sit under a dragged slider, but one evaluation is not,
+once the lighting model stops walking every lamp through every night of the year in pure Python
+(NumPy is already a dependency of the twin, through the environment twin). And a search over
+policies must stream its answers.
+
+#### C1. Instant feedback (for P1)
+
+On `Scenario`, in `base.py`:
+
+```python
+def quick(self, data: Any, params: dict, fidelity: str = "fine") -> list[dict]:
+    """The KPIs alone, without layers or series. `fidelity` is "coarse" while a slider moves
+    and "fine" for a kept run; a scenario without random draws ignores it."""
+    return self.evaluate(data, params).kpis
+
+budget_ms: int = 50   # what one evaluation of a policy it has not seen may cost; tested in CI
+```
+
+In the runner, `run()` becomes a thin wrapper around a generator, so the page can show a run as
+it forms without a second code path:
+
+```python
+def run_steps(scenario, ctx, params, period, *, data=None) -> Iterator[tuple[str, Any]]:
+    """Yields ("kpis", result), ("ranges", kpis), ("sensitivity", rows), ("backtest", dict),
+    ("finished", result) in that order. run() drains it and returns what it returns today."""
+```
+
+On `Lab`, in `lab.py`:
+
+```python
+def prepared(self, scenario_id, period) -> dict:
+    """{"version": "9f2c...", "at": ISO time}: which prepared data answers will come from.
+    The version changes when the data is read again, so nothing needs invalidating."""
+
+def evaluate(self, scenario_id, params, period, fidelity="coarse") -> dict:
+    """One evaluation, not saved: {"prepared": {...}, "params": {...}, "kpis": [...]}."""
+
+def sweep(self, scenario_id, params, period, vary: str, stops: int = 21) -> dict:
+    """The KPIs across one parameter's range, the others as set:
+    {"param": "dim_level", "values": [10, 15, ...], "at": 8,
+     "kpis": {"energy": [..21 values..], ...}, "prepared": {...}}"""
+```
+
+Routes, in `routes/scenarios.py` (declared with `def`, so they run in the thread pool and never
+on the event loop that streams the chat and the watch):
+
+| Route | Returns |
+| --- | --- |
+| `GET /api/scenarios/{id}/prepared?period=` | `Lab.prepared`; never cached |
+| `GET /api/scenarios/{id}/evaluate?period=&v=<version>&p=<params as canonical JSON>` | `Lab.evaluate`; `Cache-Control: private, immutable` because the version is in the address |
+| `GET /api/scenarios/{id}/sweep?period=&v=&p=&vary=dim_level` | `Lab.sweep`; cached the same way |
+| `POST /api/scenarios/{id}/run/stream` | The steps of `run_steps` as server-sent events, ending with the saved run's id |
+
+`POST /api/scenarios/{id}/run` stays as it is. A run gains two fields, `prepared` and `code` (the
+package version or commit), so a kept run says which data and which model produced it.
+
+On the page, in `registries/scenarios.ts`: a `Sweep` type matching `Lab.sweep`, and
+`provisional?: boolean` on a KPI shown from a coarse or interpolated answer.
+
+#### C2. Inverse what-if and trade-offs (for P2)
+
+Schema, two small extensions:
+
+- `x-when` today names a switch that must be on. Let it also take `{"policy": "threshold"}`: the
+  parameter matters only when another has that value. The waste scenario's `threshold` and
+  `forecast_level` say this in their descriptions today; stated in the schema, the form can grey
+  them out and the search can skip combinations that change nothing.
+- `x-explore` on a choice: the stops a search tries, as a list or `{"step": 10}`. Without it:
+  every value of an enum or a switch, and a number from its minimum to its maximum in at most
+  eight steps of `x-step`.
+
+On `Scenario`:
+
+```python
+tradeoff: tuple[str, str] = ()   # the two KPIs the front is drawn on by default,
+                                 # for example ("collections", "capacity_hours")
+
+def candidates(self, params: dict, limit: int = 300) -> list[dict]:
+    """The parameter sets a search tries: the choices over their stops, honouring x-when,
+    the assumptions as set. The default builds them from the schema."""
+
+def evaluate_many(self, data, candidates: list[dict], fidelity="coarse") -> Iterator[list[dict]]:
+    """The KPIs of each candidate, in order. The default calls quick() for each; a scenario
+    overrides it to do the whole grid in one vectorised pass."""
+```
+
+In the runner:
+
+```python
+def explore(scenario, data, params, *, objectives=None, target=None, limit=300) -> Iterator[dict]:
+    """Yields {"done": 40, "of": 168, "points": [...]} as candidates finish, coarse stops first,
+    then {"front": [ids], "shortlist": [ids], "recommended": id or None}.
+    A point is {"id", "params": only what differs from the current ones, "label",
+    "kpis": {kpi_id: value}, "meets": bool, "holds_in": [corners where it meets, corners]}.
+    Only points on the front are re-evaluated at the assumptions' corners for holds_in."""
+```
+
+`target` is `{"kpi": "capacity_hours", "max": 100}` or `{"kpi": ..., "min": ...}`. Today's policy
+is always among the points, labelled, so the reader sees where the model puts the present.
+
+`Lab.explore(scenario_id, params, period, objectives, target)` wraps it, and
+`POST /api/scenarios/{id}/explore` streams it. A new chat tool in `tools/scenarios.py`:
+
+```python
+@tool("find_policy",
+      "Search a scenario's policies for the ones that meet a target at the least cost ...",
+      obj({"scenario": ..., "target": {"kpi", "max" | "min"}, "minimise": kpi id, "period": PERIOD},
+          ["scenario", "target"]))
+```
+
+It returns the shortlist (three to five named options with their levers, KPIs and ranges), a
+`data_ref` of every point (rows: label, cost, harm, on_front, meets) for a scatter chart, and the
+run id of the recommended option, which it runs as an ordinary run first. `find_policy` joins
+`TOOL_LABELS` in `lib/chat.ts`.
+
+On the page: `ExplorePoint` and `Exploration` types in `registries/scenarios.ts`, and the lab's
+"Find a policy" section.
+
+The measurement behind the streaming: the waste scenario's 168 policies take 5.4 s today. On the
+real data the front has 8 of them, and it is informative: the city's measured pickups come to 31
+collections a week with 1,204 bin-hours at capacity, while a daily forecast policy reaches 5
+bin-hours with 30 collections (an upper bound on overflow, as the scenario's own backtest notes
+say).
+
+#### C3. Changes drawn on the map (for P5, then P6, P8, P9 and P10)
+
+A scenario that takes drawn changes declares one array parameter. The schema says what may be
+drawn, so the form, the map tools and the assistant all read the same list:
+
+```python
+"changes": {
+    "type": "array", "default": [], "title": "Changes on the map",
+    "x-edit": {"max": 20, "kinds": [
+        {"op": "add", "kind": "pharmacy", "geometry": "point", "title": "Add a pharmacy",
+         "snap": "street"},
+        {"op": "remove", "kind": "pharmacy", "geometry": "existing", "title": "Close a pharmacy"},
+    ]},
+    "items": {"type": "object", "required": ["op", "kind"], "properties": {
+        "id": {"type": "string"},          # stable, so charts, the list and the map stay linked
+        "op": {"enum": ["add", "move", "remove", "close", "set"]},
+        "kind": {"type": "string"},
+        "ref": {"type": "string"},         # an existing thing: an entity id, a place id, a street
+        "geometry": {"type": "object"},    # GeoJSON Point, LineString or Polygon
+        "props": {"type": "object"},       # spacing and crown size of trees, hours of a closure
+    }},
+}
+```
+
+`Scenario.validated` already validates arrays against the schema, runs already store their
+parameters, and `#/s/<run id>` already reopens a run, so a run with changes saves, shares and
+compares like any other. The runner's assumption sweeps leave the array alone.
+
+A new module `chatbot/scenarios/changes.py` holds what scenarios share: a `Change` dataclass,
+`parse(params["changes"])`, snapping to the street graph, and `describe(change)` for labels and
+the brief ("A pharmacy added on Kyriakou Matsi").
+
+On `Scenario`, for the answer that follows the pointer:
+
+```python
+def probe(self, data, params, change: dict) -> dict:
+    """What one tentative change would do, cheaply, while it is being dragged:
+    {"kpis": [...], "layer": FeatureCollection or None}. The default is
+    quick(data, {**params, "changes": params["changes"] + [change]})."""
+```
+
+with `GET /api/scenarios/{id}/probe?period=&v=&p=&change=` beside the routes of C1.
+
+`ScenarioContext` gains two fields, both already built once on the Agent or to be:
+
+```python
+network: Network | None = None          # chatbot/network.py: the street graph in memory (P5)
+environment: Environment | None = None  # chatbot/environment: shade and sun hours (P6)
+```
+
+`Result.layers` needs no change: the drawn things go in a layer named `changes` with no variant,
+so the split map draws them over both sides, and the tool marks it `chat: true` in its `meta` so
+`run_scenario` returns a `layer_ref` for it, as the waste scenario's route already does.
+
+On the page, a new registry `lib/registries/map-edits.ts`:
+
+```ts
+export type Change = { id: string; op: "add" | "move" | "remove" | "close" | "set"; kind: string
+                       ref?: string; geometry?: GeoJSON.Geometry; props?: Record<string, unknown> }
+export type EditTool = {
+  id: string                                  // "access:add:pharmacy"
+  scenario: string                            // the scenario whose x-edit lists it
+  label: string; icon: LucideIcon
+  geometry: "point" | "line" | "polygon" | "existing"
+  layers?: (layerId: string) => boolean       // for "existing": which map layers can be picked
+  snap?: "street" | "none"
+  toChange: (drawn: GeoJSON.Geometry | { ref: string }) => Change
+}
+export function registerEditTool(t: EditTool): void
+export const useMapEdit: ...                  // the active tool, the ghost, the changes of the draft
+```
+
+`lib/map/engine.ts` gains `beginEdit(tool)` and `endEdit()` beside `pickMyLocation`. While a tool
+is active, clicks go to the tool and not to `resolveClick` in `registries/map-clicks.ts`, and
+pointer moves are throttled to the probe. Points and existing things extend the engine's pick
+mode; lines and polygons use Terra Draw.
+
+For the chat, `_param_brief` in `tools/scenarios.py` passes `x-edit`'s kinds to the model, so the
+assistant knows what it may add. It proposes changes with a `ui` command
+`{action: "scenario_changes", scenario, changes}`, drawn as an editable card through
+`registries/turn-cards.ts` with Apply and Edit, and runs them only once applied.
+
+#### C4. Trust (for P3)
+
+The KPI helper gains two optional arguments, and the KPI shape two fields:
+
+```python
+kpi(id, label, unit, baseline, scenario, *, better="lower", digits=1, note=None,
+    grade=None,    # "measured" | "borrowed" | "assumed"
+    basis=None)    # one sentence: "from the lamps' own energy counters, 28 nights"
+```
+
+An assumption's property gains `x-grade` with the same three values; the waste scenario's
+`x-source` texts already tell them apart (the bins' own stretches are measured, the fuel range is
+borrowed, the minutes per stop are a planning figure). The runner lowers a KPI's grade to the
+weakest assumption that moves it by more than a tenth of its change, which it already knows from
+the sensitivity pass.
+
+Each sensitivity row gains `switch_at`: the assumption's value at which the main KPI's change
+crosses zero, or `None` when it does not cross inside the plausible range. The runner finds it
+with at most six more evaluations, by bisection between the ends it already evaluates.
+
+For the ledger:
+
+```python
+def observe(self, ctx, run: dict, since: datetime, until: datetime, scope: list[str]) -> dict | None:
+    """The run's KPIs as the sensors measured them over a later window, for the devices or
+    streets in scope and for a comparison group the change did not touch:
+    {"kpis": {kpi_id: {"treated": .., "comparison": .., "effect": .., "low": .., "high": ..}}}.
+    None (the default) means this scenario cannot be scored."""
+```
+
+and a table beside `scenario_runs`:
+
+```sql
+CREATE TABLE IF NOT EXISTS scenario_outcomes (
+    run VARCHAR, adopted TIMESTAMPTZ, scope VARCHAR,       -- JSON list of ids
+    checked TIMESTAMPTZ, weeks INTEGER, result VARCHAR,    -- JSON from observe()
+    verdict VARCHAR,                                       -- inside | outside | too early
+    PRIMARY KEY (run, weeks))
+```
+
+`brief.py` gains a track record block and the grades in its KPI table; `Scenario.describe()`
+gains the model card's fields (`not_for`, `checked_by`, `version`) beside `method` and `question`.
+
+#### What the two scenarios on the branches would change
+
+| | Lighting | Waste |
+| --- | --- | --- |
+| C1 | Compute the year as arrays (lamps by nights) with NumPy in `physical()`, to bring a policy it has not seen from 437 ms under the 50 ms budget; `quick` skips its four layers and 214 series rows | `quick` skips its three layers; nothing else: 28 ms already |
+| C2 | `tradeoff = ("energy", "safety")`: energy a year against dimmed or dark lamp-hours at flagged lamps; after C1 its 85 dimming policies cost about 4 s cold, less with `evaluate_many` | `x-when` on `threshold` and `forecast_level`; `tradeoff = ("collections", "capacity_hours")`; its own memo already makes a second visit free |
+| C3 | Later: "pick lamps on the map" as an `existing` edit, to dim a street and not the city | Later: "add, move or resize a bin" as edits, labelled as not validated (section 4.2) |
+| C4 | Grades: energy today is measured, power when dimmed is borrowed, LED cost is assumed; `observe` reads the energy counters of the lamps in scope | Grades: fill rates are measured, fuel is borrowed, minutes per stop are assumed; `observe` reads pickups and hours at capacity |
+
+#### Rules that keep the contract safe
+
+1. Every addition has a default that reproduces today's behaviour; a scenario that implements
+   none of them still runs, sweeps (slowly) and explores (slowly).
+2. `quick`, `evaluate_many` and `probe` must agree with `evaluate` on the KPIs. One shared test
+   in `tests/test_scenarios.py` checks this for every registered scenario on its fixture.
+3. Numbers reach the page only from these calls. The page interpolates between the stops of a
+   sweep while a slider moves, marks the value provisional, and replaces it with the server's
+   exact answer on release.
+4. A scenario's `budget_ms` is tested on its fixture; a scenario that cannot meet it declares a
+   larger budget, and the lab then shows a Run button for it in place of live sliders.
 
 ### P1. An instant lab: answers while you drag
 
@@ -729,12 +1060,12 @@ chart, the split map and the charts fill in a moment after the hand stops. Nothi
 play with") and what made sketch tools spread (section 1.3). It is also where break-even values
 come from: the sweep shows at which setting a KPI crosses zero or a target (section 5).
 
-**Data and model.** No new data. Three additions to the lab:
+**Data and model.** No new data. Three additions to the lab (C1 in the contract section):
 
 1. A fast path. `GET /api/scenarios/{id}/evaluate` returns the KPIs of one evaluation (0.4 kB,
-   one call to `evaluate`), unsaved. Today a run costs up to 77 evaluations and about 560 kB
-   (spike A4). A scenario may implement `quick(data, params)` that skips building layers and
-   series; by default it is `evaluate(...).kpis`.
+   one call to `evaluate`), unsaved. Today a waste run makes 77 evaluations and sends 160 kB, a
+   lighting run 43 and 264 kB (spike A7). A scenario may implement `quick(data, params)` that
+   skips building layers and series; by default it is `evaluate(...).kpis`.
 2. Sweeps. `GET /api/scenarios/{id}/sweep` takes the current parameters and one parameter to
    vary, and returns the main KPIs at each slider stop (21 stops at most). The page asks for the
    slider under the hand first, then for the others while idle.
@@ -742,9 +1073,14 @@ come from: the sweep shows at which setting a KPI crosses zero or a target (sect
    the page already uses: the central result, then the ranges, then sensitivity, then layers and
    the backtest.
 
-Scenario models that draw random numbers move their inner loops to NumPy (9 to 31 times faster
-than pure Python in spike A3) and accept `fidelity` ("coarse" while dragging, "fine" for the kept
-run), using the same random draws for every setting so that curves are smooth and comparisons are
+What has to get faster is measured (spike A7). Both scenarios remember policies they have seen
+and answer those in under 2 ms. A waste policy it has not seen costs 28 ms, inside the budget. A
+lighting policy it has not seen costs 437 ms, so a 21-stop sweep of the dimming level would take
+9 seconds. The lighting model walks every lamp through every night of the year in pure Python,
+and that loop moves to NumPy arrays (already a dependency of the twin; arrays were 9 to 31 times
+faster in spike A3). A
+model that draws random numbers accepts `fidelity` ("coarse" while dragging, "fine" for the kept
+run) and uses the same draws for every setting, so that curves are smooth and comparisons are
 fair. Evaluations run in the server's thread pool, never on the event loop that also streams the
 chat and the watch. Results are cached under a key made of the model's version, the version of
 the prepared data and the parameters (slider values snapped to their step), and both requests
@@ -792,59 +1128,66 @@ of a slider step, the full run within 1 s (section 3 for the thresholds).
 
 **Effort.** M (the fast path and a throttled form alone are S).
 
-**Builds on.** `chatbot/scenarios/base.py` (`quick`, `fidelity`), `lab.py` (evaluate and sweep
-without saving, a result cache beside `_prepared`), `routes/scenarios.py`,
-`lib/registries/scenarios.ts` (a `Sweep` type), the lab's form on the page. Both existing
-scenarios gain from it without changes to their models, beyond the optional NumPy move.
+**Builds on.** C1: `chatbot/scenarios/base.py` (`quick`, `budget_ms`, `run_steps`), `lab.py`
+(`prepared`, `evaluate` and `sweep` without saving, a result cache beside `_prepared`),
+`routes/scenarios.py`, `lib/registries/scenarios.ts` (a `Sweep` type), and the lab's form on the
+page, which is not on the branch yet and can be built this way from the start. The waste
+scenario gains from it unchanged; the lighting scenario needs its schedule vectorised, in its
+own files (`lighting_model.py`), so that work is agreed with its owner or follows its merge.
 
 ### P2. Goal seek and the trade-off front
 
-**What someone can do.** State a target instead of a setting: "keep overflow under 100 bin-hours a
-week", "save at least 20% of lighting energy without dimming any street where the cameras count
-people after midnight". The lab searches the policies and shows every candidate as a dot on a
-chart of cost against harm, with the efficient ones joined as a line. Click a dot to load that
-policy into the lab; drag the target line and the recommended dot changes. A sentence under the
-chart says it in words: "The cheapest policy that keeps overflow under 100 bin-hours a week is
-collecting at 70% full: 122 pickups a week. Every-other-day collection needs 301."
+**What someone can do.** State a target instead of a setting: "keep bins under 100 bin-hours a
+week at capacity", "save at least 20% of lighting energy without dimming any street where the
+cameras count people after midnight". The lab searches the policies and shows every candidate as
+a dot on a chart of cost against harm, with the efficient ones joined as a line. Click a dot to
+load that policy into the lab; drag the target line and the recommended dot changes. A sentence
+under the chart says it in words. On the waste scenario and the store's 28 days it would read:
+"The fewest collections that keep bins under 100 bin-hours a week at capacity: 30 a week, going
+out every day for the bins forecast to pass 95%. Today's rounds make 31 and leave 1,204."
 
 **The decision it informs.** What service level to promise and what it costs: collection policy
-(pickups against overflow), lighting (energy against lamp-hours dimmed where people walk), later
-kerb space (bays against turned-away cars) and trees (trees against shaded walking hours). It
-turns "what if we did X" into "what should we do to get Y", the question officers actually bring.
+(collections against hours at capacity), lighting (energy against dimmed lamp-hours where people
+walk), later kerb space (bays against turned-away cars) and trees (trees against shaded walking
+hours). It turns "what if we did X" into "what should we do to get Y", the question officers
+actually bring.
 
-**Data and model.** The candidates are a grid over the scenario's choice parameters (those not
-marked `x-assumption`): every value of an enum or a switch, 5 to 7 stops of a number, capped at a
-few hundred. All candidates are evaluated on the same random draws. Two KPIs chosen by the person
-are the axes (each KPI's `better` gives the direction); the front is the set of candidates no
-other beats on both. A candidate "meets the target" only if it does so at the pessimistic end of
-the assumptions too, and the chart says in how many of the assumption corners it holds. The
-search runs coarse first and confirms the front at fine fidelity before the sentence is written,
-because the coarse pass can name a different winner (spike A3: 28 ms coarse, 1 s fine, for 24
-policies and 86 bins).
+**Data and model.** C2 in the contract section. The candidates are a grid over the scenario's
+choice parameters (those not marked `x-assumption`): every value of an enum or a switch, up to
+eight stops of a number, skipping combinations that `x-when` says change nothing, capped at a few
+hundred. Two KPIs are the axes, the scenario's `tradeoff` by default (each KPI's `better` gives
+the direction); the front is the set of candidates no other beats on both. A candidate "meets the
+target" only if it does so at the pessimistic end of the assumptions too, and the chart says in
+how many of the assumption corners it holds.
 
-A scenario may add `evaluate_many(data, list_of_params, fidelity)` to do the whole grid in one
-vectorised pass; the default loops over `evaluate`.
+The search streams. The waste scenario's own 168 policies take 5.4 s today at 28 ms each (spike
+A7), so the lab shows a coarse grid of about 40 within a second and fills in the rest, and the
+sentence is written only when the front is complete: a partial or coarse pass can name a
+different winner (spike A3). The lighting scenario's policies cost 437 ms each today, so it
+joins after P1 has vectorised it. A scenario may add `evaluate_many` to do the whole grid in one
+pass; the default loops over `quick`.
 
 **How it is validated.** The recommended policy is re-run as an ordinary run, with its ranges and
 its backtest, before it is shown as an answer. Tests assert that the front has no dominated
-point, and that the coarse and fine winners agree or the difference is flagged. The chart always
+point and that a streamed search ends in the same front as an unstreamed one. The chart always
 includes today's policy as a labelled dot, so the reader can see whether the model places the
-present where the sensors do.
+present where the sensors do. Hours at capacity are an upper bound in the waste scenario, as its
+own backtest notes say, and the sentence carries that note.
 
-**Interaction.**
+**Interaction.** The waste scenario's real front, from spike A7:
 
 ```
- Overflow (bin-hours a week)
-  3,000 |x every 7 days
-        |
-  1,000 |    x every 4
-        |          o 95%                  o on the front
-    500 |- - - - - -o- 85% - - - - - - - - - - - target (drag me)
-        |             o 75%     x every 2 (today)
-    100 |                o 70%  ● chosen
-        |                    o forecast 0.7        x every day
-        +--------------------------------------------------
-        80       120       160       300        600   pickups a week
+ Bin-hours at capacity a week
+  1,500 |o                                  o on the front
+        |                              x today: the city's rounds (31 a week; 1,204)
+  1,000 |   o
+        |         o
+    500 |            o
+        |               o
+        |                  o
+    100 |- - - - - - - - - - -o- - - - - - - - target: under 100 (drag me)
+      0 +---------------------------●-------- chosen: 30 a week; 5
+        21    23    25    27    29    31   collections a week
 ```
 
 - Under the chart, a short list of up to five named options (today's policy, the cheapest that
@@ -856,15 +1199,15 @@ present where the sensors do.
 - Three or more objectives: the chart keeps two axes and the table gains columns; no radar
   charts and no weight sliders, which hide the trade-off they claim to resolve (section 2).
 - From the chat: `find_policy(scenario, target, minimise)` answers "find the cheapest collection
-  policy that keeps overflow under 100 bin-hours" with the sentence, the chart and a chip that
-  opens the lab on the chosen policy.
+  policy that keeps bins under 100 bin-hours at capacity" with the sentence, the chart and a
+  chip that opens the lab on the chosen policy.
 
-**Effort.** M, after P1 (it reuses the fast path and the fidelity levels).
+**Effort.** M, after P1 (it reuses the fast path).
 
-**Builds on.** `base.py` (`evaluate_many`, a `candidates` helper), `lab.py`, a new
-`/api/scenarios/{id}/explore` route, `tools/scenarios.py` (`find_policy`, with its line in
-`TOOL_LABELS`), a "Find a policy" section in the lab. Waste first (its policies are already a
-family), lighting second.
+**Builds on.** C2: `base.py` (`tradeoff`, `candidates`, `evaluate_many`, `explore`, and `x-when`
+with a value), `lab.py`, the `/api/scenarios/{id}/explore` stream, `tools/scenarios.py`
+(`find_policy`, with its line in `TOOL_LABELS`), a "Find a policy" section in the lab. Waste
+first: its policies are already a family and its evaluation is already inside the budget.
 
 ### P3. A prediction ledger and evidence grades
 
@@ -923,10 +1266,12 @@ read better than an interval (section 2).
 
 **Effort.** M.
 
-**Builds on.** `RunStore` and `brief.py` in `chatbot/scenarios/`, the watch's scheduler
-(`chatbot/watch/service.py`) for the periodic checks, `lib/registries/track-marks.ts` for the
-clock, `chatbot/sources.py` for the borrowed sources, the `x-source` field that assumptions
-already carry. Adds `grade` to the KPI shape in `base.py` and `scenarios.ts`.
+**Builds on.** C4: `grade` and `basis` on a KPI, `x-grade` on an assumption, `switch_at` on a
+sensitivity row, `Scenario.observe` and the `scenario_outcomes` table, in `base.py`, `lab.py`
+and `scenarios.ts`. Also `RunStore` and `brief.py` in `chatbot/scenarios/`, the watch's
+scheduler (`chatbot/watch/service.py`) for the periodic checks, `lib/registries/track-marks.ts`
+for the clock, `chatbot/sources.py` for the borrowed sources, and the `x-source` texts that
+assumptions already carry.
 
 ### P4. Record what the next models need
 
@@ -1015,22 +1360,20 @@ flowchart LR
 
 **Effort.** M.
 
-**Builds on.** This is where the platform gains **map edits**, reused by P6, P8, P9 and P10:
+**Builds on.** C3. This is where the platform gains **map edits**, reused by P6, P8, P9 and P10:
 
-- A new page registry `lib/registries/map-edits.ts`: an edit tool is `{id, label, icon, geometry:
-  "point" | "line" | "polygon" | "existing", validate, preview}`. The engine already has a
-  one-click pick mode (`pickMyLocation` in `lib/map/engine.ts`); points and "pick an existing
-  thing" extend it. Lines and polygons use Terra Draw, whose MapLibre adapter, select mode,
-  snapping and change events fit ([Terra Draw guides](https://github.com/jameslmilner/terra-draw/blob/main/guides/4.MODES.md)).
-- A parameter type in the scenario schema: `"x-edit": true` on an array property whose items are
-  changes, `{op: "add" | "move" | "remove" | "close", kind, geometry, ref}`. The lab draws the
-  changes list for it; chat tools pass the same list ("add a pharmacy at Agios Dometios").
+- The `changes` parameter with `x-edit`, `chatbot/scenarios/changes.py` and `Scenario.probe`.
   Scenarios stay pure functions of their parameters, so runs with edits save, share and compare
   like any other. This is the "list of modifications over a baseline" that Conveyal and Remix use
-  (section 2).
-- `chatbot/network.py` (the graph, cached extract, nearest-node lookup), reused by P8 and P10.
-- A new scenario module `chatbot/scenarios/access.py`, its sources entry, and a result section
-  registered with `registerScenarioSection`.
+  (section 2), and chat tools pass the same list ("add a pharmacy at Agios Dometios").
+- The page registry `lib/registries/map-edits.ts` and `beginEdit` in `lib/map/engine.ts`. The
+  engine already has a one-click pick mode (`pickMyLocation`); points and "pick an existing
+  thing" extend it. Lines and polygons use Terra Draw, whose MapLibre adapter, select mode,
+  snapping and change events fit ([Terra Draw guides](https://github.com/jameslmilner/terra-draw/blob/main/guides/4.MODES.md)).
+- `chatbot/network.py` (the graph, the cached extract, nearest-node lookup) as
+  `ScenarioContext.network`, reused by P8 and P10. SciPy joins the dependencies with it.
+- A new scenario module `chatbot/scenarios/access.py`, its entry in `chatbot/sources.py`, and a
+  result section registered with `registerScenarioSection`.
 
 ### P6. Shade and trees
 
@@ -1046,11 +1389,19 @@ hours gained per tree.
 tree programme, shade at bus stops and squares, the streets to prioritise for heat. For a city
 with summer afternoons above 40 °C this is the scenario with the widest audience.
 
-**Data and model.** The environment twin's shadow casting from the DLS buildings, extended with
-simple tree crowns (a height, a crown width and how much light passes through) and canopies.
+**Data and model.** The environment twin, now on main, already does the hard part
+(`chatbot/environment/shade.py`): the city as a grid of roof heights in cells about 1.95 m
+across, shade found by marching every cell towards the sun, `Area.shade(at)` for a moment,
+`Area.sun_hours(day)` for a day in 15-minute steps, and `Shade.along(path, start, speed)` for a
+walk. Its own notes say what is missing: "Only buildings cast shade here: no trees, awnings or
+arcades". The scenario adds exactly that, as a canopy layer: each drawn crown or canopy is
+stamped into a copy of an area's height grid for casting (a height, a crown width, and the share
+of light that passes through), while the roofs mask stays buildings only, so the ground under a
+crown is counted and not blanked. `Area.with_canopy(cells, heights, pass_through)` is the one
+addition to that module; it works on areas of up to 400 m radius, which is a street or a square.
 Outputs are shade, which is geometry and can be checked. Cooling in degrees is not computed; if
-shown at all it is a borrowed range with its source (section 4). Footfall weights come from the
-hourly camera counts (P4 extends them beyond Ledras). Existing trees are the weak input:
+shown at all it is a borrowed range with its source (section 4.4). Footfall weights come from
+the hourly camera counts (P4 extends them beyond Ledras). Existing trees are the weak input:
 OpenStreetMap's tree data is incomplete and the result says how many trees it knows per street.
 
 **How it is validated.** Building shadows against dated aerial photographs and a handful of
@@ -1062,11 +1413,13 @@ temperature claim without a measurement. The ranking is stress-tested against th
 the shade updating on release. The clock chooses the moment; a three-up strip shows 12:00, 15:00
 and 17:00 side by side. The trade-off front (P2) plots trees planted against shaded walking hours.
 
-**Effort.** M to L, depending on how far the environment twin's shadow code can be reused on the
-server.
+**Effort.** M, now that the shade engine is on main and runs on the server; L if existing trees
+are to be mapped first.
 
-**Builds on.** The environment twin (`sun_and_shade`), map edits (P5), the trade-off front (P2),
-`chatbot/scenarios/shade.py`, a "Shade" row in the Layers sheet.
+**Builds on.** The environment twin (`chatbot/environment/shade.py`, the `sun_and_shade` tool,
+its Layers sheet group), `ScenarioContext.environment` and the line tool from C3, the trade-off
+front (C2) with `tradeoff = ("trees", "shaded_walking_hours")`, and a new scenario module
+`chatbot/scenarios/shade.py`.
 
 ### P7. Session mode: one question, many hands, a brief at the end
 
@@ -1235,9 +1588,12 @@ The order, for two lanes:
   runner and form. P5 is the larger change to the map and should not overlap with the session
   finishing the lab's split map.
 - All three are built against the lighting and waste scenarios, with their sessions told what
-  each asks of a scenario: P1 an optional `quick` and `fidelity`, P2 an optional `evaluate_many`,
-  P3 a `grade` per KPI. A scenario that ignores them keeps working.
-- NumPy joins `pyproject.toml` with P1. SciPy joins with P5.
+  each asks of a scenario (the contract section in Part 2 has the signatures): P1 an optional
+  `quick` and a `budget_ms`, P2 an optional `tradeoff`, `candidates` and `evaluate_many`, P3 a
+  `grade` per KPI and an optional `observe`. A scenario that ignores them keeps working.
+- P1 includes vectorising the lighting model, which lives in the lighting scenario's own files:
+  it starts after that scenario's pull request is ready, or is agreed with its owner.
+- NumPy is already a dependency of the twin (the environment twin uses it). SciPy joins with P5.
 
 ### What not to build, and why
 
@@ -1330,18 +1686,19 @@ What it settles:
 - The browser is the same order of speed as NumPy. There is no speed reason to keep a second copy
   of a model in TypeScript; one model on the server is easier to trust.
 - NumPy is 9 to 31 times faster than pure Python here. The scenario code on both branches is pure
-  Python and `pyproject.toml` has no NumPy.
+  Python; NumPy has since become a dependency of the twin, through the environment twin.
 - The front itself is informative even with the crude model: threshold and forecast policies
   dominate fixed schedules (collecting at 70% full: 122 pickups and 185 overflow bin-hours a week;
   every 2 days: 301 pickups and 158).
 
 ### A4. What a run costs to send
 
-A result with two map layers of 240 lamps and 28 days of hourly series for four metrics is 557 kB
-of JSON, 22 kB gzipped; encoding takes 4 ms and compressing 3 ms. The KPIs alone are 0.4 kB. The
-lab's runner calls `evaluate` up to 77 times a run (every corner of six assumptions, then each
-assumption alone, then the run itself), so the cost of a run is about 77 times the cost of one
-evaluation. A slider drag should get the one central evaluation first and the ranges after.
+A made-up result with two map layers of 240 lamps and 28 days of hourly series for four metrics
+is 557 kB of JSON, 22 kB gzipped; encoding takes 4 ms and compressing 3 ms. The real results are
+smaller: 264 kB for a lighting run and 160 kB for a waste run (A7). The KPIs alone are 0.4 kB.
+The lab's runner calls `evaluate` up to 77 times a run (every corner of six assumptions, then
+each assumption alone, then the run itself). A slider drag should get the one central evaluation
+first and the ranges after.
 
 ### A5. Streets: can a drawn change be answered from a graph in memory?
 
@@ -1376,6 +1733,56 @@ The road-noise rule says about 10 dB per tenfold traffic (3 dB per doubling). Ho
 six stations against hourly vehicle counts gives slopes of 1.4 to 7.2 dB per tenfold traffic, with
 R2 from 0.14 to 0.63. The cameras with hourly data are 0.4 to 3.4 km from the stations, and the
 stations hear more than the road. The twin's data cannot support a street-level noise what-if.
+
+### A7. The lab's two scenarios as they run today
+
+Method: the branches' own code (`origin/scenario-lab` at `8a2ddca` for lighting,
+`origin/waste-scenario` at `741ad2f` for waste), extracted read-only and run on the store copy
+with the period "the last 30 days". No network: the routing address pointed nowhere, so the
+waste scenario used its cached road distances and `finish` could not draw its route. Nothing on
+those branches was changed.
+
+| | Lighting | Waste |
+| --- | --- | --- |
+| `prepare` | 1,350 ms | 318 ms |
+| `evaluate`, defaults, first call | 198 ms | 46 ms |
+| `evaluate`, the same parameters again | 1.5 ms | 1.8 ms |
+| `evaluate`, a policy it has not seen (median; slowest) | 437 ms; 677 ms | 28 ms; 141 ms |
+| Evaluations in one run | 43 (5 assumptions) | 77 (6 assumptions) |
+| A whole run | 0.08 s with no policy on; 0.53 s with dimming on | about 0.7 to 1.4 s, of which the backtest is 0.19 s, plus `finish` |
+| Result as JSON | 264 kB | 160 kB |
+| A search over policies, each evaluated once | 85 dimming policies (17 levels by 5 start times, a slice of its choices): 38 s | All 168 of its policies (fixed, threshold and forecast by round days and level): 5.4 s |
+| 40 of those again | 0.3 s | 0.17 s |
+
+The waste scenario's front on collections against bin-hours at capacity, over those 168
+policies and the store's 28 days:
+
+| Collections a week | Bin-hours at capacity a week | Policy |
+| --- | --- | --- |
+| 31 | 1,204 | Today: the city's own pickups, replayed |
+| 21 | 1,466 | One round a week, bins at 95% or more |
+| 22 | 1,056 | One round a week, bins at 85% or more |
+| 24 | 773 | Three rounds a week, bins at 95% or more |
+| 25 | 468 | Four rounds a week, bins at 90% or more |
+| 26 | 386 | Every day, bins at 95% or more |
+| 27 | 236 | Six days a week, bins at 90% or more |
+| 28 | 104 | Every day, bins at 90% or more |
+| 30 | 5 | Every day, bins forecast to pass 95% |
+
+What it settles:
+
+- Both scenarios remember what they have computed, so a setting visited twice answers in under
+  2 ms. The cost is in settings not seen before.
+- The waste scenario is inside a 50 ms budget already. The lighting scenario is about nine times
+  over it: a sweep of the dimming level would take 9 seconds, so its nightly schedule needs
+  vectorising before its sliders can be live.
+- A whole run takes half a second to a few seconds. Sliders need the one-evaluation path of
+  contract addition C1, not a faster run.
+- A search over the waste scenario's policies takes seconds, so it must stream (C2). Eight of the
+  168 policies are on the front, and today's rounds are far from it: the model finds policies
+  with fewer collections and a fraction of the hours at capacity. Hours at capacity are an upper
+  bound, as the scenario's own notes say, and the kilometres were not compared here because the
+  spike had no routing.
 
 ## Appendix B: how the research was done
 
