@@ -20,10 +20,12 @@ from fastapi.staticfiles import StaticFiles
 
 from chatbot.agent import Agent
 from chatbot.city import CityData
+from chatbot.citytiles import CityTiles
 from chatbot.dls import DLS
 from chatbot.eoa import Registry
 from chatbot.geo import Places
 from chatbot.memory import Memory
+from chatbot.osm3d import OsmBuildings
 from chatbot.overture import Overture
 from chatbot.routes import routers
 from chatbot.routing import Router
@@ -63,6 +65,10 @@ async def lifespan(app: FastAPI):
                   Places(settings, overture=overture), Router(settings), dls=dls,
                   registers=registers, memory=memory)
     app.state.agent = agent
+    # The 3D city's vector tiles (DLS buildings, OpenStreetMap's where the DLS has none).
+    app.state.city_tiles = CityTiles(dls, OsmBuildings(settings))
+    if settings.city_fill:
+        app.state.city_tiles.start()
     if memory.recorder is not None:
         memory.recorder.start()
     agent.watcher.start()
@@ -76,6 +82,7 @@ async def lifespan(app: FastAPI):
     # The registers refresh daily; the first build (parcels, then 3D heights) takes ~2 minutes.
     threading.Thread(target=registers.refresh_if_needed, daemon=True).start()
     yield
+    app.state.city_tiles.stop()
     agent.watcher.stop()
     if memory.recorder is not None:
         memory.recorder.stop()

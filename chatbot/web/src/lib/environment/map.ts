@@ -35,7 +35,7 @@ import { inspect } from "@/lib/inspector"
 import type { Basemap } from "@/lib/map/basemap"
 import {
   cityBuildings, firstLabelLayer, flyToBounds, getMap, onCityChange, onStyleReady, registerLayerRenderer,
-  setCity3d, themedPaint, useMapUi, viewing, type LayerData,
+  setCity3d, themedPaint, useMapUi, viewing, wantCityDetail, type LayerData,
 } from "@/lib/map/engine"
 import { skyAt } from "@/lib/map/sky"
 import { clearSky, useWeatherMap } from "@/lib/weather/map"
@@ -233,6 +233,7 @@ function drawShadows() {
   if (!map) return
   const city = cityBuildings()
   const on = env().shadows.on
+  wantCityDetail("shadows", on) // cast from the detailed buildings near the eye
   const sky = skyAt(new Date(moment()))
   let note = ""
   let draw = on && city.on
@@ -310,6 +311,7 @@ let cityForShadows = false
 
 export function setShadowsOn(on: boolean) {
   patch("shadows", { on })
+  wantCityDetail("shadows", on)
   if (on && !cityBuildings().on) { cityForShadows = true; setCity3d(true) }
   if (!on && cityForShadows) { cityForShadows = false; if (cityBuildings().on) setCity3d(false) }
   const map = getMap()

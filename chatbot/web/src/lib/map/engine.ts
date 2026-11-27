@@ -86,6 +86,17 @@ const CITY_HEIGHTS_DAY = [0, "#e5e7eb", 6, "#cbd5e1", 12, "#93c5fd", 20, "#3b82f
 const CITY_SRC = "city3d::src"
 const CITY_MIN_ZOOM = 14.5
 const CITY_RADIUS = 3 // tiles around the centre (each ~500 m), so pitched views stay bounded
+// The 3D city is drawn from vector tiles (chatbot/citytiles.py): MapLibre loads what a view needs,
+// near and far, and keeps what it has. Outside the DLS model they hold OpenStreetMap's buildings
+// (`src: "osm"`), drawn in a plain grey so the measured city reads apart from the mapped one.
+const CITY_TILES = "/api/buildings3d.json" // zooms and bounds (a TileJSON)
+// MapLibre fetches tiles in its worker, where an address without its origin doesn't resolve. The
+// version (citytiles.VERSION, kept in step by a test) lets browsers drop tiles when it changes.
+const CITY_TILE_URL = "/api/buildings3d/{z}/{x}/{y}.mvt?v=1"
+const CITY_LAYER = "buildings"
+const CITY_DRAW_ZOOM = 12.5 // it fades in from here
+const OSM_HEIGHTS_NIGHT = [0, "#3b4354", 12, "#475165", 40, "#5b667b"]
+const OSM_HEIGHTS_DAY = [0, "#dedbd5", 12, "#d2cec6", 40, "#c2bdb4"]
 
 // ---------------------------------------------------------------------------------------------
 // What React shows: layers with their legends, the 3D city, the registers and the time-lapse.
@@ -141,6 +152,11 @@ export function cityHeights() {
   return useMapUi.getState().basemap === "night" ? CITY_HEIGHTS_NIGHT : CITY_HEIGHTS_DAY
 }
 
+// The grey of OpenStreetMap's buildings where the DLS has none, for the legend.
+export function cityOsmGrey() {
+  return useMapUi.getState().basemap === "night" ? OSM_HEIGHTS_NIGHT[3] : OSM_HEIGHTS_DAY[3]
+}
+
 // ---------------------------------------------------------------------------------------------
 // State shared by the map, linked charts and custom visuals.
 
@@ -167,7 +183,10 @@ const state = {
 const CITY = {
   on: false, features: [] as Feature[], ids: new Set<string | number>(), tiles: new Set<string>(),
   inflight: new Set<string>(), queue: [] as [number, number][],
+  detail: new Set<string>(), // who needs the detailed buildings near the eye (wantCityDetail)
+  fill: null as CityFill | null, // how far the server has read greater Nicosia
 }
+type CityFill = { fill: { done: number; total: number }; waiting: number; problem: string | null }
 
 let map = undefined as unknown as MlMap // set once by initMap
 let styleReady = false
@@ -268,7 +287,7 @@ export function initMap(container: HTMLElement, camera?: Camera | null) {
   map.on("touchcancel", cancelPress)
   map.on("movestart", cancelPress)
   ;(window as any).__map = map // a hook for scripted demos and browser tests (e.g. map.project)
-  ;(window as any).__twin = { state, clock } // and what the map draws, for the same
+  ;(window as any).__twin = { state, clock, setCity3d, setBasemapMode } // and what the map draws, for the same
   // Zoom, the 3D view and the compass are the page's own (components/shell/map-controls.tsx);
   // the scale sits with the credits in the bottom-right corner.
   map.addControl(new maplibregl.ScaleControl({ unit: "metric" }), "bottom-right")
@@ -407,7 +426,7 @@ async function swapBasemap() {
   const ground = map.getLayersOrder()[0]
   const prefix = newPrefix(to)
   for (const l of named(layers, prefix)) {
-    const hide = l.type === "fill-extrusion" && CITY.on && !viewFocus // the 3D city stands in for them
+    const hide = l.type === "fill-extrusion" && CITY.on // the 3D city stands in for them
     map.addLayer((hide ? { ...l, layout: { ...l.layout, visibility: "none" } } : l) as LayerSpecification, ground)
   }
   await nextFrame() // MapLibre takes up the new layers, and starts on the tiles, with its next frame
@@ -1316,31 +1335,43 @@ export async function showLayer(spec: LayerSpec, prefetched: FC | null = null) {
 
 // ---------------------------------------------------------------------------------------------
 // The DLS 3D city: every building in view at its real height (from the Department of Lands and
-// Surveys), coloured by height. It replaces the base map's own 3D buildings while on. Buildings
-// that a 'buildings_3d' layer redraws are hidden here (no z-fighting); an old-town block that
-// only holds a register plot turns into a translucent ghost, so the plot shows inside it.
+// Surveys), coloured by height, near and far. It replaces the base map's own 3D buildings while
+// on; where the DLS has none (north of the buffer zone) its tiles hold OpenStreetMap's, in grey.
+// Buildings that a 'buildings_3d' layer redraws are hidden here (no z-fighting); an old-town block
+// that only holds a register plot turns into a translucent ghost, so the plot shows inside it.
 
 function cityPaint(id: string, opacity: number): any {
   const byHeight = (heights: unknown[]) => ["interpolate", ["linear"], ["get", "h"], ...heights]
+  const color = (dls: unknown[], osm: unknown[]) => ["case", ["==", ["get", "src"], "osm"], byHeight(osm), byHeight(dls)]
   return {
-    ...forBase(id, { "fill-extrusion-color": { night: byHeight(CITY_HEIGHTS_NIGHT), day: byHeight(CITY_HEIGHTS_DAY) } }),
-    "fill-extrusion-height": ["get", "h"], "fill-extrusion-base": 0, "fill-extrusion-opacity": opacity,
+    ...forBase(id, { "fill-extrusion-color": { night: color(CITY_HEIGHTS_NIGHT, OSM_HEIGHTS_NIGHT), day: color(CITY_HEIGHTS_DAY, OSM_HEIGHTS_DAY) } }),
+    "fill-extrusion-height": ["get", "h"], "fill-extrusion-base": ["coalesce", ["get", "b"], 0],
+    "fill-extrusion-opacity": ["interpolate", ["linear"], ["zoom"], CITY_DRAW_ZOOM, 0, CITY_DRAW_ZOOM + 0.6, opacity],
   }
 }
 
 function addCityLayer() {
   if (!map.getSource(CITY_SRC)) {
-    map.addSource(CITY_SRC, { type: "geojson", data: { type: "FeatureCollection", features: CITY.features } as any })
+    const origin = window.location.origin
+    map.addSource(CITY_SRC, { type: "vector", url: origin + CITY_TILES, tiles: [origin + CITY_TILE_URL] })
   }
   // Below any layer the assistant drew, so its buildings and markers stay on top (but over a
   // street's glow, which lies on the ground).
   const before = map.getStyle().layers.find((l) => l.id.includes("::") && !l.id.startsWith("city3d::") && !l.id.endsWith("::street-glow"))?.id
-  if (!map.getLayer("city3d::fill")) map.addLayer({ id: "city3d::fill", type: "fill-extrusion", source: CITY_SRC, minzoom: CITY_MIN_ZOOM - 0.5, paint: cityPaint("city3d::fill", 0.92) }, before)
-  if (!map.getLayer("city3d::ghost")) map.addLayer({ id: "city3d::ghost", type: "fill-extrusion", source: CITY_SRC, minzoom: CITY_MIN_ZOOM - 0.5, filter: ["in", ["id"], ["literal", []]], paint: cityPaint("city3d::ghost", 0.28) }, before)
+  const tiles = { source: CITY_SRC, "source-layer": CITY_LAYER, minzoom: CITY_DRAW_ZOOM } as const
+  if (!map.getLayer("city3d::fill")) map.addLayer({ id: "city3d::fill", type: "fill-extrusion", ...tiles, paint: cityPaint("city3d::fill", 0.92) }, before)
+  if (!map.getLayer("city3d::ghost")) map.addLayer({ id: "city3d::ghost", type: "fill-extrusion", ...tiles, filter: idsIn([]), paint: cityPaint("city3d::ghost", 0.28) }, before)
   weatherHooks.place() // the 3D city stands under the weather, with the ground
   setBaseBuildings(false)
   syncCityClaims()
   bindCityPopup()
+}
+
+// A filter for features with one of these ids: a `match`, which looks an id up at once, where an
+// `in` over a list would compare every building with every id.
+function idsIn(ids: Iterable<unknown>): any {
+  const list = [...new Set([...ids].map(Number).filter(Number.isFinite))]
+  return list.length ? ["match", ["id"], list, true, false] : ["boolean", false]
 }
 
 function removeCityLayer() {
@@ -1368,11 +1399,15 @@ function syncCityClaims() {
   }
   // While looking out from a building, the eye stands in it: it isn't drawn around the camera.
   if (viewFocus?.hide) claimed.add(viewFocus.hide)
-  map.setFilter("city3d::fill", ["!", ["in", ["id"], ["literal", [...claimed, ...ghosts]]]])
-  map.setFilter("city3d::ghost", ["in", ["id"], ["literal", [...ghosts].filter((g) => !claimed.has(g))]])
+  map.setFilter("city3d::fill", ["!", idsIn([...claimed, ...ghosts])])
+  map.setFilter("city3d::ghost", idsIn([...ghosts].filter((g) => !claimed.has(g))))
 }
 
+// The detailed buildings near the eye: the DLS's z16 tiles as GeoJSON, every field and the full
+// outline, for what is worked out from them on the page (shadows). They aren't drawn (the vector
+// tiles draw the city), so they are read only while something asks for them (wantCityDetail).
 function cityTilesInView() {
+  if (!CITY.detail.size) return []
   const n = 2 ** 16
   const tx = (lon: number) => Math.floor(((lon + 180) / 360) * n)
   const ty = (lat: number) => Math.floor(((1 - Math.asinh(Math.tan((lat * Math.PI) / 180)) / Math.PI) / 2) * n)
@@ -1415,7 +1450,6 @@ function pumpCity() {
         CITY.tiles.add(key)
         const add = fc.features.filter((f) => !CITY.ids.has(f.id!))
         for (const f of add) { CITY.ids.add(f.id!); CITY.features.push(f) }
-        if (add.length) (map.getSource(CITY_SRC) as GeoJSONSource | undefined)?.updateData({ add: add as any })
         if (add.length) cityChanged()
       })
       .catch(() => { /* leave it unloaded; the next move retries it */ })
@@ -1432,17 +1466,45 @@ function refreshCity() {
 
 function cityStatus() {
   let status = ""
+  const f = CITY.fill
   if (CITY.on) {
-    if (map.getZoom() < CITY_MIN_ZOOM && !viewFocus) status = "Zoom in to see the 3D buildings"
-    else if (CITY.inflight.size || CITY.queue.length) status = `Loading 3D buildings, ${CITY.inflight.size + CITY.queue.length} areas left`
-    else status = `${CITY.features.length.toLocaleString()} DLS buildings loaded`
+    if (map.getZoom() < CITY_DRAW_ZOOM && !viewFocus) status = "Zoom in to see the 3D buildings"
+    else if (f?.problem) status = "The DLS isn't answering just now: OpenStreetMap's buildings stand in where it hasn't been read"
+    else if (f && f.fill.done < f.fill.total) status = `Reading the DLS buildings of greater Nicosia, ${Math.floor((100 * f.fill.done) / f.fill.total)}% so far`
   }
   const cur = useMapUi.getState().city
   if (cur.on !== CITY.on || cur.status !== status) setUi({ city: { on: CITY.on, status } })
 }
 
-// The DLS buildings loaded so far (each with its roof height `h`), and a call whenever more
-// arrive or the 3D city is switched: for what is drawn from them, like their shadows.
+// While the server is still reading greater Nicosia from the DLS (its first run, or a month on),
+// the status line says how far it has come. The tiles fill in by themselves meanwhile.
+let fillTimer: number | undefined
+async function watchCityFill() {
+  clearTimeout(fillTimer)
+  if (!CITY.on) return
+  try {
+    const r = await fetch("/api/buildings3d/status")
+    if (r.ok) CITY.fill = await r.json()
+  } catch { /* the next look */ }
+  cityStatus()
+  const f = CITY.fill
+  if (CITY.on && (!f || f.problem || f.fill.done < f.fill.total || f.waiting)) fillTimer = window.setTimeout(watchCityFill, 10_000)
+}
+
+// The detailed buildings near the eye are read while at least one `who` wants them (the shadows,
+// say): `cityBuildings()` holds them and `onCityChange` tells of new ones.
+export function wantCityDetail(who: string, on: boolean) {
+  if (on === CITY.detail.has(who)) return
+  if (on) CITY.detail.add(who)
+  else CITY.detail.delete(who)
+  if (!map) return
+  if (on) whenStyleReady(refreshCity)
+  else if (!CITY.detail.size) CITY.queue = []
+}
+
+// The detailed DLS buildings loaded so far near the eye (each with its roof height `h`, read
+// while wantCityDetail asks for them), and a call whenever more arrive or the 3D city is
+// switched: for what is drawn from them, like their shadows.
 export function cityBuildings(): { on: boolean; features: Feature[] } {
   return { on: CITY.on, features: CITY.features }
 }
@@ -1464,6 +1526,7 @@ export function setCity3d(on: boolean) {
       if (viewFocus) applyViewBuildings()
       else if (map.getPitch() < 40 && map.getZoom() >= CITY_MIN_ZOOM) map.easeTo({ pitch: 55, duration: 900 })
       refreshCity()
+      void watchCityFill()
     } else {
       CITY.queue = []
       removeCityLayer()
@@ -2342,11 +2405,11 @@ export function resetForNewChat() {
 }
 
 // ---------------------------------------------------------------------------------------------
-// Looking out from a spot (lib/view.ts owns the view; here is what the map does for it). The base
-// map's own buildings come out to the horizon (from z13 tiles, at their full height), except
-// within reach of the eye, where the DLS buildings stand at their surveyed heights; the DLS
-// tiles are asked for only there. Answer layers don't refit the camera meanwhile, and any other
-// camera move (the assistant's, the inspector's, a link's) ends the view first.
+// Looking out from a spot (lib/view.ts owns the view; here is what the map does for it). The 3D
+// city's tiles come out to the horizon (the DLS buildings, and OpenStreetMap's beyond them); with
+// the city off, the base map's own buildings do (from z13 tiles, at their full height). Answer
+// layers don't refit the camera meanwhile, and any other camera move (the assistant's, the
+// inspector's, a link's) ends the view first.
 
 export type ViewFocus = { lon: number; lat: number; radiusM: number; hide?: number }
 let viewFocus: ViewFocus | null = null
@@ -2414,14 +2477,10 @@ function applyViewBuildings() {
         })
       }
       const saved = viewSaved.get(id)!
-      const near: any = CITY.on
-        ? [">", ["distance", { type: "Point", coordinates: [viewFocus.lon, viewFocus.lat] }], viewFocus.radiusM]
-        : null
-      const filter: any = saved.filter && near ? ["all", saved.filter, near] : (near ?? saved.filter)
       map.setLayerZoomRange(id, VIEW_BUILDINGS_MINZOOM, saved.maxzoom)
-      map.setFilter(id, filter)
+      map.setFilter(id, saved.filter)
       map.setPaintProperty(id, "fill-extrusion-height", ["coalesce", ["get", "render_height"], 6])
-      map.setLayoutProperty(id, "visibility", "visible")
+      map.setLayoutProperty(id, "visibility", CITY.on ? "none" : "visible") // the 3D city stands in for them
     } else if (viewSaved.has(id)) {
       const saved = viewSaved.get(id)!
       map.setLayerZoomRange(id, saved.minzoom, saved.maxzoom)
