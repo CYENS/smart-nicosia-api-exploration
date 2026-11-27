@@ -44,6 +44,7 @@ export const TOOL_LABELS: Record<string, string> = {
   find_high_places: "Finding high places with a view", view_from: "Flying you to the view",
   list_scenarios: "Reading the scenario lab", run_scenario: "Running the scenario",
   compare_scenarios: "Comparing the two runs", open_scenario: "Opening it in the scenario lab",
+  get_grid: "Reading the island's grid",
 }
 
 export function toolLabel(name: string) {

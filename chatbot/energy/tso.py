@@ -270,7 +270,9 @@ def parse_page(html: str) -> Page:
         else:
             pending += 1
     readings.sort(key=lambda r: r.t)
-    if not readings and not pending:
+    # An empty table is the start of a day (the first quarter hour comes some minutes after
+    # midnight); rows that are all unreadable are a changed layout.
+    if table["rows"] and not readings and not pending:
         raise LayoutChanged("the data table has no rows the twin can read")
     installed: dict[str, float] = {}
     inst = next((t for t in p.tables if t["id"] == INSTALLED_TABLE), None)

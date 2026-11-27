@@ -45,8 +45,11 @@ STEP = timedelta(minutes=15)
 MIN_INTERVAL = timedelta(minutes=15)  # never read the page more often than it is published
 PUBLISH_LAG = timedelta(minutes=12)  # a quarter hour is filled about this long after it
 MAX_BACKOFF = timedelta(hours=1)
-LIVE_AGE = timedelta(minutes=45)  # an older newest row makes "now" stale
+# An older newest row makes "now" stale: two missed quarter hours and the lag (the first rows
+# of a day come late).
+LIVE_AGE = timedelta(minutes=75)
 MOMENT_WINDOW = timedelta(minutes=30)  # a past moment takes a row at most this much older
+MIN_DAY_ROWS = 8  # fewer quarter hours since midnight than this: the card shows the last 24 hours
 KEEP_RECENT = timedelta(hours=50)  # rows kept in memory beside the twin's memory
 BACKFILL_DAYS = 15
 USUAL_WEEKS = 4
@@ -471,7 +474,12 @@ class Grid:
             self.refresh()
         moment = now if live else at
         r = self.at(moment, LIVE_AGE * 4 if live else MOMENT_WINDOW)
-        day = self.series(local_midnight(moment), moment)
+        # Today's curve from midnight; in the first hours of a day, the last 24 hours instead.
+        since, span = local_midnight(moment), "today"
+        day = self.series(since, moment)
+        if len(day) < MIN_DAY_ROWS:
+            since, span = moment - timedelta(hours=24), "last_24_hours"
+            day = self.series(since, moment)
         if live:
             status = ("unavailable" if r is None else
                       "stale" if self.error or moment - r.t > LIVE_AGE else "live")
@@ -484,7 +492,8 @@ class Grid:
         out = {
             "status": status, "live": live, "at": local_iso(moment),
             "now": point(r, moment) if r else None,
-            "day": pts, "usual": usual, "usual_days": usual_days,
+            "day": pts, "day_from": local_iso(since), "day_span": span,
+            "usual": usual, "usual_days": usual_days,
             "peak": {"t": peak["t"], "demand_mw": peak["demand_mw"]} if peak else None,
             "cleanest": {"t": clean["t"], "carbon_kg_kwh": clean["carbon_kg_kwh"]} if clean else None,
             "installed": self.installed, "labels": LABELS, "solar_note": SOLAR_NOTE,
