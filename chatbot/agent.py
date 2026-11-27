@@ -38,6 +38,7 @@ from chatbot.routing import Router
 from chatbot.scenarios import Lab, ScenarioContext
 from chatbot.scenarios.lab import default_cache_dir
 from chatbot.settings import TIMEZONE, Settings
+from chatbot.sky import SkyService
 from chatbot.store import SessionStore
 from chatbot.lidar import Flight
 from chatbot.terrain import Terrain
@@ -194,6 +195,9 @@ class Agent:
         # The scenario lab: runs what-ifs on the memory and keeps the runs (chatbot/scenarios).
         self.scenarios = Lab(ScenarioContext(settings, memory, city, router, places, registers,
                                              self.mobility, cache_dir=default_cache_dir()))
+        # Living sky (aircraft, ISS visible passes) and CyNAP PWD ITS sites + bus archive.
+        self.sky = SkyService(settings, memory=memory, mobility=self.mobility)
+        self.entities.sky = self.sky
         self.tools = TOOL_DEFS + ([WEB_SEARCH] if settings.web_search else [])
         self.conversations: dict[str, Conversation] = {}
 
@@ -242,7 +246,7 @@ class Agent:
                                mobility=self.mobility, web_places=self.web_places,
                                watcher=self.watcher, environment=self.environment,
                                terrain=self.terrain,
-                               scenarios=self.scenarios, lidar=self.lidar)
+                               scenarios=self.scenarios, lidar=self.lidar, sky=self.sky)
         conv.messages.append({"role": "user", "content": [
             {"type": "text", "text": format_context(context, self.city.now()) + text}]})
 

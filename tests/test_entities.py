@@ -346,7 +346,8 @@ def test_the_tool_list_keeps_its_order():
         "list_incidents", "explain_incident", "create_watch",
         "sun_and_shade", "environment_surface",
         "find_high_places", "view_from",
-        "list_scenarios", "run_scenario", "compare_scenarios", "open_scenario"]
+        "list_scenarios", "run_scenario", "compare_scenarios", "open_scenario",
+        "get_sky", "get_its_infrastructure"]
 
 
 def test_the_context_names_what_the_user_has_open():

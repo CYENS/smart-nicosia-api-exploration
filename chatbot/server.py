@@ -39,7 +39,9 @@ def _warm_up(agent: Agent) -> None:
     """Load the slow, cacheable things in the background so the first question is quick."""
     # The traffic cameras (one request, kept 6 h) let search and the inspector find them by name.
     # The bus timetable loads in the background (about 5 MB the first time, then from disk).
+    # ISS passes and the CyNAP ITS site inventory warm Clock track marks, search and Swarco status.
     for step in (agent.mobility.warm_up, agent.city.overview, agent.city.traffic_cameras,
+                 agent.sky.iss.summary, agent.sky.its.geojson,
                  lambda: vega_lite_validator(agent.settings)):
         try:
             step()
@@ -72,6 +74,7 @@ async def lifespan(app: FastAPI):
     if memory.recorder is not None:
         memory.recorder.start()
     agent.watcher.start()
+    agent.sky.start()
     if settings.collect:
         start_collector(memory)
     log.info("twin's memory: %s (recording %s, full collection %s)", memory.path,
@@ -83,6 +86,7 @@ async def lifespan(app: FastAPI):
     threading.Thread(target=registers.refresh_if_needed, daemon=True).start()
     yield
     app.state.city_tiles.stop()
+    agent.sky.stop()
     agent.watcher.stop()
     if memory.recorder is not None:
         memory.recorder.stop()

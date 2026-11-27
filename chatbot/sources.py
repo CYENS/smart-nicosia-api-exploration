@@ -40,7 +40,7 @@ class Source:
         return asdict(self)
 
 
-GROUPS = ("City sensors", "Mobility", "Weather", "Map, places and routes", "Buildings", "This twin",
+GROUPS = ("City sensors", "Mobility", "Sky", "Weather", "Map, places and routes", "Buildings", "This twin",
           "Figures the scenarios assume")
 
 SOURCES: tuple[Source, ...] = (
@@ -186,6 +186,44 @@ SOURCES: tuple[Source, ...] = (
         "Figures the scenarios assume",
         url="https://www.pnnl.gov/main/publications/external/technical_reports/PNNL-21036.pdf",
         refresh="A published study"),
+    Source(
+        "adsb_lol", "Live aircraft (adsb.lol)", "adsb.lol",
+        "adsb.lol community ADS-B network",
+        "Aircraft within 40 nautical miles of Nicosia (altitude, speed, track and type; community "
+        "receiver coverage around Cyprus is partial, especially on quiet evenings)",
+        "Sky",
+        url="https://api.adsb.lol/docs",
+        licence=ODBL, licence_url="https://opendatacommons.org/licenses/odbl/",
+        refresh="Every 30 seconds at most while open; recorded for 24 hours",
+        credit="Aircraft: adsb.lol, ODbL"),
+    Source(
+        "celestrak_iss", "International Space Station orbit (CelesTrak)", "CelesTrak",
+        "CelesTrak, from US Space Force Two-Line Elements",
+        "ISS orbital elements used to compute upcoming visible twilight passes over Nicosia",
+        "Sky",
+        url="https://celestrak.org/NORAD/elements/",
+        refresh="TLE cached for 12 hours; passes computed locally",
+        credit="ISS orbit: CelesTrak"),
+    Source(
+        "cynap_its", "PWD CCTV & traffic detector sites (CyNAP)", "CyNAP ITS sites",
+        f"Public Works Department, {MINISTRY}",
+        "Locations of 13 highway and arterial CCTV sites and 39 urban loop and cycle detectors "
+        "in Nicosia (static site inventory; no live video is published)",
+        "Mobility",
+        url="https://traffic4cyprus.org.cy/dataset/cctv",
+        licence=CC_BY, licence_url="https://creativecommons.org/licenses/by/4.0/",
+        refresh="Cached once a day",
+        credit="ITS sites: PWD / CyNAP, CC BY 4.0"),
+    Source(
+        "swarco_traffic", "Swarco traffic loop measurements (CyNAP)", "Swarco loop measurements",
+        f"Public Works Department, {MINISTRY}",
+        "MeasuredDataPublication feed for urban traffic counters (currently returns 92 site "
+        "references with no live measured values)",
+        "Mobility",
+        url="https://traffic4cyprus.org.cy/dataset/trafficsensors",
+        licence=CC_BY, licence_url="https://creativecommons.org/licenses/by/4.0/",
+        refresh="Checked non-intrusively every 15 minutes while active",
+        credit="Swarco feed: PWD / CyNAP, CC BY 4.0"),
 )
 
 BY_ID: dict[str, Source] = {s.id: s for s in SOURCES}
@@ -224,6 +262,8 @@ TOOL_SOURCES: dict[str, tuple[str, ...]] = {
     "view_from": ("terrain_tiles", "dls", "openstreetmap", "twin_memory"),
     "run_scenario": ("twin_memory", "smart_nicosia"),
     "compare_scenarios": ("twin_memory",),
+    "get_sky": ("adsb_lol", "celestrak_iss", "twin_memory"),
+    "get_its_infrastructure": ("cynap_its", "swarco_traffic"),
 }
 
 _tool: ContextVar[str | None] = ContextVar("source_tool", default=None)
