@@ -177,6 +177,8 @@ class CityData:
         self._cameras: list[dict] = []
         self._cameras_at = 0.0
         self._history: dict[tuple, tuple[float, dict[str, list[dict]]]] = {}
+        # Called with the device type after every fresh snapshot of it (the twin's watch).
+        self.listeners: list = []
         self._load_attr_cache()
 
     # -- inventory -------------------------------------------------------------------------
@@ -285,7 +287,12 @@ class CityData:
             latest = {k: interpret.latest_from_records(v) for k, v in fetched.items()}
             entry = (time.time(), latest)
             self._latest[device_type] = entry
-            return entry
+        for listener in self.listeners:
+            try:
+                listener(device_type)
+            except Exception as e:  # noqa: BLE001 - a listener never breaks a snapshot
+                log.warning("snapshot listener failed: %s", e)
+        return entry
 
     def states(self, device_type: str) -> list[DeviceState]:
         attrs = self.attributes(device_type)

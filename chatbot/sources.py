@@ -72,12 +72,19 @@ SOURCES: tuple[Source, ...] = (
         credit="Road speeds: traffic4cyprus, CC BY 4.0"),
     Source(
         "open_meteo", "Open-Meteo", "Open-Meteo", "Open-Meteo",
-        "The weather now and by the hour, sunrise and sunset, modelled air quality and dust, and "
-        "the weather at past moments of the city clock",
+        "The weather now and by the hour, sunrise and sunset, modelled air quality and dust (CAMS "
+        "Europe, under the air surfaces between the stations), the wind over the city, and the "
+        "weather at past moments of the city clock",
         "Weather", url="https://open-meteo.com",
         licence=CC_BY, licence_url="https://creativecommons.org/licenses/by/4.0/",
         refresh="Every 15 minutes",
         credit="Weather: Open-Meteo"),
+    Source(
+        "rainviewer", "RainViewer rain radar", "RainViewer", "RainViewer",
+        "Where it rains: the radar of the last two hours, ten minutes apart",
+        "Weather", url="https://www.rainviewer.com/api.html",
+        refresh="Every 5 minutes while the rain radar is on",
+        credit="Radar: RainViewer"),
     Source(
         "openstreetmap", "OpenStreetMap", "OpenStreetMap", "OpenStreetMap contributors",
         "Streets, places and their opening hours, and the data under the base map",
@@ -85,10 +92,28 @@ SOURCES: tuple[Source, ...] = (
         licence=ODBL, licence_url="https://opendatacommons.org/licenses/odbl/",
         refresh="The places index is rebuilt weekly"),
     Source(
+        "overture", "Overture Maps places", "Overture Maps", "Overture Maps Foundation, from Meta, "
+        "Microsoft, Foursquare, AllThePlaces and others",
+        "About 9,500 businesses and services the OpenStreetMap index doesn't list, such as "
+        "studios, schools, clinics, clubs, shops and offices, each at its door with its address, "
+        "phone and website. Some entries are out of date: a place may have closed or moved",
+        "Map, places and routes", url="https://docs.overturemaps.org/attribution/",
+        licence="CDLA-Permissive-2.0 (some rows Apache-2.0 or CC0-1.0)",
+        licence_url="https://cdla.dev/permissive-2-0/",
+        refresh="A new monthly release is read at most once a month",
+        credit="Places: Overture Maps"),
+    Source(
         "openfreemap", "OpenFreeMap", "OpenFreeMap", "OpenFreeMap, with OpenMapTiles",
         "The base map's tiles, by day and by night",
         "Map, places and routes", url="https://openfreemap.org",
         refresh="Tiles as you move the map"),
+    Source(
+        "terrain_tiles", "Terrain Tiles", "the terrain tiles", "Mapzen, on the AWS Registry of Open Data "
+        "(from SRTM, EU-DEM and other public elevation models)",
+        "The height of the ground, for the terrain and its hillshade",
+        "Map, places and routes", url="https://registry.opendata.aws/terrain-tiles/",
+        refresh="Tiles as you move the map",
+        credit="Terrain: Mapzen, AWS Open Data"),
     Source(
         "valhalla", "Valhalla routing", "Valhalla", "The Valhalla project, on FOSSGIS's public server",
         "Walking and driving routes, how far you reach on foot, walks to and from the bus, the "
@@ -111,7 +136,8 @@ SOURCES: tuple[Source, ...] = (
         credit="Places: from the web"),
     Source(
         "dls", "Department of Lands and Surveys (DLS)", "the DLS", "Republic of Cyprus",
-        "Every building in 3D at its height and floors, and the plots they stand on",
+        "Every building in 3D at its height and floors, the plots they stand on, and the shade "
+        "they cast",
         "Buildings", url="https://eservices.dls.moi.gov.cy/inspire/",
         refresh="Fetched once per area, then kept",
         credit="Buildings: DLS Cyprus"),
@@ -143,18 +169,25 @@ TOOL_SOURCES: dict[str, tuple[str, ...]] = {
     "get_speed": ("smart_nicosia",),
     "get_weather": ("open_meteo",),
     "geocode": ("geocoding",),
-    "find_places": ("openstreetmap",),
-    "locate_web_places": ("web_search", "geocoding", "openstreetmap"),
-    "plan_route": ("valhalla", "openstreetmap"),
-    "reachable_area": ("valhalla", "openstreetmap"),
+    "find_places": ("openstreetmap", "overture"),
+    "locate_web_places": ("web_search", "geocoding", "openstreetmap", "overture"),
+    "plan_route": ("valhalla", "openstreetmap", "overture"),
+    "reachable_area": ("valhalla", "openstreetmap", "overture"),
     "find_dangerous_buildings": ("registers", "dls"),
     "where_am_i": ("dls", "registers", "geocoding"),
     "query_history": ("twin_memory", "smart_nicosia"),
     "run_sql": ("twin_memory",),
     "get_buses": ("bus_live", "bus_timetable"),
     "get_departures": ("bus_timetable", "bus_live"),
-    "plan_transit": ("bus_timetable", "bus_live", "valhalla"),
+    "plan_transit": ("bus_timetable", "bus_live", "valhalla", "overture"),
     "get_road_speeds": ("road_speeds",),
+    "list_incidents": ("twin_memory", "smart_nicosia"),
+    "explain_incident": ("twin_memory", "smart_nicosia", "open_meteo"),
+    "create_watch": ("smart_nicosia",),
+    "sun_and_shade": ("dls",),
+    "environment_surface": ("smart_nicosia", "open_meteo"),
+    "find_high_places": ("terrain_tiles", "openstreetmap", "dls", "geocoding"),
+    "view_from": ("terrain_tiles", "dls", "openstreetmap", "twin_memory"),
 }
 
 _tool: ContextVar[str | None] = ContextVar("source_tool", default=None)

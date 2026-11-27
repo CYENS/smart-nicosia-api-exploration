@@ -21,7 +21,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { useClock } from "@/lib/clock"
 import { useGeometry } from "@/lib/geometry"
-import { closeLayers, layersOpener, setLayersGroup, useLayersSheet } from "@/lib/layers-sheet"
+import { closeLayers, layersHandedOff, layersOpener, setLayersGroup, useLayersSheet } from "@/lib/layers-sheet"
 import { GAP, PHONE_GAP, STRIP_H, useLayout } from "@/lib/layout"
 import type { Basemap } from "@/lib/map/basemap"
 import { skyAt } from "@/lib/map/sky"
@@ -30,6 +30,7 @@ import {
   stopFlight, useMapUi, type LayerSummary,
 } from "@/lib/map/engine"
 import { cap } from "@/lib/readouts"
+import { layerKeyFor } from "@/lib/registries/layer-keys"
 import { useLayerRegistry, type SystemLayer } from "@/lib/registries/layers"
 import { openWorkspace, useWorkspace } from "@/lib/registries/workspaces"
 import { useRovingList } from "@/lib/roving"
@@ -93,9 +94,11 @@ function MapSection() {
 
 // -- City systems -------------------------------------------------------------------------------
 
-function SystemRow({ layer }: { layer: SystemLayer }) {
+// One row: its switch, its live summary and, while it is on, its legend. The open workspace's
+// panel lists its own group's rows too (the environment's), with its own id prefix.
+export function SystemRow({ layer, idPrefix = "ls" }: { layer: SystemLayer; idPrefix?: string }) {
   const on = layer.useOn()
-  const id = `ls-${layer.id}`
+  const id = `${idPrefix}-${layer.id}`
   return (
     <div className="flex flex-col gap-2">
       <Field orientation="horizontal">
@@ -180,7 +183,7 @@ function Workspaces() {
               data-key={w.id}
               aria-current={w.id === active ? "page" : undefined}
               className="cursor-pointer gap-3 px-1.5 py-2 text-left hover:bg-accent/60 active:bg-accent aria-[current=page]:border-sodium/35 aria-[current=page]:bg-sodium/10"
-              render={<button type="button" onClick={() => { closeLayers(); openWorkspace(w.id) }} />}
+              render={<button type="button" onClick={() => { closeLayers(true); openWorkspace(w.id) }} />}
             >
               <ItemMedia className="text-muted-foreground [&_svg]:size-[18px]"><w.icon /></ItemMedia>
               <ItemContent className="gap-0.5">
@@ -264,7 +267,10 @@ function OnTheMap() {
         </p>
       ) : (
         <ul className="flex flex-col gap-4">
-          {layers.map((l) => (
+          {layers.map((l) => {
+            // A layer drawn its own way (an environment answer's grid) brings its own legend.
+            const Own = layerKeyFor(l.renderer)
+            return (
             <li key={l.ref} className="flex flex-col gap-2">
               <div className="flex items-start gap-2">
                 <span className="min-w-0 flex-1 text-[13.5px] leading-snug font-medium">
@@ -278,7 +284,7 @@ function OnTheMap() {
                   <TooltipContent>Remove this layer</TooltipContent>
                 </Tooltip>
               </div>
-              <Keys layer={l} />
+              {Own ? <Own layer={l} /> : <Keys layer={l} />}
               <FromSources ids={l.sources} />
               {l.style === "route" && (
                 <Button variant="outline" size="sm" className="self-start" aria-pressed={flying === l.ref} onClick={() => (flying === l.ref ? stopFlight() : flyRoute(l.ref))}>
@@ -287,7 +293,8 @@ function OnTheMap() {
                 </Button>
               )}
             </li>
-          ))}
+            )
+          })}
         </ul>
       )}
     </Section>
@@ -341,7 +348,7 @@ export function LayersSheet() {
         showCloseButton={false}
         // The keyboard goes to the sheet's title, so a screen reader starts there, and Tab goes on in.
         initialFocus={() => document.getElementById("layers-title")}
-        finalFocus={() => layersOpener() ?? document.querySelector<HTMLElement>("[data-layers-button]") ?? true}
+        finalFocus={() => (layersHandedOff() ? false : layersOpener() ?? document.querySelector<HTMLElement>("[data-layers-button]") ?? true)}
         className="panel-float z-30 gap-0 overflow-hidden rounded-xl border bg-console p-0 motion-reduce:transition-none"
         style={style}
       >

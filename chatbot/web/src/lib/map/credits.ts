@@ -6,7 +6,7 @@ import { AttributionControl } from "maplibre-gl"
 
 import { getMap, useMapUi } from "@/lib/map/engine"
 import { useMobility } from "@/lib/mobility/store"
-import { activeSourceIds, loadSources, openSources, useSources } from "@/lib/sources"
+import { activeSourceIds, loadSources, openSources, useExtraSources, useSources } from "@/lib/sources"
 
 let control: AttributionControl | null = null
 let shown: string | null = null
@@ -58,6 +58,7 @@ export function startCredits() {
   useMapUi.subscribe(sync)
   useMobility.subscribe(sync)
   useSources.subscribe(sync)
+  useExtraSources.subscribe(sync)
   sync()
   void loadSources()
 }

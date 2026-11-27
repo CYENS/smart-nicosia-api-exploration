@@ -3,12 +3,13 @@
 import maplibregl, {
   type GeoJSONSource, type LayerSpecification, type Map as MlMap, type VectorTileSource,
 } from "maplibre-gl"
+import { LocateFixedIcon, type LucideIcon } from "lucide-react"
 import { create } from "zustand"
 
 import { BASE_SOURCE, BASE_SOURCE_URLS, BASEMAP_URLS, baseLayers, type Basemap } from "@/lib/map/basemap"
 import { lightFor, nicosiaWallToDate, skyAt, skyFor, type Sky } from "@/lib/map/sky"
 import { kindOfId } from "@/lib/entities"
-import { clickableLayer, resolveClick, type InspectTarget } from "@/lib/registries/map-clicks"
+import { clickableLayer, handleEmptyClick, resolveClick, type InspectTarget } from "@/lib/registries/map-clicks"
 import { WALLS_RING } from "@/lib/walls"
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -91,6 +92,7 @@ const CITY_RADIUS = 3 // tiles around the centre (each ~500 m), so pitched views
 
 export type LayerSummary = {
   ref: string; title: string; count: number; style: string
+  renderer: string | null // the feature drawing it its own way, which may give its own legend
   legend: Record<string, string>; stats: Stats | null; valueField: string | null
   street: { name: string; follows: string | null } | null // `follows`: the total its glow tracks
   sources: string[] // where its data comes from (lib/sources.ts)
@@ -111,6 +113,9 @@ type MapUi = {
   me: { loc: MyLocation | null; error: string }
   picking: boolean // the next map click is the user's position ("Pick my spot on the map")
   flying: string | null // the route the camera is flying along
+  // The right-click menu, where it was asked for (page pixels) and the point of the map there.
+  menu: { x: number; y: number; at: [number, number]; n: number } | null
+  terrain: boolean // the ground is raised in 3D (lib/map/terrain.ts)
 }
 export type MyLocation = { lat: number; lon: number; accuracy_m: number | null; source: string }
 export const useMapUi = create<MapUi>(() => ({
@@ -127,6 +132,8 @@ export const useMapUi = create<MapUi>(() => ({
   me: { loc: null, error: "" },
   picking: false,
   flying: null,
+  menu: null,
+  terrain: false,
 }))
 const setUi = useMapUi.setState
 
@@ -196,6 +203,16 @@ export function fmt(v: number) {
 
 export type Camera = { center: [number, number]; zoom: number; pitch: number; bearing: number }
 
+const DOUBLE_CLICK_MS = 250 // an empty-map click waits this long for a second click
+const LONG_PRESS_MS = 550
+const emptyClick = { timer: 0, quietUntil: 0 }
+let press: { x: number; y: number; timer: number } | null = null
+
+function cancelPress() {
+  if (press) clearTimeout(press.timer)
+  press = null
+}
+
 export function initMap(container: HTMLElement, camera?: Camera | null) {
   if (map) return map // React's development mode runs effects twice
   // No style yet: setBasemap loads the first one, recoloured. (Starting from a placeholder style
@@ -207,17 +224,49 @@ export function initMap(container: HTMLElement, camera?: Camera | null) {
     attributionControl: false, // lib/map/credits.ts adds it, with the sources of what is drawn
   })
   // A click opens what is under it in the inspector. The box around the pointer catches the
-  // small dots (a lamp is a few pixels across); what lies right under the pointer wins.
+  // small dots (a lamp is a few pixels across); what lies right under the pointer wins. A click
+  // on empty map goes to the empty-click handlers ("What's here?"), a moment later, so the
+  // first click of a double-click (which zooms) does nothing. A drag is never a click.
   map.on("click", (e) => {
     if (pickDone) { endPick({ lat: e.lngLat.lat, lon: e.lngLat.lng }); return } // the user's spot
+    if (viewFocus) return // in a view, a click is the end of a look about, not a pick
     const layers = map.getLayersOrder().filter(clickableLayer)
-    if (!layers.length) return
     const { x, y } = e.point
-    const exact = map.queryRenderedFeatures(e.point, { layers })
-    const near = exact.length ? exact : map.queryRenderedFeatures([[x - 6, y - 6], [x + 6, y + 6]], { layers })
+    const exact = layers.length ? map.queryRenderedFeatures(e.point, { layers }) : []
+    const near = exact.length || !layers.length ? exact : map.queryRenderedFeatures([[x - 6, y - 6], [x + 6, y + 6]], { layers })
     const target = resolveClick(near, [e.lngLat.lng, e.lngLat.lat])
-    if (target) for (const fn of inspectSinks) fn(target)
+    clearTimeout(emptyClick.timer)
+    if (target) {
+      emptyClick.timer = 0
+      for (const fn of inspectSinks) fn(target)
+      return
+    }
+    if (performance.now() < emptyClick.quietUntil) return // the click that ends a long press
+    if (emptyClick.timer) { emptyClick.timer = 0; return } // a double-click: it zooms
+    const at: [number, number] = [e.lngLat.lng, e.lngLat.lat]
+    emptyClick.timer = window.setTimeout(() => { emptyClick.timer = 0; handleEmptyClick(at, "click") }, DOUBLE_CLICK_MS)
   })
+  map.on("dblclick", () => { clearTimeout(emptyClick.timer); emptyClick.timer = 0 })
+  // A long press on touch asks about the point, as a right-click does with a mouse. Moving the
+  // finger (a pan) or a second finger (a pinch) calls it off.
+  map.on("touchstart", (e) => {
+    cancelPress()
+    if (e.originalEvent.touches.length !== 1) return
+    const at: [number, number] = [e.lngLat.lng, e.lngLat.lat]
+    press = {
+      x: e.point.x, y: e.point.y,
+      timer: window.setTimeout(() => {
+        press = null
+        emptyClick.quietUntil = performance.now() + 800
+        if (pickDone) endPick({ lat: at[1], lon: at[0] }) // picking the user's spot, as a tap does
+        else if (!viewFocus) handleEmptyClick(at, "press") // in a view, as a right-click: quiet
+      }, LONG_PRESS_MS),
+    }
+  })
+  map.on("touchmove", (e) => { if (press && Math.hypot(e.point.x - press.x, e.point.y - press.y) > 10) cancelPress() })
+  map.on("touchend", cancelPress)
+  map.on("touchcancel", cancelPress)
+  map.on("movestart", cancelPress)
   ;(window as any).__map = map // a hook for scripted demos and browser tests (e.g. map.project)
   ;(window as any).__twin = { state, clock } // and what the map draws, for the same
   // Zoom, the 3D view and the compass are the page's own (components/shell/map-controls.tsx);
@@ -230,13 +279,21 @@ export function initMap(container: HTMLElement, camera?: Camera | null) {
   map.addControl(geolocate, "bottom-right")
   geolocate.on("geolocate", (pos: GeolocationPosition) => setMyLocation(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy, "device location"))
   geolocate.on("error", () => setUi({ me: { loc: useMapUi.getState().me.loc, error: "Couldn't read your location here. Right-click the map where you are instead." } }))
+  // Right-click: the map's menu ("What's here?", "I'm here"), drawn by components/map-menu.
+  // A touch browser that turns a long press into a context menu gets the long press instead.
   map.on("contextmenu", (e) => {
-    const button = document.createElement("button")
-    button.type = "button"
-    button.className = "me-btn"
-    button.textContent = "I'm here"
-    const popup = new maplibregl.Popup({ closeButton: false, offset: 6 }).setLngLat(e.lngLat).setDOMContent(button).addTo(map)
-    button.addEventListener("click", () => { setMyLocation(e.lngLat.lat, e.lngLat.lng, NaN, "set on the map"); popup.remove() })
+    e.preventDefault()
+    if (viewFocus) return // in a view, the map is for looking about
+    const touch = (e.originalEvent as PointerEvent).pointerType === "touch" || performance.now() < emptyClick.quietUntil
+    if (touch) {
+      if (press) { // the browser was quicker than our timer
+        cancelPress()
+        emptyClick.quietUntil = performance.now() + 800
+        handleEmptyClick([e.lngLat.lng, e.lngLat.lat], "press")
+      }
+      return
+    }
+    openMapMenu(e.lngLat, e.point)
   })
   // A page opened in a hidden tab measures a 0-size container; keep the canvas in step.
   new ResizeObserver(() => map.resize()).observe(container)
@@ -349,7 +406,7 @@ async function swapBasemap() {
   const ground = map.getLayersOrder()[0]
   const prefix = newPrefix(to)
   for (const l of named(layers, prefix)) {
-    const hide = l.type === "fill-extrusion" && CITY.on // the 3D city stands in for them
+    const hide = l.type === "fill-extrusion" && CITY.on && !viewFocus // the 3D city stands in for them
     map.addLayer((hide ? { ...l, layout: { ...l.layout, visibility: "none" } } : l) as LayerSpecification, ground)
   }
   await nextFrame() // MapLibre takes up the new layers, and starts on the tiles, with its next frame
@@ -362,6 +419,7 @@ async function swapBasemap() {
   placeOnBase()
   applyTheme()
   applySky()
+  if (viewFocus) applyViewBuildings()
 }
 
 // Until every tile in view is prepared with the layers there are. Both waits end by themselves,
@@ -477,13 +535,18 @@ function showSky(at: Date) {
 function applySky() {
   if (!styleReady) return
   map.setLight(lightFor(shown))
-  try { map.setSky(skyFor(shown)) } catch { /* a style without sky support */ }
+  // Looking out at eye level, the haze gathers only near the horizon: the city a few km off
+  // stays in sight (and its lights at night).
+  const sky = viewFocus ? { ...skyFor(shown), "fog-ground-blend": 0.94, "horizon-fog-blend": shown.dark ? 0.25 : 0.4 } : skyFor(shown)
+  try { map.setSky(sky) } catch { /* a style without sky support */ }
+  syncViewLights()
   syncNightLights()
 }
 
 export function setNightLights(on: boolean) {
   setUi({ nightLights: on })
   syncNightLights()
+  if (styleReady) syncViewLights()
 }
 
 // Street lights glow from dusk to dawn: the city's own lamps (live from /api/lamps, or as they
@@ -612,6 +675,7 @@ export function setInsets(padding: { top: number; right: number; bottom: number;
 }
 
 export function resetView() {
+  takeOver()
   framed = null
   map.flyTo({ ...HOME, essential: true })
 }
@@ -621,6 +685,36 @@ export function resetView() {
 
 let geolocate: maplibregl.GeolocateControl
 let meMarker: maplibregl.Marker | null = null
+
+// What a right click on the map offers: "What's here?" (lib/here.ts), "I'm here", and what
+// features add. components/map-menu draws it as the page's menu at the point (arrows move,
+// Enter runs one, Esc closes it and gives the keyboard back to the map). A long press on touch
+// asks "What's here?" straight away (see initMap), and the card it opens has "I'm here" too.
+export type MapMenuItem = {
+  id: string; label: string; order: number; run: (at: { lng: number; lat: number }) => void
+  icon?: LucideIcon
+  opens?: boolean // opens something that takes the keyboard (the inspector): focus goes there
+}
+const menuItems: MapMenuItem[] = [
+  { id: "me", label: "I'm here", order: 90, icon: LocateFixedIcon, run: (at) => setMyLocation(at.lat, at.lng, NaN, "set on the map") },
+]
+export function registerMapMenuItem(item: MapMenuItem) {
+  const i = menuItems.findIndex((x) => x.id === item.id)
+  if (i >= 0) menuItems.splice(i, 1)
+  menuItems.push(item)
+  menuItems.sort((a, b) => a.order - b.order)
+}
+
+export function mapMenuItems() {
+  return [...menuItems]
+}
+
+// Open the menu at a point of the map (`point`: where on the map, in pixels, if known).
+export function openMapMenu(at: { lng: number; lat: number }, point?: { x: number; y: number }) {
+  const p = point ?? map.project([at.lng, at.lat])
+  const box = map.getContainer().getBoundingClientRect()
+  setUi({ menu: { x: box.left + p.x, y: box.top + p.y, at: [at.lng, at.lat], n: performance.now() } })
+}
 
 export function setMyLocation(lat: number, lon: number, accuracy: number, source: string) {
   const loc = { lat, lon, accuracy_m: Number.isFinite(accuracy) ? Math.round(accuracy) : null, source }
@@ -1064,6 +1158,7 @@ function publishLayers() {
       const { spec, stats, data } = entry
       return {
         ref: spec.ref, title: spec.title, count: spec.count, style: spec.style,
+        renderer: entry.renderer?.id ?? null,
         legend: entry.legendNow ?? spec.legend ?? {}, stats, valueField: spec.value_field ?? null,
         street: data.street ? { name: data.street.name, follows: totalsOf(entry)?.field ?? null } : null,
         sources: spec.sources ?? [],
@@ -1143,7 +1238,7 @@ export async function showLayer(spec: LayerSpec, prefetched: FC | null = null) {
     addToMap(entry)
     // A camera move asked for alongside this layer (tools run in parallel, so just before it)
     // or after it, while it loaded, wins over fitting to it.
-    if (spec.fit !== false && !(state.flownAt > askedAt - 3000)) {
+    if (spec.fit !== false && !viewFocus && !(state.flownAt > askedAt - 3000)) {
       framed = { ref: spec.ref, fit: () => fitTo(fc, pitch) }
       framed.fit()
     } else if (spec.style === "buildings_3d" && map.getZoom() >= 15 && map.getPitch() < 45) map.easeTo({ pitch: 55, duration: 900 })
@@ -1208,15 +1303,18 @@ function syncCityClaims() {
       if (f.properties?.ghost_bid !== undefined) ghosts.add(f.properties.ghost_bid)
     }
   }
+  // While looking out from a building, the eye stands in it: it isn't drawn around the camera.
+  if (viewFocus?.hide) claimed.add(viewFocus.hide)
   map.setFilter("city3d::fill", ["!", ["in", ["id"], ["literal", [...claimed, ...ghosts]]]])
   map.setFilter("city3d::ghost", ["in", ["id"], ["literal", [...ghosts].filter((g) => !claimed.has(g))]])
 }
 
 function cityTilesInView() {
-  if (map.getZoom() < CITY_MIN_ZOOM) return []
   const n = 2 ** 16
   const tx = (lon: number) => Math.floor(((lon + 180) / 360) * n)
   const ty = (lat: number) => Math.floor(((1 - Math.asinh(Math.tan((lat * Math.PI) / 180)) / Math.PI) / 2) * n)
+  if (viewFocus) return cityTilesNear(viewFocus, tx, ty)
+  if (map.getZoom() < CITY_MIN_ZOOM) return []
   const b = map.getBounds(), c = map.getCenter()
   const cx = tx(c.lng), cy = ty(c.lat)
   const out: [number, number, number][] = []
@@ -1226,6 +1324,20 @@ function cityTilesInView() {
     }
   }
   return out.sort((p, q) => p[2] - q[2]) // nearest the centre first
+}
+
+// While looking out from a spot, only the tiles within reach of the eye: the DLS is a throttled
+// public service, and a view to the horizon would otherwise ask for a wide ring of them.
+function cityTilesNear(f: ViewFocus, tx: (lon: number) => number, ty: (lat: number) => number) {
+  const dLat = f.radiusM / 110574, dLon = f.radiusM / (111320 * Math.cos((f.lat * Math.PI) / 180))
+  const cx = tx(f.lon), cy = ty(f.lat)
+  const out: [number, number, number][] = []
+  for (let x = tx(f.lon - dLon); x <= tx(f.lon + dLon); x++) {
+    for (let y = ty(f.lat + dLat); y <= ty(f.lat - dLat); y++) {
+      if (!CITY.tiles.has(`${x}/${y}`)) out.push([x, y, (x - cx) ** 2 + (y - cy) ** 2])
+    }
+  }
+  return out.sort((p, q) => p[2] - q[2])
 }
 
 function pumpCity() {
@@ -1241,6 +1353,7 @@ function pumpCity() {
         const add = fc.features.filter((f) => !CITY.ids.has(f.id!))
         for (const f of add) { CITY.ids.add(f.id!); CITY.features.push(f) }
         if (add.length) (map.getSource(CITY_SRC) as GeoJSONSource | undefined)?.updateData({ add: add as any })
+        if (add.length) cityChanged()
       })
       .catch(() => { /* leave it unloaded; the next move retries it */ })
       .finally(() => { CITY.inflight.delete(key); cityStatus(); pumpCity() })
@@ -1257,12 +1370,26 @@ function refreshCity() {
 function cityStatus() {
   let status = ""
   if (CITY.on) {
-    if (map.getZoom() < CITY_MIN_ZOOM) status = "Zoom in to see the 3D buildings"
+    if (map.getZoom() < CITY_MIN_ZOOM && !viewFocus) status = "Zoom in to see the 3D buildings"
     else if (CITY.inflight.size || CITY.queue.length) status = `Loading 3D buildings, ${CITY.inflight.size + CITY.queue.length} areas left`
     else status = `${CITY.features.length.toLocaleString()} DLS buildings loaded`
   }
   const cur = useMapUi.getState().city
   if (cur.on !== CITY.on || cur.status !== status) setUi({ city: { on: CITY.on, status } })
+}
+
+// The DLS buildings loaded so far (each with its roof height `h`), and a call whenever more
+// arrive or the 3D city is switched: for what is drawn from them, like their shadows.
+export function cityBuildings(): { on: boolean; features: Feature[] } {
+  return { on: CITY.on, features: CITY.features }
+}
+const citySinks = new Set<() => void>()
+export function onCityChange(fn: () => void) {
+  citySinks.add(fn)
+  return () => { citySinks.delete(fn) }
+}
+function cityChanged() {
+  for (const fn of citySinks) fn()
 }
 
 export function setCity3d(on: boolean) {
@@ -1271,13 +1398,15 @@ export function setCity3d(on: boolean) {
   whenStyleReady(() => {
     if (on) {
       addCityLayer()
-      if (map.getPitch() < 40 && map.getZoom() >= CITY_MIN_ZOOM) map.easeTo({ pitch: 55, duration: 900 })
+      if (viewFocus) applyViewBuildings()
+      else if (map.getPitch() < 40 && map.getZoom() >= CITY_MIN_ZOOM) map.easeTo({ pitch: 55, duration: 900 })
       refreshCity()
     } else {
       CITY.queue = []
       removeCityLayer()
     }
     cityStatus()
+    cityChanged()
   })
 }
 
@@ -1878,6 +2007,7 @@ export function stopFlight() {
 }
 
 export function flyRoute(ref: string) {
+  takeOver()
   stopFlight()
   framed = null
   const entry = state.layers.get(ref)
@@ -1965,10 +2095,12 @@ export type Selection = {
   center: [number, number]
   geometry?: GeoJSON.Geometry | null
   footprints?: { geometry: GeoJSON.Geometry; height_m: number }[]
+  pin?: boolean // a dropped pin (a point of the map, "What's here?") in place of the ring
 }
 
 const SEL_SRC = "sel::src"
 let selection: Selection | null = null
+let pin: maplibregl.Marker | null = null
 const inspectSinks = new Set<(t: InspectTarget) => void>()
 
 export function onInspect(fn: (t: InspectTarget) => void) {
@@ -1979,14 +2111,36 @@ export function onInspect(fn: (t: InspectTarget) => void) {
 export function setSelection(s: Selection | null) {
   selection = s
   if (!s && framed?.ref === "") framed = null // closed: don't fly back to it when panels move
-  if (map) syncSelection()
+  if (map) { syncSelection(); syncPin() }
+}
+
+// The dropped pin: a sodium marker standing on the point, dropped in (unless motion is reduced).
+function syncPin() {
+  if (!selection?.pin) {
+    pin?.remove()
+    pin = null
+    return
+  }
+  if (pin) {
+    pin.setLngLat(selection.center)
+    const el = pin.getElement()
+    el.classList.remove("spot-pin-drop")
+    void el.offsetWidth // restart the drop for a new point
+    el.classList.add("spot-pin-drop")
+    return
+  }
+  const el = document.createElement("div")
+  el.className = "spot-pin spot-pin-drop"
+  el.setAttribute("aria-hidden", "true")
+  el.innerHTML = '<svg viewBox="0 0 28 38" width="28" height="38"><path d="M14 1C6.8 1 1 6.7 1 13.8 1 23.4 14 37 14 37s13-13.6 13-23.2C27 6.7 21.2 1 14 1z"/><circle cx="14" cy="13.6" r="4.6"/></svg>'
+  pin = new maplibregl.Marker({ element: el, anchor: "bottom" }).setLngLat(selection.center).addTo(map)
 }
 
 function syncSelection() {
   if (!styleReady) return
   const features: Feature[] = []
   if (selection) {
-    features.push({ type: "Feature", geometry: { type: "Point", coordinates: selection.center }, properties: { _k: "ring" } })
+    if (!selection.pin) features.push({ type: "Feature", geometry: { type: "Point", coordinates: selection.center }, properties: { _k: "ring" } })
     const g = selection.geometry
     if (g && (g.type === "Polygon" || g.type === "MultiPolygon" || g.type === "LineString")) {
       features.push({ type: "Feature", geometry: g, properties: { _k: "shape" } })
@@ -2025,6 +2179,7 @@ function syncSelection() {
 // flight under way; as with a layer's fit, the flight is kept as the framing and flown again.
 export function flyToThing(center: [number, number], kind?: string) {
   if (!map) return
+  takeOver()
   state.flownAt = performance.now()
   const building = kind === "building_3d" || kind === "register_building"
   if (kind === "building_3d" && !CITY.on) setCity3d(true)
@@ -2043,6 +2198,7 @@ export function flyToThing(center: [number, number], kind?: string) {
 // Fly to fit an area, given as [west, south, east, north] (a street from search).
 export function flyToBounds(bbox: [number, number, number, number]) {
   if (!map) return
+  takeOver()
   state.flownAt = performance.now()
   const b = new maplibregl.LngLatBounds([bbox[0], bbox[1]], [bbox[2], bbox[3]])
   const go = () => {
@@ -2062,6 +2218,7 @@ export function getCamera(): Camera | null {
 
 export function jumpToCamera(c: Camera) {
   if (!map) return
+  takeOver()
   framed = null
   map.jumpTo(c)
 }
@@ -2081,6 +2238,7 @@ export function applyMapUi(ev: any, onError: (text: string) => void) {
       showLayer({ ...ev.layer, askedAt: performance.now() }).catch((e) => onError(`Couldn't draw layer: ${e.message}`))
       break
     case "fly_to": {
+      takeOver()
       state.flownAt = performance.now()
       framed = null
       const opts: any = { essential: true, duration: 2200 }
@@ -2118,4 +2276,108 @@ export function resetForNewChat() {
   hlValue = null
   state.visualErrors = []
   resetView()
+}
+
+// ---------------------------------------------------------------------------------------------
+// Looking out from a spot (lib/view.ts owns the view; here is what the map does for it). The base
+// map's own buildings come out to the horizon (from z13 tiles, at their full height), except
+// within reach of the eye, where the DLS buildings stand at their surveyed heights; the DLS
+// tiles are asked for only there. Answer layers don't refit the camera meanwhile, and any other
+// camera move (the assistant's, the inspector's, a link's) ends the view first.
+
+export type ViewFocus = { lon: number; lat: number; radiusM: number; hide?: number }
+let viewFocus: ViewFocus | null = null
+const VIEW_BUILDINGS_MINZOOM = 13
+// The base map's 3D building layers as they were, to put back after the view.
+const viewSaved = new Map<string, { minzoom: number; maxzoom: number; filter: any; height: any }>()
+const takeovers = { leave: null as (() => void) | null }
+
+function takeOver() {
+  if (viewFocus && takeovers.leave) takeovers.leave()
+}
+
+// lib/view.ts: called when another camera move takes over from the view.
+export function onViewTakeover(fn: (() => void) | null) {
+  takeovers.leave = fn
+}
+
+export function viewing() {
+  return viewFocus !== null
+}
+
+export function setViewFocus(f: ViewFocus | null) {
+  viewFocus = f
+  if (!map) return
+  whenStyleReady(() => {
+    applyViewBuildings()
+    syncCityClaims()
+    applySky()
+    if (CITY.on) refreshCity()
+  })
+}
+
+// The city's lights from afar: looking out after dark, a small warm point at every bend of every
+// street, round and the same few pixels at any distance, so the streets km away still read as
+// lights (the glow along them is too thin at that angle). Only in a view, only at night.
+const VIEW_LIGHTS = "view::lights"
+function syncViewLights() {
+  const want = !!viewFocus && shown.dark && useMapUi.getState().nightLights
+  if (!want) { if (map.getLayer(VIEW_LIGHTS)) map.removeLayer(VIEW_LIGHTS); return }
+  if (map.getLayer(VIEW_LIGHTS) || !map.getSource(BASE_SOURCE)) return
+  map.addLayer({
+    id: VIEW_LIGHTS, type: "circle", source: BASE_SOURCE, "source-layer": "transportation", minzoom: 11,
+    filter: ["match", ["get", "class"], ["primary", "secondary", "tertiary", "minor", "trunk", "service"], true, false],
+    paint: {
+      "circle-radius": ["match", ["get", "class"], ["primary", "trunk", "secondary"], 1.7, 1.2],
+      "circle-color": "#ffcf8a", "circle-blur": 0.55, "circle-opacity": 0.85,
+      "circle-pitch-alignment": "viewport", "circle-pitch-scale": "viewport",
+    },
+  }, firstLabelLayer())
+}
+
+// The DLS buildings in a view: stone by day, as they look, rather than coloured by height.
+const VIEW_STONE = ["interpolate", ["linear"], ["get", "h"], 0, "#e9e4da", 20, "#ddd6c8", 60, "#cbc2b0"]
+
+function applyViewBuildings() {
+  if (!styleReady) return
+  for (const l of map.getStyle()?.layers || []) {
+    if (l.type !== "fill-extrusion" || !isBase(l.id)) continue
+    const id = l.id
+    if (viewFocus) {
+      if (!viewSaved.has(id)) {
+        viewSaved.set(id, {
+          minzoom: l.minzoom ?? 0, maxzoom: l.maxzoom ?? 24, filter: map.getFilter(id) ?? null,
+          height: map.getPaintProperty(id, "fill-extrusion-height"),
+        })
+      }
+      const saved = viewSaved.get(id)!
+      const near: any = CITY.on
+        ? [">", ["distance", { type: "Point", coordinates: [viewFocus.lon, viewFocus.lat] }], viewFocus.radiusM]
+        : null
+      const filter: any = saved.filter && near ? ["all", saved.filter, near] : (near ?? saved.filter)
+      map.setLayerZoomRange(id, VIEW_BUILDINGS_MINZOOM, saved.maxzoom)
+      map.setFilter(id, filter)
+      map.setPaintProperty(id, "fill-extrusion-height", ["coalesce", ["get", "render_height"], 6])
+      map.setLayoutProperty(id, "visibility", "visible")
+    } else if (viewSaved.has(id)) {
+      const saved = viewSaved.get(id)!
+      map.setLayerZoomRange(id, saved.minzoom, saved.maxzoom)
+      map.setFilter(id, saved.filter)
+      map.setPaintProperty(id, "fill-extrusion-height", saved.height)
+      map.setLayoutProperty(id, "visibility", CITY.on ? "none" : "visible")
+    }
+  }
+  if (!viewFocus) viewSaved.clear()
+  if (map.getLayer("city3d::fill")) {
+    const day = useMapUi.getState().basemap === "day"
+    map.setPaintProperty("city3d::fill", "fill-extrusion-color",
+      viewFocus && day ? VIEW_STONE : ["interpolate", ["linear"], ["get", "h"], ...cityHeights()])
+  }
+}
+
+// Place the camera for the view: an eye-level camera from lib/view.ts.
+export function viewCamera(opts: maplibregl.JumpToOptions) {
+  framed = null
+  state.flownAt = performance.now()
+  map.jumpTo(opts)
 }

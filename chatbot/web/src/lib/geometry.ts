@@ -8,6 +8,7 @@ import {
 } from "@/lib/layout"
 import { useTopics } from "@/lib/registries/topics"
 import { useWorkspaceSide } from "@/lib/registries/workspaces"
+import { useView } from "@/lib/view"
 
 function useMedia(query: string) {
   const [match, setMatch] = useState(() => window.matchMedia(query).matches)
@@ -55,6 +56,8 @@ export function useGeometry() {
   const inspecting = useInspector((s) => s.open)
   const wsSide = useWorkspaceSide() !== null
   const topic = useTopics((s) => s.active !== null)
+  // A view's card takes the right column (a phone's bottom sheet) while it is open.
+  const viewing = useView((s) => s.open || s.loading || s.error !== null)
   const stage = {
     open: useStage((s) => s.open && s.items.length > 0),
     expanded: useStage((s) => s.expanded),
@@ -68,7 +71,7 @@ export function useGeometry() {
   // the right column is taken too.
   // Every panel in the right column shares one width (and the topic card has it too).
   const sideW = Math.round(Math.min(SIDE_W, vw * 0.32))
-  const column = desktop && (inspecting || wsSide || layersOpen) ? sideW : 0
+  const column = desktop && (inspecting || wsSide || layersOpen || viewing) ? sideW : 0
   const chatW = Math.round(Math.min(CHAT_W, vw * (column && !wide ? 0.34 : 0.42)))
   const left = desktop && chatOpen ? GAP + chatW + GAP : GAP
   const sideColumn = column ? GAP + column + GAP : GAP
@@ -91,10 +94,10 @@ export function useGeometry() {
 
   // One sheet at a time on a phone; the newest wins. The conversation's is 56% of the page.
   const phoneSheet = !desktop && (inspecting || wsSide || layersOpen)
-  const cardShown = topic && (desktop ? !stage.expanded : !(chatOpen || phoneSheet))
+  const cardShown = topic && !viewing && (desktop ? !stage.expanded : !(chatOpen || phoneSheet))
   const chatBottom = !desktop && (chatOpen || phoneSheet) ? (phoneSheet ? sheetH : Math.round(vh * 0.56)) + PHONE_GAP : 0
   const cardH = useLayout((s) => s.cardH)
-  const cardBottom = !desktop && cardShown ? (cardH || Math.round(vh * 0.34)) + PHONE_GAP : 0
+  const cardBottom = !desktop && (cardShown || viewing) ? (cardH || Math.round(vh * 0.34)) + PHONE_GAP : 0
   // The topic card sits over the stage (or its button) at the bottom left of the open map.
   const cardOffset = desktop ? (stage.open && !stage.expanded ? stageH + GAP : stage.any && !stage.open ? ROW_H + GAP : 0) : 0
   const bottomInset = Math.max(chatBottom, cardBottom, stage.open && !stage.expanded && desktop ? stageH + GAP : 0)
@@ -117,6 +120,7 @@ export function useGeometry() {
     sheetH,
     inspecting,
     wsSide,
+    viewing,
     stageOpen: stage.open,
     stageExpanded: stage.expanded,
     chipsTop,

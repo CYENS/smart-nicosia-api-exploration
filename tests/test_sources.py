@@ -78,8 +78,8 @@ def test_the_store_tags_layers_and_datasets_with_the_running_tool():
         data = store.add_dataset("cafes", [{"n": 1}], title="Cafes")
         mine = store.add_layer("mine", [], geometry="point", title="Mine", sources=["dls", "nope"])
     outside = store.add_dataset("loose", [], title="Loose")
-    assert store.layers[layer]["meta"]["sources"] == ["openstreetmap"]
-    assert store.datasets[data]["sources"] == ["openstreetmap"]
+    assert store.layers[layer]["meta"]["sources"] == ["openstreetmap", "overture"]
+    assert store.datasets[data]["sources"] == ["openstreetmap", "overture"]
     assert store.layers[mine]["meta"]["sources"] == ["dls"]  # a handler can say better
     assert store.datasets[outside]["sources"] == []
 
@@ -105,7 +105,7 @@ def test_visuals_send_their_sources_to_the_page(monkeypatch):
 
     res, err = run_tool(ctx, "show_on_map", {"layer_ref": layer, "style": "points"})
     assert not err, res
-    assert events[-1]["layer"]["sources"] == ["openstreetmap"]
+    assert events[-1]["layer"]["sources"] == ["openstreetmap", "overture"]
 
     spec = {"mark": "line", "encoding": {"x": {"field": "hour"}, "y": {"field": "temp"}}}
     res, err = run_tool(ctx, "show_chart", {"title": "Weather", "spec": spec, "data_ref": rows})
@@ -115,7 +115,7 @@ def test_visuals_send_their_sources_to_the_page(monkeypatch):
     res, err = run_tool(ctx, "show_visual", {"title": "Both", "code": "document.body.textContent = String(HEIGHT)", "data_refs": [rows],
                                              "layer_refs": [layer]})
     assert not err, res
-    assert events[-1]["sources"] == ["open_meteo", "openstreetmap"]
+    assert events[-1]["sources"] == ["open_meteo", "openstreetmap", "overture"]
 
 
 # -- /api/sources ------------------------------------------------------------------------------

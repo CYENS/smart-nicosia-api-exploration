@@ -29,8 +29,8 @@ your spot on the map, after which the answer comes by itself; Stop ends an answe
 markdown. Charts and custom visuals land on
 the stage, with a filmstrip of earlier ones. For everything else, the Layers button opens one
 sheet: the base map and the 3D view, the city's systems in three groups (sensors, buildings,
-alerts) with a switch and a live summary each, the workspaces (Live and Mobility, also on Alt and
-a number and in Ctrl K), what the answers drew with their legends, and your position. Search
+alerts, plus the environment) with a switch and a live summary each, the workspaces (Live,
+Mobility and Environment, also on Alt and a number and in Ctrl K), what the answers drew with their legends, and your position. Search
 everything with Ctrl K; press ? for the keyboard shortcuts.
 
 It also has:
@@ -46,6 +46,14 @@ It also has:
 - **Search everything** from Ctrl K (Cmd K): devices by id, name or street, register buildings
   by address or file number, places, streets, commands (the 3D city, the base map, the
   registers, locate me) and the prepared questions.
+- **The environment.** Terrain lit by the sun, the shadows of every DLS 3D building at the
+  clock's moment, the hours of direct sun of a square on any date, air, noise and temperature
+  as surfaces that fade where no station is near, the wind as moving streaks (still arrows with
+  reduced motion) and the rain radar: in the Layers sheet's Environment group, on the Outside
+  card, and in the Environment workspace (Alt 3). "What's it like here?" opens any point in the
+  inspector: sun or shade, its hours of sun that day, the air and noise with how sure they are,
+  the temperature and the wind. Walks can keep to the shade at the time of the walk. See
+  [docs/environment-twin.md](docs/environment-twin.md).
 - **Links to a view.** The address keeps the camera and the open thing
   (`#/e/YL1015/@35.16680,33.36082,17z`), so a view can be shared and survives a reload.
 
@@ -208,6 +216,12 @@ To record the three minute showcase video of a running copy (captioned, on live 
 - Caches (device attributes, the OSM places index, the Vega-Lite schema) live in
   `data/chatbot_cache/`. The places index takes about a minute to build from Overpass on first
   start; until then place search falls back to Photon.
+- [chatbot/overture.py](chatbot/overture.py) is the second places index: Overture Maps' places
+  in Nicosia (about 9,500 businesses and services OSM lacks, pinned at the door), cut with
+  DuckDB from Overture's latest monthly release and kept in
+  `data/chatbot_cache/overture_places.json` (about 3.5 MB). The first copy takes a minute or two
+  in the background; a newer release is looked for at most monthly, and a failed refresh keeps
+  the last copy. Its docstring explains the quality rules.
 
 ## What the Smart Nicosia API provides
 

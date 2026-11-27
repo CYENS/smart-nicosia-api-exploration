@@ -27,6 +27,8 @@ STATE_COLORS: dict[str, str] = {
     "usual route": "#94a3b8",
     # Places found on the web (locate_web_places): at the door, or only on their street.
     "from the web": "#e046f0", "on its street": "#c9a3d6",
+    # High places with a view (find_high_places).
+    "viewpoint": "#22d3ee", "public lookout": "#c084fc", "high ground": "#a3e635",
 }
 
 
