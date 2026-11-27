@@ -87,6 +87,28 @@ SOURCES: tuple[Source, ...] = (
         refresh="Every 5 minutes while the rain radar is on",
         credit="Radar: RainViewer"),
     Source(
+        "met_stations", "Department of Meteorology weather stations", "the Met Department's stations",
+        "Department of Meteorology, Republic of Cyprus",
+        "What the thermometers, rain gauges, wind and sun meters around Nicosia measure (Lefkosia, "
+        "Athalassa, KEPNIC, Mammari): ground truth for the temperature surface and the weather now. "
+        "Reuse: published as an open XML feed with no licence stated; the file reads \"Weather Data "
+        "Copyright The Cyprus Department of Meteorology\" and is \"intended as a guide only\"",
+        "Weather", url="https://www.dom.org.cy/AWS/OpenData/CyDoM.xml",
+        licence="The Department's copyright, credited; intended as a guide only",
+        licence_url="https://www.dom.org.cy/about.html",
+        refresh="Every 10 minutes (the readings are about 10 minutes behind)",
+        credit="Stations: Cyprus Department of Meteorology"),
+    Source(
+        "eea_air", "Reference air stations (national network, through the EEA)", "the reference air stations",
+        "Department of Labour Inspection's air quality network, published by the European Environment Agency",
+        "Hourly NO2, O3 and PM10 at the Nicosia traffic station (Strovolos police station) and the "
+        "residential station (Apostolos Loukas school): official instruments to check the city's "
+        "low-cost sensors and the air model against. Two to three hours behind, not yet verified",
+        "Weather", url="https://eeadmz1-downloads-webapp.azurewebsites.net/",
+        licence=CC_BY, licence_url="https://www.eea.europa.eu/en/legal-notice",
+        refresh="Every 20 minutes; each file comes down again only once it has changed (about hourly)",
+        credit="Air reference: EEA, CC BY 4.0"),
+    Source(
         "openstreetmap", "OpenStreetMap", "OpenStreetMap", "OpenStreetMap contributors",
         "Streets, places and their opening hours, the data under the base map, and the 3D "
         "buildings where the DLS has none (north of the buffer zone), in grey",
@@ -224,6 +246,8 @@ TOOL_SOURCES: dict[str, tuple[str, ...]] = {
     "view_from": ("terrain_tiles", "dls", "openstreetmap", "twin_memory"),
     "run_scenario": ("twin_memory", "smart_nicosia"),
     "compare_scenarios": ("twin_memory",),
+    "measured_stations": ("met_stations", "eea_air", "twin_memory", "open_meteo"),
+    "compare_with_reference": ("smart_nicosia", "eea_air", "met_stations", "twin_memory"),
 }
 
 _tool: ContextVar[str | None] = ContextVar("source_tool", default=None)

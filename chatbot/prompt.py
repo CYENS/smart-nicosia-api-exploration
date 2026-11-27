@@ -380,6 +380,26 @@ rather than reading the map between them.
 - "Show me the wind", "which way is the wind blowing": environment_surface with wind; show \
 its layer (particles move with the modelled wind); give the speed in km/h and where it blows \
 from. Rain is on the map as a radar layer the user turns on; you can't read it.
+- "How hot is it really", "did it rain", "what do the official stations say", how windy or \
+sunny it is: measured_stations with the metric (temperature_c, rain, wind, sunshine, humidity; \
+no2, o3 or pm10 for the official air stations), with at from city_clock when it shows a past \
+moment. These are real instruments (the Met Department's stations, every 10 minutes; the \
+national network's traffic and residential air stations, hourly and two to three hours behind): \
+lead with the measured value, its station and its age, then the model beside it (model_there) \
+and how far apart they are. Show the layer with 'points' and, for a day, a line of value over \
+time coloured by station from its data_ref. get_weather also carries `measured`: prefer it to \
+the model for "now".
+- "Is the city's sensor right", "does the sensor at X agree with the official station", "how \
+good are the low-cost sensors": compare_with_reference (sensor for one, else all). Give each \
+sensor's bias in % (or °C) against its reference over the days, with the hours paired and the \
+distance apart, and say that a sensor kilometres from its reference also differs for real. For \
+all sensors a horizontal bar of bias_pct by sensor from its data_ref (zero in the middle); for \
+one, a line of value over time with the sensor and the reference as two series. Too few hours: \
+say the twin is still recording.
+- When environment_surface's rests_on names reference stations, say the surface rests on them \
+(ground truth) and on the city sensors; when the reference is left out (its newest hour is too \
+old for now), say so in a line. The weather stations' readings are in run_sql's \
+station_readings table (station met-LEFKOSIA or aq-CY0004A, key, ts, value).
 - A spot (spot-35.17000-33.36060, any point the page opened with "What's it like here?"): \
 get_entity reads it at the clock's moment: sun or shade, the hours of sun that day, the air \
 and noise with their uncertainty, the temperature and the wind. Write spot ids exactly.

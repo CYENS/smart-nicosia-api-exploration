@@ -148,7 +148,26 @@ def _radar(agent) -> dict:
     return status("live", at, f"newest frame {_iso(newest)[11:16]}" if newest else None)
 
 
+def _station_feed(agent, which: str) -> dict:
+    """The Met file or the EEA files: when last read, whether it worked, the newest reading."""
+    env = getattr(agent, "environment", None)
+    st = env.measured.health(which) if env is not None else None
+    if st is None or st.read_at is None:
+        return status("waiting", note="read in the background every few minutes")
+    newest = (datetime.fromtimestamp(st.newest_ms / 1000, tz=timezone.utc).astimezone(ZoneInfo(TIMEZONE))
+              .strftime("%H:%M") if st.newest_ms else None)
+    what = "newest reading" if which == "met" else "newest hour from"
+    if st.error and st.ok_at is None:
+        return status("unavailable", st.read_at, st.error)
+    note = f"{what} {newest}" if newest else None
+    if st.error:
+        return status("stale", st.ok_at, f"{note + '; ' if note else ''}the last read failed: {st.error}")
+    return status("live", st.ok_at or st.read_at, note)
+
+
 PROBES: dict[str, Callable] = {
+    "met_stations": lambda a: _station_feed(a, "met"),
+    "eea_air": lambda a: _station_feed(a, "eea"),
     "smart_nicosia": lambda a: _cached("city"),
     "open_meteo": lambda a: _cached("weather"),
     "bus_live": _bus_live,

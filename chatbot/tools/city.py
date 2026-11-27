@@ -449,4 +449,23 @@ def h_get_weather(ctx: ToolContext, a: dict) -> dict:
     res = context.weather(ctx.settings)
     res["data_ref"] = ctx.store.add_dataset("weather", res["next_12_hours"], title="Next 12 hours")
     res["_summary"] = f"{res['now']['temp_c']} °C, {res['now']['sky']}"
+    # What the Met Department's thermometers and the official air stations measure, beside the
+    # model above (measured_stations has the stations themselves).
+    measured = None
+    if getattr(ctx, "environment", None) is not None:
+        try:
+            measured = ctx.environment.measured.summary(None)
+        except Exception:  # noqa: BLE001 - the forecast stands without it
+            measured = None
+    if measured:
+        t = measured.get("temperature")
+        if t and isinstance(res["now"].get("temp_c"), (int, float)):
+            t["model_now_c"] = res["now"]["temp_c"]
+            t["measured_minus_model_c"] = round(t["value_c"] - res["now"]["temp_c"], 1)
+        res["measured"] = measured
+        res["measured_note"] = ("measured: Department of Meteorology stations (every 10 minutes) and the "
+                                "national air network's reference stations (hourly, 2 to 3 hours behind); "
+                                "the rest is the Open-Meteo model")
+        if t:
+            res["_summary"] += f"; {t['value_c']:g} °C measured at {t['station']}"
     return res
