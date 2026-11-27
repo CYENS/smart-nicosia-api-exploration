@@ -429,9 +429,11 @@ def h_get_road_speeds(ctx: ToolContext, a: dict) -> dict:
                               value_fields=["speed_kmh", "share"])
     ctx.store.layers[ref]["meta"]["live"] = {"kind": "roads", "at": at.isoformat() if at else None}
     ranked = slowest(chosen, len(chosen))
+    posted = posted_limits(ctx, segs, chosen)  # the street rules: "limit 50, traffic at 34"
     data_rows = [{"id": r["id"], "segment": r["name"], "road": r["road"], "speed_kmh": r["speed_kmh"],
                   "free_flow_kmh": r["free_flow_kmh"], "share_of_free_flow": r["share_of_free_flow"],
-                  "state": r["state_label"], "usual_kmh": r["usual_kmh"]} for r in ranked]
+                  "state": r["state_label"], "usual_kmh": r["usual_kmh"],
+                  "limit_kmh": posted.get(r["id"])} for r in ranked]
     data = ctx.store.add_dataset("road_speeds", data_rows, title=title, link={"key": "id"})
     how = {r["free_flow"] for r in chosen}
     limit = a.get("limit") or 10
@@ -444,11 +446,14 @@ def h_get_road_speeds(ctx: ToolContext, a: dict) -> dict:
         "by_state": counts,
         "slowest": [{k: r[k] for k in ("id", "name", "road", "speed_kmh", "free_flow_kmh",
                                        "share_of_free_flow", "state_label", "usual_kmh", "travel_time_s")}
-                    for r in ranked[:limit]],
+                    | {"limit_kmh": posted.get(r["id"])} for r in ranked[:limit]],
         "free_flow_from": sorted(how),
         "free_flow_note": "measured: the 85th percentile of 4 weeks of the twin's readings; estimated: "
                           "the road network's typical speed (Valhalla), until a day of readings is "
-                          "stored; assumed: 50 km/h while that estimate loads",
+                          "stored; posted: the road's posted speed limit while that estimate loads; "
+                          "assumed: 50 km/h where no limit is known either",
+        "limit_note": "limit_kmh is the posted speed limit along most of the segment, from the national "
+                      "sign inventory or OpenStreetMap (get_speed_limits has the detail); null where neither says",
         "layer_ref": ref, "data_ref": data,
     }
     if not any(r["usual_kmh"] for r in chosen):
@@ -471,3 +476,16 @@ def h_get_road_speeds(ctx: ToolContext, a: dict) -> dict:
             "_summary": f"detectors stalled since {since_words(datetime.fromisoformat(out['last_measured_at']), now)}",
         }
     return res
+
+
+def posted_limits(ctx: ToolContext, segs: dict, rows: list[dict]) -> dict[str, int]:
+    """Each road segment's posted limit from the street rules (chatbot/streets), where known."""
+    st = getattr(ctx, "streets", None)
+    if st is None:
+        return {}
+    out = {}
+    for r in rows:
+        got = st.segment_limit(segs[r["id"]]) if r["id"] in segs else None
+        if got:
+            out[r["id"]] = got["kmh"]
+    return out

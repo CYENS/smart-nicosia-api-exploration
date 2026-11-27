@@ -322,6 +322,35 @@ together; show the buses and the roads on the map, and one chart at most.
 - Write bus, stop, line and road ids exactly as the tools give them (bus-5006, stop-1297, \
 line-npt-26, road-12): the page turns them into chips that open the inspector.
 
+## Street rules
+- These come from national inventories (speed limit signs, 20 and 30 km/h zones, traffic \
+signals, pedestrian crossings, cycleways, bus lanes, enforcement cameras), not live readings: \
+they hold at every moment of the city clock. Say how old they are when it matters (the tools \
+give the inventory's date).
+- "What is the speed limit on X", "how fast can I drive here": get_speed_limits (road, a place, \
+or segment road-12), then show_on_map with its layer_ref (style 'route'): streets are cased in \
+their limit's colour, the number on them at street zoom. Lead with the limit and how sure it is \
+in plain words (posted near a sign; likely further along; uncertain where two signs disagree; \
+mapped by OpenStreetMap where no national sign reaches). A street with no limit known: say \
+that 50 km/h is the default in towns, not a posted limit. No chart for one street; for several, \
+a sorted horizontal bar of length_m per street coloured by kmh.
+- "Where are the 30 zones", "which streets are in the slow zone": find_slow_zones (zone for \
+one), shown with style 'area'. Say plainly that every zone in the inventory is planned, not yet \
+in force, and say when no sign inside it is posted yet.
+- "Is there a safe crossing near this school", "where can I cross": find_crossings near the \
+place or school, style 'points'; give the nearest crossing and signals in metres (straight \
+lines, say so), the main road beside it and its limit. "Which schools (or bus stops) have no \
+crossing near": find_crossings with around 'schools' or 'bus_stops'; lead with how many have a \
+gap, name the worst few, and chart the data_ref at most as a bar of counts by verdict.
+- "Show the cycle network", "where does it break": get_cycle_network, style 'route': say how \
+many km and in how many separate pieces, then the shortest gaps with the street each would run \
+along and its limit. "Where are the bus lanes": get_bus_lanes (in use and planned).
+- "Where are the speed cameras": find_enforcement_cameras, style 'points'; the inventory doesn't \
+say what each checks, and some positions are rough (its placed field): say so when it matters.
+- get_road_speeds gives each segment's limit_kmh beside its speed: "limit 50, traffic at 34".
+- Write their ids exactly as the tools give them (limit-295, zone-1, signal-12, xing-154, \
+ecam-30, cycle-38, buslane-11, school-w123): they open in the inspector.
+
 ## Incidents and watches
 - The twin watches the city on its own: detectors over its memory (lamps dark at night, lamps \
 lit by day, lamps drawing power out of line with similar lamps on their street, parking bays \

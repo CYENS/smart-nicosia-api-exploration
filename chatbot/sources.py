@@ -71,6 +71,58 @@ SOURCES: tuple[Source, ...] = (
         licence=CC_BY, licence_url="https://creativecommons.org/licenses/by/4.0/",
         refresh="Every 5 minutes",
         credit="Road speeds: traffic4cyprus, CC BY 4.0"),
+    # The street rules (chatbot/streets): the National Access Point's street inventories.
+    Source(
+        "speed_limits", "Speed limit signs", "the speed limit inventory", "Public Works Department, through the Cyprus National Access Point",
+        "Where each speed limit sign stands and what it says; the twin carries each along its street "
+        "to show which stretch it governs, and how sure that is",
+        "Mobility", url="https://traffic4cyprus.org.cy/dataset/speed_limits",
+        licence=CC_BY, licence_url="https://creativecommons.org/licenses/by/4.0/",
+        refresh="Once a day at most; the inventory itself changes rarely",
+        credit="Speed limits: Public Works Dept., CC BY 4.0"),
+    Source(
+        "slow_zones", "20 and 30 km/h zones", "the slow zones inventory", "Public Works Department, through the Cyprus National Access Point",
+        "The 20 and 30 km/h zones and their entrance points (Nicosia's three are listed as planned)",
+        "Mobility", url="https://traffic4cyprus.org.cy/dataset/lez",
+        licence=CC_BY, licence_url="https://creativecommons.org/licenses/by/4.0/",
+        refresh="Once a day at most",
+        credit="Slow zones: Public Works Dept., CC BY 4.0"),
+    Source(
+        "traffic_signals", "Traffic signals", "the traffic signals inventory", "Public Works Department, through the Cyprus National Access Point",
+        "Every signalled junction, with the council that runs it (where they are, not their phases)",
+        "Mobility", url="https://traffic4cyprus.org.cy/dataset/traffic_signals",
+        licence=CC_BY, licence_url="https://creativecommons.org/licenses/by/4.0/",
+        refresh="Once a day at most",
+        credit="Signals: Public Works Dept., CC BY 4.0"),
+    Source(
+        "pedestrian_crossings", "Pedestrian crossings", "the crossings inventory", "Public Works Department, through the Cyprus National Access Point",
+        "The marked pedestrian crossings the department lists, for how schools and bus stops are served",
+        "Mobility", url="https://traffic4cyprus.org.cy/dataset/pedestrian_crossings",
+        licence=CC_BY, licence_url="https://creativecommons.org/licenses/by/4.0/",
+        refresh="Once a day at most",
+        credit="Crossings: Public Works Dept., CC BY 4.0"),
+    Source(
+        "cycleways", "Cycleways", "the cycleways inventory", "Public Works Department, through the Cyprus National Access Point",
+        "The cycle routes, joined by the twin into connected pieces to show where the network breaks",
+        "Mobility", url="https://traffic4cyprus.org.cy/dataset/cycleways",
+        licence=CC_BY, licence_url="https://creativecommons.org/licenses/by/4.0/",
+        refresh="Once a day at most",
+        credit="Cycleways: Public Works Dept., CC BY 4.0"),
+    Source(
+        "bus_lanes", "Bus lanes", "the bus lanes inventory", "Public Works Department, through the Cyprus National Access Point",
+        "The bus lanes in use and those planned along the tram corridors",
+        "Mobility", url="https://traffic4cyprus.org.cy/dataset/bus_lanes",
+        licence=CC_BY, licence_url="https://creativecommons.org/licenses/by/4.0/",
+        refresh="Once a day at most",
+        credit="Bus lanes: Public Works Dept., CC BY 4.0"),
+    Source(
+        "enforcement_cameras", "Traffic enforcement cameras", "the enforcement cameras inventory",
+        "Elovate, for the Ministry of Transport, through the Cyprus National Access Point",
+        "Where the traffic enforcement cameras stand and which way they watch",
+        "Mobility", url="https://traffic4cyprus.org.cy/dataset/traffic_enforcement_cameras",
+        licence=CC_BY, licence_url="https://creativecommons.org/licenses/by/4.0/",
+        refresh="Once a day at most",
+        credit="Cameras: Elovate for the Ministry of Transport, CC BY 4.0"),
     Source(
         "open_meteo", "Open-Meteo", "Open-Meteo", "Open-Meteo",
         "The weather now and by the hour, sunrise and sunset, modelled air quality and dust (CAMS "
@@ -224,6 +276,13 @@ TOOL_SOURCES: dict[str, tuple[str, ...]] = {
     "view_from": ("terrain_tiles", "dls", "openstreetmap", "twin_memory"),
     "run_scenario": ("twin_memory", "smart_nicosia"),
     "compare_scenarios": ("twin_memory",),
+    # The street rules (chatbot/tools/streets.py).
+    "get_speed_limits": ("speed_limits", "openstreetmap"),
+    "find_slow_zones": ("slow_zones", "speed_limits", "openstreetmap"),
+    "find_crossings": ("pedestrian_crossings", "traffic_signals", "speed_limits", "openstreetmap", "overture"),
+    "get_cycle_network": ("cycleways", "openstreetmap", "speed_limits"),
+    "get_bus_lanes": ("bus_lanes",),
+    "find_enforcement_cameras": ("enforcement_cameras", "traffic_signals", "speed_limits"),
 }
 
 _tool: ContextVar[str | None] = ContextVar("source_tool", default=None)
