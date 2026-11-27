@@ -41,6 +41,7 @@ import "@/lib/weather" // the weather of the clock's moment on the map: light, s
 // After the environment: "What's here?" is the spot's menu item and icon, and its card holds the
 // environment's "What's it like here?" too.
 import "@/lib/here" // "What's here?": any point of the map, its card, the click, press and Ctrl K
+import "@/components/power/sections" // the island's grid: the Outside card's section, the inspector, the peak on the clock
 import { useWorkspace, useWorkspaceSide } from "@/lib/registries/workspaces"
 import { useView } from "@/lib/view"
 
