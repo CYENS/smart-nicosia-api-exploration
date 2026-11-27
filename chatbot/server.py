@@ -72,6 +72,7 @@ async def lifespan(app: FastAPI):
     if memory.recorder is not None:
         memory.recorder.start()
     agent.watcher.start()
+    agent.hazards.start()  # earthquakes, weather warnings and fire danger
     if settings.collect:
         start_collector(memory)
     log.info("twin's memory: %s (recording %s, full collection %s)", memory.path,
@@ -84,6 +85,7 @@ async def lifespan(app: FastAPI):
     yield
     app.state.city_tiles.stop()
     agent.watcher.stop()
+    agent.hazards.stop()
     if memory.recorder is not None:
         memory.recorder.stop()
 

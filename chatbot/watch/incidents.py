@@ -22,6 +22,7 @@ import math
 import threading
 from collections import Counter
 from collections.abc import Callable
+from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
@@ -142,6 +143,8 @@ def linked(a: dict, b: dict) -> bool:
     if a["family"] != b["family"]:
         return False
     family = a["family"]
+    if family in FAMILIES:  # a family another module added links its own way
+        return FAMILIES[family].link(a, b)
     if a["device"] == b["device"]:
         return _overlap(a, b, SAME_DEVICE_GAP.get(family, DEFAULT_SAME_GAP))
     radius, within = LINKS.get(family, LINKS["other"])
@@ -187,6 +190,8 @@ def components(members: list[dict]) -> list[list[int]]:
 
 
 def place_of(members: list[dict], streets: Callable[[float, float], str | None] | None = None) -> dict:
+    if members and members[0].get("family") in FAMILIES:  # it says its own place
+        return FAMILIES[members[0]["family"]].place(members)
     pts = [(m["lat"], m["lon"]) for m in members if m.get("lat") is not None and m.get("lon") is not None]
     lat = sum(p[0] for p in pts) / len(pts) if pts else None
     lon = sum(p[1] for p in pts) / len(pts) if pts else None
@@ -213,6 +218,8 @@ def place_of(members: list[dict], streets: Callable[[float, float], str | None] 
 def compose(members: list[dict], place: dict) -> tuple[str, str, str]:
     """(title, severity, summary) of an incident from its members."""
     family = members[0]["family"]
+    if family in FAMILIES:
+        return FAMILIES[family].compose(members, place)
     devices: dict[str, dict] = {}
     for m in sorted(members, key=lambda m: m["start"]):
         devices.setdefault(m["device"], m)
@@ -703,6 +710,9 @@ def _last_action_by(x: dict) -> str | None:
 
 
 def _cleared(x: dict) -> str:
+    fam = FAMILIES.get(x.get("family") or (x["members"][0]["family"] if x["members"] else ""))
+    if fam is not None and fam.cleared is not None:
+        return fam.cleared(x)
     whys = Counter()
     for m in x["members"]:
         for e in reversed(m.get("evidence", [])):
@@ -724,6 +734,29 @@ def streets_near(obs: Observed, radius_m: float = 200.0) -> Callable[[float, flo
                    key=lambda x: x[0])
         return best[1] if best and best[0] <= radius_m else None
     return nearest
+
+
+# -- families other modules add -------------------------------------------------------------------
+# A feature whose detections aren't devices on streets (chatbot/watch/hazards.py: earthquakes,
+# weather warnings, fire danger) registers its family: how its members link into one incident,
+# the place it names, its title and story, and why it cleared.
+
+
+@dataclass(frozen=True)
+class Family:
+    category: str  # the inbox's word for it
+    link: Callable[[dict, dict], bool]
+    place: Callable[[list[dict]], dict]  # {"label", "phrase", "street", "lat", "lon"}
+    compose: Callable[[list[dict], dict], tuple[str, str, str]]  # (title, severity, summary)
+    cleared: Callable[[dict], str] | None = None
+
+
+FAMILIES: dict[str, Family] = {}
+
+
+def register_family(name: str, family: Family) -> None:
+    FAMILIES[name] = family
+    CATEGORIES[name] = family.category
 
 
 __all__ = ["Book", "ActionError", "components", "linked", "compose", "place_of", "streets_near",

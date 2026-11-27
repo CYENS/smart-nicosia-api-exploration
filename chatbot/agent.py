@@ -30,6 +30,7 @@ from chatbot.environment.service import Environment
 from chatbot.eoa import Registry
 from chatbot.followups import TagFilter, merge_actions
 from chatbot.geo import Places
+from chatbot.hazards import Hazards
 from chatbot.memory import Memory
 from chatbot.mobility import Mobility
 from chatbot.moments import Moments
@@ -184,6 +185,10 @@ class Agent:
         self.entities.moments = self.moments  # "What's here?" reads parking and lamps from it
         self.watcher = Watcher(city, memory)  # alerts, incidents and watches
         self.watcher.feeds["road_speeds"] = self.mobility.roads.health  # a stalled road feed
+        # Earthquakes, weather warnings and fire danger: read, recorded, and raised by the watch.
+        self.hazards = Hazards(settings, memory, now=city.now, listening=lambda: self.watcher.hub.listening)
+        self.hazards.on_change.append(lambda: self.watcher.fresh_readings("hazards"))
+        self.watcher.hazards = self.hazards  # tools and the inspector reach it through the watch
         self.entities.watcher = self.watcher  # incidents open by their id (INC-12)
         # Sun and shade, air and noise surfaces, the wind and the rain radar.
         self.environment = Environment(settings, city, self.moments, dls, memory)
