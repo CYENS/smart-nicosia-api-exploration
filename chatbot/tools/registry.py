@@ -21,6 +21,7 @@ from chatbot.tools import (buildings, charts, city, clock, entities, environment
                            mobility, places, routes, scenarios, views, watch)
 from chatbot.tools import streets
 from chatbot.tools import facilities
+from chatbot.tools import energy
 from chatbot.tools.base import Handler, LocationNotShared, Tool, ToolContext, ToolError
 from chatbot.web import WebError
 
@@ -33,6 +34,8 @@ from chatbot.tools import roadreports  # noqa: E402
 DOMAINS += (roadreports,)
 # Park, charge and hire (car parks, chargers, bikes and scooters), after it.
 DOMAINS += (facilities,)
+# The island's power (demand, wind, solar and the grid's carbon), after that.
+DOMAINS += (energy,)
 
 TOOLS: list[Tool] = [t for domain in DOMAINS for t in domain.TOOLS]
 TOOL_DEFS: list[dict] = [t.definition for t in TOOLS]

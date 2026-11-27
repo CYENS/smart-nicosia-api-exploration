@@ -297,9 +297,36 @@ class Metric:
     over_time: str = "mean"  # combining moments in a bucket: mean | sum
     per_hour: bool = False  # a rate: multiplied by the hours between moments (kWh, hours full)
     entering: str | None = None  # counts moments a device entered this state (arrivals)
+    # A per-moment factor from FACTORS the value is multiplied by (the grid's carbon for CO2);
+    # a moment the factor doesn't know is unknown. `sources` and `note` go with its answers.
+    factor: str | None = None
+    sources: tuple[str, ...] = ()
+    note: str | None = None
 
     def describe(self) -> str:
         return f"{self.name} ({self.unit}): {self.label}"
+
+
+# Per-moment factors a metric can be weighted by: name -> fn(moments) -> [factor or None].
+# chatbot/energy registers "grid_co2", the grid's kg CO2 per kWh at each moment.
+FACTORS: dict[str, Callable[[list[datetime]], list[float | None]]] = {}
+
+
+def register_factor(name: str, fn: Callable[[list[datetime]], list[float | None]]) -> None:
+    FACTORS[name] = fn
+
+
+def _factors(metric: Metric, times: list[datetime]) -> list[float | None] | None:
+    if metric.factor is None:
+        return None
+    fn = FACTORS.get(metric.factor)
+    if fn is None:
+        return [None] * len(times)
+    try:
+        out = list(fn(times))
+    except Exception:  # noqa: BLE001 - a missing factor makes the moments unknown, never an error
+        return [None] * len(times)
+    return out if len(out) == len(times) else [None] * len(times)
 
 
 def _is(state: str, *yes: str, unknown: tuple[str, ...] = ("unknown",)) -> float | None:
@@ -346,6 +373,13 @@ METRICS: dict[str, dict[str, Metric]] = {
         Metric("power_kw", "kW", "power drawn by lit lamps", _lit_kw, across="sum"),
         Metric("energy_kwh", "kWh", "energy used by lit lamps", _lit_kw, across="sum",
                over_time="sum", per_hour=True),
+        Metric("co2_kg", "kg CO2", "CO2 from the energy lit lamps used, at the grid's estimated "
+               "carbon for each quarter hour (the Transmission System Operator's figures)", _lit_kw,
+               across="sum", over_time="sum", per_hour=True, factor="grid_co2",
+               sources=("tso_grid", "oil_co2"),
+               note="CO2 uses the grid's carbon at each quarter hour: the oil-fired stations' share "
+                    "of the island's demand then, times 0.70 kg CO2 per kWh they generate (an "
+                    "estimate); moments the twin has no record of the grid for count as unknown"),
     )},
     "waste_bin": {m.name: m for m in (
         Metric("fill_pct", "%", "fill level", _field("level_pct")),
@@ -384,6 +418,7 @@ def device_series(metric: Metric, times: list[datetime], step_h: float, names: l
                   states: list[list[str]], values: dict[str, list[list[float | None]]]) -> Series:
     """A metric's values from replayed frames (states[frame][device], values[field][...])."""
     fields = list(values)
+    weights = _factors(metric, times)
     per: list[list[float | None]] = []
     per_states: list[list[str]] = []
     for j, _ in enumerate(names):
@@ -401,6 +436,8 @@ def device_series(metric: Metric, times: list[datetime], step_h: float, names: l
                     v = None
             if v is not None and metric.per_hour:
                 v *= step_h
+            if v and weights is not None:  # nothing drawn is no CO2, whatever the grid did
+                v = None if weights[k] is None else v * weights[k]
             row.append(v)
             st_row.append(st)
             prev_state = st

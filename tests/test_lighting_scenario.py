@@ -181,7 +181,8 @@ def test_todays_policy_changes_nothing(data):
     total = kwh(res, "kwh_base")
     assert 650 < total < 760 and energy["baseline"] == round(total / 1000, 1)
     assert cost["baseline"] == pytest.approx(total * 0.20, abs=1)
-    assert co2["baseline"] == pytest.approx(total * 0.55 / 1000, abs=0.01)
+    # No grid recorded in this store: the 2023 yearly fossil share (0.80) stands in, at 0.70 a kWh.
+    assert co2["baseline"] == pytest.approx(total * 0.80 * 0.70 / 1000, abs=0.01)
     assert {f["properties"]["state"] for f in res.layers["change"]["features"]} == {"No change"}
 
 
@@ -218,7 +219,7 @@ def test_dimming_saves_in_proportion_and_its_range_follows_the_power_floor(store
     assert energy["delta_low"] <= energy["delta"] <= energy["delta_high"]
     tornado = {s["id"]: s for s in res.sensitivity}
     assert res.sensitivity[0]["id"] == "price_eur_kwh"  # moves the headline most
-    assert tornado["co2_kg_kwh"]["at_low"] == tornado["co2_kg_kwh"]["at_high"]
+    assert tornado["co2_conventional_kg_kwh"]["at_low"] == tornado["co2_conventional_kg_kwh"]["at_high"]
     # The Makariou camera counts more than 5 people an hour at night: the dimmed lamps there
     # are flagged, YL2 by its bus stop too and YL3 by its dangerous building.
     flagged = {r["id"]: r for r in res.details["safety"]}
@@ -326,7 +327,7 @@ def test_the_brief_prints_the_question_ranges_backtest_assumptions_and_sources(s
     page = brief.brief_html(a, b)
     assert lighting.LIGHTING.question in page
     assert "Dim to 50% 01:00 to 05:00" in page and "By the sun" in page
-    assert "Grid emission factor" in page and "0.47 to 0.63" in page  # an assumption and its range
+    assert "CO2 per kWh from the oil-fired stations" in page and "0.65 to 0.78" in page  # an assumption and its range
     assert "the sensors measured" in page and "Learnt only until" in page  # the backtest
     assert "What moves the result" in page and "<svg" in page  # the tornado
     assert "Safety check" in page and "Makariou" in page

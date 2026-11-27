@@ -228,6 +228,8 @@ def _nextbike_live(agent) -> dict:
     total = sum(s["bikes"] for s in b.stations.values())
     return status(b.status, b.feed_time or b.fetched_at,
                   b.error if b.status == "stale" else f"{total:,} bikes at {len(b.stations):,} stations in Cyprus")
+
+
 def _station_feed(agent, which: str) -> dict:
     """The Met file or the EEA files: when last read, whether it worked, the newest reading."""
     env = getattr(agent, "environment", None)
@@ -243,6 +245,23 @@ def _station_feed(agent, which: str) -> dict:
     if st.error:
         return status("stale", st.ok_at, f"{note + '; ' if note else ''}the last read failed: {st.error}")
     return status("live", st.ok_at or st.read_at, note)
+
+
+def _grid(agent) -> dict:
+    grid = getattr(agent, "grid", None)
+    if grid is None:
+        return status(None)
+    h = grid.health()
+    if h["fetched_at"] is None:
+        return status("unavailable" if h["error"] else "waiting",
+                      note=h["error"] or "read when the Outside card or a question asks for it")
+    newest = h["latest"].astimezone(ZoneInfo(TIMEZONE)).strftime("%H:%M") if h["latest"] else None
+    note = f"newest quarter hour {newest}" + (f", {h['latest_mw']:,.0f} MW" if h["latest_mw"] else "") if newest else None
+    if h["layout_changed"]:
+        return status("stale", h["fetched_at"].timestamp(), h["error"], layout_changed=True)
+    if h["error"]:
+        return status("stale", h["fetched_at"].timestamp(), f"{note}; the last read failed ({h['error']})")
+    return status("live", h["fetched_at"].timestamp(), note)
 
 
 PROBES: dict[str, Callable] = {
@@ -273,6 +292,7 @@ PROBES: dict[str, Callable] = {
     "nap_nextbike": _inventories("bike_station"),
     "nap_bolt": _inventories("scooter_zone"),
     "nextbike_live": _nextbike_live,
+    "tso_grid": _grid,
 }
 
 
