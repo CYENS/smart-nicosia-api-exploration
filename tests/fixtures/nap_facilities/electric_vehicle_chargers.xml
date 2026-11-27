@@ -1,0 +1,697 @@
+<?xml version='1.0' encoding='utf-8'?>
+<d2LogicalModel xmlns="http://datex2.eu/schema/3/common" xmlns:ei="http://datex2.eu/schema/3/energyInfrastructure">
+  <payload>
+    <publicationTime>2026-11-26T23:31:03.535678+02:00</publicationTime>
+    <publicationCreator>
+      <country>CY</country>
+      <nationalIdentifier>Department of Electrical and Mechanical Services (EMS)</nationalIdentifier>
+    </publicationCreator>
+    <ei:energyInfrastructureTable>
+      <ei:energyInfrastructureTablePublication>
+        <publicationTime>2026-11-26T23:31:03.535678+02:00</publicationTime>
+        <ei:chargingPoints>
+          <ei:chargingPoint>
+            <chargingPointIdentification>Petrolina GSZ Station (150kW)</chargingPointIdentification>
+            <ei:chargingPointOwner>Alpitronic Right CHAdeMo</ei:chargingPointOwner>
+            <ei:chargingPointOwnerLegalName>Alpitronic Right CHAdeMo</ei:chargingPointOwnerLegalName>
+            <chargingPointStatus>
+              <value>operational</value>
+              <lang>en</lang>
+            </chargingPointStatus>
+            <ei:chargingPointOperator>Petrolina (Holdings) Public Ltd.</ei:chargingPointOperator>
+            <ei:chargingPointOperatorLegalName>Petrolina (Holdings) Public Ltd.</ei:chargingPointOperatorLegalName>
+            <numberOfConnectors>2</numberOfConnectors>
+            <location>
+              <pointByCoordinates>
+                <pointCoordinates>
+                  <latitude>34.92514226471998</latitude>
+                  <longitude>33.601899147034</longitude>
+                </pointCoordinates>
+              </pointByCoordinates>
+            </location>
+            <ei:maximumPower>300</ei:maximumPower>
+            <ei:connectorPower>300</ei:connectorPower>
+            <ei:creationDate>2023-07-05</ei:creationDate>
+            <chargingMode>fastCharging</chargingMode>
+            <connectorTypes>
+              <connectorType>type2</connectorType>
+              <connectorType>comboType2</connectorType>
+            </connectorTypes>
+            <chargingPointAddress>
+              <value>Georgiou Christodoulidi Avenue, 6043, Larnaca</value>
+              <lang>el</lang>
+            </chargingPointAddress>
+            <ei:contactInformation>
+              <contact>
+                <contactType>Technical Support</contactType>
+                <phoneNumber>+357 70071071</phoneNumber>
+              </contact>
+              <contact>
+                <contactType>email</contactType>
+                <emailAddress>support@pcharge.com.cy</emailAddress>
+              </contact>
+            </ei:contactInformation>
+            <ei:operatingTime>
+              <value>24h</value>
+              <lang>en</lang>
+            </ei:operatingTime>
+            <ei:timeZone>UTC+02:00</ei:timeZone>
+            <ei:powerType>dc</ei:powerType>
+          </ei:chargingPoint>
+          <ei:chargingPoint>
+            <chargingPointIdentification>OneTower 2301 (22kW)</chargingPointIdentification>
+            <ei:chargingPointOwner>D.A One Property Management Ltd.</ei:chargingPointOwner>
+            <ei:chargingPointOwnerLegalName>D.A One Property Management Ltd.</ei:chargingPointOwnerLegalName>
+            <chargingPointStatus>
+              <value>unavailable</value>
+              <lang>en</lang>
+            </chargingPointStatus>
+            <ei:chargingPointOperator>Petrolina (Holdings) Public Ltd.</ei:chargingPointOperator>
+            <ei:chargingPointOperatorLegalName>Petrolina (Holdings) Public Ltd.</ei:chargingPointOperatorLegalName>
+            <numberOfConnectors>1</numberOfConnectors>
+            <location>
+              <pointByCoordinates>
+                <pointCoordinates>
+                  <latitude>34.687509725511994</latitude>
+                  <longitude>33.064895896694</longitude>
+                </pointCoordinates>
+              </pointByCoordinates>
+            </location>
+            <ei:maximumPower>22</ei:maximumPower>
+            <ei:connectorPower>22</ei:connectorPower>
+            <ei:creationDate>2023-07-11</ei:creationDate>
+            <chargingMode>normalCharging</chargingMode>
+            <connectorTypes>
+              <connectorType>type2</connectorType>
+            </connectorTypes>
+            <chargingPointAddress>
+              <value>28 October Avenue 355, 3105, Limassol</value>
+              <lang>el</lang>
+            </chargingPointAddress>
+            <ei:contactInformation>
+              <contact>
+                <contactType>Technical Support</contactType>
+                <phoneNumber>+357 70071071</phoneNumber>
+              </contact>
+              <contact>
+                <contactType>email</contactType>
+                <emailAddress>elias@maximumpower.com.cy</emailAddress>
+              </contact>
+            </ei:contactInformation>
+            <ei:timeZone>UTC+02:00</ei:timeZone>
+            <ei:powerType>ac</ei:powerType>
+          </ei:chargingPoint>
+          <ei:chargingPoint>
+            <chargingPointIdentification>SuperHome Center Lakatamia (2x22kW)</chargingPointIdentification>
+            <ei:chargingPointOwner>Superhome Center (DIY) Limited</ei:chargingPointOwner>
+            <ei:chargingPointOwnerLegalName>Superhome Center (DIY) Limited</ei:chargingPointOwnerLegalName>
+            <chargingPointStatus>
+              <value>operational</value>
+              <lang>en</lang>
+            </chargingPointStatus>
+            <ei:chargingPointOperator>Petrolina (Holdings) Public Ltd.</ei:chargingPointOperator>
+            <ei:chargingPointOperatorLegalName>Petrolina (Holdings) Public Ltd.</ei:chargingPointOperatorLegalName>
+            <numberOfConnectors>1</numberOfConnectors>
+            <location>
+              <pointByCoordinates>
+                <pointCoordinates>
+                  <latitude>35.126109794373</latitude>
+                  <longitude>33.292094203762</longitude>
+                </pointCoordinates>
+              </pointByCoordinates>
+            </location>
+            <ei:maximumPower>22</ei:maximumPower>
+            <ei:connectorPower>22</ei:connectorPower>
+            <ei:creationDate>2023-10-09</ei:creationDate>
+            <chargingMode>normalCharging</chargingMode>
+            <connectorTypes>
+              <connectorType>type2</connectorType>
+            </connectorTypes>
+            <chargingPointAddress>
+              <value>Viennis, 2420, Lakatamia</value>
+              <lang>el</lang>
+            </chargingPointAddress>
+            <ei:contactInformation>
+              <contact>
+                <contactType>Technical Support</contactType>
+                <phoneNumber>+357 70071071</phoneNumber>
+              </contact>
+              <contact>
+                <contactType>email</contactType>
+                <emailAddress>support@pcharge.com.cy</emailAddress>
+              </contact>
+            </ei:contactInformation>
+            <ei:operatingTime>
+              <value>24h</value>
+              <lang>en</lang>
+            </ei:operatingTime>
+            <ei:timeZone>UTC+02:00</ei:timeZone>
+            <ei:powerType>ac</ei:powerType>
+          </ei:chargingPoint>
+          <ei:chargingPoint>
+            <chargingPointIdentification>Papantoniou Supermarket Engomi (2x22kW)</chargingPointIdentification>
+            <ei:chargingPointOwner>C.A.C. PAPANTONIOU TRADING LTD</ei:chargingPointOwner>
+            <ei:chargingPointOwnerLegalName>C.A.C. PAPANTONIOU TRADING LTD</ei:chargingPointOwnerLegalName>
+            <chargingPointStatus>
+              <value>operational</value>
+              <lang>en</lang>
+            </chargingPointStatus>
+            <ei:chargingPointOperator>Petrolina (Holdings) Public Ltd.</ei:chargingPointOperator>
+            <ei:chargingPointOperatorLegalName>Petrolina (Holdings) Public Ltd.</ei:chargingPointOperatorLegalName>
+            <numberOfConnectors>1</numberOfConnectors>
+            <location>
+              <pointByCoordinates>
+                <pointCoordinates>
+                  <latitude>35.154836941655006</latitude>
+                  <longitude>33.330057263374</longitude>
+                </pointCoordinates>
+              </pointByCoordinates>
+            </location>
+            <ei:maximumPower>22</ei:maximumPower>
+            <ei:connectorPower>22</ei:connectorPower>
+            <ei:creationDate>2024-01-15</ei:creationDate>
+            <chargingMode>normalCharging</chargingMode>
+            <connectorTypes>
+              <connectorType>type2</connectorType>
+            </connectorTypes>
+            <chargingPointAddress>
+              <value>Vasileos Pavlou 27, 2412, Egkomi</value>
+              <lang>el</lang>
+            </chargingPointAddress>
+            <ei:contactInformation>
+              <contact>
+                <contactType>Technical Support</contactType>
+                <phoneNumber>+357 70071071</phoneNumber>
+              </contact>
+              <contact>
+                <contactType>email</contactType>
+                <emailAddress>support@pcharge.com.cy</emailAddress>
+              </contact>
+            </ei:contactInformation>
+            <ei:operatingTime>
+              <value>24h</value>
+              <lang>en</lang>
+            </ei:operatingTime>
+            <ei:timeZone>UTC+02:00</ei:timeZone>
+            <ei:powerType>ac</ei:powerType>
+          </ei:chargingPoint>
+          <ei:chargingPoint>
+            <chargingPointIdentification>S.E.K HQ Lefkosia (2x22kW)</chargingPointIdentification>
+            <ei:chargingPointOwner>S.E.K HQ</ei:chargingPointOwner>
+            <ei:chargingPointOwnerLegalName>S.E.K HQ</ei:chargingPointOwnerLegalName>
+            <chargingPointStatus>
+              <value>operational</value>
+              <lang>en</lang>
+            </chargingPointStatus>
+            <ei:chargingPointOperator>Petrolina (Holdings) Public Ltd.</ei:chargingPointOperator>
+            <ei:chargingPointOperatorLegalName>Petrolina (Holdings) Public Ltd.</ei:chargingPointOperatorLegalName>
+            <numberOfConnectors>1</numberOfConnectors>
+            <location>
+              <pointByCoordinates>
+                <pointCoordinates>
+                  <latitude>35.14966136443601</latitude>
+                  <longitude>33.34700345993</longitude>
+                </pointCoordinates>
+              </pointByCoordinates>
+            </location>
+            <ei:maximumPower>22</ei:maximumPower>
+            <ei:connectorPower>22</ei:connectorPower>
+            <ei:creationDate>2024-02-14</ei:creationDate>
+            <chargingMode>normalCharging</chargingMode>
+            <connectorTypes>
+              <connectorType>type2</connectorType>
+            </connectorTypes>
+            <chargingPointAddress>
+              <value>Strovolou 11, 2018, Strovolos</value>
+              <lang>el</lang>
+            </chargingPointAddress>
+            <ei:contactInformation>
+              <contact>
+                <contactType>Technical Support</contactType>
+                <phoneNumber>+357 70071071</phoneNumber>
+              </contact>
+              <contact>
+                <contactType>email</contactType>
+                <emailAddress>support@pcharge.com.cy</emailAddress>
+              </contact>
+            </ei:contactInformation>
+            <ei:operatingTime>
+              <value>24h</value>
+              <lang>en</lang>
+            </ei:operatingTime>
+            <ei:timeZone>UTC+02:00</ei:timeZone>
+            <ei:powerType>ac</ei:powerType>
+          </ei:chargingPoint>
+          <ei:chargingPoint>
+            <chargingPointIdentification>Hilton Park (2x22kW)</chargingPointIdentification>
+            <ei:chargingPointOwner>Hilton Nicosia</ei:chargingPointOwner>
+            <ei:chargingPointOwnerLegalName>Hilton Nicosia</ei:chargingPointOwnerLegalName>
+            <chargingPointStatus>
+              <value>operational</value>
+              <lang>en</lang>
+            </chargingPointStatus>
+            <ei:chargingPointOperator>Petrolina (Holdings) Public Ltd.</ei:chargingPointOperator>
+            <ei:chargingPointOperatorLegalName>Petrolina (Holdings) Public Ltd.</ei:chargingPointOperatorLegalName>
+            <numberOfConnectors>1</numberOfConnectors>
+            <location>
+              <pointByCoordinates>
+                <pointCoordinates>
+                  <latitude>35.161612899999994</latitude>
+                  <longitude>33.3283916</longitude>
+                </pointCoordinates>
+              </pointByCoordinates>
+            </location>
+            <ei:maximumPower>22</ei:maximumPower>
+            <ei:connectorPower>22</ei:connectorPower>
+            <ei:creationDate>2024-02-23</ei:creationDate>
+            <chargingMode>normalCharging</chargingMode>
+            <connectorTypes>
+              <connectorType>type2</connectorType>
+            </connectorTypes>
+            <chargingPointAddress>
+              <value>Theodosi Pieridi, 2411, Egkomi Lefkosias</value>
+              <lang>el</lang>
+            </chargingPointAddress>
+            <ei:contactInformation>
+              <contact>
+                <contactType>Technical Support</contactType>
+                <phoneNumber>+357 70071071</phoneNumber>
+              </contact>
+              <contact>
+                <contactType>email</contactType>
+                <emailAddress>elias@maximumpower.com.cy</emailAddress>
+              </contact>
+            </ei:contactInformation>
+            <ei:operatingTime>
+              <value>24h</value>
+              <lang>en</lang>
+            </ei:operatingTime>
+            <ei:timeZone>UTC+02:00</ei:timeZone>
+            <ei:powerType>ac</ei:powerType>
+          </ei:chargingPoint>
+          <ei:chargingPoint>
+            <chargingPointIdentification>EOA Nicosia 8 (22kW)</chargingPointIdentification>
+            <ei:chargingPointOwner>EOA Nicosia</ei:chargingPointOwner>
+            <ei:chargingPointOwnerLegalName>EOA Nicosia</ei:chargingPointOwnerLegalName>
+            <chargingPointStatus>
+              <value>unavailable</value>
+              <lang>en</lang>
+            </chargingPointStatus>
+            <ei:chargingPointOperator>Petrolina (Holdings) Public Ltd.</ei:chargingPointOperator>
+            <ei:chargingPointOperatorLegalName>Petrolina (Holdings) Public Ltd.</ei:chargingPointOperatorLegalName>
+            <numberOfConnectors>1</numberOfConnectors>
+            <location>
+              <pointByCoordinates>
+                <pointCoordinates>
+                  <latitude>35.17328860000001</latitude>
+                  <longitude>33.3595014</longitude>
+                </pointCoordinates>
+              </pointByCoordinates>
+            </location>
+            <ei:maximumPower>22</ei:maximumPower>
+            <ei:connectorPower>22</ei:connectorPower>
+            <ei:creationDate>2024-11-26</ei:creationDate>
+            <chargingMode>normalCharging</chargingMode>
+            <connectorTypes>
+              <connectorType>type2</connectorType>
+            </connectorTypes>
+            <chargingPointAddress>
+              <value>Alexander the Great 9, 1010, Nicosia</value>
+              <lang>el</lang>
+            </chargingPointAddress>
+            <ei:contactInformation>
+              <contact>
+                <contactType>Technical Support</contactType>
+                <phoneNumber>+357 70071071</phoneNumber>
+              </contact>
+              <contact>
+                <contactType>email</contactType>
+                <emailAddress>elias@maximumpower.com.cy</emailAddress>
+              </contact>
+            </ei:contactInformation>
+            <ei:timeZone>UTC+02:00</ei:timeZone>
+            <ei:powerType>ac</ei:powerType>
+          </ei:chargingPoint>
+          <ei:chargingPoint>
+            <chargingPointIdentification>BMW HQ Nicosia (150kW)</chargingPointIdentification>
+            <ei:chargingPointOwner>CHAR. PILAKOUTAS LTD</ei:chargingPointOwner>
+            <ei:chargingPointOwnerLegalName>CHAR. PILAKOUTAS LTD</ei:chargingPointOwnerLegalName>
+            <chargingPointStatus>
+              <value>operational</value>
+              <lang>en</lang>
+            </chargingPointStatus>
+            <ei:chargingPointOperator>Petrolina (Holdings) Public Ltd.</ei:chargingPointOperator>
+            <ei:chargingPointOperatorLegalName>Petrolina (Holdings) Public Ltd.</ei:chargingPointOperatorLegalName>
+            <numberOfConnectors>1</numberOfConnectors>
+            <location>
+              <pointByCoordinates>
+                <pointCoordinates>
+                  <latitude>35.12538020000001</latitude>
+                  <longitude>33.3647279</longitude>
+                </pointCoordinates>
+              </pointByCoordinates>
+            </location>
+            <ei:maximumPower>300</ei:maximumPower>
+            <ei:connectorPower>22</ei:connectorPower>
+            <ei:creationDate>2024-05-27</ei:creationDate>
+            <chargingMode>fastCharging</chargingMode>
+            <connectorTypes>
+              <connectorType>type2</connectorType>
+            </connectorTypes>
+            <chargingPointAddress>
+              <value>Megaron 14, 2032, Strovolos</value>
+              <lang>el</lang>
+            </chargingPointAddress>
+            <ei:contactInformation>
+              <contact>
+                <contactType>Technical Support</contactType>
+                <phoneNumber>+357 70071071</phoneNumber>
+              </contact>
+              <contact>
+                <contactType>email</contactType>
+                <emailAddress>elias@maximumpower.com.cy</emailAddress>
+              </contact>
+            </ei:contactInformation>
+            <ei:operatingTime>
+              <value>24h</value>
+              <lang>en</lang>
+            </ei:operatingTime>
+            <ei:timeZone>UTC+02:00</ei:timeZone>
+            <ei:powerType>ac</ei:powerType>
+          </ei:chargingPoint>
+          <ei:chargingPoint>
+            <chargingPointIdentification>Petrolina ENI Leof Lemesou Station (50kW)</chargingPointIdentification>
+            <ei:chargingPointOwner>Petrolina (Holdings) Public Ltd.</ei:chargingPointOwner>
+            <ei:chargingPointOwnerLegalName>Petrolina (Holdings) Public Ltd.</ei:chargingPointOwnerLegalName>
+            <chargingPointStatus>
+              <value>operational</value>
+              <lang>en</lang>
+            </chargingPointStatus>
+            <ei:chargingPointOperator>Petrolina (Holdings) Public Ltd.</ei:chargingPointOperator>
+            <ei:chargingPointOperatorLegalName>Petrolina (Holdings) Public Ltd.</ei:chargingPointOperatorLegalName>
+            <numberOfConnectors>2</numberOfConnectors>
+            <location>
+              <pointByCoordinates>
+                <pointCoordinates>
+                  <latitude>35.143222136232</latitude>
+                  <longitude>33.374378084809</longitude>
+                </pointCoordinates>
+              </pointByCoordinates>
+            </location>
+            <ei:maximumPower>50</ei:maximumPower>
+            <ei:connectorPower>50</ei:connectorPower>
+            <ei:creationDate>2024-08-21</ei:creationDate>
+            <chargingMode>fastCharging</chargingMode>
+            <connectorTypes>
+              <connectorType>type2</connectorType>
+              <connectorType>comboType2</connectorType>
+            </connectorTypes>
+            <chargingPointAddress>
+              <value>Lemesou Avenue, 1055, Nicosia</value>
+              <lang>el</lang>
+            </chargingPointAddress>
+            <ei:contactInformation>
+              <contact>
+                <contactType>Technical Support</contactType>
+                <phoneNumber>+357 70071071</phoneNumber>
+              </contact>
+              <contact>
+                <contactType>email</contactType>
+                <emailAddress>support@pcharge.com.cy</emailAddress>
+              </contact>
+            </ei:contactInformation>
+            <ei:operatingTime>
+              <value>24h</value>
+              <lang>en</lang>
+            </ei:operatingTime>
+            <ei:timeZone>UTC+02:00</ei:timeZone>
+            <ei:powerType>dc</ei:powerType>
+          </ei:chargingPoint>
+          <ei:chargingPoint>
+            <chargingPointIdentification>UNICARS Nicosia Sales Hub (50kW)</chargingPointIdentification>
+            <ei:chargingPointOwner>UNICARS Ltd</ei:chargingPointOwner>
+            <ei:chargingPointOwnerLegalName>UNICARS Ltd</ei:chargingPointOwnerLegalName>
+            <chargingPointStatus>
+              <value>operational</value>
+              <lang>en</lang>
+            </chargingPointStatus>
+            <ei:chargingPointOperator>Petrolina (Holdings) Public Ltd.</ei:chargingPointOperator>
+            <ei:chargingPointOperatorLegalName>Petrolina (Holdings) Public Ltd.</ei:chargingPointOperatorLegalName>
+            <numberOfConnectors>2</numberOfConnectors>
+            <location>
+              <pointByCoordinates>
+                <pointCoordinates>
+                  <latitude>35.12392373000001</latitude>
+                  <longitude>33.36386092</longitude>
+                </pointCoordinates>
+              </pointByCoordinates>
+            </location>
+            <ei:maximumPower>50</ei:maximumPower>
+            <ei:connectorPower>50</ei:connectorPower>
+            <ei:creationDate>2024-09-23</ei:creationDate>
+            <chargingMode>fastCharging</chargingMode>
+            <connectorTypes>
+              <connectorType>type2</connectorType>
+              <connectorType>comboType2</connectorType>
+            </connectorTypes>
+            <chargingPointAddress>
+              <value>Megaron 9, 2032, Strovolos</value>
+              <lang>el</lang>
+            </chargingPointAddress>
+            <ei:contactInformation>
+              <contact>
+                <contactType>Technical Support</contactType>
+                <phoneNumber>+357 70071071</phoneNumber>
+              </contact>
+              <contact>
+                <contactType>email</contactType>
+                <emailAddress>elias@maximumpower.com.cy</emailAddress>
+              </contact>
+            </ei:contactInformation>
+            <ei:operatingTime>
+              <value>24h</value>
+              <lang>en</lang>
+            </ei:operatingTime>
+            <ei:timeZone>UTC+02:00</ei:timeZone>
+            <ei:powerType>dc</ei:powerType>
+          </ei:chargingPoint>
+          <ei:chargingPoint>
+            <chargingPointIdentification>CY*EVP*ENIC0001</chargingPointIdentification>
+            <ei:chargingPointOwner>Abio Power Ltd</ei:chargingPointOwner>
+            <ei:chargingPointOwnerLegalName>Abio Power Ltd</ei:chargingPointOwnerLegalName>
+            <chargingPointStatus>
+              <value>operational</value>
+              <lang>en</lang>
+            </chargingPointStatus>
+            <ei:chargingPointOperator>EV Power</ei:chargingPointOperator>
+            <ei:chargingPointOperatorLegalName>EV Power Ltd</ei:chargingPointOperatorLegalName>
+            <numberOfConnectors>1</numberOfConnectors>
+            <location>
+              <pointByCoordinates>
+                <pointCoordinates>
+                  <latitude>35.15774650000001</latitude>
+                  <longitude>33.3929505</longitude>
+                </pointCoordinates>
+              </pointByCoordinates>
+            </location>
+            <ei:maximumPower>22</ei:maximumPower>
+            <ei:connectorPower>22</ei:connectorPower>
+            <chargingMode>normalCharging</chargingMode>
+            <connectorTypes>
+              <connectorType>type2</connectorType>
+            </connectorTypes>
+            <chargingPointAddress>
+              <value>Abio Power, Larnakos 62, Aglantzia, 2101, Cyprus, 2101, Nicosia</value>
+              <lang>el</lang>
+            </chargingPointAddress>
+            <ei:contactInformation>
+              <contact>
+                <contactType>support</contactType>
+                <phoneNumber>+357 700 888 09</phoneNumber>
+              </contact>
+            </ei:contactInformation>
+            <ei:operatingTime>
+              <value>24/7</value>
+              <lang>en</lang>
+            </ei:operatingTime>
+            <ei:accessInformation>
+              <value>Public EV Charging Services. The charging facilities are located at the front of the building.</value>
+              <lang>en</lang>
+            </ei:accessInformation>
+            <ei:timeZone>UTC+02:00</ei:timeZone>
+            <ei:numberOfParkingSpaces>1</ei:numberOfParkingSpaces>
+            <ei:vehicleTypeCompatibility>
+              <vehicleType>PassengerCar (M1)</vehicleType>
+              <vehicleType>Bus (M2)</vehicleType>
+            </ei:vehicleTypeCompatibility>
+            <ei:powerType>ac</ei:powerType>
+          </ei:chargingPoint>
+          <ei:chargingPoint>
+            <chargingPointIdentification>CY*EVP*ENIC0022</chargingPointIdentification>
+            <ei:chargingPointOwner>Buneba Ltd</ei:chargingPointOwner>
+            <ei:chargingPointOwnerLegalName>Buneba Ltd</ei:chargingPointOwnerLegalName>
+            <chargingPointStatus>
+              <value>operational</value>
+              <lang>en</lang>
+            </chargingPointStatus>
+            <ei:chargingPointOperator>EV Power</ei:chargingPointOperator>
+            <ei:chargingPointOperatorLegalName>EV Power Ltd</ei:chargingPointOperatorLegalName>
+            <numberOfConnectors>2</numberOfConnectors>
+            <location>
+              <pointByCoordinates>
+                <pointCoordinates>
+                  <latitude>35.16703119999999</latitude>
+                  <longitude>33.3616342</longitude>
+                </pointCoordinates>
+              </pointByCoordinates>
+            </location>
+            <ei:maximumPower>200</ei:maximumPower>
+            <ei:connectorPower>200</ei:connectorPower>
+            <chargingMode>fastCharging</chargingMode>
+            <connectorTypes>
+              <connectorType>comboType2</connectorType>
+            </connectorTypes>
+            <chargingPointAddress>
+              <value>360 Building, Afroditis 10, Nicosia, 1060, Cyprus, 1060, Nicosia</value>
+              <lang>el</lang>
+            </chargingPointAddress>
+            <ei:contactInformation>
+              <contact>
+                <contactType>support</contactType>
+                <phoneNumber>+357 700 888 09</phoneNumber>
+              </contact>
+            </ei:contactInformation>
+            <ei:operatingTime>
+              <value>24/7</value>
+              <lang>en</lang>
+            </ei:operatingTime>
+            <ei:accessInformation>
+              <value>Premium EV charging services. The DC charging services are available for the general public, located right outside the building's main entrance.The AC charging services are located in the underground parking area and are available for the building residents only.</value>
+              <lang>en</lang>
+            </ei:accessInformation>
+            <ei:timeZone>UTC+02:00</ei:timeZone>
+            <ei:numberOfParkingSpaces>2</ei:numberOfParkingSpaces>
+            <ei:vehicleTypeCompatibility>
+              <vehicleType>PassengerCar (M1)</vehicleType>
+              <vehicleType>Bus (M2)</vehicleType>
+              <vehicleType>LightCommercialVehicle (N1)</vehicleType>
+              <vehicleType>HeavyDutyVehicle (N2)</vehicleType>
+            </ei:vehicleTypeCompatibility>
+            <ei:powerType>dc</ei:powerType>
+          </ei:chargingPoint>
+          <ei:chargingPoint>
+            <chargingPointIdentification>TEC-NICOSIA-PLATIA-SOLOMOU</chargingPointIdentification>
+            <ei:chargingPointOwner>Nicosia Municipality</ei:chargingPointOwner>
+            <ei:chargingPointOwnerLegalName>Municipality of Nicosia</ei:chargingPointOwnerLegalName>
+            <chargingPointStatus>
+              <value>unavailable</value>
+              <lang>en</lang>
+            </chargingPointStatus>
+            <ei:chargingPointOperator>e-Point</ei:chargingPointOperator>
+            <ei:chargingPointOperatorLegalName>Troodos Electric Cables LTD</ei:chargingPointOperatorLegalName>
+            <numberOfConnectors>2</numberOfConnectors>
+            <location>
+              <pointByCoordinates>
+                <pointCoordinates>
+                  <latitude>35.17090499999999</latitude>
+                  <longitude>33.358635</longitude>
+                </pointCoordinates>
+              </pointByCoordinates>
+            </location>
+            <ei:maximumPower>44</ei:maximumPower>
+            <ei:connectorPower>22</ei:connectorPower>
+            <connectorTypes>
+              <connectorType>type2</connectorType>
+              <connectorType>type2</connectorType>
+            </connectorTypes>
+            <chargingPointAddress>
+              <value>Platia Solomou, 1010, Nicosia</value>
+              <lang>el</lang>
+            </chargingPointAddress>
+            <ei:contactInformation>
+              <contact>
+                <contactType>support</contactType>
+                <phoneNumber>22352357</phoneNumber>
+              </contact>
+            </ei:contactInformation>
+            <ei:operatingTime>
+              <value>24/7</value>
+              <lang>en</lang>
+            </ei:operatingTime>
+            <ei:accessInformation>
+              <value>Municipal parking</value>
+              <lang>en</lang>
+            </ei:accessInformation>
+            <ei:timeZone>UTC+02:00</ei:timeZone>
+            <ei:numberOfParkingSpaces>2</ei:numberOfParkingSpaces>
+            <ei:numberOfAccessibleParkingSpaces>0</ei:numberOfAccessibleParkingSpaces>
+            <ei:vehicleTypeCompatibility>
+              <vehicleType>TwoThreeWheeledVehicle (L)</vehicleType>
+              <vehicleType>PassengerCar (M1)</vehicleType>
+            </ei:vehicleTypeCompatibility>
+            <ei:powerType>ac</ei:powerType>
+          </ei:chargingPoint>
+          <ei:chargingPoint>
+            <chargingPointIdentification>LIDL-L127</chargingPointIdentification>
+            <ei:chargingPointOwner>Lidl Cyprus</ei:chargingPointOwner>
+            <ei:chargingPointOwnerLegalName>Lidl Cyprus</ei:chargingPointOwnerLegalName>
+            <chargingPointStatus>
+              <value>operational</value>
+              <lang>en</lang>
+            </chargingPointStatus>
+            <ei:chargingPointOperator>Lidl Cyprus</ei:chargingPointOperator>
+            <ei:chargingPointOperatorLegalName>Lidl Cyprus</ei:chargingPointOperatorLegalName>
+            <numberOfConnectors>3</numberOfConnectors>
+            <location>
+              <pointByCoordinates>
+                <pointCoordinates>
+                  <latitude>35.12553</latitude>
+                  <longitude>33.33736</longitude>
+                </pointCoordinates>
+              </pointByCoordinates>
+            </location>
+            <ei:maximumPower>22</ei:maximumPower>
+            <ei:connectorPower>22</ei:connectorPower>
+            <chargingMode>fastCharging</chargingMode>
+            <connectorTypes>
+              <connectorType>type2</connectorType>
+              <connectorType>comboType2</connectorType>
+              <connectorType>chademo</connectorType>
+            </connectorTypes>
+            <chargingPointAddress>
+              <value>Tseriou 155, 2045, Nicosia</value>
+              <lang>el</lang>
+            </chargingPointAddress>
+            <ei:contactInformation>
+              <contact>
+                <contactType>support</contactType>
+                <phoneNumber>80094404</phoneNumber>
+              </contact>
+            </ei:contactInformation>
+            <ei:operatingTime>
+              <value>07:00-21:00 Monday - Sunday</value>
+              <lang>en</lang>
+            </ei:operatingTime>
+            <ei:accessInformation>
+              <value>Πρόσβαση σε πελάτες και επισκέπτες</value>
+              <lang>en</lang>
+            </ei:accessInformation>
+            <ei:timeZone>UTC+02:00</ei:timeZone>
+            <ei:numberOfParkingSpaces>2</ei:numberOfParkingSpaces>
+            <ei:numberOfAccessibleParkingSpaces>2</ei:numberOfAccessibleParkingSpaces>
+            <ei:vehicleTypeCompatibility>
+              <vehicleType>TwoThreeWheeledVehicle (L)</vehicleType>
+              <vehicleType>PassengerCar (M1)</vehicleType>
+              <vehicleType>Bus (M2)</vehicleType>
+              <vehicleType>Coach (M3)</vehicleType>
+              <vehicleType>LightCommercialVehicle (N1)</vehicleType>
+              <vehicleType>HeavyDutyVehicle (N2)</vehicleType>
+              <vehicleType>HeavyDutyVehicle (N3)</vehicleType>
+            </ei:vehicleTypeCompatibility>
+            <ei:powerType>dc</ei:powerType>
+          </ei:chargingPoint>
+        </ei:chargingPoints>
+      </ei:energyInfrastructureTablePublication>
+    </ei:energyInfrastructureTable>
+  </payload>
+</d2LogicalModel>
