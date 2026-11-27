@@ -76,8 +76,11 @@ export function setPeriod(name: string) {
   useLab.setState({ period: name })
 }
 
-export function setValue(key: string, value: unknown) {
-  const { scenario, values } = useLab.getState()
+// `forScenario`: the scenario the value belongs to (an open run's, for its assumptions), else the
+// one chosen on Set up.
+export function setValue(key: string, value: unknown, forScenario?: string) {
+  const { values } = useLab.getState()
+  const scenario = forScenario ?? useLab.getState().scenario
   useLab.setState({ values: { ...values, [scenario]: { ...(values[scenario] ?? {}), [key]: value } } })
 }
 
@@ -98,8 +101,9 @@ export async function loadSaved() {
 }
 
 // Run the scenario on the form's values. The run opens on the results; returns it, or null.
-export async function runScenario(overrides: Record<string, unknown> = {}): Promise<ScenarioRun | null> {
-  const { scenario, period, values, running } = useLab.getState()
+export async function runScenario(overrides: Record<string, unknown> = {}, forScenario?: string): Promise<ScenarioRun | null> {
+  const { period, values, running } = useLab.getState()
+  const scenario = forScenario ?? useLab.getState().scenario
   if (running || !scenario) return null
   const params = { ...(values[scenario] ?? {}), ...overrides }
   useLab.setState({ running: true, runError: null })

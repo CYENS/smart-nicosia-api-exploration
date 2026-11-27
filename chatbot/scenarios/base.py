@@ -62,8 +62,11 @@ MAX_PERIOD = timedelta(days=92)
 
 
 def _aware(value: str) -> datetime:
+    """An ISO time; without a zone it is Nicosia's own clock."""
+    from zoneinfo import ZoneInfo
+
     t = datetime.fromisoformat(value)
-    return t if t.tzinfo else t.replace(tzinfo=timezone.utc)
+    return t if t.tzinfo else t.replace(tzinfo=ZoneInfo("Asia/Nicosia"))
 
 
 @dataclass(frozen=True)

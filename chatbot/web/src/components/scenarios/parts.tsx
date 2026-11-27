@@ -24,6 +24,7 @@ import { cn } from "@/lib/utils"
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 const MUTED = "#8798b0"
+const NBSP = String.fromCharCode(160)
 
 // -- the form ----------------------------------------------------------------------------------
 
@@ -67,15 +68,16 @@ function ParamSlider({ id, label, value, min, max, step, text, onChange, onCommi
 
 // One parameter: a switch, a slider with its value and unit, or a select. A slider commits on
 // release (or a key), so an assumption can re-run the scenario once, not on every step.
-export function ParamField({ name, p, value, onCommit, idPrefix }: {
+export function ParamField({ name, p, value, onCommit, idPrefix, scenario }: {
   name: string; p: ParamSchema; value: unknown; onCommit?: (v: unknown) => void; idPrefix: string
+  scenario?: string // whose value it is (an open run's assumptions); else the one on Set up
 }) {
   const id = `${idPrefix}-${name}`
   const [draft, setDraft] = useState<number | null>(null)
   if (p.type === "boolean") {
     return (
       <Field orientation="horizontal" className="items-start gap-3">
-        <Switch id={id} checked={Boolean(value)} onCheckedChange={(on) => { setValue(name, on); onCommit?.(on) }} className="mt-0.5" />
+        <Switch id={id} checked={Boolean(value)} onCheckedChange={(on) => { setValue(name, on, scenario); onCommit?.(on) }} className="mt-0.5" />
         <div className="flex min-w-0 flex-col gap-0.5">
           <FieldLabel htmlFor={id} className="text-[13.5px] font-medium">{p.title}</FieldLabel>
           {p.description && <FieldDescription className="text-[12.5px] leading-snug">{p.description}</FieldDescription>}
@@ -87,7 +89,7 @@ export function ParamField({ name, p, value, onCommit, idPrefix }: {
     return (
       <Field className="gap-1.5">
         <FieldLabel htmlFor={id} className="text-[12.5px] font-normal text-muted-foreground">{p.title}</FieldLabel>
-        <Select value={String(value)} onValueChange={(v) => { setValue(name, v); onCommit?.(v) }}>
+        <Select value={String(value)} onValueChange={(v) => { setValue(name, v, scenario); onCommit?.(v) }}>
           <SelectTrigger id={id} size="sm" className="w-full"><SelectValue>{enumTitle(p, String(value))}</SelectValue></SelectTrigger>
           <SelectContent>
             {p.enum.map((o) => <SelectItem key={o} value={o}>{enumTitle(p, o)}</SelectItem>)}
@@ -109,7 +111,7 @@ export function ParamField({ name, p, value, onCommit, idPrefix }: {
         onChange={setDraft}
         onCommit={(n) => {
           setDraft(null)
-          setValue(name, n)
+          setValue(name, n, scenario)
           onCommit?.(n)
         }} />
       <div className="flex justify-between font-condensed text-[11.5px] text-muted-foreground tabular-nums" aria-hidden="true">
@@ -153,7 +155,7 @@ export function changeWords(k: Kpi) {
   if (d === 0 && k.delta_low === 0 && k.delta_high === 0) return "No change"
   const good = (d < 0) === (k.better === "lower")
   const verb = d < 0 ? (good ? "Saves" : "Cuts") : (good ? "Gains" : "Adds")
-  return `${verb} ${fmtNum(d, k.digits)} ${k.unit}`
+  return `${verb} ${fmtNum(d, k.digits)}${NBSP}${k.unit}` // the number and its unit stay on one line
 }
 
 function rangeWords(k: Kpi) {
@@ -193,7 +195,11 @@ function KpiCard({ k, other, labels }: { k: Kpi; other?: Kpi | null; labels?: [s
       <span className="text-[12px] leading-tight text-muted-foreground">{k.label}</span>
       <span className={cn("font-readout text-[17px] leading-tight font-semibold tabular-nums", good && "text-[#86efac]", bad && "text-signal")}>
         {changeWords(k)}
-        {k.delta_pct !== null && k.delta !== 0 && <span className="ml-1 text-[12.5px] font-normal text-muted-foreground">{fmtSigned(k.delta_pct, 1)}%</span>}
+        {k.delta_pct !== null && k.delta !== 0 && (
+          <span className="ml-1 text-[12.5px] font-normal whitespace-nowrap text-muted-foreground">
+            {fmtNum(k.delta_pct, 1)}% {k.delta_pct < 0 ? "less" : "more"}
+          </span>
+        )}
       </span>
       {range && <span className="font-condensed text-[12px] text-muted-foreground tabular-nums">{range} across the assumptions</span>}
       <RangeBar k={k} />
@@ -204,7 +210,7 @@ function KpiCard({ k, other, labels }: { k: Kpi; other?: Kpi | null; labels?: [s
       {other && labels && (
         <span className="font-condensed text-[12px] tabular-nums">
           <span className="text-muted-foreground">{labels[1]} </span>{fmtNum(other.scenario, other.digits)} {other.unit}
-          {other.delta !== null && <span className="text-muted-foreground">, {changeWords(other).toLowerCase()}</span>}
+          {other.delta !== null && <span className="text-muted-foreground">, {changeWords(other).replace(/^./, (c) => c.toLowerCase())}</span>}
         </span>
       )}
       {k.note && <span className="mt-0.5 text-[11.5px] leading-snug text-muted-foreground">{k.note}</span>}
@@ -255,9 +261,9 @@ export function MapViewControls({ run, compare }: { run: ScenarioRun; compare: S
           size="sm"
           className="flex w-full flex-wrap"
         >
-          {split && <ToggleGroupItem value="split" className="flex-1 data-pressed:border-sodium/60 data-pressed:bg-sodium/12 data-pressed:text-sodium">{compare ? "A and B, split" : "Today and scenario"}</ToggleGroupItem>}
+          {split && <ToggleGroupItem value="split" className="h-auto min-h-8 flex-1 py-1 whitespace-normal data-pressed:border-sodium/60 data-pressed:bg-sodium/12 data-pressed:text-sodium">{compare ? "A and B, split" : "Today and scenario"}</ToggleGroupItem>}
           {views.map(([n, l]) => (
-            <ToggleGroupItem key={n} value={n} className="flex-1 data-pressed:border-sodium/60 data-pressed:bg-sodium/12 data-pressed:text-sodium">{l.meta.title}</ToggleGroupItem>
+            <ToggleGroupItem key={n} value={n} className="h-auto min-h-8 flex-1 py-1 whitespace-normal data-pressed:border-sodium/60 data-pressed:bg-sodium/12 data-pressed:text-sodium">{l.meta.title}</ToggleGroupItem>
           ))}
         </ToggleGroup>
       )}
@@ -342,10 +348,10 @@ function chartSpec(rows: SeriesRow[], def: { x: string; kind?: string; unit: str
     { field: "value", title: def.unit, format: ",.2f" }]
   const data = { values: rows }
   if (def.kind === "bar") {
-    return { $schema: "https://vega.github.io/schema/vega-lite/v5.json", width: "container", data,
+    return { width: "container", data,
       mark: { type: "bar" }, encoding: { x, xOffset: { field: "label", sort: variants }, y, color, tooltip } }
   }
-  return { $schema: "https://vega.github.io/schema/vega-lite/v5.json", width: "container", data,
+  return { width: "container", data,
     mark: { type: "line", interpolate: def.x === "time" ? "step-after" : "linear", point: def.x === "date" ? { size: 18 } : false },
     encoding: { x, y, color, tooltip } }
 }
@@ -385,7 +391,7 @@ export function Charts({ run, compare }: { run: ScenarioRun; compare: ScenarioRu
       {charts.length > 1 && (
         <ToggleGroup value={[def.metric]} onValueChange={(v) => { if (v[0]) setMetric(v[0]) }} aria-label="Which chart" variant="outline" size="sm" className="flex w-full flex-wrap">
           {charts.map((c) => (
-            <ToggleGroupItem key={c.metric} value={c.metric} className="flex-1 data-pressed:border-sodium/60 data-pressed:bg-sodium/12 data-pressed:text-sodium">
+            <ToggleGroupItem key={c.metric} value={c.metric} className="h-auto min-h-8 flex-1 py-1 whitespace-normal data-pressed:border-sodium/60 data-pressed:bg-sodium/12 data-pressed:text-sodium">
               {c.metric === "night_kw" ? "A night" : c.metric === "monthly_mwh" ? "The year" : c.metric === "backtest_kwh" ? "Backtest" : c.title}
             </ToggleGroupItem>
           ))}
@@ -398,6 +404,14 @@ export function Charts({ run, compare }: { run: ScenarioRun; compare: ScenarioRu
 }
 
 // -- assumptions and their sensitivity --------------------------------------------------------------
+
+// An assumption's sweep in words: "saves 1,509 to 2,975 EUR", "adds 10 to 30 lamp-hours".
+function effect(a: number, b: number, unit: string, digits: number) {
+  if (a === b) return "no effect"
+  if (a < 0 && b < 0) return `saves ${fmtNum(a, digits)} to ${fmtNum(b, digits)} ${unit}`
+  if (a >= 0 && b >= 0) return `adds ${fmtNum(a, digits)} to ${fmtNum(b, digits)} ${unit}`
+  return `${fmtSigned(a, digits)} to ${fmtSigned(b, digits)} ${unit}`
+}
 
 // How far each assumption alone, across its plausible range, moves the headline change: a bar
 // per assumption from its low end to its high end, the line where it stands as set.
@@ -423,7 +437,7 @@ export function Tornado({ run }: { run: ScenarioRun }) {
               <span className="flex items-baseline justify-between gap-2 text-[12.5px]">
                 <span className="truncate">{s.label}</span>
                 <span className="shrink-0 font-condensed text-muted-foreground tabular-nums">
-                  {a === b ? "no effect" : `${fmtSigned(s.at_low, kpi?.digits ?? 0)} to ${fmtSigned(s.at_high, kpi?.digits ?? 0)} ${s.unit}`}
+                  {effect(s.at_low!, s.at_high!, s.unit, kpi?.digits ?? 0)}
                 </span>
               </span>
               <span className="relative block h-2.5 rounded-sm bg-raised" aria-hidden="true">
@@ -446,7 +460,7 @@ export function Assumptions({ def, run, values, onCommit }: {
     <div className="flex flex-col gap-4">
       {props.map(([k, p]) => (
         <div key={k} className="flex flex-col gap-1">
-          <ParamField name={k} p={p} value={values[k]} idPrefix="lab-a" onCommit={onCommit} />
+          <ParamField name={k} p={p} value={values[k]} idPrefix="lab-a" onCommit={onCommit} scenario={run.scenario} />
           {p["x-source"] && <p className="text-[11.5px] leading-snug text-muted-foreground">{p["x-source"]}</p>}
           {run.params[k] !== values[k] && <Badge variant="outline" className="self-start text-[11px]">Not in this run yet</Badge>}
         </div>
