@@ -1,0 +1,645 @@
+# The chat check's questions (tools/chat_check/chat_check.py). Per feature: a direct question, a
+# where question that should draw on the map, an over-time question where the feature has
+# history, the same at a past moment of the city clock, and a question that crosses two features;
+# then failure cases and follow-ups that lean on the answer before.
+#
+# Fields: id, feature, ask (as a user would type it), and what the answer must do:
+#   tools      every entry must be called; "a|b" is either
+#   tools_not  must not be called
+#   visual     must reach the page: layer, layer:<style>, chart, visual, card, card:<action>,
+#              clock, inspect, view, scenario, fly_to, city_3d, none; "a|b" is either
+#   say        regular expressions the answer must contain (case-insensitive); say_any: one of
+#   not_say    regular expressions it must not contain
+#   ids        true: names at least one id the page turns into a chip
+#   no_chart   true: a sentence does; a chart is a warning
+#   args       {tool = ["key"]}: inputs the tool must be given (needs CHATBOT_TRACE_RESULTS=1)
+# Context: clock = "yesterday 21:00" (or {at, compare, range}), location = [lat, lon],
+#   inspecting / subject = {id, kind, name}, follows = "<id>" (same conversation, after it).
+#
+# Places used: Eleftheria Square (35.1705, 33.3607) for "me" unless the question says otherwise.
+
+# -- street lights, parking sensors, bins and air sensors ---------------------------------------
+
+[[question]]
+id = "lamps-now"
+feature = "devices"
+ask = "How many street lights are on right now, and how much power are they drawing?"
+tools = ["city_overview|find_devices"]
+say = ['\d']
+no_chart = true
+
+[[question]]
+id = "lamps-offline-map"
+feature = "devices"
+ask = "Show me the street lights that are offline on the map."
+tools = ["find_devices"]
+visual = ["layer"]
+
+[[question]]
+id = "lamps-night-replay"
+feature = "devices"
+ask = "Replay the street lights through last night."
+tools = ["get_history"]
+visual = ["layer", "chart"]
+
+[[question]]
+id = "parking-near-me"
+feature = "devices"
+ask = "Is there free on-street parking near me?"
+location = [35.1705, 33.3607]
+tools = ["find_devices|find_parking"]
+visual = ["layer"]
+ids = true
+
+[[question]]
+id = "parking-usual"
+feature = "devices"
+ask = "How full does parking on Makariou get on weekday evenings compared with usual?"
+tools = ["query_history"]
+visual = ["chart"]
+
+[[question]]
+id = "bins-full-map"
+feature = "devices"
+ask = "Which bins are full right now? Put them on the map."
+tools = ["find_devices"]
+visual = ["layer"]
+ids = true
+
+[[question]]
+id = "bins-most-often"
+feature = "devices"
+ask = "Which bins were full most often this week?"
+tools = ["query_history"]
+visual = ["chart"]
+ids = true
+
+[[question]]
+id = "air-ok"
+feature = "devices"
+ask = "Is the air OK right now?"
+tools = ["city_overview|find_devices|environment_surface|measured_stations|get_weather"]
+no_chart = true
+
+[[question]]
+id = "air-today"
+feature = "devices"
+ask = "How has the noise at the city's air stations changed today?"
+tools = ["get_history|query_history|get_entity"]
+visual = ["chart"]
+
+[[question]]
+id = "lamps-at-moment"
+feature = "devices"
+ask = "How many street lights were lit at that time?"
+clock = "yesterday 22:00"
+tools = ["set_city_time|query_history|get_history"]
+say = ['\d']
+
+# -- places and routes --------------------------------------------------------------------------
+
+[[question]]
+id = "places-pharmacy"
+feature = "places"
+ask = "Find a pharmacy that is open now near me."
+location = [35.1705, 33.3607]
+tools = ["find_places"]
+visual = ["layer"]
+
+[[question]]
+id = "places-dance"
+feature = "places"
+ask = "Where can I take dance lessons near Eleftheria Square?"
+tools = ["find_places"]
+visual = ["layer"]
+ids = true
+
+[[question]]
+id = "places-tour"
+feature = "places"
+ask = "Plan a walking tour of three museums in the old town."
+tools = ["find_places", "plan_route"]
+visual = ["layer:route"]
+
+[[question]]
+id = "route-walk"
+feature = "routes"
+ask = "Walk me from Eleftheria Square to the Cyprus Museum."
+tools = ["plan_route"]
+visual = ["layer:route"]
+
+[[question]]
+id = "route-drive-instead"
+feature = "routes"
+follows = "route-walk"
+ask = "And how long by car?"
+tools = ["plan_route"]
+visual = ["layer:route"]
+
+[[question]]
+id = "route-safer"
+feature = "routes"
+ask = "Is there a safer walk from Faneromeni Square to the Municipal Market that avoids dangerous buildings?"
+tools = ["plan_route"]
+visual = ["layer:route"]
+
+[[question]]
+id = "route-shade"
+feature = "environment"
+ask = "Give me a shaded walk from Eleftheria Square to the Municipal Market at 15:00 tomorrow."
+tools = ["plan_route"]
+visual = ["layer:route"]
+say = ['shade']
+
+[[question]]
+id = "reachable-walk"
+feature = "routes"
+ask = "How far can I walk in 10 minutes from Eleftheria Square?"
+tools = ["reachable_area"]
+visual = ["layer:area"]
+
+# -- buildings and the 3D city ------------------------------------------------------------------
+
+[[question]]
+id = "bld-dangerous-near"
+feature = "buildings"
+ask = "Are there dangerous buildings near me?"
+location = [35.1705, 33.3607]
+tools = ["find_dangerous_buildings"]
+visual = ["layer"]
+ids = true
+
+[[question]]
+id = "bld-tallest-3d"
+feature = "buildings"
+follows = "bld-dangerous-near"
+ask = "Which of them is the tallest? Show it in 3D."
+tools = ["find_dangerous_buildings"]
+visual = ["layer:buildings_3d"]
+ids = true
+
+[[question]]
+id = "bld-knocked-down"
+feature = "buildings"
+ask = "What was knocked down in the old town between 2014 and 2019?"
+tools = ["find_height_changes"]
+visual = ["layer"]
+
+[[question]]
+id = "bld-skyline"
+feature = "buildings"
+ask = "What are the five tallest buildings around Eleftheria Square?"
+tools = ["get_buildings_3d"]
+visual = ["layer"]
+ids = true
+
+[[question]]
+id = "views-high-place"
+feature = "views"
+ask = "Where is a high place with a view over the city?"
+tools = ["find_high_places"]
+visual = ["layer"]
+
+# -- the twin's memory and charts ----------------------------------------------------------------
+
+[[question]]
+id = "mem-busiest-parking"
+feature = "memory"
+ask = "When is the busiest time of the week for parking?"
+tools = ["query_history"]
+visual = ["chart"]
+
+[[question]]
+id = "mem-bays-map"
+feature = "memory"
+ask = "Which parking bays on Makariou were occupied most often on weekday evenings this month? Show them on the map."
+tools = ["query_history"]
+visual = ["layer", "chart"]
+ids = true
+
+[[question]]
+id = "mem-freshness"
+feature = "memory"
+ask = "How fresh is the twin's memory? When did each kind of device last report?"
+tools = ["run_sql|query_history"]
+
+[[question]]
+id = "chart-ledra-day"
+feature = "charts"
+ask = "How busy does Ledra Street get through the day today?"
+tools = ["get_traffic"]
+visual = ["layer:columns_3d", "chart"]
+
+# -- the city clock -----------------------------------------------------------------------------
+
+[[question]]
+id = "clock-last-night"
+feature = "clock"
+ask = "Show me the city yesterday at 21:00."
+tools = ["set_city_time"]
+visual = ["clock"]
+say = ['21:00']
+
+[[question]]
+id = "clock-back-live"
+feature = "clock"
+follows = "clock-last-night"
+ask = "Back to live."
+tools = ["set_city_time"]
+visual = ["clock"]
+no_next = true
+
+[[question]]
+id = "clock-compare-week"
+feature = "clock"
+ask = "Compare parking now with this time last week."
+tools = ["set_city_time"]
+visual = ["clock", "layer"]
+
+[[question]]
+id = "clock-out-of-reach"
+feature = "clock"
+ask = "Show me the city on 1 August at 20:00."
+tools = ["set_city_time"]
+say_any = ['no record', 'not.{0,20}(record|reach|hold|cover)', 'only (goes|reaches) back', 'too far', '62 days', 'unknown']
+
+[[question]]
+id = "clock-memory-empty"
+feature = "clock"
+ask = "What were the street lights doing at that time?"
+clock = "-50d 21:00"
+tools = ["set_city_time|get_history|query_history|get_entity"]
+say_any = ['no record', 'not.{0,30}(record|hold|cover)', 'unknown', 'no data', 'nothing (was )?recorded', "doesn't (hold|have|cover)", 'does not (hold|have|cover)']
+
+# -- entities and the inspector -----------------------------------------------------------------
+
+[[question]]
+id = "ent-open-lamp"
+feature = "entities"
+ask = "Open YL1015 and tell me how it has been today."
+tools = ["get_entity"]
+visual = ["inspect"]
+ids = true
+
+[[question]]
+id = "ent-this-bin"
+feature = "entities"
+ask = "Is this bin about to overflow?"
+inspecting = { id = "YW1394", kind = "waste_bin", name = "YW1394" }
+tools = ["get_entity"]
+
+[[question]]
+id = "spot-whats-here"
+feature = "environment"
+ask = "What's here?"
+subject = { id = "spot-35.17050-33.36070", kind = "spot", name = "A point on the map" }
+tools = ["get_entity"]
+visual = ["layer"]
+ids = true
+
+# -- live mobility: buses, stops and road speeds ------------------------------------------------
+
+[[question]]
+id = "bus-where"
+feature = "buses"
+ask = "Where are the buses right now?"
+tools = ["get_buses"]
+visual = ["layer"]
+
+[[question]]
+id = "bus-3d"
+feature = "bus-models"
+ask = "Show me the buses in 3D around Solomou Square."
+tools = ["get_buses"]
+visual = ["layer", "fly_to|city_3d"]
+
+[[question]]
+id = "bus-next"
+feature = "buses"
+ask = "When is the next bus from Solomou Square?"
+tools = ["get_departures"]
+no_chart = true
+ids = true
+
+[[question]]
+id = "bus-trip"
+feature = "buses"
+ask = "How do I get to the University of Cyprus by bus?"
+location = [35.1705, 33.3607]
+tools = ["plan_transit"]
+visual = ["layer:route"]
+
+[[question]]
+id = "roads-slow"
+feature = "roads"
+ask = "Which roads are slow right now?"
+tools = ["get_road_speeds"]
+visual = ["layer:route"]
+ids = true
+
+[[question]]
+id = "roads-last-week"
+feature = "roads"
+follows = "roads-slow"
+ask = "How was it this time last week?"
+tools = ["get_road_speeds|run_sql|query_history|set_city_time"]
+
+[[question]]
+id = "roads-makariou-now"
+feature = "roads"
+ask = "Is Makariou Avenue moving right now?"
+tools = ["get_road_speeds"]
+say_any = ['stall', 'no new', 'stopped sending', 'not (been )?updat', 'since', 'km/h']
+
+[[question]]
+id = "roads-at-moment"
+feature = "roads"
+ask = "How was traffic on the main roads at that time?"
+clock = "yesterday 08:30"
+tools = ["get_road_speeds"]
+args = { get_road_speeds = ["at"] }
+
+[[question]]
+id = "roads-week-chart"
+feature = "roads"
+ask = "How did speeds on Griva Digeni change over the last week?"
+tools = ["run_sql|query_history|get_road_speeds"]
+visual = ["chart"]
+
+# -- the environment twin -----------------------------------------------------------------------
+
+[[question]]
+id = "env-shade-july"
+feature = "environment"
+ask = "Where is the shade around Eleftheria Square at 15:00 in July?"
+tools = ["sun_and_shade"]
+visual = ["layer:area", "chart"]
+
+[[question]]
+id = "env-air-worst"
+feature = "environment"
+ask = "Where is the air worst right now?"
+tools = ["environment_surface"]
+visual = ["layer"]
+
+[[question]]
+id = "env-noise-then"
+feature = "environment"
+ask = "Where was it noisiest at that time?"
+clock = "yesterday 18:00"
+tools = ["environment_surface"]
+args = { environment_surface = ["at"] }
+visual = ["layer"]
+
+# -- the watch and its incidents ----------------------------------------------------------------
+
+[[question]]
+id = "watch-wrong"
+feature = "watch"
+ask = "Is anything going wrong in the city?"
+tools = ["list_incidents"]
+visual = ["layer"]
+ids = true
+
+[[question]]
+id = "watch-why"
+feature = "watch"
+follows = "watch-wrong"
+ask = "Why did the first one happen?"
+tools = ["explain_incident"]
+
+[[question]]
+id = "watch-create"
+feature = "watch"
+ask = "Tell me when a bin near Eleftheria Square goes over 80%."
+tools = ["create_watch"]
+visual = ["card:watch_confirm"]
+not_say = ["(is|has been|now) set", "I('ve| have) set", "is now watching", "will now alert"]
+
+# -- the scenario lab ---------------------------------------------------------------------------
+
+[[question]]
+id = "scen-dim"
+feature = "scenarios"
+ask = "What would we save if we dimmed the street lights to 50% after midnight?"
+tools = ["run_scenario"]
+visual = ["layer|chart|scenario"]
+say = ['EUR|€|kWh|MWh']
+
+[[question]]
+id = "scen-waste"
+feature = "scenarios"
+ask = "What if we only collected the bins above 70%?"
+tools = ["run_scenario"]
+visual = ["layer|chart|scenario"]
+
+# -- street rules and safety --------------------------------------------------------------------
+
+[[question]]
+id = "sr-limit-makariou"
+feature = "street-rules"
+ask = "What is the speed limit on Makariou Avenue?"
+tools = ["get_speed_limits"]
+visual = ["layer:route"]
+say = ['km/h|\b(30|40|50|60|65|80)\b']
+
+[[question]]
+id = "sr-30-zones"
+feature = "street-rules"
+ask = "Where are the 30 zones in Nicosia?"
+tools = ["find_slow_zones"]
+visual = ["layer:area"]
+say = ['plan']
+
+[[question]]
+id = "sr-school-crossings"
+feature = "street-rules"
+ask = "Which schools have no safe crossing nearby?"
+tools = ["find_crossings"]
+visual = ["layer"]
+
+[[question]]
+id = "sr-cycle-gaps"
+feature = "street-rules"
+ask = "Where does the cycle network break?"
+tools = ["get_cycle_network"]
+visual = ["layer:route"]
+
+[[question]]
+id = "sr-speed-cameras"
+feature = "street-rules"
+ask = "Where are the speed cameras?"
+tools = ["find_enforcement_cameras"]
+visual = ["layer"]
+
+[[question]]
+id = "sr-faster-than-limit"
+feature = "street-rules"
+ask = "On which main roads do cars drive faster than the speed limit?"
+tools = ["get_speed_limits", "get_road_speeds"]
+
+# -- road reports -------------------------------------------------------------------------------
+
+[[question]]
+id = "rr-closed-centre"
+feature = "road-reports"
+ask = "What is closed in the centre right now?"
+tools = ["get_road_reports"]
+visual = ["layer"]
+
+[[question]]
+id = "rr-works-on-way"
+feature = "road-reports"
+ask = "Any roadworks on my way to the General Hospital?"
+location = [35.1705, 33.3607]
+tools = ["get_road_reports"]
+visual = ["layer"]
+
+[[question]]
+id = "rr-why-slow"
+feature = "road-reports"
+ask = "Why is traffic slow on Larnakos Avenue?"
+tools = ["get_road_speeds", "get_road_reports"]
+
+[[question]]
+id = "rr-jams-then"
+feature = "road-reports"
+ask = "Were any jams or accidents reported at that time?"
+clock = "yesterday 18:00"
+tools = ["get_road_reports"]
+args = { get_road_reports = ["at"] }
+
+# -- car parks, chargers, bikes and scooters ----------------------------------------------------
+
+[[question]]
+id = "pch-park-faneromeni"
+feature = "park-charge-hire"
+ask = "Where can I park near Faneromeni?"
+tools = ["find_parking"]
+visual = ["layer"]
+ids = true
+
+[[question]]
+id = "pch-walk-there"
+feature = "park-charge-hire"
+follows = "pch-park-faneromeni"
+ask = "Walk me from the nearest one to Ledra Street."
+tools = ["plan_route"]
+visual = ["layer:route"]
+
+[[question]]
+id = "pch-carpark-or-street"
+feature = "park-charge-hire"
+ask = "Is there space at the car parks near Eleftheria Square, or should I look for a bay on the street?"
+tools = ["find_parking"]
+
+[[question]]
+id = "pch-fast-charger"
+feature = "park-charge-hire"
+ask = "Where is the nearest fast charger to the old town?"
+tools = ["find_chargers"]
+visual = ["layer"]
+ids = true
+
+[[question]]
+id = "pch-ebike"
+feature = "park-charge-hire"
+ask = "Can I pick up an e-bike near me?"
+location = [35.1705, 33.3607]
+tools = ["find_bikes"]
+visual = ["layer"]
+
+[[question]]
+id = "pch-bike-trip"
+feature = "park-charge-hire"
+ask = "Get me from Eleftheria Square to the University of Cyprus on a hire bike."
+tools = ["find_bikes", "plan_route"]
+visual = ["layer"]
+
+# -- measured weather and reference air ---------------------------------------------------------
+
+[[question]]
+id = "mw-really-hot"
+feature = "measured-weather"
+ask = "How warm is it really right now at each of the official weather stations? Show them on the map."
+tools = ["measured_stations"]
+visual = ["layer"]
+say = ['°C|degrees']
+
+[[question]]
+id = "mw-sensors-agree"
+feature = "measured-weather"
+ask = "How well do the city's air sensors agree with the official air stations?"
+tools = ["compare_with_reference"]
+visual = ["chart"]
+
+[[question]]
+id = "mw-model-vs-measured"
+feature = "measured-weather"
+ask = "Is the temperature map right? Compare it with what the stations measure."
+tools = ["measured_stations", "environment_surface|get_weather"]
+
+[[question]]
+id = "mw-rain-yesterday"
+feature = "measured-weather"
+ask = "Did it rain in Nicosia yesterday?"
+tools = ["measured_stations"]
+
+# -- the island's power -------------------------------------------------------------------------
+
+[[question]]
+id = "pw-now"
+feature = "power"
+ask = "How much power is Cyprus using now, and how much of it is wind and sun?"
+tools = ["get_grid"]
+say = ['MW']
+
+[[question]]
+id = "pw-where-made"
+feature = "power"
+ask = "Where is the island's electricity being made right now? Show it on the map."
+tools = ["get_grid"]
+visual = ["layer"]
+
+[[question]]
+id = "pw-clean-then"
+feature = "power"
+ask = "How clean was the electricity at that time?"
+clock = "yesterday 19:00"
+tools = ["get_grid"]
+args = { get_grid = ["at"] }
+
+[[question]]
+id = "pw-lamps-co2"
+feature = "power"
+ask = "How much CO2 did the street lights cause last week, with the grid as it really was?"
+tools = ["query_history"]
+say = ['CO2|CO₂']
+
+[[question]]
+id = "pw-today-chart"
+feature = "power"
+ask = "Show me what met the island's demand over today."
+tools = ["get_grid"]
+visual = ["chart"]
+
+# -- hazards ------------------------------------------------------------------------------------
+
+[[question]]
+id = "hz-quakes-week"
+feature = "hazards"
+ask = "Have there been any earthquakes near Nicosia this week?"
+tools = ["get_hazards"]
+visual = ["layer"]
+
+[[question]]
+id = "hz-warnings-fire"
+feature = "hazards"
+ask = "Are there any weather warnings or fire danger today?"
+tools = ["get_hazards"]
+
+[[question]]
+id = "hz-problems-all"
+feature = "hazards"
+ask = "Any problems in the city right now, natural hazards included?"
+tools = ["list_incidents", "get_hazards"]

@@ -1,0 +1,35 @@
+# Questions for a backend whose feeds are all down: started with every outside address sent to a
+# dead proxy except the Claude API (see docs/chat-check.md, "A feed is down"). The answer must say
+# plainly that the data couldn't be read, and must not make numbers up.
+
+[[question]]
+id = "down-lamps"
+feature = "devices"
+ask = "How many street lights are on right now?"
+tools = ["city_overview|find_devices"]
+say_any = ['could(n.t| not)', 'unavailable', 'failed', 'not (be )?reach', 'down', "isn't answering", 'not answering', 'no data']
+no_next = true
+
+[[question]]
+id = "down-buses"
+feature = "buses"
+ask = "Where are the buses right now?"
+tools = ["get_buses"]
+say_any = ['could(n.t| not)', 'unavailable', 'failed', 'not (be )?reach', 'down', "isn't answering", 'not answering', 'no data']
+no_next = true
+
+[[question]]
+id = "down-weather"
+feature = "environment"
+ask = "What's the weather like now?"
+tools = ["get_weather|measured_stations"]
+say_any = ['could(n.t| not)', 'unavailable', 'failed', 'not (be )?reach', 'down', "isn't answering", 'not answering', 'no data']
+no_next = true
+
+[[question]]
+id = "down-grid"
+feature = "power"
+ask = "How much power is Cyprus using now?"
+tools = ["get_grid"]
+say_any = ['could(n.t| not)', 'unavailable', 'failed', 'not (be )?reach', 'down', "isn't answering", 'not answering', 'no data', 'as of', 'old', 'ago']
+no_next = true
