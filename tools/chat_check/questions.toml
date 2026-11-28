@@ -476,7 +476,7 @@ visual = ["layer"]
 id = "sr-faster-than-limit"
 feature = "street-rules"
 ask = "On which main roads do cars drive faster than the speed limit?"
-tools = ["get_speed_limits", "get_road_speeds"]
+tools = ["get_road_speeds"]
 
 # -- road reports -------------------------------------------------------------------------------
 

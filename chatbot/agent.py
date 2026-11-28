@@ -13,6 +13,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import os
 import re
 import time
 import uuid
@@ -53,6 +54,9 @@ from chatbot.webplaces import WebPlaces
 
 log = logging.getLogger(__name__)
 TZ = ZoneInfo(TIMEZONE)
+# CHATBOT_TRACE_RESULTS=1 adds each tool's input and result to its tool_end event, so the chat
+# check can test the answer against them. Off by default: the page has no use for them.
+TRACE_RESULTS = os.environ.get("CHATBOT_TRACE_RESULTS", "").strip().lower() in ("1", "true", "yes", "on")
 BETAS = ["server-side-fallback-2026-07-01"]
 Emit = Callable[[dict], None]
 
@@ -365,10 +369,13 @@ class Agent:
         result, is_error = await asyncio.to_thread(run_tool, ctx, block.name, block.input)
         summary = result.pop("_summary", None)
         offered += result.pop("_actions", None) or []
-        emit({"type": "tool_end", "id": block.id, "name": block.name, "ok": not is_error,
-              "summary": (summary or result.get("error", "")[:160]) if is_error else (summary or "")})
-        return {"type": "tool_result", "tool_use_id": block.id, "is_error": is_error,
-                "content": json.dumps(result, ensure_ascii=False, default=str)}
+        content = json.dumps(result, ensure_ascii=False, default=str)
+        event = {"type": "tool_end", "id": block.id, "name": block.name, "ok": not is_error,
+                 "summary": (summary or result.get("error", "")[:160]) if is_error else (summary or "")}
+        if TRACE_RESULTS:  # for the chat check (tools/chat_check): what the model was given
+            event |= {"input": block.input, "result": content[:60_000]}
+        emit(event)
+        return {"type": "tool_result", "tool_use_id": block.id, "is_error": is_error, "content": content}
 
 
 NO_KEY = ("No Anthropic API key found. Copy .env.example to .env in the project folder, set "

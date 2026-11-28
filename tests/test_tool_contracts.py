@@ -68,13 +68,7 @@ RESULT_FIELDS = {"sun_pct"}
 
 # Gaps this test found on main that are fixed in a later change: test id -> what is missing.
 # Each is an expected failure, strict, so the fix has to take it off this list.
-KNOWN_GAPS: dict[str, str] = {
-    "test_prompt_gives_every_tool_some_guidance[city_overview]": "not named in the prompt",
-    "test_prompt_gives_every_tool_some_guidance[get_alarms]": "not named in the prompt",
-    "test_prompt_gives_every_tool_some_guidance[geocode]": "not named in the prompt",
-    "test_prompt_gives_every_tool_some_guidance[reachable_area]": "not named in the prompt",
-    "test_prompt_gives_every_tool_some_guidance[map_clear]": "not named in the prompt",
-}
+KNOWN_GAPS: dict[str, str] = {}
 
 
 @pytest.fixture(autouse=True)

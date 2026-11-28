@@ -145,3 +145,29 @@ def test_the_page_parsers_read_the_page():
     assert cc.id_in_text().search("see YL1015")
     assert {"chart", "show_layer"} <= cc.page_actions()
     assert cc.tool_labels().get("show_on_map")
+
+
+@pytest.mark.parametrize("traced", [False, True])
+def test_the_backend_traces_tool_results_only_when_asked(monkeypatch, traced):
+    from chatbot import agent as agent_mod
+    from test_chatbot import block, final, run_agent
+
+    monkeypatch.setattr(agent_mod, "TRACE_RESULTS", traced)
+    first = final([block("tool_use", id="t1", name="map_clear", input={})], "tool_use")
+    _, _, events = run_agent([first, final([block("text", text="Done.")], "end_turn")])
+    end = next(e for e in events if e["type"] == "tool_end")
+    if traced:
+        assert end["input"] == {} and json.loads(end["result"])["ok"] is True
+    else:
+        assert "input" not in end and "result" not in end
+
+
+@pytest.mark.parametrize("path", FILES, ids=lambda p: p.name)
+def test_questions_name_only_real_tools(path):
+    from chatbot.tools.registry import HANDLERS
+
+    real = set(HANDLERS) | {"web_search"}
+    for q in cc.load_questions(path):
+        named = [n for spec in q.get("tools") or [] for n in cc.alternatives(spec)]
+        named += list(q.get("tools_not") or []) + list(q.get("args") or {})
+        assert set(named) <= real, f"{q['id']} names {sorted(set(named) - real)}"

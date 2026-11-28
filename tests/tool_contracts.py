@@ -320,5 +320,5 @@ def pytest_terminal_summary(terminalreporter) -> None:
     biggest = sorted(RUNS.items(), key=lambda kv: -max(kv[1]))[:5]
     tr.write_line(f"{len(RUNS)} of {len(HANDLERS)} tools ran successfully in these tests; the "
                   "largest results: " + ", ".join(f"{n} {max(s):,} chars" for n, s in biggest))
-    if never:
+    if never and len(RUNS) >= len(HANDLERS) // 2:  # a run of a few files leaves most out anyway
         tr.write_line("never run successfully here: " + ", ".join(never))
