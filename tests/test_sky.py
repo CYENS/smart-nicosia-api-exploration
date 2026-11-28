@@ -112,9 +112,9 @@ def test_aircraft_tracker_ttl_archive_prune_and_replay(tmp_path):
 
     # Old rows beyond 24 h are pruned when next write triggers prune
     old_ts = base - timedelta(hours=HISTORY_HOURS + 2)
-    tracker._last_prune = 0.0
+    tracker._last_prune = float("-inf")
     tracker.record([{**first["aircraft"][0], "hex": "000001", "reported": int(old_ts.timestamp())}], old_ts)
-    tracker._last_prune = 0.0
+    tracker._last_prune = float("-inf")
     later = base + timedelta(minutes=2)
     tracker.record([{**first["aircraft"][0], "reported": int(later.timestamp())}], later)
     with mem.reading() as con:
@@ -259,7 +259,7 @@ def test_bus_archiver_dedup_retention_and_replay(tmp_path):
     stale_snap = SimpleNamespace(vehicles=[{**snap.vehicles[1], "vehicle": "999", "id": "bus-999",
                                             "reported": int(stale_dt.timestamp())}])
     arch.record_snapshot(stale_snap, stale_dt)
-    arch._last_prune = 0.0
+    arch._last_prune = float("-inf")
     snap3 = SimpleNamespace(vehicles=[{**snap.vehicles[0], "reported": int((base + timedelta(minutes=2)).timestamp())}])
     arch.record_snapshot(snap3, base + timedelta(minutes=2))
     st = archive_status(mem)
