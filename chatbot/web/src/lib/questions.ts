@@ -13,6 +13,8 @@ export const QUESTION_GROUPS: QuestionGroup[] = [
       "Which bins are full? Show them in 3D",
       "How are air quality and noise across the city?",
       "Is it a good afternoon for a walk?",
+      "Which pharmacies are on duty tonight near Eleftheria Square?",
+      "What events and places are open tonight in Nicosia?",
     ],
   },
   {
