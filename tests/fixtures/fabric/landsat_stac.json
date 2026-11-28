@@ -1,0 +1,26 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "id": "LC08_L2SP_176036_20260730_02_T1",
+      "type": "Feature",
+      "properties": {
+        "datetime": "2026-07-30T08:22:11Z",
+        "eo:cloud_cover": 0.4,
+        "platform": "landsat-8"
+      },
+      "assets": {
+        "lwir11": {
+          "href": "mem://scene0_lwir11.tif",
+          "raster:bands": [{"scale": 0.00341802, "offset": 149.0}]
+        },
+        "qa_pixel": {"href": "mem://scene0_qa.tif"},
+        "trad": {"href": "mem://scene0_trad.tif"},
+        "urad": {"href": "mem://scene0_urad.tif"},
+        "drad": {"href": "mem://scene0_drad.tif"},
+        "atran": {"href": "mem://scene0_atran.tif"},
+        "emis": {"href": "mem://scene0_emis.tif"}
+      }
+    }
+  ]
+}

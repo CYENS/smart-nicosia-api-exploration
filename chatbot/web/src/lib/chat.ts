@@ -56,6 +56,9 @@ export const TOOL_LABELS: Record<string, string> = {
   get_hazards: "Reading the earthquake, warning and fire danger feeds",
   whats_on_tonight: "Checking what's on tonight",
   get_sky: "Scanning the sky and ISS orbit", get_its_infrastructure: "Reading PWD traffic detectors and CCTV",
+  heat_exposure: "Reading summer ground heat and exposure",
+  accessibility_15min: "Measuring 15-minute and step-free access",
+  population_reach: "Counting modelled 2022 residents",
 }
 
 export function toolLabel(name: string) {

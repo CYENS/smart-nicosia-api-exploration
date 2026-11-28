@@ -365,6 +365,30 @@ def _swarco(agent) -> dict:
                   f"{hit.get('site_refs', 0)} site references published, no measured values yet")
 
 
+def _cynap_gradients(agent) -> dict:
+    fab = getattr(agent, "fabric", None)
+    if fab is None:
+        return status(None)
+    h = fab.gradients.health()
+    return status(h.get("state"), h.get("as_of"), h.get("note"))
+
+
+def _fabric_bundle(agent, part: str) -> dict:
+    fab = getattr(agent, "fabric", None)
+    if fab is None or not fab.ready:
+        return status("waiting", note="run python -m chatbot.fabric build to generate the Greater Nicosia bundle")
+    s = fab.summary()
+    built_at = fab._bundle.get("built_at")
+    if part == "kontur":
+        return status("live", built_at, f"{s['hex_count']} H3 hexagons, {s['population_total_2022']:,} modelled 2022 residents")
+    if part == "landsat":
+        h = s["heat"]
+        if not h.get("scenes_used"):
+            return status("waiting", note="no Landsat composite built yet")
+        return status("live", built_at, f"{h['scenes_used']} clear scenes ({h.get('date_from')} to {h.get('date_to')}), median {h.get('median_c')} °C ground (~10:30)")
+    return status("live", built_at, f"release {s.get('overture_release') or 'local'}")
+
+
 PROBES: dict[str, Callable] = {
     "met_stations": lambda a: _station_feed(a, "met"),
     "eea_air": lambda a: _station_feed(a, "eea"),
@@ -404,6 +428,10 @@ PROBES: dict[str, Callable] = {
     "duty_pharmacies": _duty_pharmacies,
     "dls_addresses": _dls_addresses,
     "visit_cyprus": _visit_cyprus,
+    "cynap_gradients": _cynap_gradients,
+    "kontur_population": lambda a: _fabric_bundle(a, "kontur"),
+    "landsat_lst": lambda a: _fabric_bundle(a, "landsat"),
+    "overture_base": lambda a: _fabric_bundle(a, "overture"),
 }
 
 

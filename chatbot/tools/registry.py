@@ -17,8 +17,8 @@ from collector.http import ApiError
 
 from chatbot import sources
 from chatbot.settings import TIMEZONE
-from chatbot.tools import (buildings, charts, city, clock, entities, environment, maps, memory,
-                           mobility, places, routes, scenarios, views, watch)
+from chatbot.tools import (buildings, charts, city, clock, entities, environment, fabric, maps,
+                           memory, mobility, places, routes, scenarios, views, watch)
 from chatbot.tools import streets
 from chatbot.tools import facilities
 from chatbot.tools import energy
@@ -43,8 +43,10 @@ DOMAINS += (energy,)
 DOMAINS += (hazards,)
 # Tonight in Nicosia (duty pharmacies, Visit Cyprus events, open-now places), after that.
 DOMAINS += (tonight,)
-# The living sky (aircraft, the ISS) and the PWD's ITS sites, last.
+# The living sky (aircraft, the ISS) and the PWD's ITS sites.
 DOMAINS += (sky,)
+# Urban fabric (heat exposure, 15-min access, Kontur 2022 population reach), appended at the end.
+DOMAINS += (fabric,)
 
 TOOLS: list[Tool] = [t for domain in DOMAINS for t in domain.TOOLS]
 TOOL_DEFS: list[dict] = [t.definition for t in TOOLS]

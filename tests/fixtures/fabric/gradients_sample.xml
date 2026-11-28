@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<d2LogicalModel xmlns="http://datex2.eu/schema/3/roadTrafficData" xmlns:loc="http://datex2.eu/schema/3/locationReferencing">
+  <payloadPublication>
+    <publicationTime>2026-11-27T04:00:00Z</publicationTime>
+    <roadElement>
+      <versionedIdentifier><identifier>1001</identifier></versionedIdentifier>
+      <roadNumber>B1</roadNumber>
+      <roadClassification>B</roadClassification>
+      <roadName><value>Λεωφ. Λεμεσού</value><lang>el</lang></roadName>
+      <roadName><value>Leof. Lemesou</value><lang>en</lang></roadName>
+      <roadElementDescription><value>KM Reference: 4.2</value></roadElementDescription>
+      <roadElementDescription><value>Junction Name: Athalassa Ave</value></roadElementDescription>
+      <gradient><gradientPercentage>1.8</gradientPercentage></gradient>
+      <location>
+        <loc:pointByCoordinates>
+          <loc:pointCoordinates>
+            <loc:latitude>35.1495</loc:latitude>
+            <loc:longitude>33.3685</loc:longitude>
+          </loc:pointCoordinates>
+        </loc:pointByCoordinates>
+      </location>
+    </roadElement>
+    <roadElement>
+      <versionedIdentifier><identifier>1002</identifier></versionedIdentifier>
+      <roadNumber>E901</roadNumber>
+      <roadClassification>E</roadClassification>
+      <roadName><value>Οδός Κέννεντυ</value><lang>el</lang></roadName>
+      <roadName><value>Kennedy Ave</value><lang>en</lang></roadName>
+      <gradient><gradientPercentage>6.4</gradientPercentage></gradient>
+      <location>
+        <loc:pointByCoordinates>
+          <loc:pointCoordinates>
+            <loc:latitude>35.1662</loc:latitude>
+            <loc:longitude>33.3694</loc:longitude>
+          </loc:pointCoordinates>
+        </loc:pointByCoordinates>
+      </location>
+    </roadElement>
+    <roadElement>
+      <versionedIdentifier><identifier>1003</identifier></versionedIdentifier>
+      <roadNumber>E902</roadNumber>
+      <roadClassification>E</roadClassification>
+      <roadName><value>Αγλαντζιάς</value><lang>el</lang></roadName>
+      <roadName><value>Aglantzia Hill</value><lang>en</lang></roadName>
+      <gradient><gradientPercentage>-9.3</gradientPercentage></gradient>
+      <location>
+        <loc:pointByCoordinates>
+          <loc:pointCoordinates>
+            <loc:latitude>35.1498</loc:latitude>
+            <loc:longitude>33.3945</loc:longitude>
+          </loc:pointCoordinates>
+        </loc:pointByCoordinates>
+      </location>
+    </roadElement>
+    <roadElement>
+      <versionedIdentifier><identifier>9999</identifier></versionedIdentifier>
+      <roadNumber>A1</roadNumber>
+      <roadClassification>A</roadClassification>
+      <roadName><value>Limassol Highway Outside BBox</value><lang>en</lang></roadName>
+      <gradient><gradientPercentage>7.5</gradientPercentage></gradient>
+      <location>
+        <loc:pointByCoordinates>
+          <loc:pointCoordinates>
+            <loc:latitude>34.7100</loc:latitude>
+            <loc:longitude>33.0400</loc:longitude>
+          </loc:pointCoordinates>
+        </loc:pointByCoordinates>
+      </location>
+    </roadElement>
+  </payloadPublication>
+</d2LogicalModel>
