@@ -441,7 +441,7 @@ function stationFeatures(surf: Surface, theme: Basemap) {
     type: "FeatureCollection" as const,
     features: (surf.stations ?? []).map((st) => ({
       type: "Feature" as const, geometry: { type: "Point" as const, coordinates: [st.lon, st.lat] },
-      properties: { id: st.id, color: colors[Math.max(0, bandOf(surf.bands, st.value))], value: shortValue(st.value) },
+      properties: { id: st.id, color: colors[Math.max(0, bandOf(surf.bands, st.value))], value: shortValue(st.value), ref: st.reference ? 1 : 0 },
     })),
   }
 }
@@ -470,7 +470,8 @@ function addStationLayers(map: MlMap, src: string, prefix: string, ids?: string[
         "circle-radius": ["interpolate", ["linear"], ["zoom"], 11, 5, 15, 8],
         "circle-color": ["get", "color"],
         ...themedPaint(circle, { "circle-stroke-color": { night: "#e4ebf4", day: "#0e1828" } }),
-        "circle-stroke-width": 1.6,
+        // An official (reference) station is a ring: thicker, and a little larger.
+        "circle-stroke-width": ["case", ["==", ["get", "ref"], 1], 3.2, 1.6],
       },
     })
     ids?.push(circle)

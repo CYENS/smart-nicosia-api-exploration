@@ -37,6 +37,7 @@ export const TOOL_LABELS: Record<string, string> = {
   set_city_time: "Setting the city clock",
   get_buses: "Finding the buses on the road", get_departures: "Reading the departures",
   plan_transit: "Planning the bus trip", get_road_speeds: "Reading the road speeds",
+  get_road_reports: "Reading the road reports",
   locate_web_places: "Putting the web results on the map",
   list_incidents: "Reading the incident inbox", explain_incident: "Looking at what happened around it",
   create_watch: "Preparing the watch",
@@ -44,6 +45,15 @@ export const TOOL_LABELS: Record<string, string> = {
   find_high_places: "Finding high places with a view", view_from: "Flying you to the view",
   list_scenarios: "Reading the scenario lab", run_scenario: "Running the scenario",
   compare_scenarios: "Comparing the two runs", open_scenario: "Opening it in the scenario lab",
+  // The street rules (chatbot/tools/streets.py).
+  get_speed_limits: "Reading the speed limits", find_slow_zones: "Finding the slow zones",
+  find_crossings: "Finding crossings and signals", get_cycle_network: "Tracing the cycle network",
+  get_bus_lanes: "Finding the bus lanes", find_enforcement_cameras: "Finding the enforcement cameras",
+  find_parking: "Finding car parks and free bays", find_chargers: "Finding EV chargers",
+  find_bikes: "Finding bikes, scooters and racks",
+  measured_stations: "Reading the measuring stations", compare_with_reference: "Comparing the sensors with the official stations",
+  get_grid: "Reading the island's grid",
+  get_hazards: "Reading the earthquake, warning and fire danger feeds",
 }
 
 export function toolLabel(name: string) {

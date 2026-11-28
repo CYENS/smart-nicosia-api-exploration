@@ -7,12 +7,18 @@ import type { Metric } from "@/lib/environment/colors"
 
 export type Band = { to: number | null; label: string }
 export type Grid = { bbox: [number, number, number, number]; nx: number; ny: number; values: (number | null)[]; confidence: number[]; min: number | null; max: number | null }
-export type StationValue = { id: string; name: string; lat: number; lon: number; value: number; model: number | null; band: string | null; estimate: number | null }
+export type StationValue = {
+  id: string; name: string; lat: number; lon: number; value: number; model: number | null; band: string | null; estimate: number | null
+  reference?: boolean; as_of?: string; raw?: number; correction?: number
+}
+// What a surface rests on: the reference stations (ground truth) used, the city sensors, and the
+// reference stations left out with why (an hourly mean too old for the moment).
+export type RestsOn = { reference: { id: string; name: string; as_of: string | null }[]; city_sensors: number; left_out: { id: string; name: string; why: string }[] }
 export type Surface = {
   metric: Metric; label: string; unit: string; known: boolean; reason?: string; at: string | null
   model_hour?: string | null; grid?: Grid; stations?: StationValue[]; bands?: Band[]
   background?: "model" | "stations"; model_bias?: number | null; spread?: number; reach_m?: number
-  notes?: string[]
+  notes?: string[]; rests_on?: RestsOn
 }
 export type Wind = {
   known: boolean; reason?: string; at: string | null; model_hour?: string

@@ -1,0 +1,4057 @@
+{"type":"FeatureCollection","metadata":{"count":156},"features":[{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.5717,
+      34.8291,
+      -22.8
+    ]
+  },
+  "id": "20251113_0000537",
+  "properties": {
+    "source_id": "1898669",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-14T08:09:31.631575Z",
+    "time": "2025-11-13T23:26:17.87Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8291,
+    "lon": 32.5717,
+    "depth": 22.8,
+    "evtype": "ke",
+    "auth": "EMSC",
+    "mag": 1.4,
+    "magtype": "ml",
+    "unid": "20251113_0000537"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.5910,
+      34.8682,
+      -20.5
+    ]
+  },
+  "id": "20251113_0000629",
+  "properties": {
+    "source_id": "1934378",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2026-01-23T07:18:08.43916Z",
+    "time": "2025-11-13T23:16:07.96Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8682,
+    "lon": 32.5910,
+    "depth": 20.5,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 1.3,
+    "magtype": "ml",
+    "unid": "20251113_0000629"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.6098,
+      34.8490,
+      -21.8
+    ]
+  },
+  "id": "20251113_0000628",
+  "properties": {
+    "source_id": "1933901",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2026-01-22T08:30:52.755348Z",
+    "time": "2025-11-13T22:05:56.25Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8490,
+    "lon": 32.6098,
+    "depth": 21.8,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 1.3,
+    "magtype": "ml",
+    "unid": "20251113_0000628"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.6303,
+      34.8522,
+      -20.9
+    ]
+  },
+  "id": "20251113_0000551",
+  "properties": {
+    "source_id": "1900627",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-17T11:58:17.247357Z",
+    "time": "2025-11-13T21:34:17.06Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8522,
+    "lon": 32.6303,
+    "depth": 20.9,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 1.4,
+    "magtype": "ml",
+    "unid": "20251113_0000551"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.6392,
+      34.8547,
+      -23.6
+    ]
+  },
+  "id": "20251113_0000535",
+  "properties": {
+    "source_id": "1898617",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-14T07:20:54.715878Z",
+    "time": "2025-11-13T21:25:34.35Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8547,
+    "lon": 32.6392,
+    "depth": 23.6,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 1.5,
+    "magtype": "ml",
+    "unid": "20251113_0000535"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.6393,
+      34.8565,
+      -25.6
+    ]
+  },
+  "id": "20251113_0000539",
+  "properties": {
+    "source_id": "1898853",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-14T08:47:18.584896Z",
+    "time": "2025-11-13T21:11:29.06Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8565,
+    "lon": 32.6393,
+    "depth": 25.6,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 1.2,
+    "magtype": "ml",
+    "unid": "20251113_0000539"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.6077,
+      34.8283,
+      -22.2
+    ]
+  },
+  "id": "20251113_0000627",
+  "properties": {
+    "source_id": "1933890",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2026-01-22T07:56:16.733517Z",
+    "time": "2025-11-13T20:49:10.22Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8283,
+    "lon": 32.6077,
+    "depth": 22.2,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 1.2,
+    "magtype": "ml",
+    "unid": "20251113_0000627"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.5798,
+      34.8627,
+      -12.8
+    ]
+  },
+  "id": "20251113_0000626",
+  "properties": {
+    "source_id": "1933880",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2026-01-22T07:44:10.975301Z",
+    "time": "2025-11-13T20:40:38.32Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8627,
+    "lon": 32.5798,
+    "depth": 12.8,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 1.2,
+    "magtype": "ml",
+    "unid": "20251113_0000626"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.6068,
+      34.8683,
+      -24.8
+    ]
+  },
+  "id": "20251113_0000625",
+  "properties": {
+    "source_id": "1933874",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2026-01-22T07:29:24.25281Z",
+    "time": "2025-11-13T20:22:07.91Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8683,
+    "lon": 32.6068,
+    "depth": 24.8,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 1.4,
+    "magtype": "ml",
+    "unid": "20251113_0000625"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.6053,
+      34.8147,
+      -21.0
+    ]
+  },
+  "id": "20251113_0000624",
+  "properties": {
+    "source_id": "1932794",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2026-01-20T08:39:24.189615Z",
+    "time": "2025-11-13T19:04:20.39Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8147,
+    "lon": 32.6053,
+    "depth": 21.0,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 1.2,
+    "magtype": "ml",
+    "unid": "20251113_0000624"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.5828,
+      34.8557,
+      -19.2
+    ]
+  },
+  "id": "20251113_0000538",
+  "properties": {
+    "source_id": "1898846",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-14T08:26:38.138288Z",
+    "time": "2025-11-13T18:01:55.19Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8557,
+    "lon": 32.5828,
+    "depth": 19.2,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 1.7,
+    "magtype": "ml",
+    "unid": "20251113_0000538"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.6132,
+      34.8363,
+      -22.4
+    ]
+  },
+  "id": "20251113_0000536",
+  "properties": {
+    "source_id": "1898841",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-14T07:54:01.724821Z",
+    "time": "2025-11-13T17:29:52.95Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8363,
+    "lon": 32.6132,
+    "depth": 22.4,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 2.2,
+    "magtype": "ml",
+    "unid": "20251113_0000536"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.3649,
+      35.5276,
+      -11.6
+    ]
+  },
+  "id": "20251113_0000396",
+  "properties": {
+    "source_id": "1898511",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-14T07:30:35.627284Z",
+    "time": "2025-11-13T17:02:43.39Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 35.5276,
+    "lon": 32.3649,
+    "depth": 11.6,
+    "evtype": "ke",
+    "auth": "EMSC",
+    "mag": 1.6,
+    "magtype": "ml",
+    "unid": "20251113_0000396"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.6183,
+      34.8737,
+      -14.9
+    ]
+  },
+  "id": "20251113_0000623",
+  "properties": {
+    "source_id": "1932790",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2026-01-20T08:24:56.588401Z",
+    "time": "2025-11-13T16:53:33.41Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8737,
+    "lon": 32.6183,
+    "depth": 14.9,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 1.0,
+    "magtype": "ml",
+    "unid": "20251113_0000623"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.5012,
+      34.7075,
+      -11.8
+    ]
+  },
+  "id": "20251113_0000338",
+  "properties": {
+    "source_id": "1898435",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-13T15:46:38.293156Z",
+    "time": "2025-11-13T13:55:19.36Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.7075,
+    "lon": 32.5012,
+    "depth": 11.8,
+    "evtype": "ke",
+    "auth": "EMSC",
+    "mag": 3.3,
+    "magtype": "ml",
+    "unid": "20251113_0000338"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.0960,
+      34.8948,
+      -16.2
+    ]
+  },
+  "id": "20251113_0000534",
+  "properties": {
+    "source_id": "1898819",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-14T06:50:39.021352Z",
+    "time": "2025-11-13T13:36:53.33Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8948,
+    "lon": 32.0960,
+    "depth": 16.2,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 1.6,
+    "magtype": "ml",
+    "unid": "20251113_0000534"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.5882,
+      34.8888,
+      -18.3
+    ]
+  },
+  "id": "20251113_0000622",
+  "properties": {
+    "source_id": "1932767",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2026-01-20T06:51:34.81208Z",
+    "time": "2025-11-13T13:20:04.63Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8888,
+    "lon": 32.5882,
+    "depth": 18.3,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 1.1,
+    "magtype": "ml",
+    "unid": "20251113_0000622"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.6017,
+      34.8177,
+      -28.1
+    ]
+  },
+  "id": "20251113_0000621",
+  "properties": {
+    "source_id": "1932763",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2026-01-20T06:39:44.085953Z",
+    "time": "2025-11-13T13:14:20.98Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8177,
+    "lon": 32.6017,
+    "depth": 28.1,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 1.4,
+    "magtype": "ml",
+    "unid": "20251113_0000621"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.6210,
+      34.8800,
+      -21.3
+    ]
+  },
+  "id": "20251113_0000620",
+  "properties": {
+    "source_id": "1932329",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2026-01-19T09:31:02.276792Z",
+    "time": "2025-11-13T11:26:14.71Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8800,
+    "lon": 32.6210,
+    "depth": 21.3,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 1.2,
+    "magtype": "ml",
+    "unid": "20251113_0000620"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.6135,
+      34.8287,
+      -23.0
+    ]
+  },
+  "id": "20251113_0000619",
+  "properties": {
+    "source_id": "1932325",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2026-01-19T09:17:40.813907Z",
+    "time": "2025-11-13T10:53:00.48Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8287,
+    "lon": 32.6135,
+    "depth": 23.0,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 1.3,
+    "magtype": "ml",
+    "unid": "20251113_0000619"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.6098,
+      34.8060,
+      -22.8
+    ]
+  },
+  "id": "20251113_0000261",
+  "properties": {
+    "source_id": "1898346",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-13T10:57:31.613427Z",
+    "time": "2025-11-13T10:31:15.2Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8060,
+    "lon": 32.6098,
+    "depth": 22.8,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 2.2,
+    "magtype": "ml",
+    "unid": "20251113_0000261"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.6241,
+      34.7997,
+      -18.0
+    ]
+  },
+  "id": "20251113_0000240",
+  "properties": {
+    "source_id": "1898322",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-13T10:35:56.141031Z",
+    "time": "2025-11-13T10:08:39.84Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.7997,
+    "lon": 32.6241,
+    "depth": 18.0,
+    "evtype": "ke",
+    "auth": "EMSC",
+    "mag": 2.8,
+    "magtype": "ml",
+    "unid": "20251113_0000240"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      33.4518,
+      35.2547,
+      -33.6
+    ]
+  },
+  "id": "20251113_0000540",
+  "properties": {
+    "source_id": "1898855",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-14T08:49:09.430191Z",
+    "time": "2025-11-13T10:01:23.91Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 35.2547,
+    "lon": 33.4518,
+    "depth": 33.6,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 1.9,
+    "magtype": "ml",
+    "unid": "20251113_0000540"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.5999,
+      34.7821,
+      -18.1
+    ]
+  },
+  "id": "20251113_0000221",
+  "properties": {
+    "source_id": "1898299",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-13T12:35:01.041754Z",
+    "time": "2025-11-13T09:27:26.62Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.7821,
+    "lon": 32.5999,
+    "depth": 18.1,
+    "evtype": "ke",
+    "auth": "EMSC",
+    "mag": 4.5,
+    "magtype": "ml",
+    "unid": "20251113_0000221"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.6085,
+      34.8702,
+      -23.4
+    ]
+  },
+  "id": "20251113_0000618",
+  "properties": {
+    "source_id": "1932320",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2026-01-19T09:00:07.352752Z",
+    "time": "2025-11-13T08:31:07.23Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8702,
+    "lon": 32.6085,
+    "depth": 23.4,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 1.5,
+    "magtype": "ml",
+    "unid": "20251113_0000618"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.7612,
+      34.6487,
+      -22.6
+    ]
+  },
+  "id": "20251113_0000297",
+  "properties": {
+    "source_id": "1898388",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-14T08:21:15.444084Z",
+    "time": "2025-11-13T08:21:50.43Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.6487,
+    "lon": 32.7612,
+    "depth": 22.6,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 1.4,
+    "magtype": "ml",
+    "unid": "20251113_0000297"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.7883,
+      34.6250,
+      -24.2
+    ]
+  },
+  "id": "20251113_0000199",
+  "properties": {
+    "source_id": "1898273",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-13T12:19:33.848552Z",
+    "time": "2025-11-13T08:10:32.27Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.6250,
+    "lon": 32.7883,
+    "depth": 24.2,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 2.2,
+    "magtype": "ml",
+    "unid": "20251113_0000199"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.6113,
+      34.8712,
+      -19.7
+    ]
+  },
+  "id": "20251113_0000617",
+  "properties": {
+    "source_id": "1932315",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2026-01-19T08:38:42.000216Z",
+    "time": "2025-11-13T08:00:16.45Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8712,
+    "lon": 32.6113,
+    "depth": 19.7,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 1.5,
+    "magtype": "ml",
+    "unid": "20251113_0000617"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.5887,
+      34.8458,
+      -25.4
+    ]
+  },
+  "id": "20251113_0000616",
+  "properties": {
+    "source_id": "1932311",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2026-01-19T08:30:12.937554Z",
+    "time": "2025-11-13T07:22:48.07Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8458,
+    "lon": 32.5887,
+    "depth": 25.4,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 1.2,
+    "magtype": "ml",
+    "unid": "20251113_0000616"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.5108,
+      34.7606,
+      -12.2
+    ]
+  },
+  "id": "20251113_0000169",
+  "properties": {
+    "source_id": "1898236",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-13T07:40:29.730276Z",
+    "time": "2025-11-13T07:03:15.86Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.7606,
+    "lon": 32.5108,
+    "depth": 12.2,
+    "evtype": "ke",
+    "auth": "EMSC",
+    "mag": 3.1,
+    "magtype": "ml",
+    "unid": "20251113_0000169"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.6198,
+      34.8448,
+      -20.8
+    ]
+  },
+  "id": "20251113_0000615",
+  "properties": {
+    "source_id": "1932296",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2026-01-19T07:32:50.229898Z",
+    "time": "2025-11-13T06:59:31.53Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8448,
+    "lon": 32.6198,
+    "depth": 20.8,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 1.4,
+    "magtype": "ml",
+    "unid": "20251113_0000615"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.5807,
+      34.7882,
+      -19.2
+    ]
+  },
+  "id": "20251113_0000614",
+  "properties": {
+    "source_id": "1930632",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2026-01-15T12:50:58.880061Z",
+    "time": "2025-11-13T06:41:35.74Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.7882,
+    "lon": 32.5807,
+    "depth": 19.2,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 1.2,
+    "magtype": "ml",
+    "unid": "20251113_0000614"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.6152,
+      34.8123,
+      -19.2
+    ]
+  },
+  "id": "20251113_0000609",
+  "properties": {
+    "source_id": "1930480",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2026-01-15T06:22:36.654696Z",
+    "time": "2025-11-13T05:16:40.79Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8123,
+    "lon": 32.6152,
+    "depth": 19.2,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 1.4,
+    "magtype": "ml",
+    "unid": "20251113_0000609"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.4841,
+      34.7522,
+      -30.2
+    ]
+  },
+  "id": "20251113_0000132",
+  "properties": {
+    "source_id": "1898195",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-13T11:37:17.862288Z",
+    "time": "2025-11-13T05:10:09.19Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.7522,
+    "lon": 32.4841,
+    "depth": 30.2,
+    "evtype": "ke",
+    "auth": "EMSC",
+    "mag": 2.4,
+    "magtype": "ml",
+    "unid": "20251113_0000132"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.5463,
+      34.7773,
+      -27.7
+    ]
+  },
+  "id": "20251113_0000117",
+  "properties": {
+    "source_id": "1898179",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-13T07:40:50.458813Z",
+    "time": "2025-11-13T04:46:32.88Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.7773,
+    "lon": 32.5463,
+    "depth": 27.7,
+    "evtype": "ke",
+    "auth": "EMSC",
+    "mag": 3.9,
+    "magtype": "ml",
+    "unid": "20251113_0000117"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.6163,
+      34.8528,
+      -23.2
+    ]
+  },
+  "id": "20251113_0000099",
+  "properties": {
+    "source_id": "1898155",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2026-01-15T12:36:26.703226Z",
+    "time": "2025-11-13T03:45:04.22Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8528,
+    "lon": 32.6163,
+    "depth": 23.2,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 1.8,
+    "magtype": "ml",
+    "unid": "20251113_0000099"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.5905,
+      34.8085,
+      -19.9
+    ]
+  },
+  "id": "20251113_0000613",
+  "properties": {
+    "source_id": "1930599",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2026-01-15T10:54:00.556595Z",
+    "time": "2025-11-13T03:23:56.48Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8085,
+    "lon": 32.5905,
+    "depth": 19.9,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 1.5,
+    "magtype": "ml",
+    "unid": "20251113_0000613"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.6393,
+      34.8605,
+      -21.0
+    ]
+  },
+  "id": "20251113_0000307",
+  "properties": {
+    "source_id": "1898399",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-13T12:35:42.328145Z",
+    "time": "2025-11-13T02:59:24.65Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8605,
+    "lon": 32.6393,
+    "depth": 21.0,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 1.3,
+    "magtype": "ml",
+    "unid": "20251113_0000307"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.6312,
+      34.8260,
+      -16.9
+    ]
+  },
+  "id": "20251113_0000612",
+  "properties": {
+    "source_id": "1930581",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2026-01-15T10:20:04.288193Z",
+    "time": "2025-11-13T02:42:51.67Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8260,
+    "lon": 32.6312,
+    "depth": 16.9,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 1.5,
+    "magtype": "ml",
+    "unid": "20251113_0000612"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.6187,
+      34.8002,
+      -24.6
+    ]
+  },
+  "id": "20251113_0000611",
+  "properties": {
+    "source_id": "1930490",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2026-01-15T06:52:01.131599Z",
+    "time": "2025-11-13T02:40:11.99Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8002,
+    "lon": 32.6187,
+    "depth": 24.6,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 1.2,
+    "magtype": "ml",
+    "unid": "20251113_0000611"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.6385,
+      34.8338,
+      -21.5
+    ]
+  },
+  "id": "20251113_0000610",
+  "properties": {
+    "source_id": "1930486",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2026-01-15T06:39:09.817216Z",
+    "time": "2025-11-13T02:30:38.19Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8338,
+    "lon": 32.6385,
+    "depth": 21.5,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 1.1,
+    "magtype": "ml",
+    "unid": "20251113_0000610"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.6103,
+      34.8115,
+      -21.8
+    ]
+  },
+  "id": "20251113_0000608",
+  "properties": {
+    "source_id": "1898248",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2026-01-14T10:50:30.493606Z",
+    "time": "2025-11-13T02:23:06.35Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8115,
+    "lon": 32.6103,
+    "depth": 21.8,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 1.1,
+    "magtype": "ml",
+    "unid": "20251113_0000608"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.6318,
+      34.8153,
+      -20.0
+    ]
+  },
+  "id": "20251113_0000607",
+  "properties": {
+    "source_id": "1898116",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2026-01-14T09:43:22.783469Z",
+    "time": "2025-11-13T02:20:41.28Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8153,
+    "lon": 32.6318,
+    "depth": 20.0,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 1.8,
+    "magtype": "ml",
+    "unid": "20251113_0000607"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.6148,
+      34.8318,
+      -20.1
+    ]
+  },
+  "id": "20251113_0000606",
+  "properties": {
+    "source_id": "1898103",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2026-01-14T07:28:05.931716Z",
+    "time": "2025-11-13T01:38:45.27Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8318,
+    "lon": 32.6148,
+    "depth": 20.1,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 1.5,
+    "magtype": "ml",
+    "unid": "20251113_0000606"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.5690,
+      34.8183,
+      -23.3
+    ]
+  },
+  "id": "20251113_0000605",
+  "properties": {
+    "source_id": "1930012",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2026-01-14T07:14:34.215547Z",
+    "time": "2025-11-13T01:02:52.18Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8183,
+    "lon": 32.5690,
+    "depth": 23.3,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 1.3,
+    "magtype": "ml",
+    "unid": "20251113_0000605"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.6338,
+      34.8458,
+      -21.2
+    ]
+  },
+  "id": "20251113_0000604",
+  "properties": {
+    "source_id": "1898243",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2026-01-14T06:18:37.083784Z",
+    "time": "2025-11-13T00:44:15.14Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8458,
+    "lon": 32.6338,
+    "depth": 21.2,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 1.3,
+    "magtype": "ml",
+    "unid": "20251113_0000604"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.5324,
+      34.8052,
+      -24.7
+    ]
+  },
+  "id": "20251113_0000022",
+  "properties": {
+    "source_id": "1898058",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-13T12:46:26.028581Z",
+    "time": "2025-11-13T00:40:18.01Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8052,
+    "lon": 32.5324,
+    "depth": 24.7,
+    "evtype": "ke",
+    "auth": "EMSC",
+    "mag": 2.1,
+    "magtype": "ml",
+    "unid": "20251113_0000022"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.6332,
+      34.8318,
+      -17.4
+    ]
+  },
+  "id": "20251113_0000603",
+  "properties": {
+    "source_id": "1898060",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2026-01-12T12:45:15.004235Z",
+    "time": "2025-11-13T00:33:33.97Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8318,
+    "lon": 32.6332,
+    "depth": 17.4,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 1.5,
+    "magtype": "ml",
+    "unid": "20251113_0000603"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.6273,
+      34.8873,
+      -19.2
+    ]
+  },
+  "id": "20251112_0000600",
+  "properties": {
+    "source_id": "1929034",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2026-01-12T09:47:07.930351Z",
+    "time": "2025-11-12T23:17:24.1Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8873,
+    "lon": 32.6273,
+    "depth": 19.2,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 1.3,
+    "magtype": "ml",
+    "unid": "20251112_0000600"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.6153,
+      34.8488,
+      -23.5
+    ]
+  },
+  "id": "20251112_0000486",
+  "properties": {
+    "source_id": "1898013",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-13T12:19:13.811121Z",
+    "time": "2025-11-12T23:05:20.9Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8488,
+    "lon": 32.6153,
+    "depth": 23.5,
+    "evtype": "ke",
+    "auth": "EMSC",
+    "mag": 2.3,
+    "magtype": "ml",
+    "unid": "20251112_0000486"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.5672,
+      34.8275,
+      -21.3
+    ]
+  },
+  "id": "20251112_0000599",
+  "properties": {
+    "source_id": "1898007",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2026-01-09T15:20:47.098791Z",
+    "time": "2025-11-12T22:49:28.46Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8275,
+    "lon": 32.5672,
+    "depth": 21.3,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 1.5,
+    "magtype": "ml",
+    "unid": "20251112_0000599"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.5673,
+      34.8357,
+      -25.2
+    ]
+  },
+  "id": "20251112_0000598",
+  "properties": {
+    "source_id": "1898006",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2026-01-09T15:12:12.825337Z",
+    "time": "2025-11-12T22:45:45.31Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8357,
+    "lon": 32.5673,
+    "depth": 25.2,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 1.6,
+    "magtype": "ml",
+    "unid": "20251112_0000598"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.7403,
+      35.1199,
+      -11.9
+    ]
+  },
+  "id": "20251112_0000473",
+  "properties": {
+    "source_id": "1897998",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-13T07:46:15.900294Z",
+    "time": "2025-11-12T22:27:30.17Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 35.1199,
+    "lon": 32.7403,
+    "depth": 11.9,
+    "evtype": "ke",
+    "auth": "EMSC",
+    "mag": 2.1,
+    "magtype": "ml",
+    "unid": "20251112_0000473"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.5723,
+      34.8903,
+      -20.8
+    ]
+  },
+  "id": "20251112_0000597",
+  "properties": {
+    "source_id": "1927796",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2026-01-09T15:03:23.583169Z",
+    "time": "2025-11-12T22:25:33.45Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8903,
+    "lon": 32.5723,
+    "depth": 20.8,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 1.0,
+    "magtype": "ml",
+    "unid": "20251112_0000597"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.6630,
+      34.7703,
+      -23.0
+    ]
+  },
+  "id": "20251112_0000596",
+  "properties": {
+    "source_id": "1927795",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2026-01-09T14:57:05.398899Z",
+    "time": "2025-11-12T22:20:13.99Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.7703,
+    "lon": 32.6630,
+    "depth": 23.0,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 1.3,
+    "magtype": "ml",
+    "unid": "20251112_0000596"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.6540,
+      34.8547,
+      -23.5
+    ]
+  },
+  "id": "20251112_0000593",
+  "properties": {
+    "source_id": "1927685",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2026-01-09T10:24:51.068022Z",
+    "time": "2025-11-12T21:19:04.55Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8547,
+    "lon": 32.6540,
+    "depth": 23.5,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 1.6,
+    "magtype": "ml",
+    "unid": "20251112_0000593"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.6185,
+      34.8330,
+      -19.0
+    ]
+  },
+  "id": "20251112_0000589",
+  "properties": {
+    "source_id": "1897967",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2026-01-09T09:08:14.949804Z",
+    "time": "2025-11-12T21:12:04.47Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8330,
+    "lon": 32.6185,
+    "depth": 19.0,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 1.6,
+    "magtype": "ml",
+    "unid": "20251112_0000589"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.6330,
+      34.8388,
+      -20.8
+    ]
+  },
+  "id": "20251112_0000592",
+  "properties": {
+    "source_id": "1927678",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2026-01-09T09:53:23.844149Z",
+    "time": "2025-11-12T21:10:17.61Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8388,
+    "lon": 32.6330,
+    "depth": 20.8,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 1.1,
+    "magtype": "ml",
+    "unid": "20251112_0000592"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.6263,
+      34.8705,
+      -24.5
+    ]
+  },
+  "id": "20251112_0000591",
+  "properties": {
+    "source_id": "1927671",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2026-01-09T09:28:50.951925Z",
+    "time": "2025-11-12T21:07:28.13Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8705,
+    "lon": 32.6263,
+    "depth": 24.5,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 1.1,
+    "magtype": "ml",
+    "unid": "20251112_0000591"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.5813,
+      34.8543,
+      -22.8
+    ]
+  },
+  "id": "20251112_0000595",
+  "properties": {
+    "source_id": "1927748",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2026-01-09T13:19:22.064587Z",
+    "time": "2025-11-12T21:00:22.67Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8543,
+    "lon": 32.5813,
+    "depth": 22.8,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 1.0,
+    "magtype": "ml",
+    "unid": "20251112_0000595"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.6205,
+      34.8293,
+      -22.1
+    ]
+  },
+  "id": "20251112_0000590",
+  "properties": {
+    "source_id": "1927668",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2026-01-09T09:20:31.586036Z",
+    "time": "2025-11-12T20:55:33.17Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8293,
+    "lon": 32.6205,
+    "depth": 22.1,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 1.4,
+    "magtype": "ml",
+    "unid": "20251112_0000590"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.6438,
+      34.8312,
+      -14.1
+    ]
+  },
+  "id": "20251112_0000594",
+  "properties": {
+    "source_id": "1927743",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2026-01-09T13:01:38.245842Z",
+    "time": "2025-11-12T20:48:34.86Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8312,
+    "lon": 32.6438,
+    "depth": 14.1,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 1.0,
+    "magtype": "ml",
+    "unid": "20251112_0000594"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.6123,
+      34.8010,
+      -20.3
+    ]
+  },
+  "id": "20251112_0000441",
+  "properties": {
+    "source_id": "1897957",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-13T11:50:00.232653Z",
+    "time": "2025-11-12T20:43:41.67Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8010,
+    "lon": 32.6123,
+    "depth": 20.3,
+    "evtype": "ke",
+    "auth": "EMSC",
+    "mag": 2.4,
+    "magtype": "ml",
+    "unid": "20251112_0000441"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.4054,
+      34.4729,
+      -4.4
+    ]
+  },
+  "id": "20251112_0000434",
+  "properties": {
+    "source_id": "1897951",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-13T07:35:33.691412Z",
+    "time": "2025-11-12T20:27:13.99Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.4729,
+    "lon": 32.4054,
+    "depth": 4.4,
+    "evtype": "ke",
+    "auth": "EMSC",
+    "mag": 3.2,
+    "magtype": "ml",
+    "unid": "20251112_0000434"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.5930,
+      34.7827,
+      -14.0
+    ]
+  },
+  "id": "20251112_0000435",
+  "properties": {
+    "source_id": "1897952",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-13T08:58:53.726535Z",
+    "time": "2025-11-12T20:23:27.02Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.7827,
+    "lon": 32.5930,
+    "depth": 14.0,
+    "evtype": "ke",
+    "auth": "EMSC",
+    "mag": 2.7,
+    "magtype": "ml",
+    "unid": "20251112_0000435"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.5753,
+      34.8007,
+      -23.0
+    ]
+  },
+  "id": "20251112_0000588",
+  "properties": {
+    "source_id": "1927641",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2026-01-09T07:54:26.142224Z",
+    "time": "2025-11-12T20:16:37.49Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8007,
+    "lon": 32.5753,
+    "depth": 23.0,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 1.5,
+    "magtype": "ml",
+    "unid": "20251112_0000588"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.6053,
+      34.8282,
+      -19.0
+    ]
+  },
+  "id": "20251112_0000587",
+  "properties": {
+    "source_id": "1927636",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2026-01-09T07:33:55.313647Z",
+    "time": "2025-11-12T20:13:48.08Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8282,
+    "lon": 32.6053,
+    "depth": 19.0,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 1.5,
+    "magtype": "ml",
+    "unid": "20251112_0000587"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.6577,
+      34.8240,
+      -18.0
+    ]
+  },
+  "id": "20251112_0000427",
+  "properties": {
+    "source_id": "1897944",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-13T11:25:27.574465Z",
+    "time": "2025-11-12T20:05:03.47Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8240,
+    "lon": 32.6577,
+    "depth": 18.0,
+    "evtype": "ke",
+    "auth": "EMSC",
+    "mag": 2.4,
+    "magtype": "ml",
+    "unid": "20251112_0000427"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.6123,
+      34.8147,
+      -20.7
+    ]
+  },
+  "id": "20251112_0000586",
+  "properties": {
+    "source_id": "1927628",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2026-01-09T07:11:33.424965Z",
+    "time": "2025-11-12T19:58:36.85Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8147,
+    "lon": 32.6123,
+    "depth": 20.7,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 1.8,
+    "magtype": "ml",
+    "unid": "20251112_0000586"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.6493,
+      34.8455,
+      -21.6
+    ]
+  },
+  "id": "20251112_0000585",
+  "properties": {
+    "source_id": "1923085",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-12-31T11:54:28.402563Z",
+    "time": "2025-11-12T19:51:00.92Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8455,
+    "lon": 32.6493,
+    "depth": 21.6,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 1.5,
+    "magtype": "ml",
+    "unid": "20251112_0000585"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.6423,
+      34.8375,
+      -22.2
+    ]
+  },
+  "id": "20251112_0000515",
+  "properties": {
+    "source_id": "1898407",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-13T12:52:05.355057Z",
+    "time": "2025-11-12T19:47:52.55Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8375,
+    "lon": 32.6423,
+    "depth": 22.2,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 2.3,
+    "magtype": "ml",
+    "unid": "20251112_0000515"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.5968,
+      34.8588,
+      -20.9
+    ]
+  },
+  "id": "20251112_0000584",
+  "properties": {
+    "source_id": "1923067",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-12-31T10:49:09.260654Z",
+    "time": "2025-11-12T19:35:13.79Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8588,
+    "lon": 32.5968,
+    "depth": 20.9,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 1.9,
+    "magtype": "ml",
+    "unid": "20251112_0000584"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.6087,
+      34.8288,
+      -22.1
+    ]
+  },
+  "id": "20251112_0000583",
+  "properties": {
+    "source_id": "1923060",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-12-31T10:28:18.419974Z",
+    "time": "2025-11-12T19:29:49.88Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8288,
+    "lon": 32.6087,
+    "depth": 22.1,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 1.7,
+    "magtype": "ml",
+    "unid": "20251112_0000583"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.6573,
+      34.8468,
+      -23.5
+    ]
+  },
+  "id": "20251112_0000514",
+  "properties": {
+    "source_id": "1898318",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-13T10:05:14.530679Z",
+    "time": "2025-11-12T19:13:56.84Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8468,
+    "lon": 32.6573,
+    "depth": 23.5,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 2.5,
+    "magtype": "ml",
+    "unid": "20251112_0000514"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.6468,
+      34.8417,
+      -24.8
+    ]
+  },
+  "id": "20251112_0000569",
+  "properties": {
+    "source_id": "1904726",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-25T15:23:47.211081Z",
+    "time": "2025-11-12T19:10:10.54Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8417,
+    "lon": 32.6468,
+    "depth": 24.8,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 2.0,
+    "magtype": "ml",
+    "unid": "20251112_0000569"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.6358,
+      34.8790,
+      -20.2
+    ]
+  },
+  "id": "20251112_0000568",
+  "properties": {
+    "source_id": "1904723",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-25T15:15:35.826818Z",
+    "time": "2025-11-12T19:08:46.92Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8790,
+    "lon": 32.6358,
+    "depth": 20.2,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 1.2,
+    "magtype": "ml",
+    "unid": "20251112_0000568"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.6652,
+      34.8288,
+      -21.1
+    ]
+  },
+  "id": "20251112_0000567",
+  "properties": {
+    "source_id": "1904720",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-25T15:09:31.714036Z",
+    "time": "2025-11-12T19:04:04.98Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8288,
+    "lon": 32.6652,
+    "depth": 21.1,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 1.0,
+    "magtype": "ml",
+    "unid": "20251112_0000567"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.6378,
+      34.8460,
+      -23.9
+    ]
+  },
+  "id": "20251112_0000566",
+  "properties": {
+    "source_id": "1904718",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-25T15:03:31.784216Z",
+    "time": "2025-11-12T19:00:05.0Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8460,
+    "lon": 32.6378,
+    "depth": 23.9,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 1.4,
+    "magtype": "ml",
+    "unid": "20251112_0000566"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.6527,
+      34.8440,
+      -24.3
+    ]
+  },
+  "id": "20251112_0000565",
+  "properties": {
+    "source_id": "1904708",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-25T14:47:44.096712Z",
+    "time": "2025-11-12T18:34:21.82Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8440,
+    "lon": 32.6527,
+    "depth": 24.3,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 1.5,
+    "magtype": "ml",
+    "unid": "20251112_0000565"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.5965,
+      34.8725,
+      -22.8
+    ]
+  },
+  "id": "20251112_0000564",
+  "properties": {
+    "source_id": "1904705",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-25T14:41:34.256483Z",
+    "time": "2025-11-12T18:18:34.07Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8725,
+    "lon": 32.5965,
+    "depth": 22.8,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 1.2,
+    "magtype": "ml",
+    "unid": "20251112_0000564"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.5985,
+      34.8710,
+      -22.0
+    ]
+  },
+  "id": "20251112_0000563",
+  "properties": {
+    "source_id": "1904703",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-25T14:35:34.411494Z",
+    "time": "2025-11-12T18:14:32.67Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8710,
+    "lon": 32.5985,
+    "depth": 22.0,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 1.1,
+    "magtype": "ml",
+    "unid": "20251112_0000563"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.6225,
+      34.8842,
+      -23.9
+    ]
+  },
+  "id": "20251112_0000562",
+  "properties": {
+    "source_id": "1897893",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-25T12:29:27.370623Z",
+    "time": "2025-11-12T18:03:33.64Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8842,
+    "lon": 32.6225,
+    "depth": 23.9,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 1.7,
+    "magtype": "ml",
+    "unid": "20251112_0000562"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.6290,
+      34.7995,
+      -21.6
+    ]
+  },
+  "id": "20251112_0000561",
+  "properties": {
+    "source_id": "1904189",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-24T14:22:44.278912Z",
+    "time": "2025-11-12T17:43:32.78Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.7995,
+    "lon": 32.6290,
+    "depth": 21.6,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 1.1,
+    "magtype": "ml",
+    "unid": "20251112_0000561"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.6850,
+      34.8494,
+      -13.8
+    ]
+  },
+  "id": "20251112_0000367",
+  "properties": {
+    "source_id": "1897872",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-12T18:09:01.001804Z",
+    "time": "2025-11-12T17:35:12.96Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8494,
+    "lon": 32.6850,
+    "depth": 13.8,
+    "evtype": "ke",
+    "auth": "EMSC",
+    "mag": 2.2,
+    "magtype": "ml",
+    "unid": "20251112_0000367"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.6136,
+      34.8501,
+      -17.4
+    ]
+  },
+  "id": "20251112_0000374",
+  "properties": {
+    "source_id": "1897879",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-13T13:12:20.756539Z",
+    "time": "2025-11-12T17:30:24.78Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8501,
+    "lon": 32.6136,
+    "depth": 17.4,
+    "evtype": "ke",
+    "auth": "EMSC",
+    "mag": 1.8,
+    "magtype": "ml",
+    "unid": "20251112_0000374"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.5774,
+      34.8498,
+      -16.1
+    ]
+  },
+  "id": "20251112_0000360",
+  "properties": {
+    "source_id": "1897862",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-13T07:34:57.44061Z",
+    "time": "2025-11-12T17:24:59.13Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8498,
+    "lon": 32.5774,
+    "depth": 16.1,
+    "evtype": "ke",
+    "auth": "EMSC",
+    "mag": 3.1,
+    "magtype": "ml",
+    "unid": "20251112_0000360"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.6360,
+      34.8655,
+      -20.5
+    ]
+  },
+  "id": "20251112_0000358",
+  "properties": {
+    "source_id": "1897860",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-24T12:42:11.704009Z",
+    "time": "2025-11-12T17:14:30.42Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8655,
+    "lon": 32.6360,
+    "depth": 20.5,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 2.2,
+    "magtype": "ml",
+    "unid": "20251112_0000358"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.6218,
+      34.8308,
+      -23.8
+    ]
+  },
+  "id": "20251112_0000357",
+  "properties": {
+    "source_id": "1897858",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-13T09:12:38.167001Z",
+    "time": "2025-11-12T17:10:55.62Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8308,
+    "lon": 32.6218,
+    "depth": 23.8,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 2.6,
+    "magtype": "ml",
+    "unid": "20251112_0000357"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.6577,
+      34.8420,
+      -23.1
+    ]
+  },
+  "id": "20251112_0000356",
+  "properties": {
+    "source_id": "1897857",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-24T12:12:41.783876Z",
+    "time": "2025-11-12T17:04:31.31Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8420,
+    "lon": 32.6577,
+    "depth": 23.1,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 2.1,
+    "magtype": "ml",
+    "unid": "20251112_0000356"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.6282,
+      34.8168,
+      -26.4
+    ]
+  },
+  "id": "20251112_0000355",
+  "properties": {
+    "source_id": "1897855",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-24T11:50:11.535109Z",
+    "time": "2025-11-12T17:01:45.37Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8168,
+    "lon": 32.6282,
+    "depth": 26.4,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 2.0,
+    "magtype": "ml",
+    "unid": "20251112_0000355"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.6585,
+      34.8178,
+      -21.1
+    ]
+  },
+  "id": "20251112_0000349",
+  "properties": {
+    "source_id": "1897847",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-13T08:34:19.932689Z",
+    "time": "2025-11-12T16:46:52.42Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8178,
+    "lon": 32.6585,
+    "depth": 21.1,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 2.8,
+    "magtype": "ml",
+    "unid": "20251112_0000349"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.5983,
+      34.8450,
+      -23.9
+    ]
+  },
+  "id": "20251112_0000560",
+  "properties": {
+    "source_id": "1904125",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-24T11:27:25.161228Z",
+    "time": "2025-11-12T16:44:48.29Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8450,
+    "lon": 32.5983,
+    "depth": 23.9,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 1.5,
+    "magtype": "ml",
+    "unid": "20251112_0000560"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.5887,
+      34.8390,
+      -24.8
+    ]
+  },
+  "id": "20251112_0000559",
+  "properties": {
+    "source_id": "1897866",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-24T11:17:48.562609Z",
+    "time": "2025-11-12T16:39:23.51Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8390,
+    "lon": 32.5887,
+    "depth": 24.8,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 1.4,
+    "magtype": "ml",
+    "unid": "20251112_0000559"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.5737,
+      34.8373,
+      -24.7
+    ]
+  },
+  "id": "20251112_0000334",
+  "properties": {
+    "source_id": "1897825",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-24T11:04:24.341357Z",
+    "time": "2025-11-12T16:30:04.05Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8373,
+    "lon": 32.5737,
+    "depth": 24.7,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 2.2,
+    "magtype": "ml",
+    "unid": "20251112_0000334"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.6483,
+      34.8580,
+      -23.8
+    ]
+  },
+  "id": "20251112_0000558",
+  "properties": {
+    "source_id": "1904116",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-24T10:48:33.568892Z",
+    "time": "2025-11-12T16:20:43.34Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8580,
+    "lon": 32.6483,
+    "depth": 23.8,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 1.1,
+    "magtype": "ml",
+    "unid": "20251112_0000558"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.5783,
+      34.8408,
+      -22.7
+    ]
+  },
+  "id": "20251112_0000557",
+  "properties": {
+    "source_id": "1897846",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-24T10:28:44.977352Z",
+    "time": "2025-11-12T16:12:47.26Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8408,
+    "lon": 32.5783,
+    "depth": 22.7,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 1.7,
+    "magtype": "ml",
+    "unid": "20251112_0000557"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.5977,
+      34.8603,
+      -27.5
+    ]
+  },
+  "id": "20251112_0000556",
+  "properties": {
+    "source_id": "1897842",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-24T10:19:23.541623Z",
+    "time": "2025-11-12T16:11:13.55Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8603,
+    "lon": 32.5977,
+    "depth": 27.5,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 1.6,
+    "magtype": "ml",
+    "unid": "20251112_0000556"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.6328,
+      34.8042,
+      -23.8
+    ]
+  },
+  "id": "20251112_0000327",
+  "properties": {
+    "source_id": "1897813",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-21T15:27:10.312169Z",
+    "time": "2025-11-12T16:07:43.95Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8042,
+    "lon": 32.6328,
+    "depth": 23.8,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 2.0,
+    "magtype": "ml",
+    "unid": "20251112_0000327"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.6143,
+      34.8490,
+      -24.2
+    ]
+  },
+  "id": "20251112_0000555",
+  "properties": {
+    "source_id": "1902793",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-21T13:57:25.075948Z",
+    "time": "2025-11-12T16:06:34.2Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8490,
+    "lon": 32.6143,
+    "depth": 24.2,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 1.5,
+    "magtype": "ml",
+    "unid": "20251112_0000555"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.6280,
+      34.8432,
+      -23.3
+    ]
+  },
+  "id": "20251112_0000554",
+  "properties": {
+    "source_id": "1902786",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-21T13:41:38.983464Z",
+    "time": "2025-11-12T16:02:44.52Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8432,
+    "lon": 32.6280,
+    "depth": 23.3,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 1.1,
+    "magtype": "ml",
+    "unid": "20251112_0000554"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.5738,
+      34.8940,
+      -19.0
+    ]
+  },
+  "id": "20251112_0000322",
+  "properties": {
+    "source_id": "1897808",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-14T11:25:21.886251Z",
+    "time": "2025-11-12T15:54:23.58Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8940,
+    "lon": 32.5738,
+    "depth": 19.0,
+    "evtype": "ke",
+    "auth": "EMSC",
+    "mag": 2.4,
+    "magtype": "ml",
+    "unid": "20251112_0000322"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.6412,
+      34.8168,
+      -21.0
+    ]
+  },
+  "id": "20251112_0000324",
+  "properties": {
+    "source_id": "1897810",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-21T06:41:58.841433Z",
+    "time": "2025-11-12T15:48:45.29Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8168,
+    "lon": 32.6412,
+    "depth": 21.0,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 2.3,
+    "magtype": "ml",
+    "unid": "20251112_0000324"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.5984,
+      34.8766,
+      -17.3
+    ]
+  },
+  "id": "20251112_0000318",
+  "properties": {
+    "source_id": "1897803",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-14T11:29:22.990196Z",
+    "time": "2025-11-12T15:45:57.21Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8766,
+    "lon": 32.5984,
+    "depth": 17.3,
+    "evtype": "ke",
+    "auth": "EMSC",
+    "mag": 2.2,
+    "magtype": "ml",
+    "unid": "20251112_0000318"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.6505,
+      34.8317,
+      -20.3
+    ]
+  },
+  "id": "20251112_0000553",
+  "properties": {
+    "source_id": "1902778",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-21T13:13:28.042665Z",
+    "time": "2025-11-12T15:39:38.58Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8317,
+    "lon": 32.6505,
+    "depth": 20.3,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 1.1,
+    "magtype": "ml",
+    "unid": "20251112_0000553"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.6087,
+      34.8125,
+      -25.7
+    ]
+  },
+  "id": "20251112_0000314",
+  "properties": {
+    "source_id": "1897796",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-21T13:01:38.288925Z",
+    "time": "2025-11-12T15:33:44.5Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8125,
+    "lon": 32.6087,
+    "depth": 25.7,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 2.0,
+    "magtype": "ml",
+    "unid": "20251112_0000314"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.6148,
+      34.8030,
+      -25.0
+    ]
+  },
+  "id": "20251112_0000312",
+  "properties": {
+    "source_id": "1897794",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-21T12:45:31.215785Z",
+    "time": "2025-11-12T15:32:23.37Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8030,
+    "lon": 32.6148,
+    "depth": 25.0,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 2.0,
+    "magtype": "ml",
+    "unid": "20251112_0000312"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.6308,
+      34.8462,
+      -25.9
+    ]
+  },
+  "id": "20251112_0000552",
+  "properties": {
+    "source_id": "1897822",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-21T11:58:01.845301Z",
+    "time": "2025-11-12T15:29:56.96Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8462,
+    "lon": 32.6308,
+    "depth": 25.9,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 1.9,
+    "magtype": "ml",
+    "unid": "20251112_0000552"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.6392,
+      34.8157,
+      -23.5
+    ]
+  },
+  "id": "20251112_0000306",
+  "properties": {
+    "source_id": "1897786",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-14T11:10:46.295792Z",
+    "time": "2025-11-12T15:19:41.4Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8157,
+    "lon": 32.6392,
+    "depth": 23.5,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 2.2,
+    "magtype": "ml",
+    "unid": "20251112_0000306"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.6297,
+      34.8038,
+      -21.1
+    ]
+  },
+  "id": "20251112_0000551",
+  "properties": {
+    "source_id": "1897814",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-21T11:37:23.145903Z",
+    "time": "2025-11-12T15:14:27.9Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8038,
+    "lon": 32.6297,
+    "depth": 21.1,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 1.9,
+    "magtype": "ml",
+    "unid": "20251112_0000551"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.3164,
+      34.7406,
+      -7.6
+    ]
+  },
+  "id": "20251112_0000301",
+  "properties": {
+    "source_id": "1897780",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-12T15:27:02.281802Z",
+    "time": "2025-11-12T15:08:30.0Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.7406,
+    "lon": 32.3164,
+    "depth": 7.6,
+    "evtype": "ke",
+    "auth": "AFAD",
+    "mag": 2.5,
+    "magtype": "ml",
+    "unid": "20251112_0000301"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.6247,
+      34.8250,
+      -26.3
+    ]
+  },
+  "id": "20251112_0000300",
+  "properties": {
+    "source_id": "1897779",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-14T11:04:27.938957Z",
+    "time": "2025-11-12T15:07:22.02Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8250,
+    "lon": 32.6247,
+    "depth": 26.3,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 2.7,
+    "magtype": "ml",
+    "unid": "20251112_0000300"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.6217,
+      34.8003,
+      -24.7
+    ]
+  },
+  "id": "20251112_0000299",
+  "properties": {
+    "source_id": "1897777",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-21T11:21:01.734818Z",
+    "time": "2025-11-12T15:03:37.68Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8003,
+    "lon": 32.6217,
+    "depth": 24.7,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 2.5,
+    "magtype": "ml",
+    "unid": "20251112_0000299"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.5482,
+      34.8764,
+      -10.7
+    ]
+  },
+  "id": "20251112_0000298",
+  "properties": {
+    "source_id": "1897776",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-12T16:12:51.022153Z",
+    "time": "2025-11-12T15:00:43.97Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8764,
+    "lon": 32.5482,
+    "depth": 10.7,
+    "evtype": "ke",
+    "auth": "EMSC",
+    "mag": 2.7,
+    "magtype": "ml",
+    "unid": "20251112_0000298"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.6170,
+      34.8158,
+      -21.2
+    ]
+  },
+  "id": "20251112_0000290",
+  "properties": {
+    "source_id": "1897767",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-13T08:09:13.135075Z",
+    "time": "2025-11-12T14:58:00.33Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8158,
+    "lon": 32.6170,
+    "depth": 21.2,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 2.8,
+    "magtype": "ml",
+    "unid": "20251112_0000290"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.6207,
+      34.8342,
+      -23.0
+    ]
+  },
+  "id": "20251112_0000550",
+  "properties": {
+    "source_id": "1897897",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-21T10:08:37.76372Z",
+    "time": "2025-11-12T14:53:21.07Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8342,
+    "lon": 32.6207,
+    "depth": 23.0,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 2.1,
+    "magtype": "ml",
+    "unid": "20251112_0000550"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.5231,
+      34.9427,
+      -2.3
+    ]
+  },
+  "id": "20251112_0000287",
+  "properties": {
+    "source_id": "1897762",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-12T18:11:41.026031Z",
+    "time": "2025-11-12T14:51:35.01Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.9427,
+    "lon": 32.5231,
+    "depth": 2.3,
+    "evtype": "ke",
+    "auth": "EMSC",
+    "mag": 2.5,
+    "magtype": "ml",
+    "unid": "20251112_0000287"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.6042,
+      34.8382,
+      -23.1
+    ]
+  },
+  "id": "20251112_0000549",
+  "properties": {
+    "source_id": "1897894",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-20T12:24:27.933358Z",
+    "time": "2025-11-12T14:50:32.97Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8382,
+    "lon": 32.6042,
+    "depth": 23.1,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 1.9,
+    "magtype": "ml",
+    "unid": "20251112_0000549"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.6128,
+      34.8297,
+      -20.5
+    ]
+  },
+  "id": "20251112_0000307",
+  "properties": {
+    "source_id": "1897766",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-13T07:20:50.108724Z",
+    "time": "2025-11-12T14:42:41.74Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8297,
+    "lon": 32.6128,
+    "depth": 20.5,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 3.7,
+    "magtype": "ml",
+    "unid": "20251112_0000307"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.6177,
+      34.8287,
+      -24.4
+    ]
+  },
+  "id": "20251112_0000303",
+  "properties": {
+    "source_id": "1897782",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-13T06:53:26.84429Z",
+    "time": "2025-11-12T14:41:02.37Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8287,
+    "lon": 32.6177,
+    "depth": 24.4,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 3.7,
+    "magtype": "ml",
+    "unid": "20251112_0000303"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.5790,
+      34.8488,
+      -21.3
+    ]
+  },
+  "id": "20251112_0000295",
+  "properties": {
+    "source_id": "1897773",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-13T07:37:38.130123Z",
+    "time": "2025-11-12T14:39:50.17Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8488,
+    "lon": 32.5790,
+    "depth": 21.3,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 3.2,
+    "magtype": "ml",
+    "unid": "20251112_0000295"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.5432,
+      34.7044,
+      -7.1
+    ]
+  },
+  "id": "20251112_0000277",
+  "properties": {
+    "source_id": "1897749",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-12T15:40:41.245103Z",
+    "time": "2025-11-12T14:37:45.2Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.7044,
+    "lon": 32.5432,
+    "depth": 7.1,
+    "evtype": "ke",
+    "auth": "EMSC",
+    "mag": 3.7,
+    "magtype": "ml",
+    "unid": "20251112_0000277"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.6275,
+      34.8288,
+      -24.3
+    ]
+  },
+  "id": "20251112_0000546",
+  "properties": {
+    "source_id": "1897778",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-20T10:15:21.989109Z",
+    "time": "2025-11-12T14:34:09.12Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8288,
+    "lon": 32.6275,
+    "depth": 24.3,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 2.6,
+    "magtype": "ml",
+    "unid": "20251112_0000546"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.5349,
+      34.7121,
+      -6.2
+    ]
+  },
+  "id": "20251112_0000280",
+  "properties": {
+    "source_id": "1897752",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-12T15:40:24.102765Z",
+    "time": "2025-11-12T14:30:16.11Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.7121,
+    "lon": 32.5349,
+    "depth": 6.2,
+    "evtype": "ke",
+    "auth": "EMSC",
+    "mag": 3.6,
+    "magtype": "ml",
+    "unid": "20251112_0000280"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.4592,
+      35.0254,
+      -10.0
+    ]
+  },
+  "id": "20251112_0000582",
+  "properties": {
+    "source_id": "1897753",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-12-12T11:11:20.739145Z",
+    "time": "2025-11-12T14:26:11.542Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 35.0254,
+    "lon": 32.4592,
+    "depth": 10.0,
+    "evtype": "ke",
+    "auth": "NEIC",
+    "mag": 4.6,
+    "magtype": "mb",
+    "unid": "20251112_0000582"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.4881,
+      34.8968,
+      -9.2
+    ]
+  },
+  "id": "20251112_0000274",
+  "properties": {
+    "source_id": "1897742",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-12T14:53:07.177962Z",
+    "time": "2025-11-12T14:23:31.64Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8968,
+    "lon": 32.4881,
+    "depth": 9.2,
+    "evtype": "ke",
+    "auth": "EMSC",
+    "mag": 5.3,
+    "magtype": "mw",
+    "unid": "20251112_0000274"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.6083,
+      34.8468,
+      -18.9
+    ]
+  },
+  "id": "20251112_0000548",
+  "properties": {
+    "source_id": "1897802",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-20T12:08:25.544074Z",
+    "time": "2025-11-12T14:21:19.44Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8468,
+    "lon": 32.6083,
+    "depth": 18.9,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 2.1,
+    "magtype": "ml",
+    "unid": "20251112_0000548"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.6105,
+      34.8607,
+      -24.8
+    ]
+  },
+  "id": "20251112_0000545",
+  "properties": {
+    "source_id": "1897793",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-20T09:57:33.882214Z",
+    "time": "2025-11-12T14:17:17.31Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8607,
+    "lon": 32.6105,
+    "depth": 24.8,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 2.3,
+    "magtype": "ml",
+    "unid": "20251112_0000545"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.6012,
+      34.8615,
+      -23.8
+    ]
+  },
+  "id": "20251112_0000543",
+  "properties": {
+    "source_id": "1897788",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-20T09:46:14.047931Z",
+    "time": "2025-11-12T14:16:06.31Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8615,
+    "lon": 32.6012,
+    "depth": 23.8,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 2.1,
+    "magtype": "ml",
+    "unid": "20251112_0000543"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.6030,
+      34.8502,
+      -22.6
+    ]
+  },
+  "id": "20251112_0000547",
+  "properties": {
+    "source_id": "1902216",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-20T11:44:14.920465Z",
+    "time": "2025-11-12T13:24:50.16Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8502,
+    "lon": 32.6030,
+    "depth": 22.6,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 1.3,
+    "magtype": "ml",
+    "unid": "20251112_0000547"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.5490,
+      34.8783,
+      -20.3
+    ]
+  },
+  "id": "20251112_0000544",
+  "properties": {
+    "source_id": "1902145",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-20T09:48:14.946725Z",
+    "time": "2025-11-12T13:21:24.36Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8783,
+    "lon": 32.5490,
+    "depth": 20.3,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 1.1,
+    "magtype": "ml",
+    "unid": "20251112_0000544"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.6048,
+      34.8432,
+      -25.6
+    ]
+  },
+  "id": "20251112_0000542",
+  "properties": {
+    "source_id": "1902140",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-20T09:38:30.836315Z",
+    "time": "2025-11-12T13:07:49.56Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8432,
+    "lon": 32.6048,
+    "depth": 25.6,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 1.4,
+    "magtype": "ml",
+    "unid": "20251112_0000542"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.5987,
+      34.8483,
+      -26.6
+    ]
+  },
+  "id": "20251112_0000539",
+  "properties": {
+    "source_id": "1902121",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-20T08:25:26.69241Z",
+    "time": "2025-11-12T12:57:48.62Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8483,
+    "lon": 32.5987,
+    "depth": 26.6,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 1.4,
+    "magtype": "ml",
+    "unid": "20251112_0000539"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.5960,
+      34.8915,
+      -23.3
+    ]
+  },
+  "id": "20251112_0000541",
+  "properties": {
+    "source_id": "1902136",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-20T09:27:41.377274Z",
+    "time": "2025-11-12T12:35:55.35Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8915,
+    "lon": 32.5960,
+    "depth": 23.3,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 1.0,
+    "magtype": "ml",
+    "unid": "20251112_0000541"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.6025,
+      34.8957,
+      -22.3
+    ]
+  },
+  "id": "20251112_0000540",
+  "properties": {
+    "source_id": "1902127",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-20T08:52:42.240675Z",
+    "time": "2025-11-12T12:20:15.91Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8957,
+    "lon": 32.6025,
+    "depth": 22.3,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 1.0,
+    "magtype": "ml",
+    "unid": "20251112_0000540"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.5160,
+      34.8598,
+      -26.6
+    ]
+  },
+  "id": "20251112_0000537",
+  "properties": {
+    "source_id": "1897699",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-18T13:44:14.076496Z",
+    "time": "2025-11-12T12:15:10.48Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8598,
+    "lon": 32.5160,
+    "depth": 26.6,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 1.9,
+    "magtype": "ml",
+    "unid": "20251112_0000537"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.6080,
+      34.8852,
+      -22.2
+    ]
+  },
+  "id": "20251112_0000536",
+  "properties": {
+    "source_id": "1901176",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-18T13:27:26.620306Z",
+    "time": "2025-11-12T11:58:45.83Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8852,
+    "lon": 32.6080,
+    "depth": 22.2,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 1.1,
+    "magtype": "ml",
+    "unid": "20251112_0000536"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.6040,
+      34.8597,
+      -26.4
+    ]
+  },
+  "id": "20251112_0000535",
+  "properties": {
+    "source_id": "1901139",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-18T11:29:08.215079Z",
+    "time": "2025-11-12T11:29:18.12Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8597,
+    "lon": 32.6040,
+    "depth": 26.4,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 1.1,
+    "magtype": "ml",
+    "unid": "20251112_0000535"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.5937,
+      34.8403,
+      -25.6
+    ]
+  },
+  "id": "20251112_0000534",
+  "properties": {
+    "source_id": "1897694",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-18T11:19:38.776857Z",
+    "time": "2025-11-12T11:27:09.23Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8403,
+    "lon": 32.5937,
+    "depth": 25.6,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 1.2,
+    "magtype": "ml",
+    "unid": "20251112_0000534"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.6297,
+      34.8555,
+      -28.7
+    ]
+  },
+  "id": "20251112_0000253",
+  "properties": {
+    "source_id": "1897691",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-12T13:30:30.924552Z",
+    "time": "2025-11-12T11:20:57.17Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8555,
+    "lon": 32.6297,
+    "depth": 28.7,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 1.4,
+    "magtype": "ml",
+    "unid": "20251112_0000253"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.6038,
+      34.8105,
+      -17.4
+    ]
+  },
+  "id": "20251112_0000250",
+  "properties": {
+    "source_id": "1897714",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-12T13:15:18.937598Z",
+    "time": "2025-11-12T11:10:57.66Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8105,
+    "lon": 32.6038,
+    "depth": 17.4,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 1.3,
+    "magtype": "ml",
+    "unid": "20251112_0000250"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.6002,
+      34.8728,
+      -21.6
+    ]
+  },
+  "id": "20251112_0000245",
+  "properties": {
+    "source_id": "1897667",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-12T13:05:29.23523Z",
+    "time": "2025-11-12T10:53:45.39Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8728,
+    "lon": 32.6002,
+    "depth": 21.6,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 1.6,
+    "magtype": "ml",
+    "unid": "20251112_0000245"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.6062,
+      34.8535,
+      -22.0
+    ]
+  },
+  "id": "20251112_0000240",
+  "properties": {
+    "source_id": "1897663",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-12T12:53:58.538995Z",
+    "time": "2025-11-12T10:49:42.03Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8535,
+    "lon": 32.6062,
+    "depth": 22.0,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 2.6,
+    "magtype": "ml",
+    "unid": "20251112_0000240"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.5937,
+      34.8857,
+      -23.0
+    ]
+  },
+  "id": "20251112_0000533",
+  "properties": {
+    "source_id": "1900646",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-17T12:42:21.517046Z",
+    "time": "2025-11-12T10:48:16.57Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8857,
+    "lon": 32.5937,
+    "depth": 23.0,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 1.6,
+    "magtype": "ml",
+    "unid": "20251112_0000533"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.6023,
+      34.8993,
+      -22.3
+    ]
+  },
+  "id": "20251112_0000532",
+  "properties": {
+    "source_id": "1897673",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-17T12:26:17.573792Z",
+    "time": "2025-11-12T10:46:28.35Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8993,
+    "lon": 32.6023,
+    "depth": 22.3,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 1.7,
+    "magtype": "ml",
+    "unid": "20251112_0000532"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.6120,
+      34.8747,
+      -19.9
+    ]
+  },
+  "id": "20251112_0000237",
+  "properties": {
+    "source_id": "1897698",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-12T12:41:32.632924Z",
+    "time": "2025-11-12T10:37:52.84Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8747,
+    "lon": 32.6120,
+    "depth": 19.9,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 1.6,
+    "magtype": "ml",
+    "unid": "20251112_0000237"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.6147,
+      34.9003,
+      -23.0
+    ]
+  },
+  "id": "20251112_0000231",
+  "properties": {
+    "source_id": "1897647",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-17T12:14:35.946658Z",
+    "time": "2025-11-12T10:29:57.79Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.9003,
+    "lon": 32.6147,
+    "depth": 23.0,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 2.3,
+    "magtype": "ml",
+    "unid": "20251112_0000231"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.5852,
+      34.8833,
+      -18.1
+    ]
+  },
+  "id": "20251112_0000198",
+  "properties": {
+    "source_id": "1897643",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-12T13:30:32.855154Z",
+    "time": "2025-11-12T10:08:04.11Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8833,
+    "lon": 32.5852,
+    "depth": 18.1,
+    "evtype": "ke",
+    "auth": "EMSC",
+    "mag": 2.6,
+    "magtype": "ml",
+    "unid": "20251112_0000198"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.5579,
+      34.8799,
+      -15.4
+    ]
+  },
+  "id": "20251112_0000196",
+  "properties": {
+    "source_id": "1897639",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-12T13:30:16.573939Z",
+    "time": "2025-11-12T10:04:05.66Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8799,
+    "lon": 32.5579,
+    "depth": 15.4,
+    "evtype": "ke",
+    "auth": "EMSC",
+    "mag": 3.1,
+    "magtype": "ml",
+    "unid": "20251112_0000196"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.4628,
+      34.7607,
+      -17.1
+    ]
+  },
+  "id": "20251112_0000192",
+  "properties": {
+    "source_id": "1897637",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-12T10:43:19.328715Z",
+    "time": "2025-11-12T09:59:10.21Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.7607,
+    "lon": 32.4628,
+    "depth": 17.1,
+    "evtype": "ke",
+    "auth": "EMSC",
+    "mag": 4.1,
+    "magtype": "ml",
+    "unid": "20251112_0000192"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.6124,
+      34.9431,
+      -19.0
+    ]
+  },
+  "id": "20251112_0000191",
+  "properties": {
+    "source_id": "1897634",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-12T12:23:35.418608Z",
+    "time": "2025-11-12T09:55:23.99Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.9431,
+    "lon": 32.6124,
+    "depth": 19.0,
+    "evtype": "ke",
+    "auth": "EMSC",
+    "mag": 2.1,
+    "magtype": "ml",
+    "unid": "20251112_0000191"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.5962,
+      34.8615,
+      -17.5
+    ]
+  },
+  "id": "20251112_0000222",
+  "properties": {
+    "source_id": "1897636",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-12T11:57:21.311506Z",
+    "time": "2025-11-12T09:50:06.68Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8615,
+    "lon": 32.5962,
+    "depth": 17.5,
+    "evtype": "ke",
+    "auth": "GSD",
+    "mag": 2.8,
+    "magtype": "ml",
+    "unid": "20251112_0000222"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.5665,
+      34.8745,
+      -18.5
+    ]
+  },
+  "id": "20251112_0000188",
+  "properties": {
+    "source_id": "1897631",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-12T09:58:38.082184Z",
+    "time": "2025-11-12T09:48:05.1Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8745,
+    "lon": 32.5665,
+    "depth": 18.5,
+    "evtype": "ke",
+    "auth": "KOERI",
+    "mag": 2.3,
+    "magtype": "ml",
+    "unid": "20251112_0000188"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.4919,
+      34.7731,
+      -12.4
+    ]
+  },
+  "id": "20251112_0000185",
+  "properties": {
+    "source_id": "1897626",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-12T10:42:45.302142Z",
+    "time": "2025-11-12T09:41:51.98Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.7731,
+    "lon": 32.4919,
+    "depth": 12.4,
+    "evtype": "ke",
+    "auth": "EMSC",
+    "mag": 4.7,
+    "magtype": "mb",
+    "unid": "20251112_0000185"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.5562,
+      34.8965,
+      -16.4
+    ]
+  },
+  "id": "20251112_0000183",
+  "properties": {
+    "source_id": "1897625",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-12T10:42:25.109416Z",
+    "time": "2025-11-12T09:36:22.65Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8965,
+    "lon": 32.5562,
+    "depth": 16.4,
+    "evtype": "ke",
+    "auth": "EMSC",
+    "mag": 4.1,
+    "magtype": "ml",
+    "unid": "20251112_0000183"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.4837,
+      34.6530,
+      -15.3
+    ]
+  },
+  "id": "20251112_0000182",
+  "properties": {
+    "source_id": "1897624",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-12T09:45:51.099676Z",
+    "time": "2025-11-12T09:35:06.5Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.6530,
+    "lon": 32.4837,
+    "depth": 15.3,
+    "evtype": "ke",
+    "auth": "KOERI",
+    "mag": 3.5,
+    "magtype": "ml",
+    "unid": "20251112_0000182"
+  }
+},{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      32.4658,
+      34.8039,
+      -10.2
+    ]
+  },
+  "id": "20251112_0000180",
+  "properties": {
+    "source_id": "1897620",
+    "source_catalog": "EMSC-RTS",
+    "lastupdate": "2025-11-12T13:38:19.776442Z",
+    "time": "2025-11-12T09:31:25.66Z",
+    "flynn_region": "CYPRUS REGION",
+    "lat": 34.8039,
+    "lon": 32.4658,
+    "depth": 10.2,
+    "evtype": "ke",
+    "auth": "EMSC",
+    "mag": 5.2,
+    "magtype": "mw",
+    "unid": "20251112_0000180"
+  }
+}]}

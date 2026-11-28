@@ -72,11 +72,18 @@ async def lifespan(app: FastAPI):
     if memory.recorder is not None:
         memory.recorder.start()
     agent.watcher.start()
+    # The measuring stations: the Met file every 10 minutes, the EEA files every 20 (each comes
+    # down again only once it has changed), recorded in the memory for the clock.
+    agent.environment.measured.start()
+    agent.grid.start()  # the island's grid, read as the operator publishes it
+    if os.environ.get("CHATBOT_HAZARDS", "1").strip().lower() not in ("0", "false", "no", "off"):
+        agent.hazards.start()  # earthquakes, warnings and fire danger (CHATBOT_HAZARDS=0: from the memory only)
     if settings.collect:
         start_collector(memory)
     log.info("twin's memory: %s (recording %s, full collection %s)", memory.path,
              "on" if memory.recorder else "off", "on" if settings.collect else "off")
     threading.Thread(target=_warm_up, args=(agent,), daemon=True).start()
+    threading.Thread(target=agent.streets.warm_up, daemon=True, name="streets-warm-up").start()
     # Overture's places: a newer release is looked for at most monthly (a minute or two to cut).
     threading.Thread(target=overture.watch, daemon=True).start()
     # The registers refresh daily; the first build (parcels, then 3D heights) takes ~2 minutes.
@@ -84,6 +91,9 @@ async def lifespan(app: FastAPI):
     yield
     app.state.city_tiles.stop()
     agent.watcher.stop()
+    agent.environment.measured.stop()
+    agent.grid.stop()
+    agent.hazards.stop()
     if memory.recorder is not None:
         memory.recorder.stop()
 

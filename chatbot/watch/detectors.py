@@ -26,6 +26,11 @@ Detectors:
   minutes (its newest measurement is old), until a fresh one comes. Like a device's silence it
   counts only while someone is looking: the feed must have been read in the last 15 minutes,
   else the detector says nothing either way.
+- road_closure: a road closed in Greater Nicosia that was new when the twin first saw it (a
+  closure reported weeks before is a long closure, not news, so the first look at the feeds
+  never floods the inbox), until it leaves its feed.
+- road_jam: a standstill or heavy jam, or an accident, reported in Greater Nicosia (Waze
+  drivers, Waze's jam lines, the Public Works Department), until it leaves its feed.
 """
 
 from __future__ import annotations
@@ -35,6 +40,7 @@ import logging
 import re
 import statistics
 from collections import defaultdict
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
@@ -45,6 +51,7 @@ from collector.interpret import Interpretation
 from chatbot import history
 from chatbot.city import TYPE_TO_KIND, CityData, Device, DeviceState
 from chatbot.memory import Memory, Unavailable
+from chatbot.mobility.reports import COVERAGE_TYPE, ROW_COLUMNS, SOURCE_NAMES, RoadReport
 from chatbot.settings import TIMEZONE
 
 log = logging.getLogger(__name__)
@@ -213,11 +220,16 @@ class Observed:
     covered: dict[str, list[tuple[int, int]]]  # device -> ms stretches the memory covers
     events: list[tuple[int, str | None, str]] = field(default_factory=list)  # (ms, device, text)
     alarms: list[dict] = field(default_factory=list)  # active (or recently seen) city alarms
+    # What the detectors other modules register read for themselves (`register`), by name:
+    # "hazards" -> the earthquakes, warnings and fire danger days of the window.
+    more: dict[str, object] = field(default_factory=dict)
     live: dict[str, Interpretation] = field(default_factory=dict)  # device -> live verdict
     notes: list[str] = field(default_factory=list)
     # Feeds the twin reads that aren't devices, as their last read left them (never fetched for
     # this): source id -> Roads.health() (read_ok_at, error, newest, published).
     feeds: dict[str, dict] = field(default_factory=dict)
+    road_reports: list[RoadReport] = field(default_factory=list)  # seen in the window
+    road_watched: dict[str, datetime] = field(default_factory=dict)  # feed -> its last good read
 
     def of_type(self, device_type: str) -> list[Place]:
         return [p for p in self.devices.values() if p.type == device_type]
@@ -284,6 +296,7 @@ def observe(memory: Memory | None, city: CityData | None, now: datetime, *,
                       epoch_ms(end_ts), epoch_ms(clear_ts), epoch_ms(last_seen)
                FROM alarms WHERE status LIKE 'ACTIVE%' AND last_seen >= ?""",
             [now - timedelta(hours=1)]).fetchall()
+        reports, watched = _road_reports(con, start)
     for recs in readings.values():
         recs.sort()
     covered: dict[str, list[tuple[int, int]]] = {}
@@ -296,10 +309,13 @@ def observe(memory: Memory | None, city: CityData | None, now: datetime, *,
                    [dict(zip(("id", "device", "device_type", "type", "severity", "status",
                               "start_ms", "end_ms", "clear_ms", "last_seen_ms"), a))
                     for a in alarms])
+    obs.road_reports, obs.road_watched = reports, watched
     if city is not None:
         for device_type in ("Lighting", "Parking", "Wastebin", "smartsense"):
             for name, state in city.cached_states(device_type).items():
                 obs.live[name] = state.interp
+    for read in OBSERVERS:  # what the registered detectors need from the memory
+        read(memory, obs)
     return obs
 
 
@@ -756,12 +772,107 @@ def _guess_type(device: str) -> str:
     return "?"
 
 
+# -- road reports ----------------------------------------------------------------------------------
+
+ROAD_TYPE = "road_report"  # device_type (and kind) of a road report member
+NEW_CLOSURE_WITHIN = timedelta(hours=6)  # reported this soon before the twin first saw it: news
+NEW_REPORT_WITHIN = timedelta(hours=2)
+LEFT_FEED_AFTER = timedelta(minutes=10)  # not in a read this long after its last sighting: gone
+UNWATCHED_AFTER = timedelta(minutes=30)  # no read of its feed since: a jam is taken as over
+LOUD_JAMS = {"JAM_STAND_STILL_TRAFFIC", "JAM_HEAVY_TRAFFIC"}
+
+
+def _road_reports(con, since: datetime) -> tuple[list[RoadReport], dict[str, datetime]]:
+    """The closures, jams and accidents the memory saw in the window, and when each feed was
+    last read (its coverage). A memory from before road reports has none."""
+    import duckdb  # noqa: PLC0415
+
+    try:
+        rows = con.execute(
+            f"""SELECT {ROW_COLUMNS} FROM road_reports
+                WHERE last_seen >= ? AND kind IN ('closure', 'jam', 'accident')""", [since]).fetchall()
+        watched = con.execute(
+            """SELECT device, max(end_ts) FROM coverage WHERE device_type = ? GROUP BY 1""",
+            [COVERAGE_TYPE]).fetchall()
+    except duckdb.CatalogException:
+        return [], {}
+    return [RoadReport.from_row(r) for r in rows], {d: t for d, t in watched if t is not None}
+
+
+def _report_end(obs: Observed, r: RoadReport, keep_unwatched: bool) -> tuple[datetime | None, str | None]:
+    """When a report stopped being reported: it left its feed while the twin read it, or (for
+    short-lived jams) the twin stopped reading the feed. (None, None) while it is still there."""
+    last = r.last_seen or r.first_seen
+    read = obs.road_watched.get(r.source)
+    if last is None:
+        return None, None
+    if read is not None and read - last > LEFT_FEED_AFTER:
+        return last, "no longer in the feed"
+    if not keep_unwatched and obs.now - last > UNWATCHED_AFTER:
+        return last, "the twin stopped reading the feed after this"
+    return None, None
+
+
+def _road_detection(obs: Observed, r: RoadReport, rule: str, severity: str, what: str,
+                    keep_unwatched: bool) -> Detection:
+    who = SOURCE_NAMES.get(r.source, r.source)
+    start = r.since or r.first_seen or obs.now
+    end, why = _report_end(obs, r, keep_unwatched)
+    ev = [Evidence(start, f"{who}: {r.label}" + (f" on {r.street}" if r.street else ""), r.id, "event")]
+    if r.first_seen and abs((r.first_seen - start).total_seconds()) > 120:
+        ev.append(Evidence(r.first_seen, "first seen by the twin", r.id))
+    if end is not None and why:
+        ev.append(Evidence(end, why, r.id))
+    return Detection(rule, "roads", r.id, ROAD_TYPE, start, end, severity, what, ev, source="city",
+                     label=f"{r.label}" + (f" on {r.street}" if r.street else ""), street=r.street,
+                     lat=r.lat, lon=r.lon, extra={"kind": r.kind, "feed": r.source})
+
+
+def road_closures(obs: Observed) -> list[Detection]:
+    """Closures that were news when the twin first saw them, while they stay in their feed."""
+    out = []
+    for r in obs.road_reports:
+        if r.kind != "closure" or r.status(obs.now) != "active":
+            continue
+        start = r.since or r.first_seen
+        if start is None or (r.first_seen and r.first_seen - start > NEW_CLOSURE_WITHIN):
+            continue  # a long closure the twin met already old
+        pts = r.details.get("points") or 1
+        what = "road closed" + (f" ({pts} points along it)" if pts > 1 else "")
+        out.append(_road_detection(obs, r, "road_closure", "medium", what, keep_unwatched=True))
+    return out
+
+
+def road_jams(obs: Observed) -> list[Detection]:
+    """Standstill and heavy jams, and accidents, reported while the twin read their feed."""
+    out = []
+    for r in obs.road_reports:
+        if r.kind not in ("jam", "accident") or r.status(obs.now) != "active":
+            continue
+        start = r.since or r.first_seen
+        if start is None or (r.first_seen and r.first_seen - start > NEW_REPORT_WITHIN):
+            continue
+        if r.kind == "jam":
+            level = r.details.get("level") or 0
+            if r.details.get("subtype") not in LOUD_JAMS and level < 3:
+                continue
+            standstill = r.details.get("subtype") == "JAM_STAND_STILL_TRAFFIC" or level >= 4
+            severity = "medium" if standstill else "low"
+            what = r.label.lower() + " reported"
+        else:
+            severity = "high"
+            what = r.label.lower() + " reported"
+        out.append(_road_detection(obs, r, "road_jam", severity, what, keep_unwatched=False))
+    return out
+
+
 # Each detector and the rule its detections carry.
 DETECTORS = ((lamps_dark, "lamp_dark"), (lamps_by_day, "lamp_day"), (lamps_power, "lamp_power"),
              (parking_stuck, "parking_stuck"), (bins_jump, "bin_jump"),
              (bins_silent, "bin_silent"), (air_silent, "air_silent"),
              (city_events, "city_event"), (city_alarms, "city_alarm"),
-             (road_feed_stalled, "road_feed_stalled"))
+             (road_feed_stalled, "road_feed_stalled"),
+             (road_closures, "road_closure"), (road_jams, "road_jam"))
 RULES = tuple(rule for _, rule in DETECTORS)
 
 
@@ -785,3 +896,21 @@ def detect(obs: Observed) -> tuple[list[Detection], set[str]]:
 
 def member_json(members: list[dict]) -> str:
     return json.dumps(members, ensure_ascii=False, separators=(",", ":"))
+
+
+# -- detectors other modules add ------------------------------------------------------------------
+# A feature with detectors of its own (chatbot/watch/hazards.py) registers them here rather than
+# editing DETECTORS: `observer(memory, obs)` reads what they need into `obs.more` at the end of
+# observe(), and each detector is then a plain function of `obs` like the rest.
+
+OBSERVERS: list[Callable[[Memory, Observed], None]] = []
+
+
+def register(fn: Callable[[Observed], list[Detection] | None], rule: str,
+             observer: Callable[[Memory, Observed], None] | None = None) -> None:
+    global DETECTORS, RULES
+    if rule not in RULES:
+        DETECTORS = (*DETECTORS, (fn, rule))
+        RULES = tuple(r for _, r in DETECTORS)
+    if observer is not None and observer not in OBSERVERS:
+        OBSERVERS.append(observer)

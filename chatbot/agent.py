@@ -22,14 +22,18 @@ from zoneinfo import ZoneInfo
 
 import anthropic
 
+from chatbot import history
 from chatbot.city import CityData
 from chatbot.dls import DLS
+from chatbot.energy import Grid
 from chatbot.entities import Entities
 from chatbot.environment import spot as _spot  # noqa: F401 - registers the spot kind
+from chatbot.environment import station_kinds as _station_kinds  # noqa: F401 - the measuring stations
 from chatbot.environment.service import Environment
 from chatbot.eoa import Registry
 from chatbot.followups import TagFilter, merge_actions
 from chatbot.geo import Places
+from chatbot.hazards import Hazards
 from chatbot.memory import Memory
 from chatbot.mobility import Mobility
 from chatbot.moments import Moments
@@ -39,6 +43,8 @@ from chatbot.scenarios import Lab, ScenarioContext
 from chatbot.scenarios.lab import default_cache_dir
 from chatbot.settings import TIMEZONE, Settings
 from chatbot.store import SessionStore
+from chatbot.streets import Streets
+from chatbot.streets import entities as _street_kinds  # noqa: F401 - registers the street kinds
 from chatbot.lidar import Flight
 from chatbot.terrain import Terrain
 from chatbot.tools import TOOL_DEFS, WEB_SEARCH, ToolContext, run_tool
@@ -184,13 +190,26 @@ class Agent:
         self.entities.moments = self.moments  # "What's here?" reads parking and lamps from it
         self.watcher = Watcher(city, memory)  # alerts, incidents and watches
         self.watcher.feeds["road_speeds"] = self.mobility.roads.health  # a stalled road feed
+        # Earthquakes, weather warnings and fire danger: read, recorded, and raised by the watch.
+        self.hazards = Hazards(settings, memory, now=city.now, listening=lambda: self.watcher.hub.listening)
+        self.hazards.on_change.append(lambda: self.watcher.fresh_readings("hazards"))
+        self.watcher.hazards = self.hazards  # tools and the inspector reach it through the watch
         self.entities.watcher = self.watcher  # incidents open by their id (INC-12)
+        if getattr(self.mobility, "reports", None) is not None:  # closures and jams for the watch
+            self.watcher.readers.append(self.mobility.reports.refresh)
         # Sun and shade, air and noise surfaces, the wind and the rain radar.
         self.environment = Environment(settings, city, self.moments, dls, memory)
         self.entities.environment = self.environment
         self.terrain = Terrain(settings)  # the ground's height, for views and lines of sight
         self.lidar = Flight()  # buildings as the 2019 LiDAR flight measured them
         self.entities.lidar = self.lidar
+        # The street rules: limits, slow zones, signals, crossings, cycleways, bus lanes, cameras.
+        self.streets = Streets(settings, self.mobility, places)
+        self.entities.streets = self.streets
+        # The island's grid: demand, wind, solar and carbon every 15 minutes (chatbot/energy).
+        self.grid = Grid(settings, memory)
+        self.entities.grid = self.grid
+        history.register_factor("grid_co2", self.grid.carbon_at)  # the lamps' CO2
         # The scenario lab: runs what-ifs on the memory and keeps the runs (chatbot/scenarios).
         self.scenarios = Lab(ScenarioContext(settings, memory, city, router, places, registers,
                                              self.mobility, cache_dir=default_cache_dir()))
@@ -242,7 +261,8 @@ class Agent:
                                mobility=self.mobility, web_places=self.web_places,
                                watcher=self.watcher, environment=self.environment,
                                terrain=self.terrain,
-                               scenarios=self.scenarios, lidar=self.lidar)
+                               scenarios=self.scenarios, lidar=self.lidar,
+                               streets=self.streets)
         conv.messages.append({"role": "user", "content": [
             {"type": "text", "text": format_context(context, self.city.now()) + text}]})
 

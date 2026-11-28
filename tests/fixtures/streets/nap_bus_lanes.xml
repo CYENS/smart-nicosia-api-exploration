@@ -1,0 +1,1621 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<d2LogicalModel xmlns="https://datex2.eu/schema/3/exchangeInformation" xmlns:xsi="https://www.w3.org/2001/XMLSchema-instance" xmlns:location="https://datex2.eu/schema/3/locationReferencing" xmlns:pt="https://datex2.eu/schema/3/publicTransport" xmlns:linear="https://datex2.eu/schema/3/linear" xsi:schemaLocation="https://datex2.eu/schema/3/exchangeInformation/DATEXII_3_ExchangeInformation.xsd">
+  <ns0:exchange xmlns:ns0="https://datex2.eu/schema/3/exchange">
+    <ns0:supplierIdentification>
+      <ns1:country xmlns:ns1="https://datex2.eu/schema/3/common">CY</ns1:country>
+      <ns2:nationalIdentifier xmlns:ns2="https://datex2.eu/schema/3/common">Ministry of Transport, Communications and Works</ns2:nationalIdentifier>
+    </ns0:supplierIdentification>
+  </ns0:exchange>
+  <ns3:payloadPublication xmlns:ns3="https://datex2.eu/schema/3/publication" xsi:type="GenericPublication">
+    <ns3:publicationTime>2026-11-26T23:30:15.203670+02:00</ns3:publicationTime>
+    <ns3:genericPublicationName>Bus Lane Information</ns3:genericPublicationName>
+    <ns3:genericPublicationExtension>
+      <ns3:genericPublicationExtension>
+        <linear:linearElementPublication>
+          <linear:linearElement>
+            <ns4:id xmlns:ns4="https://datex2.eu/schema/3/common">0</ns4:id>
+            <ns5:name xmlns:ns5="https://datex2.eu/schema/3/common">
+              <ns5:value>Leof. Vasileos Georgiou A'- Amathountos (Paraliakos)-Rythmisi me IΤS</ns5:value>
+              <ns5:lang>en</ns5:lang>
+            </ns5:name>
+            <ns6:name xmlns:ns6="https://datex2.eu/schema/3/common">
+              <ns6:value>Λεωφ. Βασιλέως Γεωργίου Α'- Αμαθούντος (Παραλιακός)-Ρύθμιση με ITS</ns6:value>
+              <ns6:lang>el</ns6:lang>
+            </ns6:name>
+            <ns7:status xmlns:ns7="https://datex2.eu/schema/3/common">
+              <ns7:value>Future</ns7:value>
+              <ns7:lang>en</ns7:lang>
+            </ns7:status>
+            <ns8:status xmlns:ns8="https://datex2.eu/schema/3/common">
+              <ns8:value>Μελλοντική</ns8:value>
+              <ns8:lang>el</ns8:lang>
+            </ns8:status>
+            <location:location>
+              <location:linearByCoordinates>
+                <location:polyline>
+                  <location:pointCoordinates>
+                    <ns9:latitude xmlns:ns9="https://datex2.eu/schema/3/common">34.696078</ns9:latitude>
+                    <ns10:longitude xmlns:ns10="https://datex2.eu/schema/3/common">33.08878</ns10:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns11:latitude xmlns:ns11="https://datex2.eu/schema/3/common">34.696312999999996</ns11:latitude>
+                    <ns12:longitude xmlns:ns12="https://datex2.eu/schema/3/common">33.08939</ns12:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns13:latitude xmlns:ns13="https://datex2.eu/schema/3/common">34.69642199999999</ns13:latitude>
+                    <ns14:longitude xmlns:ns14="https://datex2.eu/schema/3/common">33.089875</ns14:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns15:latitude xmlns:ns15="https://datex2.eu/schema/3/common">34.696536</ns15:latitude>
+                    <ns16:longitude xmlns:ns16="https://datex2.eu/schema/3/common">33.090547</ns16:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns17:latitude xmlns:ns17="https://datex2.eu/schema/3/common">34.69664999999999</ns17:latitude>
+                    <ns18:longitude xmlns:ns18="https://datex2.eu/schema/3/common">33.091137</ns18:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns19:latitude xmlns:ns19="https://datex2.eu/schema/3/common">34.696803</ns19:latitude>
+                    <ns20:longitude xmlns:ns20="https://datex2.eu/schema/3/common">33.091559</ns20:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns21:latitude xmlns:ns21="https://datex2.eu/schema/3/common">34.697335</ns21:latitude>
+                    <ns22:longitude xmlns:ns22="https://datex2.eu/schema/3/common">33.092665</ns22:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns23:latitude xmlns:ns23="https://datex2.eu/schema/3/common">34.69769000000001</ns23:latitude>
+                    <ns24:longitude xmlns:ns24="https://datex2.eu/schema/3/common">33.093397</ns24:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns25:latitude xmlns:ns25="https://datex2.eu/schema/3/common">34.697939999999996</ns25:latitude>
+                    <ns26:longitude xmlns:ns26="https://datex2.eu/schema/3/common">33.094022</ns26:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns27:latitude xmlns:ns27="https://datex2.eu/schema/3/common">34.698662999999996</ns27:latitude>
+                    <ns28:longitude xmlns:ns28="https://datex2.eu/schema/3/common">33.096379</ns28:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns29:latitude xmlns:ns29="https://datex2.eu/schema/3/common">34.69904999999999</ns29:latitude>
+                    <ns30:longitude xmlns:ns30="https://datex2.eu/schema/3/common">33.097704</ns30:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns31:latitude xmlns:ns31="https://datex2.eu/schema/3/common">34.69919099999999</ns31:latitude>
+                    <ns32:longitude xmlns:ns32="https://datex2.eu/schema/3/common">33.098373</ns32:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns33:latitude xmlns:ns33="https://datex2.eu/schema/3/common">34.69930699999999</ns33:latitude>
+                    <ns34:longitude xmlns:ns34="https://datex2.eu/schema/3/common">33.099065</ns34:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns35:latitude xmlns:ns35="https://datex2.eu/schema/3/common">34.69949700000001</ns35:latitude>
+                    <ns36:longitude xmlns:ns36="https://datex2.eu/schema/3/common">33.099904</ns36:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns37:latitude xmlns:ns37="https://datex2.eu/schema/3/common">34.699692</ns37:latitude>
+                    <ns38:longitude xmlns:ns38="https://datex2.eu/schema/3/common">33.100521</ns38:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns39:latitude xmlns:ns39="https://datex2.eu/schema/3/common">34.699935999999994</ns39:latitude>
+                    <ns40:longitude xmlns:ns40="https://datex2.eu/schema/3/common">33.101092</ns40:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns41:latitude xmlns:ns41="https://datex2.eu/schema/3/common">34.70026199999999</ns41:latitude>
+                    <ns42:longitude xmlns:ns42="https://datex2.eu/schema/3/common">33.101708</ns42:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns43:latitude xmlns:ns43="https://datex2.eu/schema/3/common">34.700404999999996</ns43:latitude>
+                    <ns44:longitude xmlns:ns44="https://datex2.eu/schema/3/common">33.102032</ns44:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns45:latitude xmlns:ns45="https://datex2.eu/schema/3/common">34.700638999999995</ns45:latitude>
+                    <ns46:longitude xmlns:ns46="https://datex2.eu/schema/3/common">33.102499</ns46:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns47:latitude xmlns:ns47="https://datex2.eu/schema/3/common">34.70089</ns47:latitude>
+                    <ns48:longitude xmlns:ns48="https://datex2.eu/schema/3/common">33.10303</ns48:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns49:latitude xmlns:ns49="https://datex2.eu/schema/3/common">34.701171</ns49:latitude>
+                    <ns50:longitude xmlns:ns50="https://datex2.eu/schema/3/common">33.103602</ns50:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns51:latitude xmlns:ns51="https://datex2.eu/schema/3/common">34.701375000000006</ns51:latitude>
+                    <ns52:longitude xmlns:ns52="https://datex2.eu/schema/3/common">33.10406</ns52:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns53:latitude xmlns:ns53="https://datex2.eu/schema/3/common">34.701614</ns53:latitude>
+                    <ns54:longitude xmlns:ns54="https://datex2.eu/schema/3/common">33.104681</ns54:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns55:latitude xmlns:ns55="https://datex2.eu/schema/3/common">34.702102</ns55:latitude>
+                    <ns56:longitude xmlns:ns56="https://datex2.eu/schema/3/common">33.10593</ns56:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns57:latitude xmlns:ns57="https://datex2.eu/schema/3/common">34.702352</ns57:latitude>
+                    <ns58:longitude xmlns:ns58="https://datex2.eu/schema/3/common">33.106577</ns58:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns59:latitude xmlns:ns59="https://datex2.eu/schema/3/common">34.70277099999999</ns59:latitude>
+                    <ns60:longitude xmlns:ns60="https://datex2.eu/schema/3/common">33.107594</ns60:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns61:latitude xmlns:ns61="https://datex2.eu/schema/3/common">34.70310700000001</ns61:latitude>
+                    <ns62:longitude xmlns:ns62="https://datex2.eu/schema/3/common">33.108371</ns62:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns63:latitude xmlns:ns63="https://datex2.eu/schema/3/common">34.703273</ns63:latitude>
+                    <ns64:longitude xmlns:ns64="https://datex2.eu/schema/3/common">33.108835</ns64:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns65:latitude xmlns:ns65="https://datex2.eu/schema/3/common">34.703448</ns65:latitude>
+                    <ns66:longitude xmlns:ns66="https://datex2.eu/schema/3/common">33.109363</ns66:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns67:latitude xmlns:ns67="https://datex2.eu/schema/3/common">34.703629</ns67:latitude>
+                    <ns68:longitude xmlns:ns68="https://datex2.eu/schema/3/common">33.109905</ns68:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns69:latitude xmlns:ns69="https://datex2.eu/schema/3/common">34.70374899999999</ns69:latitude>
+                    <ns70:longitude xmlns:ns70="https://datex2.eu/schema/3/common">33.110261</ns70:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns71:latitude xmlns:ns71="https://datex2.eu/schema/3/common">34.70391</ns71:latitude>
+                    <ns72:longitude xmlns:ns72="https://datex2.eu/schema/3/common">33.110786</ns72:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns73:latitude xmlns:ns73="https://datex2.eu/schema/3/common">34.704104</ns73:latitude>
+                    <ns74:longitude xmlns:ns74="https://datex2.eu/schema/3/common">33.111449</ns74:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns75:latitude xmlns:ns75="https://datex2.eu/schema/3/common">34.704328999999994</ns75:latitude>
+                    <ns76:longitude xmlns:ns76="https://datex2.eu/schema/3/common">33.112134</ns76:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns77:latitude xmlns:ns77="https://datex2.eu/schema/3/common">34.704563</ns77:latitude>
+                    <ns78:longitude xmlns:ns78="https://datex2.eu/schema/3/common">33.112796</ns78:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns79:latitude xmlns:ns79="https://datex2.eu/schema/3/common">34.70486700000001</ns79:latitude>
+                    <ns80:longitude xmlns:ns80="https://datex2.eu/schema/3/common">33.113406</ns80:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns81:latitude xmlns:ns81="https://datex2.eu/schema/3/common">34.70508999999999</ns81:latitude>
+                    <ns82:longitude xmlns:ns82="https://datex2.eu/schema/3/common">33.113853</ns82:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns83:latitude xmlns:ns83="https://datex2.eu/schema/3/common">34.705279999999995</ns83:latitude>
+                    <ns84:longitude xmlns:ns84="https://datex2.eu/schema/3/common">33.114237</ns84:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns85:latitude xmlns:ns85="https://datex2.eu/schema/3/common">34.705552999999995</ns85:latitude>
+                    <ns86:longitude xmlns:ns86="https://datex2.eu/schema/3/common">33.114939</ns86:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns87:latitude xmlns:ns87="https://datex2.eu/schema/3/common">34.70567699999999</ns87:latitude>
+                    <ns88:longitude xmlns:ns88="https://datex2.eu/schema/3/common">33.115413</ns88:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns89:latitude xmlns:ns89="https://datex2.eu/schema/3/common">34.70586999999999</ns89:latitude>
+                    <ns90:longitude xmlns:ns90="https://datex2.eu/schema/3/common">33.116312</ns90:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns91:latitude xmlns:ns91="https://datex2.eu/schema/3/common">34.706016000000005</ns91:latitude>
+                    <ns92:longitude xmlns:ns92="https://datex2.eu/schema/3/common">33.116989</ns92:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns93:latitude xmlns:ns93="https://datex2.eu/schema/3/common">34.706092</ns93:latitude>
+                    <ns94:longitude xmlns:ns94="https://datex2.eu/schema/3/common">33.117331</ns94:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns95:latitude xmlns:ns95="https://datex2.eu/schema/3/common">34.70620199999999</ns95:latitude>
+                    <ns96:longitude xmlns:ns96="https://datex2.eu/schema/3/common">33.117736</ns96:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns97:latitude xmlns:ns97="https://datex2.eu/schema/3/common">34.70645900000001</ns97:latitude>
+                    <ns98:longitude xmlns:ns98="https://datex2.eu/schema/3/common">33.118489</ns98:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns99:latitude xmlns:ns99="https://datex2.eu/schema/3/common">34.706686</ns99:latitude>
+                    <ns100:longitude xmlns:ns100="https://datex2.eu/schema/3/common">33.119072</ns100:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns101:latitude xmlns:ns101="https://datex2.eu/schema/3/common">34.706868</ns101:latitude>
+                    <ns102:longitude xmlns:ns102="https://datex2.eu/schema/3/common">33.119571</ns102:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns103:latitude xmlns:ns103="https://datex2.eu/schema/3/common">34.707094</ns103:latitude>
+                    <ns104:longitude xmlns:ns104="https://datex2.eu/schema/3/common">33.120179</ns104:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns105:latitude xmlns:ns105="https://datex2.eu/schema/3/common">34.707902000000004</ns105:latitude>
+                    <ns106:longitude xmlns:ns106="https://datex2.eu/schema/3/common">33.122357</ns106:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns107:latitude xmlns:ns107="https://datex2.eu/schema/3/common">34.708074999999994</ns107:latitude>
+                    <ns108:longitude xmlns:ns108="https://datex2.eu/schema/3/common">33.12283</ns108:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns109:latitude xmlns:ns109="https://datex2.eu/schema/3/common">34.70817499999998</ns109:latitude>
+                    <ns110:longitude xmlns:ns110="https://datex2.eu/schema/3/common">33.123252</ns110:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns111:latitude xmlns:ns111="https://datex2.eu/schema/3/common">34.708255</ns111:latitude>
+                    <ns112:longitude xmlns:ns112="https://datex2.eu/schema/3/common">33.123705</ns112:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns113:latitude xmlns:ns113="https://datex2.eu/schema/3/common">34.708294</ns113:latitude>
+                    <ns114:longitude xmlns:ns114="https://datex2.eu/schema/3/common">33.124163</ns114:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns115:latitude xmlns:ns115="https://datex2.eu/schema/3/common">34.708309</ns115:latitude>
+                    <ns116:longitude xmlns:ns116="https://datex2.eu/schema/3/common">33.124441</ns116:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns117:latitude xmlns:ns117="https://datex2.eu/schema/3/common">34.70832299999999</ns117:latitude>
+                    <ns118:longitude xmlns:ns118="https://datex2.eu/schema/3/common">33.124682</ns118:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns119:latitude xmlns:ns119="https://datex2.eu/schema/3/common">34.708384</ns119:latitude>
+                    <ns120:longitude xmlns:ns120="https://datex2.eu/schema/3/common">33.125089</ns120:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns121:latitude xmlns:ns121="https://datex2.eu/schema/3/common">34.70845099999999</ns121:latitude>
+                    <ns122:longitude xmlns:ns122="https://datex2.eu/schema/3/common">33.125348</ns122:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns123:latitude xmlns:ns123="https://datex2.eu/schema/3/common">34.70857</ns123:latitude>
+                    <ns124:longitude xmlns:ns124="https://datex2.eu/schema/3/common">33.125723</ns124:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns125:latitude xmlns:ns125="https://datex2.eu/schema/3/common">34.708735</ns125:latitude>
+                    <ns126:longitude xmlns:ns126="https://datex2.eu/schema/3/common">33.126071</ns126:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns127:latitude xmlns:ns127="https://datex2.eu/schema/3/common">34.709139</ns127:latitude>
+                    <ns128:longitude xmlns:ns128="https://datex2.eu/schema/3/common">33.126717</ns128:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns129:latitude xmlns:ns129="https://datex2.eu/schema/3/common">34.709378</ns129:latitude>
+                    <ns130:longitude xmlns:ns130="https://datex2.eu/schema/3/common">33.127122</ns130:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns131:latitude xmlns:ns131="https://datex2.eu/schema/3/common">34.709783</ns131:latitude>
+                    <ns132:longitude xmlns:ns132="https://datex2.eu/schema/3/common">33.127782</ns132:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns133:latitude xmlns:ns133="https://datex2.eu/schema/3/common">34.70993</ns133:latitude>
+                    <ns134:longitude xmlns:ns134="https://datex2.eu/schema/3/common">33.128047</ns134:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns135:latitude xmlns:ns135="https://datex2.eu/schema/3/common">34.710036999999986</ns135:latitude>
+                    <ns136:longitude xmlns:ns136="https://datex2.eu/schema/3/common">33.128322</ns136:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns137:latitude xmlns:ns137="https://datex2.eu/schema/3/common">34.71013799999999</ns137:latitude>
+                    <ns138:longitude xmlns:ns138="https://datex2.eu/schema/3/common">33.128724</ns138:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns139:latitude xmlns:ns139="https://datex2.eu/schema/3/common">34.71017499999999</ns139:latitude>
+                    <ns140:longitude xmlns:ns140="https://datex2.eu/schema/3/common">33.129287</ns140:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns141:latitude xmlns:ns141="https://datex2.eu/schema/3/common">34.710033</ns141:latitude>
+                    <ns142:longitude xmlns:ns142="https://datex2.eu/schema/3/common">33.130154</ns142:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns143:latitude xmlns:ns143="https://datex2.eu/schema/3/common">34.709956</ns143:latitude>
+                    <ns144:longitude xmlns:ns144="https://datex2.eu/schema/3/common">33.130605</ns144:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns145:latitude xmlns:ns145="https://datex2.eu/schema/3/common">34.70989699999999</ns145:latitude>
+                    <ns146:longitude xmlns:ns146="https://datex2.eu/schema/3/common">33.13099</ns146:longitude>
+                  </location:pointCoordinates>
+                </location:polyline>
+              </location:linearByCoordinates>
+            </location:location>
+          </linear:linearElement>
+  <linear:linearElement>
+            <ns147:id xmlns:ns147="https://datex2.eu/schema/3/common">1</ns147:id>
+            <ns148:name xmlns:ns148="https://datex2.eu/schema/3/common">
+              <ns148:value>Leof. Leontiou</ns148:value>
+              <ns148:lang>en</ns148:lang>
+            </ns148:name>
+            <ns149:name xmlns:ns149="https://datex2.eu/schema/3/common">
+              <ns149:value>Λεωφ. Λεοντίου</ns149:value>
+              <ns149:lang>el</ns149:lang>
+            </ns149:name>
+            <ns150:status xmlns:ns150="https://datex2.eu/schema/3/common">
+              <ns150:value>Future</ns150:value>
+              <ns150:lang>en</ns150:lang>
+            </ns150:status>
+            <ns151:status xmlns:ns151="https://datex2.eu/schema/3/common">
+              <ns151:value>Μελλοντική</ns151:value>
+              <ns151:lang>el</ns151:lang>
+            </ns151:status>
+            <location:location>
+              <location:linearByCoordinates>
+                <location:polyline>
+                  <location:pointCoordinates>
+                    <ns152:latitude xmlns:ns152="https://datex2.eu/schema/3/common">34.68337299999999</ns152:latitude>
+                    <ns153:longitude xmlns:ns153="https://datex2.eu/schema/3/common">33.030331</ns153:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns154:latitude xmlns:ns154="https://datex2.eu/schema/3/common">34.680802</ns154:latitude>
+                    <ns155:longitude xmlns:ns155="https://datex2.eu/schema/3/common">33.034428</ns155:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns156:latitude xmlns:ns156="https://datex2.eu/schema/3/common">34.68020599999999</ns156:latitude>
+                    <ns157:longitude xmlns:ns157="https://datex2.eu/schema/3/common">33.035425</ns157:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns158:latitude xmlns:ns158="https://datex2.eu/schema/3/common">34.67971099999999</ns158:latitude>
+                    <ns159:longitude xmlns:ns159="https://datex2.eu/schema/3/common">33.036198</ns159:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns160:latitude xmlns:ns160="https://datex2.eu/schema/3/common">34.679442</ns160:latitude>
+                    <ns161:longitude xmlns:ns161="https://datex2.eu/schema/3/common">33.036642</ns161:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns162:latitude xmlns:ns162="https://datex2.eu/schema/3/common">34.678026</ns162:latitude>
+                    <ns163:longitude xmlns:ns163="https://datex2.eu/schema/3/common">33.03775</ns163:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns164:latitude xmlns:ns164="https://datex2.eu/schema/3/common">34.67753</ns164:latitude>
+                    <ns165:longitude xmlns:ns165="https://datex2.eu/schema/3/common">33.038249</ns165:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns166:latitude xmlns:ns166="https://datex2.eu/schema/3/common">34.676812999999996</ns166:latitude>
+                    <ns167:longitude xmlns:ns167="https://datex2.eu/schema/3/common">33.039003</ns167:longitude>
+                  </location:pointCoordinates>
+                </location:polyline>
+              </location:linearByCoordinates>
+            </location:location>
+          </linear:linearElement>
+  <linear:linearElement>
+            <ns308:id xmlns:ns308="https://datex2.eu/schema/3/common">8</ns308:id>
+            <ns309:name xmlns:ns309="https://datex2.eu/schema/3/common">
+              <ns309:value>Leof.Strovolou - Severi (Diadromos ΤRAΜ)</ns309:value>
+              <ns309:lang>en</ns309:lang>
+            </ns309:name>
+            <ns310:name xmlns:ns310="https://datex2.eu/schema/3/common">
+              <ns310:value>Λεωφ.Στροβόλου - Σεβέρη (Διάδρομος ΤΡΑΜ)</ns310:value>
+              <ns310:lang>el</ns310:lang>
+            </ns310:name>
+            <ns311:status xmlns:ns311="https://datex2.eu/schema/3/common">
+              <ns311:value>Future</ns311:value>
+              <ns311:lang>en</ns311:lang>
+            </ns311:status>
+            <ns312:status xmlns:ns312="https://datex2.eu/schema/3/common">
+              <ns312:value>Μελλοντική</ns312:value>
+              <ns312:lang>el</ns312:lang>
+            </ns312:status>
+            <location:location>
+              <location:linearByCoordinates>
+                <location:polyline>
+                  <location:pointCoordinates>
+                    <ns313:latitude xmlns:ns313="https://datex2.eu/schema/3/common">35.12290099999999</ns313:latitude>
+                    <ns314:longitude xmlns:ns314="https://datex2.eu/schema/3/common">33.320444</ns314:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns315:latitude xmlns:ns315="https://datex2.eu/schema/3/common">35.124292</ns315:latitude>
+                    <ns316:longitude xmlns:ns316="https://datex2.eu/schema/3/common">33.321673000000004</ns316:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns317:latitude xmlns:ns317="https://datex2.eu/schema/3/common">35.126313999999994</ns317:latitude>
+                    <ns318:longitude xmlns:ns318="https://datex2.eu/schema/3/common">33.323546</ns318:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns319:latitude xmlns:ns319="https://datex2.eu/schema/3/common">35.130722999999996</ns319:latitude>
+                    <ns320:longitude xmlns:ns320="https://datex2.eu/schema/3/common">33.326141</ns320:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns321:latitude xmlns:ns321="https://datex2.eu/schema/3/common">35.134002</ns321:latitude>
+                    <ns322:longitude xmlns:ns322="https://datex2.eu/schema/3/common">33.329994</ns322:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns323:latitude xmlns:ns323="https://datex2.eu/schema/3/common">35.13602499999998</ns323:latitude>
+                    <ns324:longitude xmlns:ns324="https://datex2.eu/schema/3/common">33.331647</ns324:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns325:latitude xmlns:ns325="https://datex2.eu/schema/3/common">35.13777799999999</ns325:latitude>
+                    <ns326:longitude xmlns:ns326="https://datex2.eu/schema/3/common">33.3333</ns326:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns327:latitude xmlns:ns327="https://datex2.eu/schema/3/common">35.139754</ns327:latitude>
+                    <ns328:longitude xmlns:ns328="https://datex2.eu/schema/3/common">33.335502</ns328:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns329:latitude xmlns:ns329="https://datex2.eu/schema/3/common">35.14051499999999</ns329:latitude>
+                    <ns330:longitude xmlns:ns330="https://datex2.eu/schema/3/common">33.337261</ns330:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns331:latitude xmlns:ns331="https://datex2.eu/schema/3/common">35.14123</ns331:latitude>
+                    <ns332:longitude xmlns:ns332="https://datex2.eu/schema/3/common">33.339622</ns332:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns333:latitude xmlns:ns333="https://datex2.eu/schema/3/common">35.142262</ns333:latitude>
+                    <ns334:longitude xmlns:ns334="https://datex2.eu/schema/3/common">33.340998</ns334:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns335:latitude xmlns:ns335="https://datex2.eu/schema/3/common">35.14360799999999</ns335:latitude>
+                    <ns336:longitude xmlns:ns336="https://datex2.eu/schema/3/common">33.343198</ns336:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns337:latitude xmlns:ns337="https://datex2.eu/schema/3/common">35.14446</ns337:latitude>
+                    <ns338:longitude xmlns:ns338="https://datex2.eu/schema/3/common">33.344682</ns338:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns339:latitude xmlns:ns339="https://datex2.eu/schema/3/common">35.146103</ns339:latitude>
+                    <ns340:longitude xmlns:ns340="https://datex2.eu/schema/3/common">33.345128</ns340:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns341:latitude xmlns:ns341="https://datex2.eu/schema/3/common">35.14927599999999</ns341:latitude>
+                    <ns342:longitude xmlns:ns342="https://datex2.eu/schema/3/common">33.346458</ns342:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns343:latitude xmlns:ns343="https://datex2.eu/schema/3/common">35.150422999999996</ns343:latitude>
+                    <ns344:longitude xmlns:ns344="https://datex2.eu/schema/3/common">33.347176</ns344:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns345:latitude xmlns:ns345="https://datex2.eu/schema/3/common">35.15121</ns345:latitude>
+                    <ns346:longitude xmlns:ns346="https://datex2.eu/schema/3/common">33.347536</ns346:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns347:latitude xmlns:ns347="https://datex2.eu/schema/3/common">35.15217799999999</ns347:latitude>
+                    <ns348:longitude xmlns:ns348="https://datex2.eu/schema/3/common">33.347677</ns348:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns349:latitude xmlns:ns349="https://datex2.eu/schema/3/common">35.153349999999996</ns349:latitude>
+                    <ns350:longitude xmlns:ns350="https://datex2.eu/schema/3/common">33.347628</ns350:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns351:latitude xmlns:ns351="https://datex2.eu/schema/3/common">35.154249</ns351:latitude>
+                    <ns352:longitude xmlns:ns352="https://datex2.eu/schema/3/common">33.348317</ns352:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns353:latitude xmlns:ns353="https://datex2.eu/schema/3/common">35.154785</ns353:latitude>
+                    <ns354:longitude xmlns:ns354="https://datex2.eu/schema/3/common">33.349579</ns354:longitude>
+                  </location:pointCoordinates>
+                </location:polyline>
+              </location:linearByCoordinates>
+            </location:location>
+          </linear:linearElement>
+  <linear:linearElement>
+            <ns355:id xmlns:ns355="https://datex2.eu/schema/3/common">9</ns355:id>
+            <ns356:name xmlns:ns356="https://datex2.eu/schema/3/common">
+              <ns356:value>Leof. Lemesou (Diadromos ΤRAΜ)</ns356:value>
+              <ns356:lang>en</ns356:lang>
+            </ns356:name>
+            <ns357:name xmlns:ns357="https://datex2.eu/schema/3/common">
+              <ns357:value>Λεωφ. Λεμεσού (Διάδρομος ΤΡΑΜ)</ns357:value>
+              <ns357:lang>el</ns357:lang>
+            </ns357:name>
+            <ns358:status xmlns:ns358="https://datex2.eu/schema/3/common">
+              <ns358:value>Future</ns358:value>
+              <ns358:lang>en</ns358:lang>
+            </ns358:status>
+            <ns359:status xmlns:ns359="https://datex2.eu/schema/3/common">
+              <ns359:value>Μελλοντική</ns359:value>
+              <ns359:lang>el</ns359:lang>
+            </ns359:status>
+            <location:location>
+              <location:linearByCoordinates>
+                <location:polyline>
+                  <location:pointCoordinates>
+                    <ns360:latitude xmlns:ns360="https://datex2.eu/schema/3/common">35.159737</ns360:latitude>
+                    <ns361:longitude xmlns:ns361="https://datex2.eu/schema/3/common">33.372449</ns361:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns362:latitude xmlns:ns362="https://datex2.eu/schema/3/common">35.15931599999999</ns362:latitude>
+                    <ns363:longitude xmlns:ns363="https://datex2.eu/schema/3/common">33.372737</ns363:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns364:latitude xmlns:ns364="https://datex2.eu/schema/3/common">35.157613</ns364:latitude>
+                    <ns365:longitude xmlns:ns365="https://datex2.eu/schema/3/common">33.373387</ns365:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns366:latitude xmlns:ns366="https://datex2.eu/schema/3/common">35.15619000000001</ns366:latitude>
+                    <ns367:longitude xmlns:ns367="https://datex2.eu/schema/3/common">33.374492</ns367:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns368:latitude xmlns:ns368="https://datex2.eu/schema/3/common">35.155027999999994</ns368:latitude>
+                    <ns369:longitude xmlns:ns369="https://datex2.eu/schema/3/common">33.37531</ns369:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns370:latitude xmlns:ns370="https://datex2.eu/schema/3/common">35.153991</ns370:latitude>
+                    <ns371:longitude xmlns:ns371="https://datex2.eu/schema/3/common">33.375373</ns371:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns372:latitude xmlns:ns372="https://datex2.eu/schema/3/common">35.15142500000001</ns372:latitude>
+                    <ns373:longitude xmlns:ns373="https://datex2.eu/schema/3/common">33.374621</ns373:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns374:latitude xmlns:ns374="https://datex2.eu/schema/3/common">35.148182</ns374:latitude>
+                    <ns375:longitude xmlns:ns375="https://datex2.eu/schema/3/common">33.374304</ns375:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns376:latitude xmlns:ns376="https://datex2.eu/schema/3/common">35.146594</ns376:latitude>
+                    <ns377:longitude xmlns:ns377="https://datex2.eu/schema/3/common">33.374311000000006</ns377:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns378:latitude xmlns:ns378="https://datex2.eu/schema/3/common">35.144567</ns378:latitude>
+                    <ns379:longitude xmlns:ns379="https://datex2.eu/schema/3/common">33.373972</ns379:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns380:latitude xmlns:ns380="https://datex2.eu/schema/3/common">35.142070000000004</ns380:latitude>
+                    <ns381:longitude xmlns:ns381="https://datex2.eu/schema/3/common">33.374466</ns381:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns382:latitude xmlns:ns382="https://datex2.eu/schema/3/common">35.140041</ns382:latitude>
+                    <ns383:longitude xmlns:ns383="https://datex2.eu/schema/3/common">33.374854</ns383:longitude>
+                  </location:pointCoordinates>
+                </location:polyline>
+              </location:linearByCoordinates>
+            </location:location>
+          </linear:linearElement>
+  <linear:linearElement>
+            <ns384:id xmlns:ns384="https://datex2.eu/schema/3/common">10</ns384:id>
+            <ns385:name xmlns:ns385="https://datex2.eu/schema/3/common">
+              <ns385:value>Gr. Afxentiou - Palama (Diadromos ΤRAΜ)</ns385:value>
+              <ns385:lang>en</ns385:lang>
+            </ns385:name>
+            <ns386:name xmlns:ns386="https://datex2.eu/schema/3/common">
+              <ns386:value>Γρ. Αυξεντίου - Παλαμά (Διάδρομος ΤΡΑΜ)</ns386:value>
+              <ns386:lang>el</ns386:lang>
+            </ns386:name>
+            <ns387:status xmlns:ns387="https://datex2.eu/schema/3/common">
+              <ns387:value>Future</ns387:value>
+              <ns387:lang>en</ns387:lang>
+            </ns387:status>
+            <ns388:status xmlns:ns388="https://datex2.eu/schema/3/common">
+              <ns388:value>Μελλοντική</ns388:value>
+              <ns388:lang>el</ns388:lang>
+            </ns388:status>
+            <location:location>
+              <location:linearByCoordinates>
+                <location:polyline>
+                  <location:pointCoordinates>
+                    <ns389:latitude xmlns:ns389="https://datex2.eu/schema/3/common">35.16691699999999</ns389:latitude>
+                    <ns390:longitude xmlns:ns390="https://datex2.eu/schema/3/common">33.354921</ns390:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns391:latitude xmlns:ns391="https://datex2.eu/schema/3/common">35.166920999999995</ns391:latitude>
+                    <ns392:longitude xmlns:ns392="https://datex2.eu/schema/3/common">33.354923</ns392:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns393:latitude xmlns:ns393="https://datex2.eu/schema/3/common">35.167916</ns393:latitude>
+                    <ns394:longitude xmlns:ns394="https://datex2.eu/schema/3/common">33.355065</ns394:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns395:latitude xmlns:ns395="https://datex2.eu/schema/3/common">35.169073999999995</ns395:latitude>
+                    <ns396:longitude xmlns:ns396="https://datex2.eu/schema/3/common">33.355137</ns396:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns397:latitude xmlns:ns397="https://datex2.eu/schema/3/common">35.16983599999999</ns397:latitude>
+                    <ns398:longitude xmlns:ns398="https://datex2.eu/schema/3/common">33.355218</ns398:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns399:latitude xmlns:ns399="https://datex2.eu/schema/3/common">35.170333</ns399:latitude>
+                    <ns400:longitude xmlns:ns400="https://datex2.eu/schema/3/common">33.35609</ns400:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns401:latitude xmlns:ns401="https://datex2.eu/schema/3/common">35.170784</ns401:latitude>
+                    <ns402:longitude xmlns:ns402="https://datex2.eu/schema/3/common">33.356681</ns402:longitude>
+                  </location:pointCoordinates>
+                </location:polyline>
+              </location:linearByCoordinates>
+            </location:location>
+          </linear:linearElement>
+  <linear:linearElement>
+            <ns403:id xmlns:ns403="https://datex2.eu/schema/3/common">11</ns403:id>
+            <ns404:name xmlns:ns404="https://datex2.eu/schema/3/common">
+              <ns404:value>Leof. Μakariou (Ethnikis Frouras - Griva Digeni)</ns404:value>
+              <ns404:lang>en</ns404:lang>
+            </ns404:name>
+            <ns405:name xmlns:ns405="https://datex2.eu/schema/3/common">
+              <ns405:value>Λεωφ. Μακαρίου (Εθνικής Φρουράς - Γρίβα Διγενή)</ns405:value>
+              <ns405:lang>el</ns405:lang>
+            </ns405:name>
+            <ns406:status xmlns:ns406="https://datex2.eu/schema/3/common">
+              <ns406:value>Active</ns406:value>
+              <ns406:lang>en</ns406:lang>
+            </ns406:status>
+            <ns407:status xmlns:ns407="https://datex2.eu/schema/3/common">
+              <ns407:value>Ενεργή</ns407:value>
+              <ns407:lang>el</ns407:lang>
+            </ns407:status>
+            <location:location>
+              <location:linearByCoordinates>
+                <location:polyline>
+                  <location:pointCoordinates>
+                    <ns408:latitude xmlns:ns408="https://datex2.eu/schema/3/common">35.1644564851432</ns408:latitude>
+                    <ns409:longitude xmlns:ns409="https://datex2.eu/schema/3/common">33.36402411028391</ns409:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns410:latitude xmlns:ns410="https://datex2.eu/schema/3/common">35.16333754518601</ns410:latitude>
+                    <ns411:longitude xmlns:ns411="https://datex2.eu/schema/3/common">33.36493970402117</ns411:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns412:latitude xmlns:ns412="https://datex2.eu/schema/3/common">35.16303838977734</ns412:latitude>
+                    <ns413:longitude xmlns:ns413="https://datex2.eu/schema/3/common">33.36520004477579</ns413:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns414:latitude xmlns:ns414="https://datex2.eu/schema/3/common">35.162918932193264</ns414:latitude>
+                    <ns415:longitude xmlns:ns415="https://datex2.eu/schema/3/common">33.36533882067312</ns415:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns416:latitude xmlns:ns416="https://datex2.eu/schema/3/common">35.16264097591117</ns416:latitude>
+                    <ns417:longitude xmlns:ns417="https://datex2.eu/schema/3/common">33.36574609314448</ns417:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns418:latitude xmlns:ns418="https://datex2.eu/schema/3/common">35.16258196295312</ns418:latitude>
+                    <ns419:longitude xmlns:ns419="https://datex2.eu/schema/3/common">33.36583430919445</ns419:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns420:latitude xmlns:ns420="https://datex2.eu/schema/3/common">35.16231636116798</ns420:latitude>
+                    <ns421:longitude xmlns:ns421="https://datex2.eu/schema/3/common">33.366245398788024</ns421:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns422:latitude xmlns:ns422="https://datex2.eu/schema/3/common">35.16223561926515</ns422:latitude>
+                    <ns423:longitude xmlns:ns423="https://datex2.eu/schema/3/common">33.366361754950496</ns423:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns424:latitude xmlns:ns424="https://datex2.eu/schema/3/common">35.16197781379569</ns424:latitude>
+                    <ns425:longitude xmlns:ns425="https://datex2.eu/schema/3/common">33.36675028555794</ns425:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns426:latitude xmlns:ns426="https://datex2.eu/schema/3/common">35.16186594161964</ns426:latitude>
+                    <ns427:longitude xmlns:ns427="https://datex2.eu/schema/3/common">33.366936154993574</ns427:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns428:latitude xmlns:ns428="https://datex2.eu/schema/3/common">35.161693315243134</ns428:latitude>
+                    <ns429:longitude xmlns:ns429="https://datex2.eu/schema/3/common">33.36727423646997</ns429:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns430:latitude xmlns:ns430="https://datex2.eu/schema/3/common">35.16142255645222</ns430:latitude>
+                    <ns431:longitude xmlns:ns431="https://datex2.eu/schema/3/common">33.367854721519706</ns431:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns432:latitude xmlns:ns432="https://datex2.eu/schema/3/common">35.16119671881319</ns432:latitude>
+                    <ns433:longitude xmlns:ns433="https://datex2.eu/schema/3/common">33.36840528486594</ns433:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns434:latitude xmlns:ns434="https://datex2.eu/schema/3/common">35.161015699542794</ns434:latitude>
+                    <ns435:longitude xmlns:ns435="https://datex2.eu/schema/3/common">33.36895981259155</ns435:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns436:latitude xmlns:ns436="https://datex2.eu/schema/3/common">35.1609235311348</ns436:latitude>
+                    <ns437:longitude xmlns:ns437="https://datex2.eu/schema/3/common">33.36927377716674</ns437:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns438:latitude xmlns:ns438="https://datex2.eu/schema/3/common">35.160857665904416</ns438:latitude>
+                    <ns439:longitude xmlns:ns439="https://datex2.eu/schema/3/common">33.36958032993788</ns439:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns440:latitude xmlns:ns440="https://datex2.eu/schema/3/common">35.160793225141916</ns440:latitude>
+                    <ns441:longitude xmlns:ns441="https://datex2.eu/schema/3/common">33.36992642150864</ns441:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns442:latitude xmlns:ns442="https://datex2.eu/schema/3/common">35.1607061271638</ns442:latitude>
+                    <ns443:longitude xmlns:ns443="https://datex2.eu/schema/3/common">33.37060373241314</ns443:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns444:latitude xmlns:ns444="https://datex2.eu/schema/3/common">35.16063029112664</ns444:latitude>
+                    <ns445:longitude xmlns:ns445="https://datex2.eu/schema/3/common">33.37113613955047</ns445:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns446:latitude xmlns:ns446="https://datex2.eu/schema/3/common">35.16058461655353</ns446:latitude>
+                    <ns447:longitude xmlns:ns447="https://datex2.eu/schema/3/common">33.37141077878945</ns447:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns448:latitude xmlns:ns448="https://datex2.eu/schema/3/common">35.16054075293261</ns448:latitude>
+                    <ns449:longitude xmlns:ns449="https://datex2.eu/schema/3/common">33.37159883046677</ns449:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns450:latitude xmlns:ns450="https://datex2.eu/schema/3/common">35.16038821084664</ns450:latitude>
+                    <ns451:longitude xmlns:ns451="https://datex2.eu/schema/3/common">33.3719369879983</ns451:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns452:latitude xmlns:ns452="https://datex2.eu/schema/3/common">35.16019733736958</ns452:latitude>
+                    <ns453:longitude xmlns:ns453="https://datex2.eu/schema/3/common">33.37217143197261</ns453:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns454:latitude xmlns:ns454="https://datex2.eu/schema/3/common">35.16003621817451</ns454:latitude>
+                    <ns455:longitude xmlns:ns455="https://datex2.eu/schema/3/common">33.37228176553357</ns455:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns456:latitude xmlns:ns456="https://datex2.eu/schema/3/common">35.15973735380418</ns456:latitude>
+                    <ns457:longitude xmlns:ns457="https://datex2.eu/schema/3/common">33.37244229816996</ns457:longitude>
+                  </location:pointCoordinates>
+                </location:polyline>
+              </location:linearByCoordinates>
+            </location:location>
+          </linear:linearElement>
+  <linear:linearElement>
+            <ns458:id xmlns:ns458="https://datex2.eu/schema/3/common">12</ns458:id>
+            <ns459:name xmlns:ns459="https://datex2.eu/schema/3/common">
+              <ns459:value>Leof. Μakariou (Griva Digeni – Evagorou)</ns459:value>
+              <ns459:lang>en</ns459:lang>
+            </ns459:name>
+            <ns460:name xmlns:ns460="https://datex2.eu/schema/3/common">
+              <ns460:value>Λεωφ. Μακαρίου (Γρίβα Διγενή – Ευαγόρου)</ns460:value>
+              <ns460:lang>el</ns460:lang>
+            </ns460:name>
+            <ns461:status xmlns:ns461="https://datex2.eu/schema/3/common">
+              <ns461:value>Active</ns461:value>
+              <ns461:lang>en</ns461:lang>
+            </ns461:status>
+            <ns462:status xmlns:ns462="https://datex2.eu/schema/3/common">
+              <ns462:value>Ενεργή</ns462:value>
+              <ns462:lang>el</ns462:lang>
+            </ns462:status>
+            <location:location>
+              <location:linearByCoordinates>
+                <location:polyline>
+                  <location:pointCoordinates>
+                    <ns463:latitude xmlns:ns463="https://datex2.eu/schema/3/common">35.1644564851432</ns463:latitude>
+                    <ns464:longitude xmlns:ns464="https://datex2.eu/schema/3/common">33.36402411028391</ns464:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns465:latitude xmlns:ns465="https://datex2.eu/schema/3/common">35.1649057074526</ns465:latitude>
+                    <ns466:longitude xmlns:ns466="https://datex2.eu/schema/3/common">33.36372677671666</ns466:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns467:latitude xmlns:ns467="https://datex2.eu/schema/3/common">35.16536495505186</ns467:latitude>
+                    <ns468:longitude xmlns:ns468="https://datex2.eu/schema/3/common">33.363437014988094</ns468:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns469:latitude xmlns:ns469="https://datex2.eu/schema/3/common">35.165477295622594</ns469:latitude>
+                    <ns470:longitude xmlns:ns470="https://datex2.eu/schema/3/common">33.36335091402633</ns470:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns471:latitude xmlns:ns471="https://datex2.eu/schema/3/common">35.1655595100183</ns471:latitude>
+                    <ns472:longitude xmlns:ns472="https://datex2.eu/schema/3/common">33.36325808967024</ns472:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns473:latitude xmlns:ns473="https://datex2.eu/schema/3/common">35.16573805235335</ns473:latitude>
+                    <ns474:longitude xmlns:ns474="https://datex2.eu/schema/3/common">33.36300566972419</ns474:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns475:latitude xmlns:ns475="https://datex2.eu/schema/3/common">35.16597979093306</ns475:latitude>
+                    <ns476:longitude xmlns:ns476="https://datex2.eu/schema/3/common">33.362557735094256</ns476:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns477:latitude xmlns:ns477="https://datex2.eu/schema/3/common">35.16617159336623</ns477:latitude>
+                    <ns478:longitude xmlns:ns478="https://datex2.eu/schema/3/common">33.36226489434757</ns478:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns479:latitude xmlns:ns479="https://datex2.eu/schema/3/common">35.16664454296283</ns479:latitude>
+                    <ns480:longitude xmlns:ns480="https://datex2.eu/schema/3/common">33.36152710949423</ns480:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns481:latitude xmlns:ns481="https://datex2.eu/schema/3/common">35.167006226885455</ns481:latitude>
+                    <ns482:longitude xmlns:ns482="https://datex2.eu/schema/3/common">33.36103262919594</ns482:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns483:latitude xmlns:ns483="https://datex2.eu/schema/3/common">35.16813206785462</ns483:latitude>
+                    <ns484:longitude xmlns:ns484="https://datex2.eu/schema/3/common">33.35986563292318</ns484:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns485:latitude xmlns:ns485="https://datex2.eu/schema/3/common">35.16881113494575</ns485:latitude>
+                    <ns486:longitude xmlns:ns486="https://datex2.eu/schema/3/common">33.359213444329065</ns486:longitude>
+                  </location:pointCoordinates>
+                </location:polyline>
+              </location:linearByCoordinates>
+            </location:location>
+          </linear:linearElement>
+  <linear:linearElement>
+            <ns487:id xmlns:ns487="https://datex2.eu/schema/3/common">13</ns487:id>
+            <ns488:name xmlns:ns488="https://datex2.eu/schema/3/common">
+              <ns488:value>Aglantzias (Akadimias – Larnakos)</ns488:value>
+              <ns488:lang>en</ns488:lang>
+            </ns488:name>
+            <ns489:name xmlns:ns489="https://datex2.eu/schema/3/common">
+              <ns489:value>Αγλαντζιάς (Ακαδημίας – Λάρνακος)</ns489:value>
+              <ns489:lang>el</ns489:lang>
+            </ns489:name>
+            <ns490:status xmlns:ns490="https://datex2.eu/schema/3/common">
+              <ns490:value>Active</ns490:value>
+              <ns490:lang>en</ns490:lang>
+            </ns490:status>
+            <ns491:status xmlns:ns491="https://datex2.eu/schema/3/common">
+              <ns491:value>Ενεργή</ns491:value>
+              <ns491:lang>el</ns491:lang>
+            </ns491:status>
+            <location:location>
+              <location:linearByCoordinates>
+                <location:polyline>
+                  <location:pointCoordinates>
+                    <ns492:latitude xmlns:ns492="https://datex2.eu/schema/3/common">35.155919131109016</ns492:latitude>
+                    <ns493:longitude xmlns:ns493="https://datex2.eu/schema/3/common">33.38251552112467</ns493:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns494:latitude xmlns:ns494="https://datex2.eu/schema/3/common">35.1559989166964</ns494:latitude>
+                    <ns495:longitude xmlns:ns495="https://datex2.eu/schema/3/common">33.38270695871128</ns495:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns496:latitude xmlns:ns496="https://datex2.eu/schema/3/common">35.156149675460455</ns496:latitude>
+                    <ns497:longitude xmlns:ns497="https://datex2.eu/schema/3/common">33.38294296581786</ns497:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns498:latitude xmlns:ns498="https://datex2.eu/schema/3/common">35.15647713736101</ns498:latitude>
+                    <ns499:longitude xmlns:ns499="https://datex2.eu/schema/3/common">33.38327674678396</ns499:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns500:latitude xmlns:ns500="https://datex2.eu/schema/3/common">35.15680169415137</ns500:latitude>
+                    <ns501:longitude xmlns:ns501="https://datex2.eu/schema/3/common">33.383551220451494</ns501:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns502:latitude xmlns:ns502="https://datex2.eu/schema/3/common">35.15700052742871</ns502:latitude>
+                    <ns503:longitude xmlns:ns503="https://datex2.eu/schema/3/common">33.383739455303946</ns503:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns504:latitude xmlns:ns504="https://datex2.eu/schema/3/common">35.157128276957856</ns504:latitude>
+                    <ns505:longitude xmlns:ns505="https://datex2.eu/schema/3/common">33.38391794495045</ns505:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns506:latitude xmlns:ns506="https://datex2.eu/schema/3/common">35.157188198764906</ns506:latitude>
+                    <ns507:longitude xmlns:ns507="https://datex2.eu/schema/3/common">33.38403493728662</ns507:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns508:latitude xmlns:ns508="https://datex2.eu/schema/3/common">35.15725933595343</ns508:latitude>
+                    <ns509:longitude xmlns:ns509="https://datex2.eu/schema/3/common">33.3842715170849</ns509:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns510:latitude xmlns:ns510="https://datex2.eu/schema/3/common">35.157371234389444</ns510:latitude>
+                    <ns511:longitude xmlns:ns511="https://datex2.eu/schema/3/common">33.3850598430324</ns511:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns512:latitude xmlns:ns512="https://datex2.eu/schema/3/common">35.157392522281825</ns512:latitude>
+                    <ns513:longitude xmlns:ns513="https://datex2.eu/schema/3/common">33.385414782740554</ns513:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns514:latitude xmlns:ns514="https://datex2.eu/schema/3/common">35.157397256227476</ns514:latitude>
+                    <ns515:longitude xmlns:ns515="https://datex2.eu/schema/3/common">33.38562752047211</ns515:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns516:latitude xmlns:ns516="https://datex2.eu/schema/3/common">35.1573625377377</ns516:latitude>
+                    <ns517:longitude xmlns:ns517="https://datex2.eu/schema/3/common">33.386092318417575</ns517:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns518:latitude xmlns:ns518="https://datex2.eu/schema/3/common">35.15728240249879</ns518:latitude>
+                    <ns519:longitude xmlns:ns519="https://datex2.eu/schema/3/common">33.386739497261146</ns519:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns520:latitude xmlns:ns520="https://datex2.eu/schema/3/common">35.15721122983594</ns520:latitude>
+                    <ns521:longitude xmlns:ns521="https://datex2.eu/schema/3/common">33.387241769983085</ns521:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns522:latitude xmlns:ns522="https://datex2.eu/schema/3/common">35.157142288218544</ns522:latitude>
+                    <ns523:longitude xmlns:ns523="https://datex2.eu/schema/3/common">33.38801229884599</ns523:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns524:latitude xmlns:ns524="https://datex2.eu/schema/3/common">35.15709015985821</ns524:latitude>
+                    <ns525:longitude xmlns:ns525="https://datex2.eu/schema/3/common">33.38860031067784</ns525:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns526:latitude xmlns:ns526="https://datex2.eu/schema/3/common">35.15706812481861</ns526:latitude>
+                    <ns527:longitude xmlns:ns527="https://datex2.eu/schema/3/common">33.38944447545828</ns527:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns528:latitude xmlns:ns528="https://datex2.eu/schema/3/common">35.15710532606197</ns528:latitude>
+                    <ns529:longitude xmlns:ns529="https://datex2.eu/schema/3/common">33.3906145830809</ns529:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns530:latitude xmlns:ns530="https://datex2.eu/schema/3/common">35.157141694210864</ns530:latitude>
+                    <ns531:longitude xmlns:ns531="https://datex2.eu/schema/3/common">33.39156067844827</ns531:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns532:latitude xmlns:ns532="https://datex2.eu/schema/3/common">35.15711748728579</ns532:latitude>
+                    <ns533:longitude xmlns:ns533="https://datex2.eu/schema/3/common">33.392353065600794</ns533:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns534:latitude xmlns:ns534="https://datex2.eu/schema/3/common">35.15711511508581</ns534:latitude>
+                    <ns535:longitude xmlns:ns535="https://datex2.eu/schema/3/common">33.392608123499905</ns535:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns536:latitude xmlns:ns536="https://datex2.eu/schema/3/common">35.157138125793594</ns536:latitude>
+                    <ns537:longitude xmlns:ns537="https://datex2.eu/schema/3/common">33.393378148197236</ns537:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns538:latitude xmlns:ns538="https://datex2.eu/schema/3/common">35.15714514632052</ns538:latitude>
+                    <ns539:longitude xmlns:ns539="https://datex2.eu/schema/3/common">33.39359654396519</ns539:longitude>
+                  </location:pointCoordinates>
+                </location:polyline>
+              </location:linearByCoordinates>
+            </location:location>
+          </linear:linearElement>
+  <linear:linearElement>
+            <ns540:id xmlns:ns540="https://datex2.eu/schema/3/common">14</ns540:id>
+            <ns541:name xmlns:ns541="https://datex2.eu/schema/3/common">
+              <ns541:value>Archangelou (Lefkotheou – Griva Digeni)</ns541:value>
+              <ns541:lang>en</ns541:lang>
+            </ns541:name>
+            <ns542:name xmlns:ns542="https://datex2.eu/schema/3/common">
+              <ns542:value>Αρχαγγέλου (Λευκοθέου – Γρίβα Διγενή)</ns542:value>
+              <ns542:lang>el</ns542:lang>
+            </ns542:name>
+            <ns543:status xmlns:ns543="https://datex2.eu/schema/3/common">
+              <ns543:value>Active</ns543:value>
+              <ns543:lang>en</ns543:lang>
+            </ns543:status>
+            <ns544:status xmlns:ns544="https://datex2.eu/schema/3/common">
+              <ns544:value>Ενεργή</ns544:value>
+              <ns544:lang>el</ns544:lang>
+            </ns544:status>
+            <location:location>
+              <location:linearByCoordinates>
+                <location:polyline>
+                  <location:pointCoordinates>
+                    <ns545:latitude xmlns:ns545="https://datex2.eu/schema/3/common">35.14739892533396</ns545:latitude>
+                    <ns546:longitude xmlns:ns546="https://datex2.eu/schema/3/common">33.324635046082435</ns546:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns547:latitude xmlns:ns547="https://datex2.eu/schema/3/common">35.148736863367496</ns547:latitude>
+                    <ns548:longitude xmlns:ns548="https://datex2.eu/schema/3/common">33.32611101782472</ns548:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns549:latitude xmlns:ns549="https://datex2.eu/schema/3/common">35.14901237756684</ns549:latitude>
+                    <ns550:longitude xmlns:ns550="https://datex2.eu/schema/3/common">33.3263706124034</ns550:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns551:latitude xmlns:ns551="https://datex2.eu/schema/3/common">35.14949365275753</ns551:latitude>
+                    <ns552:longitude xmlns:ns552="https://datex2.eu/schema/3/common">33.32676655360648</ns552:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns553:latitude xmlns:ns553="https://datex2.eu/schema/3/common">35.150216027329094</ns553:latitude>
+                    <ns554:longitude xmlns:ns554="https://datex2.eu/schema/3/common">33.32718856150959</ns554:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns555:latitude xmlns:ns555="https://datex2.eu/schema/3/common">35.15051863397146</ns555:latitude>
+                    <ns556:longitude xmlns:ns556="https://datex2.eu/schema/3/common">33.32733784572632</ns556:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns557:latitude xmlns:ns557="https://datex2.eu/schema/3/common">35.15154987075366</ns557:latitude>
+                    <ns558:longitude xmlns:ns558="https://datex2.eu/schema/3/common">33.32788157020306</ns558:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns559:latitude xmlns:ns559="https://datex2.eu/schema/3/common">35.151833904648115</ns559:latitude>
+                    <ns560:longitude xmlns:ns560="https://datex2.eu/schema/3/common">33.32803831417097</ns560:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns561:latitude xmlns:ns561="https://datex2.eu/schema/3/common">35.152226811575694</ns561:latitude>
+                    <ns562:longitude xmlns:ns562="https://datex2.eu/schema/3/common">33.328333533365225</ns562:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns563:latitude xmlns:ns563="https://datex2.eu/schema/3/common">35.1523481339189</ns563:latitude>
+                    <ns564:longitude xmlns:ns564="https://datex2.eu/schema/3/common">33.32844194069887</ns564:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns565:latitude xmlns:ns565="https://datex2.eu/schema/3/common">35.15255579801036</ns565:latitude>
+                    <ns566:longitude xmlns:ns566="https://datex2.eu/schema/3/common">33.3286360277153</ns566:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns567:latitude xmlns:ns567="https://datex2.eu/schema/3/common">35.1533516210902</ns567:latitude>
+                    <ns568:longitude xmlns:ns568="https://datex2.eu/schema/3/common">33.32933444156336</ns568:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns569:latitude xmlns:ns569="https://datex2.eu/schema/3/common">35.15385324596711</ns569:latitude>
+                    <ns570:longitude xmlns:ns570="https://datex2.eu/schema/3/common">33.32982336657756</ns570:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns571:latitude xmlns:ns571="https://datex2.eu/schema/3/common">35.1542168938865</ns571:latitude>
+                    <ns572:longitude xmlns:ns572="https://datex2.eu/schema/3/common">33.33026405330031</ns572:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns573:latitude xmlns:ns573="https://datex2.eu/schema/3/common">35.15440781834739</ns573:latitude>
+                    <ns574:longitude xmlns:ns574="https://datex2.eu/schema/3/common">33.33054843558972</ns574:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns575:latitude xmlns:ns575="https://datex2.eu/schema/3/common">35.154672392473216</ns575:latitude>
+                    <ns576:longitude xmlns:ns576="https://datex2.eu/schema/3/common">33.331036414201556</ns576:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns577:latitude xmlns:ns577="https://datex2.eu/schema/3/common">35.15487333312391</ns577:latitude>
+                    <ns578:longitude xmlns:ns578="https://datex2.eu/schema/3/common">33.33142625392793</ns578:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns579:latitude xmlns:ns579="https://datex2.eu/schema/3/common">35.15552662437468</ns579:latitude>
+                    <ns580:longitude xmlns:ns580="https://datex2.eu/schema/3/common">33.33297999915522</ns580:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns581:latitude xmlns:ns581="https://datex2.eu/schema/3/common">35.15577454646562</ns581:latitude>
+                    <ns582:longitude xmlns:ns582="https://datex2.eu/schema/3/common">33.33352314152878</ns582:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns583:latitude xmlns:ns583="https://datex2.eu/schema/3/common">35.15620349063421</ns583:latitude>
+                    <ns584:longitude xmlns:ns584="https://datex2.eu/schema/3/common">33.334200051069615</ns584:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns585:latitude xmlns:ns585="https://datex2.eu/schema/3/common">35.15712296204435</ns585:latitude>
+                    <ns586:longitude xmlns:ns586="https://datex2.eu/schema/3/common">33.33564199129408</ns586:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns587:latitude xmlns:ns587="https://datex2.eu/schema/3/common">35.15787216860634</ns587:latitude>
+                    <ns588:longitude xmlns:ns588="https://datex2.eu/schema/3/common">33.33678206937194</ns588:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns589:latitude xmlns:ns589="https://datex2.eu/schema/3/common">35.15826254519853</ns589:latitude>
+                    <ns590:longitude xmlns:ns590="https://datex2.eu/schema/3/common">33.33723797876907</ns590:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns591:latitude xmlns:ns591="https://datex2.eu/schema/3/common">35.15885281367128</ns591:latitude>
+                    <ns592:longitude xmlns:ns592="https://datex2.eu/schema/3/common">33.33771228838418</ns592:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns593:latitude xmlns:ns593="https://datex2.eu/schema/3/common">35.15936527047916</ns593:latitude>
+                    <ns594:longitude xmlns:ns594="https://datex2.eu/schema/3/common">33.338000544223384</ns594:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns595:latitude xmlns:ns595="https://datex2.eu/schema/3/common">35.15969475051894</ns595:latitude>
+                    <ns596:longitude xmlns:ns596="https://datex2.eu/schema/3/common">33.3381173667454</ns596:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns597:latitude xmlns:ns597="https://datex2.eu/schema/3/common">35.16060517731294</ns597:latitude>
+                    <ns598:longitude xmlns:ns598="https://datex2.eu/schema/3/common">33.33835456599572</ns598:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns599:latitude xmlns:ns599="https://datex2.eu/schema/3/common">35.1613012812256</ns599:latitude>
+                    <ns600:longitude xmlns:ns600="https://datex2.eu/schema/3/common">33.33857331215709</ns600:longitude>
+                  </location:pointCoordinates>
+                </location:polyline>
+              </location:linearByCoordinates>
+            </location:location>
+          </linear:linearElement>
+  <linear:linearElement>
+            <ns601:id xmlns:ns601="https://datex2.eu/schema/3/common">15</ns601:id>
+            <ns602:name xmlns:ns602="https://datex2.eu/schema/3/common">
+              <ns602:value>Kalamon (Lemesou – A1)</ns602:value>
+              <ns602:lang>en</ns602:lang>
+            </ns602:name>
+            <ns603:name xmlns:ns603="https://datex2.eu/schema/3/common">
+              <ns603:value>Καλαμών (Λεμεσού – Α1)</ns603:value>
+              <ns603:lang>el</ns603:lang>
+            </ns603:name>
+            <ns604:status xmlns:ns604="https://datex2.eu/schema/3/common">
+              <ns604:value>Active</ns604:value>
+              <ns604:lang>en</ns604:lang>
+            </ns604:status>
+            <ns605:status xmlns:ns605="https://datex2.eu/schema/3/common">
+              <ns605:value>Ενεργή</ns605:value>
+              <ns605:lang>el</ns605:lang>
+            </ns605:status>
+            <location:location>
+              <location:linearByCoordinates>
+                <location:polyline>
+                  <location:pointCoordinates>
+                    <ns606:latitude xmlns:ns606="https://datex2.eu/schema/3/common">35.12393126388572</ns606:latitude>
+                    <ns607:longitude xmlns:ns607="https://datex2.eu/schema/3/common">33.37525665894816</ns607:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns608:latitude xmlns:ns608="https://datex2.eu/schema/3/common">35.1239198008222</ns608:latitude>
+                    <ns609:longitude xmlns:ns609="https://datex2.eu/schema/3/common">33.37496432070741</ns609:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns610:latitude xmlns:ns610="https://datex2.eu/schema/3/common">35.12384903295232</ns610:latitude>
+                    <ns611:longitude xmlns:ns611="https://datex2.eu/schema/3/common">33.374685509852284</ns611:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns612:latitude xmlns:ns612="https://datex2.eu/schema/3/common">35.12382161292981</ns612:latitude>
+                    <ns613:longitude xmlns:ns613="https://datex2.eu/schema/3/common">33.37455366772221</ns613:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns614:latitude xmlns:ns614="https://datex2.eu/schema/3/common">35.12379167817715</ns614:latitude>
+                    <ns615:longitude xmlns:ns615="https://datex2.eu/schema/3/common">33.37440174308408</ns615:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns616:latitude xmlns:ns616="https://datex2.eu/schema/3/common">35.12377936824395</ns616:latitude>
+                    <ns617:longitude xmlns:ns617="https://datex2.eu/schema/3/common">33.37404918832503</ns617:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns618:latitude xmlns:ns618="https://datex2.eu/schema/3/common">35.12380443368006</ns618:latitude>
+                    <ns619:longitude xmlns:ns619="https://datex2.eu/schema/3/common">33.37377520707572</ns619:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns620:latitude xmlns:ns620="https://datex2.eu/schema/3/common">35.123840646046894</ns620:latitude>
+                    <ns621:longitude xmlns:ns621="https://datex2.eu/schema/3/common">33.373562744286716</ns621:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns622:latitude xmlns:ns622="https://datex2.eu/schema/3/common">35.12390046022558</ns622:latitude>
+                    <ns623:longitude xmlns:ns623="https://datex2.eu/schema/3/common">33.3733836317917</ns623:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns624:latitude xmlns:ns624="https://datex2.eu/schema/3/common">35.12398042171417</ns624:latitude>
+                    <ns625:longitude xmlns:ns625="https://datex2.eu/schema/3/common">33.3731883031365</ns625:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns626:latitude xmlns:ns626="https://datex2.eu/schema/3/common">35.12454454124256</ns626:latitude>
+                    <ns627:longitude xmlns:ns627="https://datex2.eu/schema/3/common">33.372234981818906</ns627:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns628:latitude xmlns:ns628="https://datex2.eu/schema/3/common">35.12489407405928</ns628:latitude>
+                    <ns629:longitude xmlns:ns629="https://datex2.eu/schema/3/common">33.37168460967803</ns629:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns630:latitude xmlns:ns630="https://datex2.eu/schema/3/common">35.1254855243036</ns630:latitude>
+                    <ns631:longitude xmlns:ns631="https://datex2.eu/schema/3/common">33.37072135544214</ns631:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns632:latitude xmlns:ns632="https://datex2.eu/schema/3/common">35.12599771768597</ns632:latitude>
+                    <ns633:longitude xmlns:ns633="https://datex2.eu/schema/3/common">33.36989070363722</ns633:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns634:latitude xmlns:ns634="https://datex2.eu/schema/3/common">35.12636900744121</ns634:latitude>
+                    <ns635:longitude xmlns:ns635="https://datex2.eu/schema/3/common">33.36929963924531</ns635:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns636:latitude xmlns:ns636="https://datex2.eu/schema/3/common">35.126751696171986</ns636:latitude>
+                    <ns637:longitude xmlns:ns637="https://datex2.eu/schema/3/common">33.36868729455734</ns637:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns638:latitude xmlns:ns638="https://datex2.eu/schema/3/common">35.127102498830695</ns638:latitude>
+                    <ns639:longitude xmlns:ns639="https://datex2.eu/schema/3/common">33.36805284703363</ns639:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns640:latitude xmlns:ns640="https://datex2.eu/schema/3/common">35.12737686772332</ns640:latitude>
+                    <ns641:longitude xmlns:ns641="https://datex2.eu/schema/3/common">33.36747199421091</ns641:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns642:latitude xmlns:ns642="https://datex2.eu/schema/3/common">35.12779872064265</ns642:latitude>
+                    <ns643:longitude xmlns:ns643="https://datex2.eu/schema/3/common">33.3665160747436</ns643:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns644:latitude xmlns:ns644="https://datex2.eu/schema/3/common">35.127873760573095</ns644:latitude>
+                    <ns645:longitude xmlns:ns645="https://datex2.eu/schema/3/common">33.36624041963082</ns645:longitude>
+                  </location:pointCoordinates>
+                </location:polyline>
+              </location:linearByCoordinates>
+            </location:location>
+          </linear:linearElement>
+  <linear:linearElement>
+            <ns646:id xmlns:ns646="https://datex2.eu/schema/3/common">16</ns646:id>
+            <ns647:name xmlns:ns647="https://datex2.eu/schema/3/common">
+              <ns647:value>A.G. Leventi</ns647:value>
+              <ns647:lang>en</ns647:lang>
+            </ns647:name>
+            <ns648:name xmlns:ns648="https://datex2.eu/schema/3/common">
+              <ns648:value>Α.Γ. Λεβέντη</ns648:value>
+              <ns648:lang>el</ns648:lang>
+            </ns648:name>
+            <ns649:status xmlns:ns649="https://datex2.eu/schema/3/common">
+              <ns649:value>Active</ns649:value>
+              <ns649:lang>en</ns649:lang>
+            </ns649:status>
+            <ns650:status xmlns:ns650="https://datex2.eu/schema/3/common">
+              <ns650:value>Ενεργή</ns650:value>
+              <ns650:lang>el</ns650:lang>
+            </ns650:status>
+            <location:location>
+              <location:linearByCoordinates>
+                <location:polyline>
+                  <location:pointCoordinates>
+                    <ns651:latitude xmlns:ns651="https://datex2.eu/schema/3/common">35.16881113494575</ns651:latitude>
+                    <ns652:longitude xmlns:ns652="https://datex2.eu/schema/3/common">33.359213444329065</ns652:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns653:latitude xmlns:ns653="https://datex2.eu/schema/3/common">35.16903580992765</ns653:latitude>
+                    <ns654:longitude xmlns:ns654="https://datex2.eu/schema/3/common">33.35895430499631</ns654:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns655:latitude xmlns:ns655="https://datex2.eu/schema/3/common">35.16915473372896</ns655:latitude>
+                    <ns656:longitude xmlns:ns656="https://datex2.eu/schema/3/common">33.35881927249238</ns656:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns657:latitude xmlns:ns657="https://datex2.eu/schema/3/common">35.169232250147374</ns657:latitude>
+                    <ns658:longitude xmlns:ns658="https://datex2.eu/schema/3/common">33.35874555968478</ns658:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns659:latitude xmlns:ns659="https://datex2.eu/schema/3/common">35.169366391597336</ns659:latitude>
+                    <ns660:longitude xmlns:ns660="https://datex2.eu/schema/3/common">33.35869217768104</ns660:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns661:latitude xmlns:ns661="https://datex2.eu/schema/3/common">35.16991389655224</ns661:latitude>
+                    <ns662:longitude xmlns:ns662="https://datex2.eu/schema/3/common">33.35861299717712</ns662:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns663:latitude xmlns:ns663="https://datex2.eu/schema/3/common">35.17022428643608</ns663:latitude>
+                    <ns664:longitude xmlns:ns664="https://datex2.eu/schema/3/common">33.358556622768646</ns664:longitude>
+                  </location:pointCoordinates>
+                </location:polyline>
+              </location:linearByCoordinates>
+            </location:location>
+          </linear:linearElement>
+  <linear:linearElement>
+            <ns665:id xmlns:ns665="https://datex2.eu/schema/3/common">17</ns665:id>
+            <ns666:name xmlns:ns666="https://datex2.eu/schema/3/common">
+              <ns666:value>Leof. Larnakos - Aglantzia</ns666:value>
+              <ns666:lang>en</ns666:lang>
+            </ns666:name>
+            <ns667:name xmlns:ns667="https://datex2.eu/schema/3/common">
+              <ns667:value>Λεωφ. Λάρνακος - Αγλαντζιά</ns667:value>
+              <ns667:lang>el</ns667:lang>
+            </ns667:name>
+            <ns668:status xmlns:ns668="https://datex2.eu/schema/3/common">
+              <ns668:value>Active</ns668:value>
+              <ns668:lang>en</ns668:lang>
+            </ns668:status>
+            <ns669:status xmlns:ns669="https://datex2.eu/schema/3/common">
+              <ns669:value>Ενεργή</ns669:value>
+              <ns669:lang>el</ns669:lang>
+            </ns669:status>
+            <location:location>
+              <location:linearByCoordinates>
+                <location:polyline>
+                  <location:pointCoordinates>
+                    <ns670:latitude xmlns:ns670="https://datex2.eu/schema/3/common">35.157161248821986</ns670:latitude>
+                    <ns671:longitude xmlns:ns671="https://datex2.eu/schema/3/common">33.39380625559011</ns671:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns672:latitude xmlns:ns672="https://datex2.eu/schema/3/common">35.157048892889584</ns672:latitude>
+                    <ns673:longitude xmlns:ns673="https://datex2.eu/schema/3/common">33.394504157201204</ns673:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns674:latitude xmlns:ns674="https://datex2.eu/schema/3/common">35.15690861400434</ns674:latitude>
+                    <ns675:longitude xmlns:ns675="https://datex2.eu/schema/3/common">33.39487974495234</ns675:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns676:latitude xmlns:ns676="https://datex2.eu/schema/3/common">35.156173362673634</ns676:latitude>
+                    <ns677:longitude xmlns:ns677="https://datex2.eu/schema/3/common">33.396475303763566</ns677:longitude>
+                  </location:pointCoordinates>
+                </location:polyline>
+              </location:linearByCoordinates>
+            </location:location>
+          </linear:linearElement>
+  <linear:linearElement>
+            <ns678:id xmlns:ns678="https://datex2.eu/schema/3/common">18</ns678:id>
+            <ns679:name xmlns:ns679="https://datex2.eu/schema/3/common">
+              <ns679:value>Leof. Larnakos - Aglantzia</ns679:value>
+              <ns679:lang>en</ns679:lang>
+            </ns679:name>
+            <ns680:name xmlns:ns680="https://datex2.eu/schema/3/common">
+              <ns680:value>Λεωφ. Λάρνακος - Αγλαντζιά</ns680:value>
+              <ns680:lang>el</ns680:lang>
+            </ns680:name>
+            <ns681:status xmlns:ns681="https://datex2.eu/schema/3/common">
+              <ns681:value>Active</ns681:value>
+              <ns681:lang>en</ns681:lang>
+            </ns681:status>
+            <ns682:status xmlns:ns682="https://datex2.eu/schema/3/common">
+              <ns682:value>Ενεργή</ns682:value>
+              <ns682:lang>el</ns682:lang>
+            </ns682:status>
+            <location:location>
+              <location:linearByCoordinates>
+                <location:polyline>
+                  <location:pointCoordinates>
+                    <ns683:latitude xmlns:ns683="https://datex2.eu/schema/3/common">35.1560134258139</ns683:latitude>
+                    <ns684:longitude xmlns:ns684="https://datex2.eu/schema/3/common">33.396954260352324</ns684:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns685:latitude xmlns:ns685="https://datex2.eu/schema/3/common">35.15573393199059</ns685:latitude>
+                    <ns686:longitude xmlns:ns686="https://datex2.eu/schema/3/common">33.397376194686196</ns686:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns687:latitude xmlns:ns687="https://datex2.eu/schema/3/common">35.15200497682901</ns687:latitude>
+                    <ns688:longitude xmlns:ns688="https://datex2.eu/schema/3/common">33.40540729742869</ns688:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns689:latitude xmlns:ns689="https://datex2.eu/schema/3/common">35.14970138542293</ns689:latitude>
+                    <ns690:longitude xmlns:ns690="https://datex2.eu/schema/3/common">33.41042796924637</ns690:longitude>
+                  </location:pointCoordinates>
+                </location:polyline>
+              </location:linearByCoordinates>
+            </location:location>
+          </linear:linearElement>
+  <linear:linearElement>
+            <ns691:id xmlns:ns691="https://datex2.eu/schema/3/common">19</ns691:id>
+            <ns692:name xmlns:ns692="https://datex2.eu/schema/3/common">
+              <ns692:value>A1</ns692:value>
+              <ns692:lang>en</ns692:lang>
+            </ns692:name>
+            <ns693:name xmlns:ns693="https://datex2.eu/schema/3/common">
+              <ns693:value>Α1</ns693:value>
+              <ns693:lang>el</ns693:lang>
+            </ns693:name>
+            <ns694:status xmlns:ns694="https://datex2.eu/schema/3/common">
+              <ns694:value>Active</ns694:value>
+              <ns694:lang>en</ns694:lang>
+            </ns694:status>
+            <ns695:status xmlns:ns695="https://datex2.eu/schema/3/common">
+              <ns695:value>Ενεργή</ns695:value>
+              <ns695:lang>el</ns695:lang>
+            </ns695:status>
+            <location:location>
+              <location:linearByCoordinates>
+                <location:polyline>
+                  <location:pointCoordinates>
+                    <ns696:latitude xmlns:ns696="https://datex2.eu/schema/3/common">35.12738521871411</ns696:latitude>
+                    <ns697:longitude xmlns:ns697="https://datex2.eu/schema/3/common">33.36467791037837</ns697:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns698:latitude xmlns:ns698="https://datex2.eu/schema/3/common">35.12778605661108</ns698:latitude>
+                    <ns699:longitude xmlns:ns699="https://datex2.eu/schema/3/common">33.36498932228722</ns699:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns700:latitude xmlns:ns700="https://datex2.eu/schema/3/common">35.127891530424584</ns700:latitude>
+                    <ns701:longitude xmlns:ns701="https://datex2.eu/schema/3/common">33.36507030006831</ns701:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns702:latitude xmlns:ns702="https://datex2.eu/schema/3/common">35.12797813405226</ns702:latitude>
+                    <ns703:longitude xmlns:ns703="https://datex2.eu/schema/3/common">33.365110634651835</ns703:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns704:latitude xmlns:ns704="https://datex2.eu/schema/3/common">35.12809493100771</ns704:latitude>
+                    <ns705:longitude xmlns:ns705="https://datex2.eu/schema/3/common">33.36514461479176</ns705:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns706:latitude xmlns:ns706="https://datex2.eu/schema/3/common">35.128188195345615</ns706:latitude>
+                    <ns707:longitude xmlns:ns707="https://datex2.eu/schema/3/common">33.3651505486841</ns707:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns708:latitude xmlns:ns708="https://datex2.eu/schema/3/common">35.128335303954216</ns708:latitude>
+                    <ns709:longitude xmlns:ns709="https://datex2.eu/schema/3/common">33.36513542790749</ns709:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns710:latitude xmlns:ns710="https://datex2.eu/schema/3/common">35.128433136201195</ns710:latitude>
+                    <ns711:longitude xmlns:ns711="https://datex2.eu/schema/3/common">33.365141608892394</ns711:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns712:latitude xmlns:ns712="https://datex2.eu/schema/3/common">35.128511150642666</ns712:latitude>
+                    <ns713:longitude xmlns:ns713="https://datex2.eu/schema/3/common">33.365171799551824</ns713:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns714:latitude xmlns:ns714="https://datex2.eu/schema/3/common">35.1285607722311</ns714:latitude>
+                    <ns715:longitude xmlns:ns715="https://datex2.eu/schema/3/common">33.36519886418258</ns715:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns716:latitude xmlns:ns716="https://datex2.eu/schema/3/common">35.128654879044504</ns716:latitude>
+                    <ns717:longitude xmlns:ns717="https://datex2.eu/schema/3/common">33.36526697337564</ns717:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns718:latitude xmlns:ns718="https://datex2.eu/schema/3/common">35.12870334030468</ns718:latitude>
+                    <ns719:longitude xmlns:ns719="https://datex2.eu/schema/3/common">33.36534417146792</ns719:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns720:latitude xmlns:ns720="https://datex2.eu/schema/3/common">35.12877041424266</ns720:latitude>
+                    <ns721:longitude xmlns:ns721="https://datex2.eu/schema/3/common">33.365491509429326</ns721:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns722:latitude xmlns:ns722="https://datex2.eu/schema/3/common">35.12883366558083</ns722:latitude>
+                    <ns723:longitude xmlns:ns723="https://datex2.eu/schema/3/common">33.36569728301819</ns723:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns724:latitude xmlns:ns724="https://datex2.eu/schema/3/common">35.12887772850998</ns724:latitude>
+                    <ns725:longitude xmlns:ns725="https://datex2.eu/schema/3/common">33.36583229433685</ns725:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns726:latitude xmlns:ns726="https://datex2.eu/schema/3/common">35.1289172042904</ns726:latitude>
+                    <ns727:longitude xmlns:ns727="https://datex2.eu/schema/3/common">33.36595961785553</ns727:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns728:latitude xmlns:ns728="https://datex2.eu/schema/3/common">35.128996999424935</ns728:latitude>
+                    <ns729:longitude xmlns:ns729="https://datex2.eu/schema/3/common">33.36616434843964</ns729:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns730:latitude xmlns:ns730="https://datex2.eu/schema/3/common">35.1291110609295</ns730:latitude>
+                    <ns731:longitude xmlns:ns731="https://datex2.eu/schema/3/common">33.36638247907954</ns731:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns732:latitude xmlns:ns732="https://datex2.eu/schema/3/common">35.12923759197945</ns732:latitude>
+                    <ns733:longitude xmlns:ns733="https://datex2.eu/schema/3/common">33.36662845364152</ns733:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns734:latitude xmlns:ns734="https://datex2.eu/schema/3/common">35.129348980553736</ns734:latitude>
+                    <ns735:longitude xmlns:ns735="https://datex2.eu/schema/3/common">33.36681934532035</ns735:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns736:latitude xmlns:ns736="https://datex2.eu/schema/3/common">35.12945810385377</ns736:latitude>
+                    <ns737:longitude xmlns:ns737="https://datex2.eu/schema/3/common">33.36698520736853</ns737:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns738:latitude xmlns:ns738="https://datex2.eu/schema/3/common">35.12958514419092</ns738:latitude>
+                    <ns739:longitude xmlns:ns739="https://datex2.eu/schema/3/common">33.3671945881285</ns739:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns740:latitude xmlns:ns740="https://datex2.eu/schema/3/common">35.12966100668258</ns740:latitude>
+                    <ns741:longitude xmlns:ns741="https://datex2.eu/schema/3/common">33.367307869298884</ns741:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns742:latitude xmlns:ns742="https://datex2.eu/schema/3/common">35.129824977721405</ns742:latitude>
+                    <ns743:longitude xmlns:ns743="https://datex2.eu/schema/3/common">33.36757204086488</ns743:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns744:latitude xmlns:ns744="https://datex2.eu/schema/3/common">35.129981961735886</ns744:latitude>
+                    <ns745:longitude xmlns:ns745="https://datex2.eu/schema/3/common">33.367847147493904</ns745:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns746:latitude xmlns:ns746="https://datex2.eu/schema/3/common">35.13012540890403</ns746:latitude>
+                    <ns747:longitude xmlns:ns747="https://datex2.eu/schema/3/common">33.368125061495434</ns747:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns748:latitude xmlns:ns748="https://datex2.eu/schema/3/common">35.130237181008056</ns748:latitude>
+                    <ns749:longitude xmlns:ns749="https://datex2.eu/schema/3/common">33.36834769936461</ns749:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns750:latitude xmlns:ns750="https://datex2.eu/schema/3/common">35.13045878791156</ns750:latitude>
+                    <ns751:longitude xmlns:ns751="https://datex2.eu/schema/3/common">33.368822094912105</ns751:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns752:latitude xmlns:ns752="https://datex2.eu/schema/3/common">35.130643163043686</ns752:latitude>
+                    <ns753:longitude xmlns:ns753="https://datex2.eu/schema/3/common">33.36920526959231</ns753:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns754:latitude xmlns:ns754="https://datex2.eu/schema/3/common">35.13080273128585</ns754:latitude>
+                    <ns755:longitude xmlns:ns755="https://datex2.eu/schema/3/common">33.36949932330352</ns755:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns756:latitude xmlns:ns756="https://datex2.eu/schema/3/common">35.131003575384085</ns756:latitude>
+                    <ns757:longitude xmlns:ns757="https://datex2.eu/schema/3/common">33.369872270909795</ns757:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns758:latitude xmlns:ns758="https://datex2.eu/schema/3/common">35.13116063752988</ns758:latitude>
+                    <ns759:longitude xmlns:ns759="https://datex2.eu/schema/3/common">33.3701590756888</ns759:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns760:latitude xmlns:ns760="https://datex2.eu/schema/3/common">35.13136779219279</ns760:latitude>
+                    <ns761:longitude xmlns:ns761="https://datex2.eu/schema/3/common">33.37052526800379</ns761:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns762:latitude xmlns:ns762="https://datex2.eu/schema/3/common">35.131520064089216</ns762:latitude>
+                    <ns763:longitude xmlns:ns763="https://datex2.eu/schema/3/common">33.37075220212446</ns763:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns764:latitude xmlns:ns764="https://datex2.eu/schema/3/common">35.131648496492275</ns764:latitude>
+                    <ns765:longitude xmlns:ns765="https://datex2.eu/schema/3/common">33.37093949792833</ns765:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns766:latitude xmlns:ns766="https://datex2.eu/schema/3/common">35.13185645954214</ns766:latitude>
+                    <ns767:longitude xmlns:ns767="https://datex2.eu/schema/3/common">33.37122496959932</ns767:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns768:latitude xmlns:ns768="https://datex2.eu/schema/3/common">35.131997160002015</ns768:latitude>
+                    <ns769:longitude xmlns:ns769="https://datex2.eu/schema/3/common">33.37140269555239</ns769:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns770:latitude xmlns:ns770="https://datex2.eu/schema/3/common">35.13216082719466</ns770:latitude>
+                    <ns771:longitude xmlns:ns771="https://datex2.eu/schema/3/common">33.371609002577046</ns771:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns772:latitude xmlns:ns772="https://datex2.eu/schema/3/common">35.132268496774174</ns772:latitude>
+                    <ns773:longitude xmlns:ns773="https://datex2.eu/schema/3/common">33.371716011210594</ns773:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns774:latitude xmlns:ns774="https://datex2.eu/schema/3/common">35.13255000515419</ns774:latitude>
+                    <ns775:longitude xmlns:ns775="https://datex2.eu/schema/3/common">33.37202610340187</ns775:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns776:latitude xmlns:ns776="https://datex2.eu/schema/3/common">35.13281143894944</ns776:latitude>
+                    <ns777:longitude xmlns:ns777="https://datex2.eu/schema/3/common">33.37228625492568</ns777:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns778:latitude xmlns:ns778="https://datex2.eu/schema/3/common">35.133023413559656</ns778:latitude>
+                    <ns779:longitude xmlns:ns779="https://datex2.eu/schema/3/common">33.37249836652547</ns779:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns780:latitude xmlns:ns780="https://datex2.eu/schema/3/common">35.13318611634951</ns780:latitude>
+                    <ns781:longitude xmlns:ns781="https://datex2.eu/schema/3/common">33.372634844836675</ns781:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns782:latitude xmlns:ns782="https://datex2.eu/schema/3/common">35.13329064435647</ns782:latitude>
+                    <ns783:longitude xmlns:ns783="https://datex2.eu/schema/3/common">33.372728238690264</ns783:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns784:latitude xmlns:ns784="https://datex2.eu/schema/3/common">35.13341563595153</ns784:latitude>
+                    <ns785:longitude xmlns:ns785="https://datex2.eu/schema/3/common">33.37283656956316</ns785:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns786:latitude xmlns:ns786="https://datex2.eu/schema/3/common">35.13355265593723</ns786:latitude>
+                    <ns787:longitude xmlns:ns787="https://datex2.eu/schema/3/common">33.372948324803616</ns787:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns788:latitude xmlns:ns788="https://datex2.eu/schema/3/common">35.13378349429607</ns788:latitude>
+                    <ns789:longitude xmlns:ns789="https://datex2.eu/schema/3/common">33.37312124767308</ns789:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns790:latitude xmlns:ns790="https://datex2.eu/schema/3/common">35.133958101679305</ns790:latitude>
+                    <ns791:longitude xmlns:ns791="https://datex2.eu/schema/3/common">33.37325033822426</ns791:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns792:latitude xmlns:ns792="https://datex2.eu/schema/3/common">35.13419328856657</ns792:latitude>
+                    <ns793:longitude xmlns:ns793="https://datex2.eu/schema/3/common">33.373422037070824</ns793:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns794:latitude xmlns:ns794="https://datex2.eu/schema/3/common">35.13448038011042</ns794:latitude>
+                    <ns795:longitude xmlns:ns795="https://datex2.eu/schema/3/common">33.37359829153204</ns795:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns796:latitude xmlns:ns796="https://datex2.eu/schema/3/common">35.134762839976105</ns796:latitude>
+                    <ns797:longitude xmlns:ns797="https://datex2.eu/schema/3/common">33.37376594401556</ns797:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns798:latitude xmlns:ns798="https://datex2.eu/schema/3/common">35.134992167595</ns798:latitude>
+                    <ns799:longitude xmlns:ns799="https://datex2.eu/schema/3/common">33.37389389973359</ns799:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns800:latitude xmlns:ns800="https://datex2.eu/schema/3/common">35.13524432643402</ns800:latitude>
+                    <ns801:longitude xmlns:ns801="https://datex2.eu/schema/3/common">33.37402019547526</ns801:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns802:latitude xmlns:ns802="https://datex2.eu/schema/3/common">35.135490884685716</ns802:latitude>
+                    <ns803:longitude xmlns:ns803="https://datex2.eu/schema/3/common">33.37412565271012</ns803:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns804:latitude xmlns:ns804="https://datex2.eu/schema/3/common">35.13584281395028</ns804:latitude>
+                    <ns805:longitude xmlns:ns805="https://datex2.eu/schema/3/common">33.37427256242739</ns805:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns806:latitude xmlns:ns806="https://datex2.eu/schema/3/common">35.13607348085215</ns806:latitude>
+                    <ns807:longitude xmlns:ns807="https://datex2.eu/schema/3/common">33.37435197311193</ns807:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns808:latitude xmlns:ns808="https://datex2.eu/schema/3/common">35.1363094595712</ns808:latitude>
+                    <ns809:longitude xmlns:ns809="https://datex2.eu/schema/3/common">33.37443253356683</ns809:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns810:latitude xmlns:ns810="https://datex2.eu/schema/3/common">35.136690210732354</ns810:latitude>
+                    <ns811:longitude xmlns:ns811="https://datex2.eu/schema/3/common">33.37455386631894</ns811:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns812:latitude xmlns:ns812="https://datex2.eu/schema/3/common">35.13693599896468</ns812:latitude>
+                    <ns813:longitude xmlns:ns813="https://datex2.eu/schema/3/common">33.374606361064245</ns813:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns814:latitude xmlns:ns814="https://datex2.eu/schema/3/common">35.1372528539255</ns814:latitude>
+                    <ns815:longitude xmlns:ns815="https://datex2.eu/schema/3/common">33.37467748881222</ns815:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns816:latitude xmlns:ns816="https://datex2.eu/schema/3/common">35.13751788678938</ns816:latitude>
+                    <ns817:longitude xmlns:ns817="https://datex2.eu/schema/3/common">33.37472923328942</ns817:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns818:latitude xmlns:ns818="https://datex2.eu/schema/3/common">35.13783265690724</ns818:latitude>
+                    <ns819:longitude xmlns:ns819="https://datex2.eu/schema/3/common">33.37477123410214</ns819:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns820:latitude xmlns:ns820="https://datex2.eu/schema/3/common">35.13817193618385</ns820:latitude>
+                    <ns821:longitude xmlns:ns821="https://datex2.eu/schema/3/common">33.37480236308046</ns821:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns822:latitude xmlns:ns822="https://datex2.eu/schema/3/common">35.138443725187294</ns822:latitude>
+                    <ns823:longitude xmlns:ns823="https://datex2.eu/schema/3/common">33.37481920963719</ns823:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns824:latitude xmlns:ns824="https://datex2.eu/schema/3/common">35.13869254407525</ns824:latitude>
+                    <ns825:longitude xmlns:ns825="https://datex2.eu/schema/3/common">33.37481522403347</ns825:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns826:latitude xmlns:ns826="https://datex2.eu/schema/3/common">35.1389479318856</ns826:latitude>
+                    <ns827:longitude xmlns:ns827="https://datex2.eu/schema/3/common">33.37481829520755</ns827:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns828:latitude xmlns:ns828="https://datex2.eu/schema/3/common">35.139211489482406</ns828:latitude>
+                    <ns829:longitude xmlns:ns829="https://datex2.eu/schema/3/common">33.37479681862344</ns829:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns830:latitude xmlns:ns830="https://datex2.eu/schema/3/common">35.13946520513178</ns830:latitude>
+                    <ns831:longitude xmlns:ns831="https://datex2.eu/schema/3/common">33.37478195627354</ns831:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns832:latitude xmlns:ns832="https://datex2.eu/schema/3/common">35.13956905321499</ns832:latitude>
+                    <ns833:longitude xmlns:ns833="https://datex2.eu/schema/3/common">33.37477735523361</ns833:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns834:latitude xmlns:ns834="https://datex2.eu/schema/3/common">35.139719825011646</ns834:latitude>
+                    <ns835:longitude xmlns:ns835="https://datex2.eu/schema/3/common">33.37477582725975</ns835:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns836:latitude xmlns:ns836="https://datex2.eu/schema/3/common">35.139883596567216</ns836:latitude>
+                    <ns837:longitude xmlns:ns837="https://datex2.eu/schema/3/common">33.374764909692395</ns837:longitude>
+                  </location:pointCoordinates>
+                  <location:pointCoordinates>
+                    <ns838:latitude xmlns:ns838="https://datex2.eu/schema/3/common">35.14001303913707</ns838:latitude>
+                    <ns839:longitude xmlns:ns839="https://datex2.eu/schema/3/common">33.374752229128</ns839:longitude>
+                  </location:pointCoordinates>
+                </location:polyline>
+              </location:linearByCoordinates>
+            </location:location>
+          </linear:linearElement>
+        </linear:linearElementPublication>
+      </ns3:genericPublicationExtension>
+    </ns3:genericPublicationExtension>
+  </ns3:payloadPublication>
+</d2LogicalModel>

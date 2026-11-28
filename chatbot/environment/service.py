@@ -17,6 +17,7 @@ from collector import interpret
 
 from chatbot.environment import sun as S
 from chatbot.environment.shade import NO_DATA, Shade, downsample, encode_grid
+from chatbot.environment.stations import Measured
 from chatbot.environment.surfaces import METRICS, Field, band_of, build_field
 from chatbot.environment.weather import WIND_LATS, WIND_LONS, ModelGrids, bilinear
 from chatbot.settings import TIMEZONE, Settings
@@ -44,7 +45,13 @@ SOURCES = {
     "weather_model": {"name": "Open-Meteo weather forecast", "url": "https://open-meteo.com/en/docs"},
     "dls": {"name": "DLS 3D buildings (INSPIRE)", "url": "https://eservices.dls.moi.gov.cy/inspire/"},
     "radar": {"name": "RainViewer radar", "url": "https://www.rainviewer.com/api.html"},
+    "met_stations": {"name": "Department of Meteorology stations", "url": "https://www.dom.org.cy/"},
+    "eea_air": {"name": "National air quality network (EEA up-to-date files)",
+                "url": "https://eeadmz1-downloads-webapp.azurewebsites.net/"},
 }
+# What reference stations measure, of the surfaces' metrics.
+REFERENCE_METRICS = {"no2", "o3", "pm10", "pm2_5", "temperature_c"}
+CALIBRATE_MIN_HOURS = 24  # hours beside a Met station before a city sensor's temperature is corrected
 
 
 def wind_from(u: float, v: float) -> float:
@@ -62,13 +69,17 @@ def compass(deg: float) -> str:
 
 class Environment:
     def __init__(self, settings: Settings, city=None, moments=None, dls=None, memory=None,
-                 models: ModelGrids | None = None, fetch=get_json):
+                 models: ModelGrids | None = None, fetch=get_json, measured: Measured | None = None):
         self.s = settings
         self.city = city
         self.moments = moments
         self.memory = memory
         self.shade = Shade(dls)
         self.models = models or ModelGrids(settings, fetch=fetch)
+        # The Met Department's stations and the national air network (stations.py); its poller
+        # is started by the server, never by a read.
+        self.measured = measured or Measured(settings, memory,
+                                             now=(city.now if city is not None else None))
         self._fetch = fetch
         self._fields: dict[tuple, tuple[float, Field, str | None, list[str]]] = {}
         self._radar: tuple[float, dict] | None = None
@@ -141,13 +152,83 @@ class Environment:
             if hit and time.time() - hit[0] < ttl:
                 return hit[1], hit[2], list(hit[3])
         rows, note = self.stations(at)
-        field, problem = build_field(metric, rows, self.models, at or self.now())
         notes = [note] if note else []
+        used, left, extras, city_note = [], [], {}, None
+        if metric in REFERENCE_METRICS:
+            try:
+                used, left = self.measured.for_surface(metric, at)
+            except Exception as e:  # noqa: BLE001 - the city sensors and the model still stand
+                log.info("reference stations for %s: %s", metric, e)
+            if metric == "temperature_c" and used:
+                rows, extras, city_note = self._calibrated_temperature(rows, at)
+        field, problem = build_field(metric, rows + used, self.models, at or self.now())
+        field.extras = extras  # type: ignore[attr-defined]
+        field.left_out = left  # type: ignore[attr-defined]
+        field.city_note = city_note  # type: ignore[attr-defined]
+        field.as_of = {u["id"]: u["as_of"] for u in used}  # type: ignore[attr-defined]
         with self._lock:
             self._fields[key] = (time.time(), field, problem, notes)
             if len(self._fields) > 200:
                 self._fields.pop(next(iter(self._fields)))
         return field, problem, notes
+
+    def city_sensors(self) -> list[tuple[str, str, float, float]]:
+        """The city's air sensors as (id, name, lat, lon), from the inventory already read."""
+        if self.city is None:
+            return []
+        try:
+            devices = self.city.devices_of(AIR_TYPE)
+        except Exception:  # noqa: BLE001 - nothing to compare
+            return []
+        out = []
+        for d in devices:
+            if d.lat is None or d.lon is None:
+                continue
+            label = None
+            try:
+                label = self.city.cached_label(d)[0]
+            except Exception:  # noqa: BLE001 - a fake or an empty cache
+                pass
+            name = (label or "").removeprefix("Air station ").strip() or d.name
+            out.append((d.name, name, d.lat, d.lon))
+        return out
+
+    def _calibrated_temperature(self, rows: list[dict], at: datetime | None):
+        """The city sensors' temperatures beside the Met stations: each corrected by how far it
+        read from its nearest Met station over the past week, or left out where the twin's
+        memory doesn't hold a day of both. Returns (rows, what was done per sensor, a note)."""
+        sensors = [(r["id"], r.get("name") or r["id"], r["lat"], r["lon"]) for r in rows
+                   if r.get("temperature_c") is not None]
+        try:
+            comp = self.measured.compare(sensors, ("temperature_c",), end=at)
+        except Exception as e:  # noqa: BLE001 - leave them out rather than guess
+            log.info("temperature comparison: %s", e)
+            comp = []
+        by = {c["sensor_id"]: c for c in comp
+              if c.get("bias") is not None and c["hours"] >= CALIBRATE_MIN_HOURS}
+        out, extras, dropped = [], {}, 0
+        for r in rows:
+            v = r.get("temperature_c")
+            if v is None:
+                out.append(r)
+                continue
+            c = by.get(r["id"])
+            if c is None:
+                out.append({k: x for k, x in r.items() if k != "temperature_c"})
+                dropped += 1
+                continue
+            sd = math.sqrt(max(0.0, c["rmse"] ** 2 - c["bias"] ** 2))
+            out.append({**r, "temperature_c": round(v - c["bias"], 1), "error": max(0.5, round(sd, 2))})
+            extras[r["id"]] = {"raw": v, "correction": round(-c["bias"], 1), "compared_with": c["reference"]}
+        note = None
+        if dropped and not by:
+            note = ("the city sensors' own temperatures are left out: the twin's memory doesn't yet "
+                    "hold a day of them beside the Met stations to correct them")
+        elif by:
+            note = (f"{len(by)} city sensor{'s' if len(by) != 1 else ''} corrected by how far each read "
+                    "from its nearest Met station over the past week"
+                    + (f"; {dropped} left out, not yet compared" if dropped else ""))
+        return out, extras, note
 
     def surface(self, metric: str, at: datetime | None) -> dict:
         """What the page draws for a metric at a moment: the grid of estimates and how sure
@@ -160,14 +241,28 @@ class Environment:
                     "reason": reason, "at": _local(at)}
         grid = field.grid()
         stations = []
+        extras = getattr(field, "extras", {}) or {}
+        as_of = getattr(field, "as_of", {}) or {}
         for s in field.stations:
             est = field.at(s.lat, s.lon)
             stations.append({"id": s.id, "name": s.name, "lat": s.lat, "lon": s.lon,
                              "value": round(s.value, m.decimals),
                              "model": round(s.model, m.decimals) if s.model is not None and field.has_model else None,
                              "band": band_of(m, s.value),
-                             "estimate": round(est["value"], m.decimals) if est["value"] is not None else None})
+                             "estimate": round(est["value"], m.decimals) if est["value"] is not None else None,
+                             "reference": s.reference,
+                             **({"as_of": as_of[s.id]} if s.id in as_of else {}),
+                             **extras.get(s.id, {})})
         hi = max(stations, key=lambda r: r["value"]) if stations else None
+        refs = [x for x in stations if x["reference"]]
+        left = getattr(field, "left_out", []) or []
+        city_note = getattr(field, "city_note", None)
+        if metric in REFERENCE_METRICS and not refs and left:
+            newest = max(left, key=lambda x: x["as_of"])
+            notes = notes + [f"the reference stations aren't used: {newest['why']}; move the clock back "
+                             "to see the surface rest on them"]
+        if city_note:
+            notes = notes + [city_note]
         return {
             "metric": metric, "label": m.label, "unit": m.unit, "known": True, "at": _local(at),
             "model_hour": field.model["time"] if field.has_model and field.model else None,
@@ -179,10 +274,15 @@ class Environment:
             "spread": round(field.spread, m.decimals),
             "reach_m": m.reach_m,
             "highest_station": hi,
+            # What the surface rests on: the reference stations (ground truth) and the city's.
+            "rests_on": {"reference": [{"id": x["id"], "name": x["name"], "as_of": x.get("as_of")} for x in refs],
+                         "city_sensors": sum(1 for x in stations if not x["reference"]),
+                         "left_out": [{"id": x["id"], "name": x["name"], "why": x["why"]} for x in left]},
             "notes": notes + ([problem] if problem and m.model else []),
             "sources": [SOURCES["stations"]] + (
                 [SOURCES["air_model"] if m.model != "temperature" else SOURCES["weather_model"]]
-                if field.has_model else []),
+                if field.has_model else []) + (
+                [SOURCES["met_stations" if metric == "temperature_c" else "eea_air"]] if refs else []),
         }
 
     def estimate(self, metric: str, lat: float, lon: float, at: datetime | None) -> dict | None:

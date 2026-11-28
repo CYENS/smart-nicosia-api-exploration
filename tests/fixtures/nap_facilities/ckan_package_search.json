@@ -1,0 +1,134 @@
+{
+ "success": true,
+ "result": {
+  "count": 7,
+  "results": [
+   {
+    "name": "electricvehiclecharges",
+    "title": {
+     "el": "Σταθμοί επαναφόρτισης ηλεκτρικών οχημάτων",
+     "en": "Electric Vehicle Chargers"
+    },
+    "license_id": "CC-BY-4.0",
+    "metadata_modified": "2026-11-26T23:01:50.460730",
+    "organization": {
+     "title": "Department of Electrical and Mechanical Services"
+    },
+    "resources": [
+     {
+      "url": "https://fixcyprus.cy/gnosis/open/api/nap/datasets/electric_vehicle_chargers/",
+      "format": "XML"
+     }
+    ]
+   },
+   {
+    "name": "nextbike",
+    "title": {
+     "el": "Σταθμοί ενοικίασης ποδηλάτων Nextbike",
+     "en": "Nextbike Bike Stations"
+    },
+    "license_id": "CC-BY-4.0",
+    "metadata_modified": "2025-11-21T11:14:15.992852",
+    "organization": {
+     "title": "NextBike Cyprus"
+    },
+    "resources": [
+     {
+      "url": "https://fixcyprus.cy/gnosis/open/api/nap/datasets/nextbikestations/",
+      "format": "XML"
+     }
+    ]
+   },
+   {
+    "name": "bolt",
+    "title": {
+     "el": "Σταθμοί ενοικίασης e-Scooter Bolt",
+     "en": "Bolt e-Scooter Stations"
+    },
+    "license_id": "CC-BY-4.0",
+    "metadata_modified": "2025-11-21T11:11:19.706636",
+    "organization": {
+     "title": "Bolt"
+    },
+    "resources": [
+     {
+      "url": "https://fixcyprus.cy/gnosis/open/api/nap/datasets/boltstations/",
+      "format": "XML"
+     }
+    ]
+   },
+   {
+    "name": "bicycle_racks",
+    "title": {
+     "el": "Θέσεις Στάθμευσης Ποδηλάτων",
+     "en": "Bicycle Racks"
+    },
+    "license_id": "CC-BY-4.0",
+    "metadata_modified": "2025-03-13T10:51:22.436587",
+    "organization": {
+     "title": "Τμήμα Δημόσιων Έργων"
+    },
+    "resources": [
+     {
+      "url": "https://fixcyprus.cy/gnosis/open/api/nap/datasets/bicycle_racks/",
+      "format": "XML"
+     }
+    ]
+   },
+   {
+    "name": "parking_areas",
+    "title": {
+     "el": "Χώροι Στάθμευσης",
+     "en": "Parking Areas"
+    },
+    "license_id": "CC-BY-4.0",
+    "metadata_modified": "2025-03-11T13:16:30.345377",
+    "organization": {
+     "title": "Τμήμα Δημόσιων Έργων"
+    },
+    "resources": [
+     {
+      "url": "https://fixcyprus.cy/gnosis/open/api/nap/datasets/parking_areas/",
+      "format": "XML"
+     }
+    ]
+   },
+   {
+    "name": "bike_stations_rental",
+    "title": {
+     "el": "Σταθμοί Ενοικίασης Ποδηλάτων",
+     "en": "Bike Stations Rental"
+    },
+    "license_id": "CC-BY-4.0",
+    "metadata_modified": "2025-03-10T13:57:03.144603",
+    "organization": {
+     "title": "Τμήμα Δημόσιων Έργων"
+    },
+    "resources": [
+     {
+      "url": "https://fixcyprus.cy/gnosis/open/api/nap/datasets/bike_stations_rental/",
+      "format": "XML"
+     }
+    ]
+   },
+   {
+    "name": "park_and_ride",
+    "title": {
+     "el": "Χώροι Στάθμευσης και Μετεπιβίβασης",
+     "en": "Park & Ride"
+    },
+    "license_id": "CC-BY-4.0",
+    "metadata_modified": "2025-03-10T13:48:28.683221",
+    "organization": {
+     "title": "Τμήμα Δημόσιων Έργων"
+    },
+    "resources": [
+     {
+      "url": "https://fixcyprus.cy/gnosis/open/api/nap/datasets/parkandride/",
+      "format": "XML"
+     }
+    ]
+   }
+  ]
+ }
+}

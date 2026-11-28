@@ -19,13 +19,26 @@ from chatbot import sources
 from chatbot.settings import TIMEZONE
 from chatbot.tools import (buildings, charts, city, clock, entities, environment, maps, memory,
                            mobility, places, routes, scenarios, views, watch)
+from chatbot.tools import streets
+from chatbot.tools import facilities
+from chatbot.tools import energy
+from chatbot.tools import hazards
 from chatbot.tools.base import Handler, LocationNotShared, Tool, ToolContext, ToolError
 from chatbot.web import WebError
 
 log = logging.getLogger(__name__)
 
 DOMAINS = (city, places, routes, buildings, maps, charts, memory, entities, clock, mobility,
-           watch, environment, views, scenarios)
+           watch, environment, views, scenarios, streets)
+# Road reports (closures, jams, roadworks): a domain of its own, at the end.
+from chatbot.tools import roadreports  # noqa: E402
+DOMAINS += (roadreports,)
+# Park, charge and hire (car parks, chargers, bikes and scooters), after it.
+DOMAINS += (facilities,)
+# The island's power (demand, wind, solar and the grid's carbon), after that.
+DOMAINS += (energy,)
+# Hazards (earthquakes, weather warnings and fire danger), last.
+DOMAINS += (hazards,)
 
 TOOLS: list[Tool] = [t for domain in DOMAINS for t in domain.TOOLS]
 TOOL_DEFS: list[dict] = [t.definition for t in TOOLS]

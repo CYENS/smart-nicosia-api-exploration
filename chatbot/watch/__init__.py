@@ -4,10 +4,13 @@
 - `incidents`: those grouped by place and time, with severity, evidence and a history of what
   people did, stored in the twin's memory.
 - `watches`: rules people asked the twin to keep an eye on, raised the moment they come true.
+- `hazards`: earthquakes, official weather warnings and fire danger (chatbot/hazards) as
+  incidents, registered beside the detectors above.
 - `service`: the `Watcher` that runs them when fresh data arrives, and the live stream to pages.
 """
 
 from chatbot.watch import entities as _entities  # noqa: F401 - registers the incident kind
+from chatbot.watch import hazards as _hazards  # noqa: F401 - earthquakes, warnings, fire danger
 from chatbot.watch.service import Hub, Watcher
 
 __all__ = ["Hub", "Watcher"]

@@ -316,12 +316,23 @@ function Actions({ d }: { d: IncidentDetail }) {
   )
 }
 
+// What an incident's members are called: devices, a data feed, or the hazards it groups.
+const MEMBER_WORDS: Record<string, [string, string]> = {
+  feed: ["The data feed", "data feeds"], quake: ["The earthquake", "earthquakes"],
+  warning: ["The warning", "warnings"], fire: ["The fire danger", "runs of fire danger"],
+}
+
+function membersHeading(d: IncidentDetail) {
+  const [one, many] = MEMBER_WORDS[d.family] ?? ["The device", "devices"]
+  return d.members.length === 1 ? one : `${d.members.length} ${many}`
+}
+
 function Devices({ d }: { d: IncidentDetail }) {
   const { ref, onKeyDown, onFocus } = useRovingList<HTMLDivElement>({ orientation: "both" })
   return (
     <section aria-labelledby="incident-devices" className="flex flex-col gap-2">
       <Heading aside={<span className="text-[12px] text-muted-foreground">{d.family === "feed" ? "opens in Data sources" : "open one in the inspector"}</span>}>
-        <span id="incident-devices">{d.family === "feed" ? "The data feed" : d.members.length === 1 ? "The device" : `${d.members.length} devices`}</span>
+        <span id="incident-devices">{membersHeading(d)}</span>
       </Heading>
       <div ref={ref} role="list" aria-labelledby="incident-devices" onKeyDown={onKeyDown} onFocus={onFocus} className="flex flex-wrap gap-1.5">
         {d.members.map((m) => {

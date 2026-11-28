@@ -31,13 +31,18 @@ import { useLayout } from "@/lib/layout"
 import { startCredits } from "@/lib/map/credits"
 import { initMap, setInsets } from "@/lib/map/engine"
 import "@/lib/mobility" // buses, stops and road speeds: their workspace, kinds, layers and commands
+import "@/lib/reports" // road reports: closures, jams, accidents and roadworks on the map, the Traffic card and Layers
+import "@/lib/facilities" // car parks, chargers, bike stations, scooter zones and racks: kinds, layers, Parking card
 import "@/lib/watch" // the incident inbox, its Layers row, marks on the clock, toasts from the live stream
+import "@/lib/hazards" // earthquakes, weather warnings and fire danger: Layers row, Outside line, incident extents
 import "@/lib/environment" // sun, shade, terrain, air, noise and weather: workspace, spot, layers
+import "@/lib/streets" // speed limits, slow zones, signals, crossings, cycleways, bus lanes, cameras
 import "@/lib/scenarios" // the Scenario lab: its workspace, split map, sections and saved runs
 import "@/lib/weather" // the weather of the clock's moment on the map: light, sky, cloud, rain, haze
 // After the environment: "What's here?" is the spot's menu item and icon, and its card holds the
 // environment's "What's it like here?" too.
 import "@/lib/here" // "What's here?": any point of the map, its card, the click, press and Ctrl K
+import "@/components/power/sections" // the island's grid: the Outside card's section, the inspector, the peak on the clock
 import { useWorkspace, useWorkspaceSide } from "@/lib/registries/workspaces"
 import { useView } from "@/lib/view"
 

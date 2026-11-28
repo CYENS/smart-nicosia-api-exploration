@@ -2322,6 +2322,9 @@ function syncSelection() {
 // the 3D city on. With reduced motion the camera jumps.
 // Opening the inspector (or the stage) changes the camera padding a moment later, which stops a
 // flight under way; as with a layer's fit, the flight is kept as the framing and flown again.
+// The zoom a kind is best seen at, where street level isn't (an earthquake, a warning's area).
+export const KIND_ZOOM: Record<string, number> = {}
+
 export function flyToThing(center: [number, number], kind?: string) {
   if (!map) return
   takeOver()
@@ -2329,7 +2332,7 @@ export function flyToThing(center: [number, number], kind?: string) {
   const building = kind === "building_3d" || kind === "register_building"
   if (kind === "building_3d" && !CITY.on) setCity3d(true)
   const opts = {
-    center, zoom: Math.max(map.getZoom(), building ? 17 : 16.8),
+    center, zoom: KIND_ZOOM[kind ?? ""] ?? Math.max(map.getZoom(), building ? 17 : 16.8),
     pitch: building ? Math.max(map.getPitch(), 55) : map.getPitch(), essential: true,
   }
   const go = () => {

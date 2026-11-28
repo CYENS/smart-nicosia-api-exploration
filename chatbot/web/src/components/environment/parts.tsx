@@ -26,7 +26,7 @@ function Steps({ colors, labels, label, className }: { colors: string[]; labels:
   )
 }
 
-export function SurfaceLegend({ surface }: { surface: Pick<Surface, "metric" | "unit" | "bands" | "background" | "model_bias" | "label"> }) {
+export function SurfaceLegend({ surface }: { surface: Pick<Surface, "metric" | "unit" | "bands" | "background" | "model_bias" | "label" | "rests_on"> }) {
   const base = useBase()
   const bands = surface.bands ?? []
   const colors = bandColors(surface.metric, base).slice(0, bands.length)
@@ -40,8 +40,31 @@ export function SurfaceLegend({ surface }: { surface: Pick<Surface, "metric" | "
           ? "Only near the stations: it fades out between them, where nothing is measured."
           : `Strong near a station, faded where only the regional model speaks${surface.model_bias ? ` (corrected by ${surface.model_bias > 0 ? "+" : ""}${fmtValue(surface.model_bias, surface.unit)} to match the stations)` : ""}.`}
       </p>
+      {surface.rests_on && <RestsOnLine rests={surface.rests_on} />}
     </div>
   )
+}
+
+// Which official stations the surface rests on (drawn as rings), or why they are left out.
+function RestsOnLine({ rests }: { rests: NonNullable<Surface["rests_on"]> }) {
+  const city = rests.city_sensors
+  if (rests.reference.length) {
+    const names = rests.reference.map((r) => r.name.replace(/^Nicosia /, "")).join(", ")
+    const when = rests.reference[0].as_of?.slice(11, 16)
+    return (
+      <p className="text-[12px] leading-snug text-muted-foreground">
+        Rests on official stations (the rings): {names}{when ? `, ${when}` : ""}{city ? `, and ${city} city sensor${city === 1 ? "" : "s"}` : ""}.
+      </p>
+    )
+  }
+  if (rests.left_out.length) {
+    return (
+      <p className="text-[12px] leading-snug text-muted-foreground">
+        The official stations aren't used: {rests.left_out[0].why}. Move the clock back a few hours to see the surface rest on them.
+      </p>
+    )
+  }
+  return null
 }
 
 export function SunHoursLegend() {

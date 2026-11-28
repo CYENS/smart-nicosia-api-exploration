@@ -27,6 +27,7 @@ type Live = {
 type Road = {
   speed_kmh: number | null; free_flow_kmh: number | null; free_flow: string; usual_kmh: number | null; share: number | null
   usual_days?: number; stalled?: boolean; last_measured_at?: string // stalled: the detectors' last time
+  limit_kmh?: number | null; limit_tier?: string | null // the posted limit, from the street rules
 }
 type OnRoad = { id: string; name: string; detail: string; lon: number; lat: number }
 type MobilityEntity = Entity & {
@@ -167,6 +168,7 @@ function StopSection({ entity }: SectionProps) {
 const FREE_FLOW_FROM: Record<string, string> = {
   measured: "measured from 4 weeks of this road",
   estimated: "estimated from the road network until a day of readings is stored",
+  posted: "the road's posted limit until the estimate loads",
   assumed: "assumed at the urban limit for now",
 }
 
@@ -195,6 +197,15 @@ function RoadSection({ entity }: SectionProps) {
           {stalledSentence(road.last_measured_at)}{road.usual_kmh ? ` Usually ${Math.round(road.usual_kmh)} km/h at this hour on this weekday${road.usual_days ? `, over ${road.usual_days} ${road.usual_days === 1 ? "day" : "days"}` : ""}. That is the usual, not a reading.` : ""}
         </p>
       )}
+      {road.limit_kmh ? (
+        <p className="flex items-center gap-2 text-[12.5px] leading-snug">
+          <span aria-hidden="true" className="flex size-6 shrink-0 items-center justify-center rounded-full border-2 border-foreground/70 font-readout text-[11px] font-semibold">{road.limit_kmh}</span>
+          <span>
+            Limit {road.limit_kmh}{road.speed_kmh !== null && !road.stalled ? `, traffic at ${Math.round(road.speed_kmh)} km/h` : " km/h"}
+            <span className="text-muted-foreground">{road.limit_tier === "mapped" ? ", as OpenStreetMap maps it" : road.limit_tier === "likely" ? ", likely, from the nearest sign" : ", from the signs"}</span>
+          </span>
+        </p>
+      ) : null}
       <p className="text-[12.5px] leading-snug text-muted-foreground">
         {share !== null ? `${share}% of its free-flow speed. ` : road.stalled ? "" : "No car crossed both detectors in the last 30 minutes. "}
         Free flow is {FREE_FLOW_FROM[road.free_flow] ?? "unknown"}.

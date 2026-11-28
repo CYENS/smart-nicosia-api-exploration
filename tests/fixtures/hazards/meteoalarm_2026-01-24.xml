@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom" xmlns:cap="urn:oasis:names:tc:emergency:cap:1.2">
+  <link rel="hub" href="https://pubsubhubbub.appspot.com/"/>
+  <link type="application/atom+xml" rel="self" href="https://feeds.meteoalarm.org/feeds/meteoalarm-legacy-atom-cyprus"/>
+  <link type="text/html" rel="alternate" href="https://meteoalarm.org"/>
+  <rights>Copyright © 2026 MeteoAlarm.Org. Licensed under terms equivalent to CC BY 4.0, with additional requirements for redistributing outlined in our Terms and Conditions.</rights>
+  <generator>MeteoAlarm Producer Server</generator>
+  <logo>https://feeds.meteoalarm.org/images/logo.svg</logo>
+  <author>
+    <name>meteoalarm.org</name>
+    <uri>https://meteoalarm.org</uri>
+    <email>meteoalarm@geosphere.at</email>
+  </author>
+  <id>tag:meteoalarm.org,2021-02-19:CY</id>
+  <title>MeteoAlarm - Alerting Europe for Extreme Weather</title>
+  <updated>2026-01-24T02:05:05.147600Z</updated>
+  <entry>
+    <cap:geocode>
+      <valueName>EMMA_ID</valueName>
+      <value>CY001</value>
+    </cap:geocode>
+    <link title="Cyprus" href="https://meteoalarm.org?geocode=EMMA_ID:CY001" hreflang="en"/>
+    <cap:areaDesc>Cyprus</cap:areaDesc>
+    <cap:event>Thunderstorm Yellow</cap:event>
+    <cap:sent>2026-01-23T08:05:48+00:00</cap:sent>
+    <cap:expires>2026-01-24T14:59:59+00:00</cap:expires>
+    <cap:effective>2026-01-23T08:05:48+00:00</cap:effective>
+    <cap:onset>2026-01-23T20:00:00+00:00</cap:onset>
+    <cap:certainty>Likely</cap:certainty>
+    <cap:severity>Moderate</cap:severity>
+    <cap:urgency>Future</cap:urgency>
+    <cap:scope>Public</cap:scope>
+    <cap:message_type>Alert</cap:message_type>
+    <cap:status>Actual</cap:status>
+    <cap:identifier>2.49.0.0.196.0.CY.260123100548.thunder.000</cap:identifier>
+    <link type="application/cap+xml" href="https://feeds.meteoalarm.org/api/v1/warnings/feeds-cyprus/d634efd7-d854-436c-acdd-54ac28a3ac2d"/>
+    <link title="Cyprus" rel="related" href="https://meteoalarm.org?region=CY" hreflang="en"/>
+    <author>
+      <name>meteoalarm.org</name>
+      <uri>https://meteoalarm.org</uri>
+    </author>
+    <published>2026-01-23T08:05:48Z</published>
+    <id>https://feeds.meteoalarm.org/api/v1/warnings/feeds-cyprus/d634efd7-d854-436c-acdd-54ac28a3ac2d?index_info=1&amp;index_area=0&amp;index_geocode=0</id>
+    <title>Yellow Thunderstorm Warning issued for Cyprus - Cyprus</title>
+    <updated>2026-01-23T08:05:48Z</updated>
+  </entry>
+</feed>

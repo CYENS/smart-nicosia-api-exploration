@@ -39,12 +39,24 @@ npm run build                     # writes chatbot/static (committed, see below)
   and cached. `?at=` on `/api/overview`, `/api/lamps` and `/api/entities/{id}` reads it, and
   `set_city_time` too. A moment the memory holds nothing for is unknown, never a guess.
 - `chatbot/mobility/` is live mobility: the bus timetables and live feed, departures and
-  trips, and road speeds against free flow ([docs/live-mobility.md](docs/live-mobility.md)). One
+  trips, road speeds against free flow ([docs/live-mobility.md](docs/live-mobility.md)), and
+  road reports: closures, jams, hazards and roadworks ([docs/road-reports.md](docs/road-reports.md)). One
   `Mobility` on the Agent shares each feed's fetch between pages, tools and the inspector.
+- `chatbot/mobility/facilities.py` is where people park, charge and hire: six national
+  inventories (car parks, park and ride, EV chargers, Nextbike stations, Bolt scooter zones,
+  bicycle racks) read once a day, and Nextbike's live bikes; `facility_kinds.py` is their entity
+  kinds (a car park's live bays are the city's sensors within 60 m). The page side is
+  `lib/facilities/` and `components/facilities/` ([docs/park-charge-hire.md](docs/park-charge-hire.md)).
 - `chatbot/lidar.py` is the 2019 LiDAR flight: it fetches DLS's open surface and terrain sheets
   (heavy, kept out of git in `data/dls_lidar/`), measures every DLS building on them, and
   compares them with the 2014 survey. The twin reads two small files it writes
   (`data/lidar_*_2019.json.gz`), never the sheets ([docs/lidar-2019.md](docs/lidar-2019.md)).
+- `chatbot/streets/` is the street rules: the National Access Point's inventories (speed signs,
+  slow zones, signals, crossings, cycleways, bus lanes, enforcement cameras) read once a day, the
+  OpenStreetMap street network read once a week, what each speed sign governs with how sure it
+  is, and the school, stop, cycle and zone analyses. One `Streets` on the Agent; the road speeds
+  read posted limits from it; the page side is `lib/streets/` and `components/streets/`
+  ([docs/street-rules.md](docs/street-rules.md)).
 - `chatbot/environment/` is the environment twin: the sun's path, shade and sun hours from the
   DLS 3D buildings (`shade.py`), air, noise and temperature surfaces with their uncertainty
   (`surfaces.py`), the Open-Meteo grids and the wind, the RainViewer radar, and the `spot` kind
@@ -66,6 +78,11 @@ npm run build                     # writes chatbot/static (committed, see below)
   and time with who did what, watches, and a live server-sent events stream
   (`/api/watch/stream`). On the page, `lib/watch/` is the incident inbox (Alt 4), its Layers
   row under Alerts, the toasts (shadcn Sonner, Alt T) and the clock's incident marks.
+- `chatbot/hazards/` reads earthquakes (EMSC with the Geological Survey Department, and felt
+  reports), Meteoalarm's weather warnings and EFFIS's fire danger into the memory's `hazards`
+  table; `chatbot/watch/hazards.py` raises them as incidents through `detectors.register` and
+  `incidents.register_family`, the way a module adds detectors without editing the shared lists
+  ([docs/hazards.md](docs/hazards.md)). On the page, `lib/hazards/` (a Layers row under Alerts).
 - `chatbot/web/src/lib/registries/` is where page features plug in instead of editing shared
   files: workspaces (opened from the Layers sheet, Ctrl K and Alt and a number), topics (the
   chips, four at most, and sections on their cards), the Layers sheet's system layer rows,

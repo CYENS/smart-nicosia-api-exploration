@@ -91,6 +91,31 @@ def _roads(agent) -> dict:
     return status("live", h["read_at"], f"newest measurement {since_words(newest, now)}", **measured)
 
 
+def _road_reports(source: str) -> Callable:
+    """A road report feed, judged by the times inside what it sent (its publication time, its
+    newest report), not by its HTTP status: a feed can answer 200 for weeks without news."""
+    def probe(agent) -> dict:
+        mob = getattr(agent, "mobility", None)
+        rep = getattr(mob, "reports", None)
+        if rep is None or source not in rep.state:
+            return status(None)
+        st = rep.state[source]
+        if st.parsed is None:
+            if st.error:
+                return status("unavailable", st.tried_at, st.error)
+            return status("waiting", note="read while road reports are on the map or the watch listens")
+        problem = st.fresh_problem(source, rep.now())
+        n = len(st.parsed.reports)
+        newest = st.parsed.newest
+        note = f"{n} in Greater Nicosia" + (f", newest {_iso(newest.timestamp())[11:16]}" if newest and source != "traffic_events" else "")
+        if st.error:
+            return status("stale", st.ok_at, f"the last read failed ({st.error}); {note}")
+        if problem:
+            return status("stale", st.ok_at, f"{problem}; {note}")
+        return status("live", st.ok_at, note)
+    return probe
+
+
 def _registers(agent) -> dict:
     reg = agent.registers
     parts = []
@@ -148,16 +173,140 @@ def _radar(agent) -> dict:
     return status("live", at, f"newest frame {_iso(newest)[11:16]}" if newest else None)
 
 
+def _street_feed(*keys: str) -> Callable:
+    """A street inventory's state: when the publisher last changed it, from the catalogue."""
+    def probe(agent) -> dict:
+        st = getattr(agent, "streets", None)
+        if st is None:
+            return status(None)
+        invs = [inv for k in keys if (inv := st.feeds.peek(k)) is not None]
+        if not invs:
+            return status("waiting", note="read when the server starts, then once a day")
+        bad = [i for i in invs if i.error]
+        updated = max((i.updated for i in invs if i.updated), default=None)
+        count = sum(len(i.records) for i in invs[:1])
+        note = (f"inventory updated {updated}, " if updated else "") + f"{count} in Greater Nicosia"
+        if bad:
+            return status("stale" if any(i.records for i in invs) else "unavailable", max(i.read_at for i in invs),
+                          bad[0].error, updated=updated)
+        return status("live", max(i.read_at for i in invs), note, updated=updated)
+    return probe
+
+
+def _inventories(*kinds: str):
+    """Park, charge and hire: when the twin read each inventory, and how old it is."""
+    def probe(agent) -> dict:
+        from chatbot.mobility.facilities import PLURALS
+        from chatbot.mobility.facility_kinds import day, facilities_of
+
+        fac = facilities_of(agent.entities)
+        if fac is None:
+            return status(None)
+        invs = [(k, fac.cached(k)) for k in kinds]
+        read = [(k, i) for k, i in invs if i is not None]
+        if not read:
+            return status("waiting", note="read when the layer is on or the assistant asks")
+        parts = []
+        for k, i in read:
+            when = f"last changed {day(i.updated)}" if i.updated else f"republished {day(i.published)}"
+            parts.append(f"{i.public()['in_nicosia']:,} {PLURALS[k]} in Greater Nicosia, {when}")
+        errors = [i.error for _, i in read if i.error]
+        return status("stale" if errors else "live", max(i.read_at for _, i in read),
+                      "; ".join(errors[:1] + parts))
+    return probe
+
+
+def _nextbike_live(agent) -> dict:
+    from chatbot.mobility.facility_kinds import facilities_of
+
+    fac = facilities_of(agent.entities)
+    b = fac.last_bikes() if fac is not None else None
+    if b is None:
+        return status("waiting", note="read while bike stations are on the map")
+    if b.status == "unavailable":
+        return status("unavailable", b.fetched_at, b.error)
+    total = sum(s["bikes"] for s in b.stations.values())
+    return status(b.status, b.feed_time or b.fetched_at,
+                  b.error if b.status == "stale" else f"{total:,} bikes at {len(b.stations):,} stations in Cyprus")
+
+
+def _station_feed(agent, which: str) -> dict:
+    """The Met file or the EEA files: when last read, whether it worked, the newest reading."""
+    env = getattr(agent, "environment", None)
+    st = env.measured.health(which) if env is not None else None
+    if st is None or st.read_at is None:
+        return status("waiting", note="read in the background every few minutes")
+    newest = (datetime.fromtimestamp(st.newest_ms / 1000, tz=timezone.utc).astimezone(ZoneInfo(TIMEZONE))
+              .strftime("%H:%M") if st.newest_ms else None)
+    what = "newest reading" if which == "met" else "newest hour from"
+    if st.error and st.ok_at is None:
+        return status("unavailable", st.read_at, st.error)
+    note = f"{what} {newest}" if newest else None
+    if st.error:
+        return status("stale", st.ok_at, f"{note + '; ' if note else ''}the last read failed: {st.error}")
+    return status("live", st.ok_at or st.read_at, note)
+
+
+def _grid(agent) -> dict:
+    grid = getattr(agent, "grid", None)
+    if grid is None:
+        return status(None)
+    h = grid.health()
+    if h["fetched_at"] is None:
+        return status("unavailable" if h["error"] else "waiting",
+                      note=h["error"] or "read when the Outside card or a question asks for it")
+    newest = h["latest"].astimezone(ZoneInfo(TIMEZONE)).strftime("%H:%M") if h["latest"] else None
+    note = f"newest quarter hour {newest}" + (f", {h['latest_mw']:,.0f} MW" if h["latest_mw"] else "") if newest else None
+    if h["layout_changed"]:
+        return status("stale", h["fetched_at"].timestamp(), h["error"], layout_changed=True)
+    if h["error"]:
+        return status("stale", h["fetched_at"].timestamp(), f"{note}; the last read failed ({h['error']})")
+    return status("live", h["fetched_at"].timestamp(), note)
+
+
+def _hazards(feed: str) -> Callable:
+    """Earthquakes, warnings or fire danger, as the hazard feeds' last read left them."""
+    def probe(agent) -> dict:
+        hz = getattr(agent, "hazards", None)
+        if hz is None:
+            return status(None)
+        state, at, note = hz.feed_state(feed)
+        return status(state, at, note)
+    return probe
+
+
 PROBES: dict[str, Callable] = {
+    "met_stations": lambda a: _station_feed(a, "met"),
+    "eea_air": lambda a: _station_feed(a, "eea"),
     "smart_nicosia": lambda a: _cached("city"),
     "open_meteo": lambda a: _cached("weather"),
     "bus_live": _bus_live,
     "bus_timetable": _timetable,
     "road_speeds": _roads,
+    "waze_alerts": _road_reports("waze_alerts"),
+    "traffic_events": _road_reports("traffic_events"),
+    "waze_traffic": _road_reports("waze_traffic"),
     "registers": _registers,
     "twin_memory": _memory,
     "overture": _overture,
     "rainviewer": _radar,
+    # The street rules' inventories (chatbot/streets).
+    "speed_limits": _street_feed("speed_limits"),
+    "slow_zones": _street_feed("zones", "zone_entrances"),
+    "traffic_signals": _street_feed("signals"),
+    "pedestrian_crossings": _street_feed("crossings"),
+    "cycleways": _street_feed("cycleways"),
+    "bus_lanes": _street_feed("bus_lanes"),
+    "enforcement_cameras": _street_feed("cameras"),
+    "nap_public_works": _inventories("car_park", "park_and_ride", "bike_rack"),
+    "nap_chargers": _inventories("charger"),
+    "nap_nextbike": _inventories("bike_station"),
+    "nap_bolt": _inventories("scooter_zone"),
+    "nextbike_live": _nextbike_live,
+    "tso_grid": _grid,
+    "emsc": _hazards("earthquakes"),
+    "meteoalarm": _hazards("warnings"),
+    "effis": _hazards("fire"),
 }
 
 

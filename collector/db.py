@@ -141,6 +141,23 @@ CREATE TABLE IF NOT EXISTS travel_times (
     publication_time TIMESTAMPTZ,
     PRIMARY KEY (segment_id, measured_at)
 );
+CREATE TABLE IF NOT EXISTS road_reports (
+    id VARCHAR PRIMARY KEY,          -- report-waze-3bd616e2, report-works-639274141179895317
+    source VARCHAR,                  -- waze_alerts | waze_traffic | traffic_events
+    kind VARCHAR,                    -- closure | roadworks | hazard | jam | accident | diversion
+    label VARCHAR,                   -- its type in English words ("Pothole", "Standstill traffic")
+    street VARCHAR,
+    text VARCHAR,                    -- the publisher's own words (Greek where they wrote Greek)
+    lat DOUBLE,
+    lon DOUBLE,
+    geometry VARCHAR,                -- GeoJSON, when it is more than a point (a closed stretch)
+    since TIMESTAMPTZ,               -- reported at, or when the works start
+    until TIMESTAMPTZ,               -- when the works are planned to end, if said
+    severity VARCHAR,
+    details VARCHAR,                 -- JSON: the source's codes, lanes, delay, the points it groups
+    first_seen TIMESTAMPTZ,          -- the first fetch of its feed the twin saw it in...
+    last_seen TIMESTAMPTZ            -- ...and the last (the feed's coverage says when it looked)
+);
 CREATE TABLE IF NOT EXISTS traffic_cameras (
     analytics_id INTEGER PRIMARY KEY,
     name VARCHAR,
