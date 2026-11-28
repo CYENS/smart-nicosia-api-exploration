@@ -429,8 +429,11 @@ def test_an_accident_and_the_jams_behind_it_are_one_incident():
     assert one["severity"] == "high" and one["family"] == "roads"
 
 
-def test_the_watch_reads_the_road_reports_from_the_memory(tmp_path):
+def test_the_watch_reads_the_road_reports_from_the_memory(tmp_path, monkeypatch):
     mem = Memory(tmp_path / "twin.duckdb")
+    # The read is stamped at the test's now, not the wall clock: a jam is news only when the twin
+    # first sees it within two hours of its start.
+    monkeypatch.setattr(R.time, "time", lambda: NOW.timestamp())
     r, _, _ = reports(memory=mem)
     r.current()
     assert mem.recorder.flush()
