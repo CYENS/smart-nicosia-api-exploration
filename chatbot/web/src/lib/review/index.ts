@@ -1,4 +1,4 @@
-/* The counting cameras walkthrough plugs into the twin here: its workspace (Alt 5), a command in
+/* The counting cameras walkthrough plugs into the twin here: its workspace (Alt 6), a command in
    Ctrl K, and the /#review link the collectors' admin page opens it with (/#review/<analytics
    id> starts at that camera). */
 import { CctvIcon } from "lucide-react"
@@ -11,7 +11,7 @@ import { showCamera } from "@/lib/review/store"
 registerWorkspace({
   id: "cameras", label: "Cameras",
   description: "Counting cameras: where each one is, what its lines count, and how they add up",
-  icon: CctvIcon, order: 40, key: "5", Side: CameraReview,
+  icon: CctvIcon, order: 50, key: "6", Side: CameraReview,
 })
 
 registerSearchProvider({
