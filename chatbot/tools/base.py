@@ -29,6 +29,7 @@ if TYPE_CHECKING:
     from chatbot.scenarios.lab import Lab
     from chatbot.streets import Streets
     from chatbot.terrain import Terrain
+    from chatbot.tonight.service import Tonight
     from chatbot.watch import Watcher
     from chatbot.webplaces import WebPlaces
 
@@ -80,6 +81,7 @@ class ToolContext:
     scenarios: Lab | None = None  # the scenario lab: runs and saved runs (chatbot/scenarios)
     lidar: Flight | None = None  # buildings as the 2019 LiDAR flight measured them (chatbot/lidar.py)
     streets: Streets | None = None  # the street rules: limits, zones, crossings (chatbot/streets)
+    tonight: Tonight | None = None  # duty pharmacies, city events, open-now places (chatbot/tonight)
 
 
 # -- schema helpers -----------------------------------------------------------------------------

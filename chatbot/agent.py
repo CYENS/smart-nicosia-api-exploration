@@ -47,6 +47,7 @@ from chatbot.streets import Streets
 from chatbot.streets import entities as _street_kinds  # noqa: F401 - registers the street kinds
 from chatbot.lidar import Flight
 from chatbot.terrain import Terrain
+from chatbot.tonight import Tonight
 from chatbot.tools import TOOL_DEFS, WEB_SEARCH, ToolContext, run_tool
 from chatbot.watch import Watcher
 from chatbot.webplaces import WebPlaces
@@ -213,6 +214,9 @@ class Agent:
         # The scenario lab: runs what-ifs on the memory and keeps the runs (chatbot/scenarios).
         self.scenarios = Lab(ScenarioContext(settings, memory, city, router, places, registers,
                                              self.mobility, cache_dir=default_cache_dir()))
+        # Tonight in Nicosia: duty pharmacies, Visit Cyprus events, open-now OSM places.
+        self.tonight = Tonight(settings, self.places, memory, router)
+        self.entities.tonight = self.tonight
         self.tools = TOOL_DEFS + ([WEB_SEARCH] if settings.web_search else [])
         self.conversations: dict[str, Conversation] = {}
 
@@ -262,7 +266,7 @@ class Agent:
                                watcher=self.watcher, environment=self.environment,
                                terrain=self.terrain,
                                scenarios=self.scenarios, lidar=self.lidar,
-                               streets=self.streets)
+                               streets=self.streets, tonight=self.tonight)
         conv.messages.append({"role": "user", "content": [
             {"type": "text", "text": format_context(context, self.city.now()) + text}]})
 

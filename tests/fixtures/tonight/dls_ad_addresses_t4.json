@@ -1,0 +1,6188 @@
+{
+  "features": [
+    {
+      "attributes": {
+        "OBJECTID": 1073,
+        "IFCID": 1073,
+        "RID": 1073,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 1090,
+        "IFCID": 1090,
+        "RID": 1090,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 1732,
+        "IFCID": 1732,
+        "RID": 1732,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 1735,
+        "IFCID": 1735,
+        "RID": 1735,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 1736,
+        "IFCID": 1736,
+        "RID": 1736,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 1737,
+        "IFCID": 1737,
+        "RID": 1737,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 1739,
+        "IFCID": 1739,
+        "RID": 1739,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 1740,
+        "IFCID": 1740,
+        "RID": 1740,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 1746,
+        "IFCID": 1746,
+        "RID": 1746,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 1754,
+        "IFCID": 1754,
+        "RID": 1754,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 1774,
+        "IFCID": 1774,
+        "RID": 1774,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 1839,
+        "IFCID": 1839,
+        "RID": 1839,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 1847,
+        "IFCID": 1847,
+        "RID": 1847,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 1856,
+        "IFCID": 1856,
+        "RID": 1856,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 1861,
+        "IFCID": 1861,
+        "RID": 1861,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 1875,
+        "IFCID": 1875,
+        "RID": 1875,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 2047,
+        "IFCID": 2047,
+        "RID": 2047,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 2048,
+        "IFCID": 2048,
+        "RID": 2048,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 2049,
+        "IFCID": 2049,
+        "RID": 2049,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 2053,
+        "IFCID": 2053,
+        "RID": 2053,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 2058,
+        "IFCID": 2058,
+        "RID": 2058,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 2062,
+        "IFCID": 2062,
+        "RID": 2062,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 2063,
+        "IFCID": 2063,
+        "RID": 2063,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 2064,
+        "IFCID": 2064,
+        "RID": 2064,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 2065,
+        "IFCID": 2065,
+        "RID": 2065,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 2066,
+        "IFCID": 2066,
+        "RID": 2066,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 2067,
+        "IFCID": 2067,
+        "RID": 2067,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 2068,
+        "IFCID": 2068,
+        "RID": 2068,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 2069,
+        "IFCID": 2069,
+        "RID": 2069,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 2077,
+        "IFCID": 2077,
+        "RID": 2077,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 2095,
+        "IFCID": 2095,
+        "RID": 2095,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 2313,
+        "IFCID": 2313,
+        "RID": 2313,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 2315,
+        "IFCID": 2315,
+        "RID": 2315,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 2320,
+        "IFCID": 2320,
+        "RID": 2320,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 2333,
+        "IFCID": 2333,
+        "RID": 2333,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 2338,
+        "IFCID": 2338,
+        "RID": 2338,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 2340,
+        "IFCID": 2340,
+        "RID": 2340,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 2345,
+        "IFCID": 2345,
+        "RID": 2345,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 2364,
+        "IFCID": 2364,
+        "RID": 2364,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 2367,
+        "IFCID": 2367,
+        "RID": 2367,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 2374,
+        "IFCID": 2374,
+        "RID": 2374,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 2378,
+        "IFCID": 2378,
+        "RID": 2378,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 2383,
+        "IFCID": 2383,
+        "RID": 2383,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 2384,
+        "IFCID": 2384,
+        "RID": 2384,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 2385,
+        "IFCID": 2385,
+        "RID": 2385,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 2387,
+        "IFCID": 2387,
+        "RID": 2387,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 2390,
+        "IFCID": 2390,
+        "RID": 2390,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 2396,
+        "IFCID": 2396,
+        "RID": 2396,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 2400,
+        "IFCID": 2400,
+        "RID": 2400,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 2401,
+        "IFCID": 2401,
+        "RID": 2401,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 2412,
+        "IFCID": 2412,
+        "RID": 2412,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 2413,
+        "IFCID": 2413,
+        "RID": 2413,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 2418,
+        "IFCID": 2418,
+        "RID": 2418,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 2419,
+        "IFCID": 2419,
+        "RID": 2419,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 2421,
+        "IFCID": 2421,
+        "RID": 2421,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 2432,
+        "IFCID": 2432,
+        "RID": 2432,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 2441,
+        "IFCID": 2441,
+        "RID": 2441,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 2442,
+        "IFCID": 2442,
+        "RID": 2442,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 7650,
+        "IFCID": 7650,
+        "RID": 7650,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 7700,
+        "IFCID": 7700,
+        "RID": 7700,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 7765,
+        "IFCID": 7765,
+        "RID": 7765,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 7766,
+        "IFCID": 7766,
+        "RID": 7766,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 15757,
+        "IFCID": 15757,
+        "RID": 15757,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 15758,
+        "IFCID": 15758,
+        "RID": 15758,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 15823,
+        "IFCID": 15823,
+        "RID": 15823,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 15973,
+        "IFCID": 15973,
+        "RID": 15973,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 15974,
+        "IFCID": 15974,
+        "RID": 15974,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 16100,
+        "IFCID": 16100,
+        "RID": 16100,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 16428,
+        "IFCID": 16428,
+        "RID": 16428,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 16429,
+        "IFCID": 16429,
+        "RID": 16429,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 16430,
+        "IFCID": 16430,
+        "RID": 16430,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 16431,
+        "IFCID": 16431,
+        "RID": 16431,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 16437,
+        "IFCID": 16437,
+        "RID": 16437,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 16438,
+        "IFCID": 16438,
+        "RID": 16438,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 16983,
+        "IFCID": 16983,
+        "RID": 16983,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 16984,
+        "IFCID": 16984,
+        "RID": 16984,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 22052,
+        "IFCID": 22052,
+        "RID": 22052,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 22053,
+        "IFCID": 22053,
+        "RID": 22053,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 22073,
+        "IFCID": 22073,
+        "RID": 22073,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 22074,
+        "IFCID": 22074,
+        "RID": 22074,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 31186,
+        "IFCID": 31186,
+        "RID": 31186,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 31187,
+        "IFCID": 31187,
+        "RID": 31187,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 33095,
+        "IFCID": 33095,
+        "RID": 33095,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 33097,
+        "IFCID": 33097,
+        "RID": 33097,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 33131,
+        "IFCID": 33131,
+        "RID": 33131,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 33143,
+        "IFCID": 33143,
+        "RID": 33143,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 47053,
+        "IFCID": 47053,
+        "RID": 47053,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 47054,
+        "IFCID": 47054,
+        "RID": 47054,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 55388,
+        "IFCID": 55388,
+        "RID": 55388,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 55390,
+        "IFCID": 55390,
+        "RID": 55390,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 55393,
+        "IFCID": 55393,
+        "RID": 55393,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 55398,
+        "IFCID": 55398,
+        "RID": 55398,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 55402,
+        "IFCID": 55402,
+        "RID": 55402,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 55405,
+        "IFCID": 55405,
+        "RID": 55405,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 55406,
+        "IFCID": 55406,
+        "RID": 55406,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 55408,
+        "IFCID": 55408,
+        "RID": 55408,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 55411,
+        "IFCID": 55411,
+        "RID": 55411,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 55413,
+        "IFCID": 55413,
+        "RID": 55413,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 55417,
+        "IFCID": 55417,
+        "RID": 55417,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 55419,
+        "IFCID": 55419,
+        "RID": 55419,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 55420,
+        "IFCID": 55420,
+        "RID": 55420,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 55421,
+        "IFCID": 55421,
+        "RID": 55421,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 55422,
+        "IFCID": 55422,
+        "RID": 55422,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 55426,
+        "IFCID": 55426,
+        "RID": 55426,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 55432,
+        "IFCID": 55432,
+        "RID": 55432,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 55434,
+        "IFCID": 55434,
+        "RID": 55434,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 55435,
+        "IFCID": 55435,
+        "RID": 55435,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 55488,
+        "IFCID": 55488,
+        "RID": 55488,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 55491,
+        "IFCID": 55491,
+        "RID": 55491,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 55492,
+        "IFCID": 55492,
+        "RID": 55492,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 55495,
+        "IFCID": 55495,
+        "RID": 55495,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 55503,
+        "IFCID": 55503,
+        "RID": 55503,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 60837,
+        "IFCID": 60837,
+        "RID": 60837,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 60838,
+        "IFCID": 60838,
+        "RID": 60838,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 60865,
+        "IFCID": 60865,
+        "RID": 60865,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 63014,
+        "IFCID": 63014,
+        "RID": 63014,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 64895,
+        "IFCID": 64895,
+        "RID": 64895,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 64899,
+        "IFCID": 64899,
+        "RID": 64899,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 64906,
+        "IFCID": 64906,
+        "RID": 64906,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 65305,
+        "IFCID": 65305,
+        "RID": 65305,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 80518,
+        "IFCID": 80518,
+        "RID": 80518,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 80519,
+        "IFCID": 80519,
+        "RID": 80519,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 80520,
+        "IFCID": 80520,
+        "RID": 80520,
+        "name": "DIGENI AKRITA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 8245,
+        "IFCID": 8245,
+        "RID": 8245,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 8273,
+        "IFCID": 8273,
+        "RID": 8273,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 8278,
+        "IFCID": 8278,
+        "RID": 8278,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 8316,
+        "IFCID": 8316,
+        "RID": 8316,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 8335,
+        "IFCID": 8335,
+        "RID": 8335,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 8345,
+        "IFCID": 8345,
+        "RID": 8345,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 8352,
+        "IFCID": 8352,
+        "RID": 8352,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 8390,
+        "IFCID": 8390,
+        "RID": 8390,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 8412,
+        "IFCID": 8412,
+        "RID": 8412,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 8413,
+        "IFCID": 8413,
+        "RID": 8413,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 8637,
+        "IFCID": 8637,
+        "RID": 8637,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 8694,
+        "IFCID": 8694,
+        "RID": 8694,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 8926,
+        "IFCID": 8926,
+        "RID": 8926,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 8927,
+        "IFCID": 8927,
+        "RID": 8927,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 9017,
+        "IFCID": 9017,
+        "RID": 9017,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 9018,
+        "IFCID": 9018,
+        "RID": 9018,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 9039,
+        "IFCID": 9039,
+        "RID": 9039,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 9080,
+        "IFCID": 9080,
+        "RID": 9080,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 9102,
+        "IFCID": 9102,
+        "RID": 9102,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 9704,
+        "IFCID": 9704,
+        "RID": 9704,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 10146,
+        "IFCID": 10146,
+        "RID": 10146,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 10147,
+        "IFCID": 10147,
+        "RID": 10147,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 12035,
+        "IFCID": 12035,
+        "RID": 12035,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 12038,
+        "IFCID": 12038,
+        "RID": 12038,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 12039,
+        "IFCID": 12039,
+        "RID": 12039,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 12040,
+        "IFCID": 12040,
+        "RID": 12040,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 12042,
+        "IFCID": 12042,
+        "RID": 12042,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 12043,
+        "IFCID": 12043,
+        "RID": 12043,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 12044,
+        "IFCID": 12044,
+        "RID": 12044,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 12068,
+        "IFCID": 12068,
+        "RID": 12068,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 12069,
+        "IFCID": 12069,
+        "RID": 12069,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 24722,
+        "IFCID": 24722,
+        "RID": 24722,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 24724,
+        "IFCID": 24724,
+        "RID": 24724,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 24725,
+        "IFCID": 24725,
+        "RID": 24725,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 24903,
+        "IFCID": 24903,
+        "RID": 24903,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 25034,
+        "IFCID": 25034,
+        "RID": 25034,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 25260,
+        "IFCID": 25260,
+        "RID": 25260,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 25261,
+        "IFCID": 25261,
+        "RID": 25261,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 26869,
+        "IFCID": 26869,
+        "RID": 26869,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 26870,
+        "IFCID": 26870,
+        "RID": 26870,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 26874,
+        "IFCID": 26874,
+        "RID": 26874,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 26875,
+        "IFCID": 26875,
+        "RID": 26875,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 26961,
+        "IFCID": 26961,
+        "RID": 26961,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 26962,
+        "IFCID": 26962,
+        "RID": 26962,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 26963,
+        "IFCID": 26963,
+        "RID": 26963,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 26971,
+        "IFCID": 26971,
+        "RID": 26971,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 26972,
+        "IFCID": 26972,
+        "RID": 26972,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 28239,
+        "IFCID": 28239,
+        "RID": 28239,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 28252,
+        "IFCID": 28252,
+        "RID": 28252,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 28253,
+        "IFCID": 28253,
+        "RID": 28253,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 28254,
+        "IFCID": 28254,
+        "RID": 28254,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 28255,
+        "IFCID": 28255,
+        "RID": 28255,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 28256,
+        "IFCID": 28256,
+        "RID": 28256,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 28257,
+        "IFCID": 28257,
+        "RID": 28257,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 28258,
+        "IFCID": 28258,
+        "RID": 28258,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 28259,
+        "IFCID": 28259,
+        "RID": 28259,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 28260,
+        "IFCID": 28260,
+        "RID": 28260,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 28267,
+        "IFCID": 28267,
+        "RID": 28267,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 28268,
+        "IFCID": 28268,
+        "RID": 28268,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 28269,
+        "IFCID": 28269,
+        "RID": 28269,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 28277,
+        "IFCID": 28277,
+        "RID": 28277,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 28283,
+        "IFCID": 28283,
+        "RID": 28283,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 28284,
+        "IFCID": 28284,
+        "RID": 28284,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 28310,
+        "IFCID": 28310,
+        "RID": 28310,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 28311,
+        "IFCID": 28311,
+        "RID": 28311,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 28312,
+        "IFCID": 28312,
+        "RID": 28312,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 28313,
+        "IFCID": 28313,
+        "RID": 28313,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 28317,
+        "IFCID": 28317,
+        "RID": 28317,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 28318,
+        "IFCID": 28318,
+        "RID": 28318,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 28323,
+        "IFCID": 28323,
+        "RID": 28323,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 28324,
+        "IFCID": 28324,
+        "RID": 28324,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 30010,
+        "IFCID": 30010,
+        "RID": 30010,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 30011,
+        "IFCID": 30011,
+        "RID": 30011,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 30015,
+        "IFCID": 30015,
+        "RID": 30015,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 30020,
+        "IFCID": 30020,
+        "RID": 30020,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 30439,
+        "IFCID": 30439,
+        "RID": 30439,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 30445,
+        "IFCID": 30445,
+        "RID": 30445,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 30446,
+        "IFCID": 30446,
+        "RID": 30446,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 31389,
+        "IFCID": 31389,
+        "RID": 31389,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 31390,
+        "IFCID": 31390,
+        "RID": 31390,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 31427,
+        "IFCID": 31427,
+        "RID": 31427,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 31448,
+        "IFCID": 31448,
+        "RID": 31448,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 31449,
+        "IFCID": 31449,
+        "RID": 31449,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 31450,
+        "IFCID": 31450,
+        "RID": 31450,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 31451,
+        "IFCID": 31451,
+        "RID": 31451,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 31452,
+        "IFCID": 31452,
+        "RID": 31452,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 31453,
+        "IFCID": 31453,
+        "RID": 31453,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 31530,
+        "IFCID": 31530,
+        "RID": 31530,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 31531,
+        "IFCID": 31531,
+        "RID": 31531,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 31552,
+        "IFCID": 31552,
+        "RID": 31552,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 31553,
+        "IFCID": 31553,
+        "RID": 31553,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 33483,
+        "IFCID": 33483,
+        "RID": 33483,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 33513,
+        "IFCID": 33513,
+        "RID": 33513,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 33514,
+        "IFCID": 33514,
+        "RID": 33514,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 33515,
+        "IFCID": 33515,
+        "RID": 33515,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 33516,
+        "IFCID": 33516,
+        "RID": 33516,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 33518,
+        "IFCID": 33518,
+        "RID": 33518,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 33526,
+        "IFCID": 33526,
+        "RID": 33526,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 33527,
+        "IFCID": 33527,
+        "RID": 33527,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 33569,
+        "IFCID": 33569,
+        "RID": 33569,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 33631,
+        "IFCID": 33631,
+        "RID": 33631,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 43343,
+        "IFCID": 43343,
+        "RID": 43343,
+        "name": "LEOF 28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 43344,
+        "IFCID": 43344,
+        "RID": 43344,
+        "name": "LEOF 28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 43345,
+        "IFCID": 43345,
+        "RID": 43345,
+        "name": "LEOF 28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 44019,
+        "IFCID": 44019,
+        "RID": 44019,
+        "name": "LEOF 28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 44054,
+        "IFCID": 44054,
+        "RID": 44054,
+        "name": "LEOF 28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 44063,
+        "IFCID": 44063,
+        "RID": 44063,
+        "name": "LEOF 28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 44064,
+        "IFCID": 44064,
+        "RID": 44064,
+        "name": "LEOF 28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 44112,
+        "IFCID": 44112,
+        "RID": 44112,
+        "name": "LEOF 28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 44121,
+        "IFCID": 44121,
+        "RID": 44121,
+        "name": "LEOF 28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 44126,
+        "IFCID": 44126,
+        "RID": 44126,
+        "name": "LEOF 28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 44130,
+        "IFCID": 44130,
+        "RID": 44130,
+        "name": "LEOF 28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 44138,
+        "IFCID": 44138,
+        "RID": 44138,
+        "name": "LEOF 28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 44139,
+        "IFCID": 44139,
+        "RID": 44139,
+        "name": "LEOF 28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 44147,
+        "IFCID": 44147,
+        "RID": 44147,
+        "name": "LEOF 28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 44160,
+        "IFCID": 44160,
+        "RID": 44160,
+        "name": "LEOF 28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 44164,
+        "IFCID": 44164,
+        "RID": 44164,
+        "name": "LEOF 28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 44172,
+        "IFCID": 44172,
+        "RID": 44172,
+        "name": "LEOF 28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 44188,
+        "IFCID": 44188,
+        "RID": 44188,
+        "name": "LEOF 28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 44255,
+        "IFCID": 44255,
+        "RID": 44255,
+        "name": "LEOF 28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 44312,
+        "IFCID": 44312,
+        "RID": 44312,
+        "name": "LEOF 28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 44317,
+        "IFCID": 44317,
+        "RID": 44317,
+        "name": "LEOF 28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 44330,
+        "IFCID": 44330,
+        "RID": 44330,
+        "name": "LEOF 28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 44354,
+        "IFCID": 44354,
+        "RID": 44354,
+        "name": "LEOF 28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 44363,
+        "IFCID": 44363,
+        "RID": 44363,
+        "name": "LEOF 28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 44365,
+        "IFCID": 44365,
+        "RID": 44365,
+        "name": "LEOF 28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 44374,
+        "IFCID": 44374,
+        "RID": 44374,
+        "name": "LEOF 28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 44412,
+        "IFCID": 44412,
+        "RID": 44412,
+        "name": "LEOF 28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 44441,
+        "IFCID": 44441,
+        "RID": 44441,
+        "name": "LEOF 28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 44466,
+        "IFCID": 44466,
+        "RID": 44466,
+        "name": "LEOF 28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 44467,
+        "IFCID": 44467,
+        "RID": 44467,
+        "name": "LEOF 28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 44476,
+        "IFCID": 44476,
+        "RID": 44476,
+        "name": "LEOF 28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 44492,
+        "IFCID": 44492,
+        "RID": 44492,
+        "name": "LEOF 28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 44493,
+        "IFCID": 44493,
+        "RID": 44493,
+        "name": "LEOF 28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 44494,
+        "IFCID": 44494,
+        "RID": 44494,
+        "name": "LEOF 28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 44505,
+        "IFCID": 44505,
+        "RID": 44505,
+        "name": "LEOF 28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 45171,
+        "IFCID": 45171,
+        "RID": 45171,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 45172,
+        "IFCID": 45172,
+        "RID": 45172,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 45173,
+        "IFCID": 45173,
+        "RID": 45173,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 45660,
+        "IFCID": 45660,
+        "RID": 45660,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 45662,
+        "IFCID": 45662,
+        "RID": 45662,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 45766,
+        "IFCID": 45766,
+        "RID": 45766,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 45767,
+        "IFCID": 45767,
+        "RID": 45767,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 46432,
+        "IFCID": 46432,
+        "RID": 46432,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 46433,
+        "IFCID": 46433,
+        "RID": 46433,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 46456,
+        "IFCID": 46456,
+        "RID": 46456,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 46457,
+        "IFCID": 46457,
+        "RID": 46457,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 46458,
+        "IFCID": 46458,
+        "RID": 46458,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 46459,
+        "IFCID": 46459,
+        "RID": 46459,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 46460,
+        "IFCID": 46460,
+        "RID": 46460,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 46461,
+        "IFCID": 46461,
+        "RID": 46461,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 46721,
+        "IFCID": 46721,
+        "RID": 46721,
+        "name": "LEOFOROS 28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 46746,
+        "IFCID": 46746,
+        "RID": 46746,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 46749,
+        "IFCID": 46749,
+        "RID": 46749,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 46750,
+        "IFCID": 46750,
+        "RID": 46750,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 46808,
+        "IFCID": 46808,
+        "RID": 46808,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 46809,
+        "IFCID": 46809,
+        "RID": 46809,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 46810,
+        "IFCID": 46810,
+        "RID": 46810,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 46815,
+        "IFCID": 46815,
+        "RID": 46815,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 46816,
+        "IFCID": 46816,
+        "RID": 46816,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 46828,
+        "IFCID": 46828,
+        "RID": 46828,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 46829,
+        "IFCID": 46829,
+        "RID": 46829,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 46830,
+        "IFCID": 46830,
+        "RID": 46830,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 46831,
+        "IFCID": 46831,
+        "RID": 46831,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 46832,
+        "IFCID": 46832,
+        "RID": 46832,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 46838,
+        "IFCID": 46838,
+        "RID": 46838,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 46839,
+        "IFCID": 46839,
+        "RID": 46839,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 46840,
+        "IFCID": 46840,
+        "RID": 46840,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 46923,
+        "IFCID": 46923,
+        "RID": 46923,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 47052,
+        "IFCID": 47052,
+        "RID": 47052,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 47060,
+        "IFCID": 47060,
+        "RID": 47060,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 47061,
+        "IFCID": 47061,
+        "RID": 47061,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 47062,
+        "IFCID": 47062,
+        "RID": 47062,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 47063,
+        "IFCID": 47063,
+        "RID": 47063,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 54974,
+        "IFCID": 54974,
+        "RID": 54974,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 54978,
+        "IFCID": 54978,
+        "RID": 54978,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 54990,
+        "IFCID": 54990,
+        "RID": 54990,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 54997,
+        "IFCID": 54997,
+        "RID": 54997,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 55010,
+        "IFCID": 55010,
+        "RID": 55010,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 55107,
+        "IFCID": 55107,
+        "RID": 55107,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 55120,
+        "IFCID": 55120,
+        "RID": 55120,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 55138,
+        "IFCID": 55138,
+        "RID": 55138,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 55412,
+        "IFCID": 55412,
+        "RID": 55412,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 55457,
+        "IFCID": 55457,
+        "RID": 55457,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 55468,
+        "IFCID": 55468,
+        "RID": 55468,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 55469,
+        "IFCID": 55469,
+        "RID": 55469,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 55470,
+        "IFCID": 55470,
+        "RID": 55470,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 55471,
+        "IFCID": 55471,
+        "RID": 55471,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 55478,
+        "IFCID": 55478,
+        "RID": 55478,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 55482,
+        "IFCID": 55482,
+        "RID": 55482,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 55483,
+        "IFCID": 55483,
+        "RID": 55483,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 55881,
+        "IFCID": 55881,
+        "RID": 55881,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 55893,
+        "IFCID": 55893,
+        "RID": 55893,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 55923,
+        "IFCID": 55923,
+        "RID": 55923,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 55931,
+        "IFCID": 55931,
+        "RID": 55931,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 55963,
+        "IFCID": 55963,
+        "RID": 55963,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 55977,
+        "IFCID": 55977,
+        "RID": 55977,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 55979,
+        "IFCID": 55979,
+        "RID": 55979,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 55986,
+        "IFCID": 55986,
+        "RID": 55986,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 55988,
+        "IFCID": 55988,
+        "RID": 55988,
+        "name": "28IS OKTOVRIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 23,
+        "IFCID": 23,
+        "RID": 23,
+        "name": "AGIOU PAVLOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 25,
+        "IFCID": 25,
+        "RID": 25,
+        "name": "AGIOU PAVLOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 26,
+        "IFCID": 26,
+        "RID": 26,
+        "name": "AGIOU PAVLOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 32,
+        "IFCID": 32,
+        "RID": 32,
+        "name": "AGIOU PAVLOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 33,
+        "IFCID": 33,
+        "RID": 33,
+        "name": "AGIOU PAVLOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 34,
+        "IFCID": 34,
+        "RID": 34,
+        "name": "AGIOU PAVLOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 38,
+        "IFCID": 38,
+        "RID": 38,
+        "name": "AGIOU PAVLOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 41,
+        "IFCID": 41,
+        "RID": 41,
+        "name": "AGIOU PAVLOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 48,
+        "IFCID": 48,
+        "RID": 48,
+        "name": "AGIOU PAVLOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 53,
+        "IFCID": 53,
+        "RID": 53,
+        "name": "AGIOU PAVLOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 54,
+        "IFCID": 54,
+        "RID": 54,
+        "name": "AGIOU PAVLOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 55,
+        "IFCID": 55,
+        "RID": 55,
+        "name": "AGIOU PAVLOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 56,
+        "IFCID": 56,
+        "RID": 56,
+        "name": "AGIOU PAVLOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 62,
+        "IFCID": 62,
+        "RID": 62,
+        "name": "AGIOU PAVLOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 74,
+        "IFCID": 74,
+        "RID": 74,
+        "name": "AGIOU PAVLOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 81,
+        "IFCID": 81,
+        "RID": 81,
+        "name": "AGIOU PAVLOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 178,
+        "IFCID": 178,
+        "RID": 178,
+        "name": "AGIOU PAVLOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 179,
+        "IFCID": 179,
+        "RID": 179,
+        "name": "AGIOU PAVLOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 180,
+        "IFCID": 180,
+        "RID": 180,
+        "name": "AGIOU PAVLOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 210,
+        "IFCID": 210,
+        "RID": 210,
+        "name": "AGIOU PAVLOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 212,
+        "IFCID": 212,
+        "RID": 212,
+        "name": "AGIOU PAVLOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 213,
+        "IFCID": 213,
+        "RID": 213,
+        "name": "AGIOU PAVLOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 214,
+        "IFCID": 214,
+        "RID": 214,
+        "name": "AGIOU PAVLOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 216,
+        "IFCID": 216,
+        "RID": 216,
+        "name": "AGIOU PAVLOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 218,
+        "IFCID": 218,
+        "RID": 218,
+        "name": "AGIOU PAVLOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 220,
+        "IFCID": 220,
+        "RID": 220,
+        "name": "AGIOU PAVLOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 222,
+        "IFCID": 222,
+        "RID": 222,
+        "name": "AGIOU PAVLOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 224,
+        "IFCID": 224,
+        "RID": 224,
+        "name": "AGIOU PAVLOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 228,
+        "IFCID": 228,
+        "RID": 228,
+        "name": "AGIOU PAVLOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 232,
+        "IFCID": 232,
+        "RID": 232,
+        "name": "AGIOU PAVLOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 235,
+        "IFCID": 235,
+        "RID": 235,
+        "name": "AGIOU PAVLOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 240,
+        "IFCID": 240,
+        "RID": 240,
+        "name": "AGIOU PAVLOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 351,
+        "IFCID": 351,
+        "RID": 351,
+        "name": "AGIOU PAVLOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 6301,
+        "IFCID": 6301,
+        "RID": 6301,
+        "name": "AGIOU PAVLOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 6302,
+        "IFCID": 6302,
+        "RID": 6302,
+        "name": "AGIOU PAVLOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 6303,
+        "IFCID": 6303,
+        "RID": 6303,
+        "name": "AGIOU PAVLOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 6304,
+        "IFCID": 6304,
+        "RID": 6304,
+        "name": "AGIOU PAVLOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 6305,
+        "IFCID": 6305,
+        "RID": 6305,
+        "name": "AGIOU PAVLOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 6306,
+        "IFCID": 6306,
+        "RID": 6306,
+        "name": "AGIOU PAVLOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 6307,
+        "IFCID": 6307,
+        "RID": 6307,
+        "name": "AGIOU PAVLOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 6308,
+        "IFCID": 6308,
+        "RID": 6308,
+        "name": "AGIOU PAVLOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 6324,
+        "IFCID": 6324,
+        "RID": 6324,
+        "name": "AGIOU PAVLOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 6326,
+        "IFCID": 6326,
+        "RID": 6326,
+        "name": "AGIOU PAVLOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 6356,
+        "IFCID": 6356,
+        "RID": 6356,
+        "name": "AGIOU PAVLOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 6359,
+        "IFCID": 6359,
+        "RID": 6359,
+        "name": "AGIOU PAVLOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 6365,
+        "IFCID": 6365,
+        "RID": 6365,
+        "name": "AGIOU PAVLOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 6377,
+        "IFCID": 6377,
+        "RID": 6377,
+        "name": "AGIOU PAVLOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 6388,
+        "IFCID": 6388,
+        "RID": 6388,
+        "name": "AGIOU PAVLOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 6406,
+        "IFCID": 6406,
+        "RID": 6406,
+        "name": "AGIOU PAVLOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 6407,
+        "IFCID": 6407,
+        "RID": 6407,
+        "name": "AGIOU PAVLOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 6444,
+        "IFCID": 6444,
+        "RID": 6444,
+        "name": "AGIOU PAVLOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 6473,
+        "IFCID": 6473,
+        "RID": 6473,
+        "name": "AGIOU PAVLOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 6480,
+        "IFCID": 6480,
+        "RID": 6480,
+        "name": "AGIOU PAVLOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 6535,
+        "IFCID": 6535,
+        "RID": 6535,
+        "name": "AGIOU PAVLOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 6536,
+        "IFCID": 6536,
+        "RID": 6536,
+        "name": "AGIOU PAVLOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 6537,
+        "IFCID": 6537,
+        "RID": 6537,
+        "name": "AGIOU PAVLOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 6538,
+        "IFCID": 6538,
+        "RID": 6538,
+        "name": "AGIOU PAVLOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 6548,
+        "IFCID": 6548,
+        "RID": 6548,
+        "name": "AGIOU PAVLOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 6553,
+        "IFCID": 6553,
+        "RID": 6553,
+        "name": "AGIOU PAVLOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 6572,
+        "IFCID": 6572,
+        "RID": 6572,
+        "name": "AGIOU PAVLOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 6596,
+        "IFCID": 6596,
+        "RID": 6596,
+        "name": "AGIOU PAVLOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 21797,
+        "IFCID": 21797,
+        "RID": 21797,
+        "name": "AGIOU PAVLOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 32482,
+        "IFCID": 32482,
+        "RID": 32482,
+        "name": "AGIOU PAVLOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 32483,
+        "IFCID": 32483,
+        "RID": 32483,
+        "name": "AGIOU PAVLOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 26838,
+        "IFCID": 26838,
+        "RID": 26838,
+        "name": "LEOFOROS GERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 26839,
+        "IFCID": 26839,
+        "RID": 26839,
+        "name": "LEOFOROS GERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 26840,
+        "IFCID": 26840,
+        "RID": 26840,
+        "name": "LEOFOROS GERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 26901,
+        "IFCID": 26901,
+        "RID": 26901,
+        "name": "LEOFOROS GERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 26902,
+        "IFCID": 26902,
+        "RID": 26902,
+        "name": "LEOFOROS GERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 26906,
+        "IFCID": 26906,
+        "RID": 26906,
+        "name": "LEOFOROS GERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 27436,
+        "IFCID": 27436,
+        "RID": 27436,
+        "name": "LEOFOROS GERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 27437,
+        "IFCID": 27437,
+        "RID": 27437,
+        "name": "LEOFOROS GERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 27441,
+        "IFCID": 27441,
+        "RID": 27441,
+        "name": "LEOFOROS GERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 27443,
+        "IFCID": 27443,
+        "RID": 27443,
+        "name": "LEOFOROS GERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 27444,
+        "IFCID": 27444,
+        "RID": 27444,
+        "name": "LEOFOROS GERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 27846,
+        "IFCID": 27846,
+        "RID": 27846,
+        "name": "LEOFOROS GERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 27847,
+        "IFCID": 27847,
+        "RID": 27847,
+        "name": "LEOFOROS GERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 27973,
+        "IFCID": 27973,
+        "RID": 27973,
+        "name": "LEOFOROS GERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 27974,
+        "IFCID": 27974,
+        "RID": 27974,
+        "name": "LEOFOROS GERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 27975,
+        "IFCID": 27975,
+        "RID": 27975,
+        "name": "LEOFOROS GERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 27976,
+        "IFCID": 27976,
+        "RID": 27976,
+        "name": "LEOFOROS GERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 27977,
+        "IFCID": 27977,
+        "RID": 27977,
+        "name": "LEOFOROS GERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 28055,
+        "IFCID": 28055,
+        "RID": 28055,
+        "name": "LEOFOROS GERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 28056,
+        "IFCID": 28056,
+        "RID": 28056,
+        "name": "LEOFOROS GERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 10556,
+        "IFCID": 10556,
+        "RID": 10556,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 10644,
+        "IFCID": 10644,
+        "RID": 10644,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 10645,
+        "IFCID": 10645,
+        "RID": 10645,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 10646,
+        "IFCID": 10646,
+        "RID": 10646,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 10648,
+        "IFCID": 10648,
+        "RID": 10648,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 10695,
+        "IFCID": 10695,
+        "RID": 10695,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 14552,
+        "IFCID": 14552,
+        "RID": 14552,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 14553,
+        "IFCID": 14553,
+        "RID": 14553,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 14554,
+        "IFCID": 14554,
+        "RID": 14554,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 14559,
+        "IFCID": 14559,
+        "RID": 14559,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 14564,
+        "IFCID": 14564,
+        "RID": 14564,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 14565,
+        "IFCID": 14565,
+        "RID": 14565,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 14593,
+        "IFCID": 14593,
+        "RID": 14593,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 14603,
+        "IFCID": 14603,
+        "RID": 14603,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 14630,
+        "IFCID": 14630,
+        "RID": 14630,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 14789,
+        "IFCID": 14789,
+        "RID": 14789,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 14817,
+        "IFCID": 14817,
+        "RID": 14817,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 14846,
+        "IFCID": 14846,
+        "RID": 14846,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 14863,
+        "IFCID": 14863,
+        "RID": 14863,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 14866,
+        "IFCID": 14866,
+        "RID": 14866,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 14870,
+        "IFCID": 14870,
+        "RID": 14870,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 14872,
+        "IFCID": 14872,
+        "RID": 14872,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 14874,
+        "IFCID": 14874,
+        "RID": 14874,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 14924,
+        "IFCID": 14924,
+        "RID": 14924,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 14938,
+        "IFCID": 14938,
+        "RID": 14938,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 14988,
+        "IFCID": 14988,
+        "RID": 14988,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 15064,
+        "IFCID": 15064,
+        "RID": 15064,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 15067,
+        "IFCID": 15067,
+        "RID": 15067,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 15069,
+        "IFCID": 15069,
+        "RID": 15069,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 15076,
+        "IFCID": 15076,
+        "RID": 15076,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 15077,
+        "IFCID": 15077,
+        "RID": 15077,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 15078,
+        "IFCID": 15078,
+        "RID": 15078,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 15079,
+        "IFCID": 15079,
+        "RID": 15079,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 15086,
+        "IFCID": 15086,
+        "RID": 15086,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 15088,
+        "IFCID": 15088,
+        "RID": 15088,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 15089,
+        "IFCID": 15089,
+        "RID": 15089,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 15090,
+        "IFCID": 15090,
+        "RID": 15090,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 15091,
+        "IFCID": 15091,
+        "RID": 15091,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 15092,
+        "IFCID": 15092,
+        "RID": 15092,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 15113,
+        "IFCID": 15113,
+        "RID": 15113,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 15137,
+        "IFCID": 15137,
+        "RID": 15137,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 15138,
+        "IFCID": 15138,
+        "RID": 15138,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 15153,
+        "IFCID": 15153,
+        "RID": 15153,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 15154,
+        "IFCID": 15154,
+        "RID": 15154,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 15157,
+        "IFCID": 15157,
+        "RID": 15157,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 15162,
+        "IFCID": 15162,
+        "RID": 15162,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 15177,
+        "IFCID": 15177,
+        "RID": 15177,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 15179,
+        "IFCID": 15179,
+        "RID": 15179,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 15184,
+        "IFCID": 15184,
+        "RID": 15184,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 15206,
+        "IFCID": 15206,
+        "RID": 15206,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 15228,
+        "IFCID": 15228,
+        "RID": 15228,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 15229,
+        "IFCID": 15229,
+        "RID": 15229,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 15237,
+        "IFCID": 15237,
+        "RID": 15237,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 15238,
+        "IFCID": 15238,
+        "RID": 15238,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 15239,
+        "IFCID": 15239,
+        "RID": 15239,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 15295,
+        "IFCID": 15295,
+        "RID": 15295,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 15386,
+        "IFCID": 15386,
+        "RID": 15386,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 15387,
+        "IFCID": 15387,
+        "RID": 15387,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 15407,
+        "IFCID": 15407,
+        "RID": 15407,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 15498,
+        "IFCID": 15498,
+        "RID": 15498,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 15550,
+        "IFCID": 15550,
+        "RID": 15550,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 15551,
+        "IFCID": 15551,
+        "RID": 15551,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 15635,
+        "IFCID": 15635,
+        "RID": 15635,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 15645,
+        "IFCID": 15645,
+        "RID": 15645,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 15660,
+        "IFCID": 15660,
+        "RID": 15660,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 15661,
+        "IFCID": 15661,
+        "RID": 15661,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 15662,
+        "IFCID": 15662,
+        "RID": 15662,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 15663,
+        "IFCID": 15663,
+        "RID": 15663,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 15664,
+        "IFCID": 15664,
+        "RID": 15664,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 16083,
+        "IFCID": 16083,
+        "RID": 16083,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 16096,
+        "IFCID": 16096,
+        "RID": 16096,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 16148,
+        "IFCID": 16148,
+        "RID": 16148,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 16153,
+        "IFCID": 16153,
+        "RID": 16153,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 16154,
+        "IFCID": 16154,
+        "RID": 16154,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 16155,
+        "IFCID": 16155,
+        "RID": 16155,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 16156,
+        "IFCID": 16156,
+        "RID": 16156,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 16329,
+        "IFCID": 16329,
+        "RID": 16329,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 16336,
+        "IFCID": 16336,
+        "RID": 16336,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 16340,
+        "IFCID": 16340,
+        "RID": 16340,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 16344,
+        "IFCID": 16344,
+        "RID": 16344,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 16353,
+        "IFCID": 16353,
+        "RID": 16353,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 16356,
+        "IFCID": 16356,
+        "RID": 16356,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 16361,
+        "IFCID": 16361,
+        "RID": 16361,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 16414,
+        "IFCID": 16414,
+        "RID": 16414,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 16419,
+        "IFCID": 16419,
+        "RID": 16419,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 16441,
+        "IFCID": 16441,
+        "RID": 16441,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 16442,
+        "IFCID": 16442,
+        "RID": 16442,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 16444,
+        "IFCID": 16444,
+        "RID": 16444,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 16445,
+        "IFCID": 16445,
+        "RID": 16445,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 16447,
+        "IFCID": 16447,
+        "RID": 16447,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 16450,
+        "IFCID": 16450,
+        "RID": 16450,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 16451,
+        "IFCID": 16451,
+        "RID": 16451,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 16499,
+        "IFCID": 16499,
+        "RID": 16499,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 16542,
+        "IFCID": 16542,
+        "RID": 16542,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 16543,
+        "IFCID": 16543,
+        "RID": 16543,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 16544,
+        "IFCID": 16544,
+        "RID": 16544,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 16573,
+        "IFCID": 16573,
+        "RID": 16573,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 16574,
+        "IFCID": 16574,
+        "RID": 16574,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 16595,
+        "IFCID": 16595,
+        "RID": 16595,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 16709,
+        "IFCID": 16709,
+        "RID": 16709,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 16710,
+        "IFCID": 16710,
+        "RID": 16710,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 16786,
+        "IFCID": 16786,
+        "RID": 16786,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 16874,
+        "IFCID": 16874,
+        "RID": 16874,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 16933,
+        "IFCID": 16933,
+        "RID": 16933,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 16934,
+        "IFCID": 16934,
+        "RID": 16934,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 17014,
+        "IFCID": 17014,
+        "RID": 17014,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 17015,
+        "IFCID": 17015,
+        "RID": 17015,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 17070,
+        "IFCID": 17070,
+        "RID": 17070,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 17071,
+        "IFCID": 17071,
+        "RID": 17071,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 17123,
+        "IFCID": 17123,
+        "RID": 17123,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 23660,
+        "IFCID": 23660,
+        "RID": 23660,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 23666,
+        "IFCID": 23666,
+        "RID": 23666,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 23678,
+        "IFCID": 23678,
+        "RID": 23678,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 23706,
+        "IFCID": 23706,
+        "RID": 23706,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 23903,
+        "IFCID": 23903,
+        "RID": 23903,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 23904,
+        "IFCID": 23904,
+        "RID": 23904,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 23923,
+        "IFCID": 23923,
+        "RID": 23923,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 23926,
+        "IFCID": 23926,
+        "RID": 23926,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 23927,
+        "IFCID": 23927,
+        "RID": 23927,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 23942,
+        "IFCID": 23942,
+        "RID": 23942,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 23948,
+        "IFCID": 23948,
+        "RID": 23948,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 23949,
+        "IFCID": 23949,
+        "RID": 23949,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 24001,
+        "IFCID": 24001,
+        "RID": 24001,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 24035,
+        "IFCID": 24035,
+        "RID": 24035,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 24036,
+        "IFCID": 24036,
+        "RID": 24036,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 24075,
+        "IFCID": 24075,
+        "RID": 24075,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 24091,
+        "IFCID": 24091,
+        "RID": 24091,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 24092,
+        "IFCID": 24092,
+        "RID": 24092,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 24093,
+        "IFCID": 24093,
+        "RID": 24093,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 24094,
+        "IFCID": 24094,
+        "RID": 24094,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 24112,
+        "IFCID": 24112,
+        "RID": 24112,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 24121,
+        "IFCID": 24121,
+        "RID": 24121,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 24166,
+        "IFCID": 24166,
+        "RID": 24166,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 24167,
+        "IFCID": 24167,
+        "RID": 24167,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 24168,
+        "IFCID": 24168,
+        "RID": 24168,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 24205,
+        "IFCID": 24205,
+        "RID": 24205,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 24212,
+        "IFCID": 24212,
+        "RID": 24212,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 24217,
+        "IFCID": 24217,
+        "RID": 24217,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 24263,
+        "IFCID": 24263,
+        "RID": 24263,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 24264,
+        "IFCID": 24264,
+        "RID": 24264,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 24343,
+        "IFCID": 24343,
+        "RID": 24343,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 24577,
+        "IFCID": 24577,
+        "RID": 24577,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 24578,
+        "IFCID": 24578,
+        "RID": 24578,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 24579,
+        "IFCID": 24579,
+        "RID": 24579,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 24582,
+        "IFCID": 24582,
+        "RID": 24582,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 24583,
+        "IFCID": 24583,
+        "RID": 24583,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 24584,
+        "IFCID": 24584,
+        "RID": 24584,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 24585,
+        "IFCID": 24585,
+        "RID": 24585,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 24588,
+        "IFCID": 24588,
+        "RID": 24588,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 24589,
+        "IFCID": 24589,
+        "RID": 24589,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 24590,
+        "IFCID": 24590,
+        "RID": 24590,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 24591,
+        "IFCID": 24591,
+        "RID": 24591,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 24592,
+        "IFCID": 24592,
+        "RID": 24592,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 24593,
+        "IFCID": 24593,
+        "RID": 24593,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 24594,
+        "IFCID": 24594,
+        "RID": 24594,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 24595,
+        "IFCID": 24595,
+        "RID": 24595,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 24603,
+        "IFCID": 24603,
+        "RID": 24603,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 24604,
+        "IFCID": 24604,
+        "RID": 24604,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 24614,
+        "IFCID": 24614,
+        "RID": 24614,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 24616,
+        "IFCID": 24616,
+        "RID": 24616,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 24617,
+        "IFCID": 24617,
+        "RID": 24617,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 24656,
+        "IFCID": 24656,
+        "RID": 24656,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 25461,
+        "IFCID": 25461,
+        "RID": 25461,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 25462,
+        "IFCID": 25462,
+        "RID": 25462,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 80808,
+        "IFCID": 80808,
+        "RID": 80808,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 80809,
+        "IFCID": 80809,
+        "RID": 80809,
+        "name": "TSERIOU"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 1277,
+        "IFCID": 1277,
+        "RID": 1277,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 1282,
+        "IFCID": 1282,
+        "RID": 1282,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 1284,
+        "IFCID": 1284,
+        "RID": 1284,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 1308,
+        "IFCID": 1308,
+        "RID": 1308,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 1309,
+        "IFCID": 1309,
+        "RID": 1309,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 3856,
+        "IFCID": 3856,
+        "RID": 3856,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 3883,
+        "IFCID": 3883,
+        "RID": 3883,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 3884,
+        "IFCID": 3884,
+        "RID": 3884,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 3914,
+        "IFCID": 3914,
+        "RID": 3914,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 3916,
+        "IFCID": 3916,
+        "RID": 3916,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 3924,
+        "IFCID": 3924,
+        "RID": 3924,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 3931,
+        "IFCID": 3931,
+        "RID": 3931,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 3963,
+        "IFCID": 3963,
+        "RID": 3963,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 3964,
+        "IFCID": 3964,
+        "RID": 3964,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 6677,
+        "IFCID": 6677,
+        "RID": 6677,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 6703,
+        "IFCID": 6703,
+        "RID": 6703,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 12439,
+        "IFCID": 12439,
+        "RID": 12439,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 18568,
+        "IFCID": 18568,
+        "RID": 18568,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 18772,
+        "IFCID": 18772,
+        "RID": 18772,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 19258,
+        "IFCID": 19258,
+        "RID": 19258,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 19259,
+        "IFCID": 19259,
+        "RID": 19259,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 22630,
+        "IFCID": 22630,
+        "RID": 22630,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 22638,
+        "IFCID": 22638,
+        "RID": 22638,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 22648,
+        "IFCID": 22648,
+        "RID": 22648,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 22684,
+        "IFCID": 22684,
+        "RID": 22684,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 22689,
+        "IFCID": 22689,
+        "RID": 22689,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 22699,
+        "IFCID": 22699,
+        "RID": 22699,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 22701,
+        "IFCID": 22701,
+        "RID": 22701,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 22708,
+        "IFCID": 22708,
+        "RID": 22708,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 22720,
+        "IFCID": 22720,
+        "RID": 22720,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 22722,
+        "IFCID": 22722,
+        "RID": 22722,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 22728,
+        "IFCID": 22728,
+        "RID": 22728,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 22732,
+        "IFCID": 22732,
+        "RID": 22732,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 22736,
+        "IFCID": 22736,
+        "RID": 22736,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 22738,
+        "IFCID": 22738,
+        "RID": 22738,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 22747,
+        "IFCID": 22747,
+        "RID": 22747,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 22749,
+        "IFCID": 22749,
+        "RID": 22749,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 22764,
+        "IFCID": 22764,
+        "RID": 22764,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 22794,
+        "IFCID": 22794,
+        "RID": 22794,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 22795,
+        "IFCID": 22795,
+        "RID": 22795,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 22825,
+        "IFCID": 22825,
+        "RID": 22825,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 22826,
+        "IFCID": 22826,
+        "RID": 22826,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 22827,
+        "IFCID": 22827,
+        "RID": 22827,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 22835,
+        "IFCID": 22835,
+        "RID": 22835,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 22839,
+        "IFCID": 22839,
+        "RID": 22839,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 22877,
+        "IFCID": 22877,
+        "RID": 22877,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 22893,
+        "IFCID": 22893,
+        "RID": 22893,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 22897,
+        "IFCID": 22897,
+        "RID": 22897,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 22905,
+        "IFCID": 22905,
+        "RID": 22905,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 22910,
+        "IFCID": 22910,
+        "RID": 22910,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 22911,
+        "IFCID": 22911,
+        "RID": 22911,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 22912,
+        "IFCID": 22912,
+        "RID": 22912,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 22969,
+        "IFCID": 22969,
+        "RID": 22969,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 22970,
+        "IFCID": 22970,
+        "RID": 22970,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 22984,
+        "IFCID": 22984,
+        "RID": 22984,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 23019,
+        "IFCID": 23019,
+        "RID": 23019,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 23021,
+        "IFCID": 23021,
+        "RID": 23021,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 23022,
+        "IFCID": 23022,
+        "RID": 23022,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 23106,
+        "IFCID": 23106,
+        "RID": 23106,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 23107,
+        "IFCID": 23107,
+        "RID": 23107,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 23278,
+        "IFCID": 23278,
+        "RID": 23278,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 23318,
+        "IFCID": 23318,
+        "RID": 23318,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 23319,
+        "IFCID": 23319,
+        "RID": 23319,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 23428,
+        "IFCID": 23428,
+        "RID": 23428,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 23451,
+        "IFCID": 23451,
+        "RID": 23451,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 23452,
+        "IFCID": 23452,
+        "RID": 23452,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 23535,
+        "IFCID": 23535,
+        "RID": 23535,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 23661,
+        "IFCID": 23661,
+        "RID": 23661,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 23662,
+        "IFCID": 23662,
+        "RID": 23662,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 23667,
+        "IFCID": 23667,
+        "RID": 23667,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 23670,
+        "IFCID": 23670,
+        "RID": 23670,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 23675,
+        "IFCID": 23675,
+        "RID": 23675,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 23680,
+        "IFCID": 23680,
+        "RID": 23680,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 23704,
+        "IFCID": 23704,
+        "RID": 23704,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 23705,
+        "IFCID": 23705,
+        "RID": 23705,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 23733,
+        "IFCID": 23733,
+        "RID": 23733,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 23743,
+        "IFCID": 23743,
+        "RID": 23743,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 23744,
+        "IFCID": 23744,
+        "RID": 23744,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 23745,
+        "IFCID": 23745,
+        "RID": 23745,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 25661,
+        "IFCID": 25661,
+        "RID": 25661,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 27453,
+        "IFCID": 27453,
+        "RID": 27453,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 27458,
+        "IFCID": 27458,
+        "RID": 27458,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 27463,
+        "IFCID": 27463,
+        "RID": 27463,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 27471,
+        "IFCID": 27471,
+        "RID": 27471,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 27496,
+        "IFCID": 27496,
+        "RID": 27496,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 27511,
+        "IFCID": 27511,
+        "RID": 27511,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 27523,
+        "IFCID": 27523,
+        "RID": 27523,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 27535,
+        "IFCID": 27535,
+        "RID": 27535,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 27580,
+        "IFCID": 27580,
+        "RID": 27580,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 27585,
+        "IFCID": 27585,
+        "RID": 27585,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 27596,
+        "IFCID": 27596,
+        "RID": 27596,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 27605,
+        "IFCID": 27605,
+        "RID": 27605,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 27616,
+        "IFCID": 27616,
+        "RID": 27616,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 27628,
+        "IFCID": 27628,
+        "RID": 27628,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 27635,
+        "IFCID": 27635,
+        "RID": 27635,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 27646,
+        "IFCID": 27646,
+        "RID": 27646,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 27655,
+        "IFCID": 27655,
+        "RID": 27655,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 27665,
+        "IFCID": 27665,
+        "RID": 27665,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 27834,
+        "IFCID": 27834,
+        "RID": 27834,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 28105,
+        "IFCID": 28105,
+        "RID": 28105,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 28158,
+        "IFCID": 28158,
+        "RID": 28158,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 28485,
+        "IFCID": 28485,
+        "RID": 28485,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 28486,
+        "IFCID": 28486,
+        "RID": 28486,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 28771,
+        "IFCID": 28771,
+        "RID": 28771,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 29814,
+        "IFCID": 29814,
+        "RID": 29814,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 29815,
+        "IFCID": 29815,
+        "RID": 29815,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 29816,
+        "IFCID": 29816,
+        "RID": 29816,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 29817,
+        "IFCID": 29817,
+        "RID": 29817,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 29818,
+        "IFCID": 29818,
+        "RID": 29818,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 29819,
+        "IFCID": 29819,
+        "RID": 29819,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 29841,
+        "IFCID": 29841,
+        "RID": 29841,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 29976,
+        "IFCID": 29976,
+        "RID": 29976,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 29977,
+        "IFCID": 29977,
+        "RID": 29977,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 29978,
+        "IFCID": 29978,
+        "RID": 29978,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 29979,
+        "IFCID": 29979,
+        "RID": 29979,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 30014,
+        "IFCID": 30014,
+        "RID": 30014,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 30090,
+        "IFCID": 30090,
+        "RID": 30090,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 30091,
+        "IFCID": 30091,
+        "RID": 30091,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 30092,
+        "IFCID": 30092,
+        "RID": 30092,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 30112,
+        "IFCID": 30112,
+        "RID": 30112,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 30113,
+        "IFCID": 30113,
+        "RID": 30113,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 30189,
+        "IFCID": 30189,
+        "RID": 30189,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 30191,
+        "IFCID": 30191,
+        "RID": 30191,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 30192,
+        "IFCID": 30192,
+        "RID": 30192,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 30198,
+        "IFCID": 30198,
+        "RID": 30198,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 30199,
+        "IFCID": 30199,
+        "RID": 30199,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 30206,
+        "IFCID": 30206,
+        "RID": 30206,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 30207,
+        "IFCID": 30207,
+        "RID": 30207,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 30209,
+        "IFCID": 30209,
+        "RID": 30209,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 30210,
+        "IFCID": 30210,
+        "RID": 30210,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 30211,
+        "IFCID": 30211,
+        "RID": 30211,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 30212,
+        "IFCID": 30212,
+        "RID": 30212,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 30213,
+        "IFCID": 30213,
+        "RID": 30213,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 30216,
+        "IFCID": 30216,
+        "RID": 30216,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 30318,
+        "IFCID": 30318,
+        "RID": 30318,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 30323,
+        "IFCID": 30323,
+        "RID": 30323,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 30326,
+        "IFCID": 30326,
+        "RID": 30326,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 30329,
+        "IFCID": 30329,
+        "RID": 30329,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 30331,
+        "IFCID": 30331,
+        "RID": 30331,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 30334,
+        "IFCID": 30334,
+        "RID": 30334,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 30337,
+        "IFCID": 30337,
+        "RID": 30337,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 30342,
+        "IFCID": 30342,
+        "RID": 30342,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 30347,
+        "IFCID": 30347,
+        "RID": 30347,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 30355,
+        "IFCID": 30355,
+        "RID": 30355,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 30375,
+        "IFCID": 30375,
+        "RID": 30375,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 30380,
+        "IFCID": 30380,
+        "RID": 30380,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 30381,
+        "IFCID": 30381,
+        "RID": 30381,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 30403,
+        "IFCID": 30403,
+        "RID": 30403,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 31538,
+        "IFCID": 31538,
+        "RID": 31538,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 31539,
+        "IFCID": 31539,
+        "RID": 31539,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 31540,
+        "IFCID": 31540,
+        "RID": 31540,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 31541,
+        "IFCID": 31541,
+        "RID": 31541,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 31732,
+        "IFCID": 31732,
+        "RID": 31732,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 31733,
+        "IFCID": 31733,
+        "RID": 31733,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 31735,
+        "IFCID": 31735,
+        "RID": 31735,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 31789,
+        "IFCID": 31789,
+        "RID": 31789,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 31790,
+        "IFCID": 31790,
+        "RID": 31790,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 31796,
+        "IFCID": 31796,
+        "RID": 31796,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 31797,
+        "IFCID": 31797,
+        "RID": 31797,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 31798,
+        "IFCID": 31798,
+        "RID": 31798,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 31799,
+        "IFCID": 31799,
+        "RID": 31799,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 31800,
+        "IFCID": 31800,
+        "RID": 31800,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 31801,
+        "IFCID": 31801,
+        "RID": 31801,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 31804,
+        "IFCID": 31804,
+        "RID": 31804,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 31805,
+        "IFCID": 31805,
+        "RID": 31805,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 31833,
+        "IFCID": 31833,
+        "RID": 31833,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 31836,
+        "IFCID": 31836,
+        "RID": 31836,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 31837,
+        "IFCID": 31837,
+        "RID": 31837,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 31838,
+        "IFCID": 31838,
+        "RID": 31838,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 31839,
+        "IFCID": 31839,
+        "RID": 31839,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 31841,
+        "IFCID": 31841,
+        "RID": 31841,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 31852,
+        "IFCID": 31852,
+        "RID": 31852,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 31854,
+        "IFCID": 31854,
+        "RID": 31854,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 31859,
+        "IFCID": 31859,
+        "RID": 31859,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 31860,
+        "IFCID": 31860,
+        "RID": 31860,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 31882,
+        "IFCID": 31882,
+        "RID": 31882,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 32195,
+        "IFCID": 32195,
+        "RID": 32195,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 32355,
+        "IFCID": 32355,
+        "RID": 32355,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 32356,
+        "IFCID": 32356,
+        "RID": 32356,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 32357,
+        "IFCID": 32357,
+        "RID": 32357,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 32358,
+        "IFCID": 32358,
+        "RID": 32358,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 32359,
+        "IFCID": 32359,
+        "RID": 32359,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 32377,
+        "IFCID": 32377,
+        "RID": 32377,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 32424,
+        "IFCID": 32424,
+        "RID": 32424,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 32425,
+        "IFCID": 32425,
+        "RID": 32425,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 32668,
+        "IFCID": 32668,
+        "RID": 32668,
+        "name": "LEOFOROS ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 32687,
+        "IFCID": 32687,
+        "RID": 32687,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 37632,
+        "IFCID": 37632,
+        "RID": 37632,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 37633,
+        "IFCID": 37633,
+        "RID": 37633,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 37635,
+        "IFCID": 37635,
+        "RID": 37635,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 37636,
+        "IFCID": 37636,
+        "RID": 37636,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 37637,
+        "IFCID": 37637,
+        "RID": 37637,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 37642,
+        "IFCID": 37642,
+        "RID": 37642,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 37643,
+        "IFCID": 37643,
+        "RID": 37643,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 37645,
+        "IFCID": 37645,
+        "RID": 37645,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 37646,
+        "IFCID": 37646,
+        "RID": 37646,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 37647,
+        "IFCID": 37647,
+        "RID": 37647,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 37648,
+        "IFCID": 37648,
+        "RID": 37648,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 37649,
+        "IFCID": 37649,
+        "RID": 37649,
+        "name": "ELEFTHERIAS"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 37650,
+        "IFCID": 37650,
+        "RID": 37650,
+        "name": "ELEFTHERIAS"
+      }
+    }
+  ]
+}

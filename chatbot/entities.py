@@ -299,6 +299,7 @@ class Entities:
         self.environment = None  # the environment twin (chatbot/environment), set by the Agent
         self.lidar = None  # buildings as the 2019 flight measured them (chatbot/lidar.py), likewise
         self.moments = None  # the city at past moments (chatbot/moments.py), set by the Agent
+        self.tonight = None  # duty pharmacies and city events (chatbot/tonight), set by the Agent
         self.places = places
         self.dls = dls
         self.registers = registers

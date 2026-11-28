@@ -40,7 +40,7 @@ def _warm_up(agent: Agent) -> None:
     # The traffic cameras (one request, kept 6 h) let search and the inspector find them by name.
     # The bus timetable loads in the background (about 5 MB the first time, then from disk).
     for step in (agent.mobility.warm_up, agent.city.overview, agent.city.traffic_cameras,
-                 lambda: vega_lite_validator(agent.settings)):
+                 agent.tonight.warm_up, lambda: vega_lite_validator(agent.settings)):
         try:
             step()
         except Exception as e:  # noqa: BLE001 - best effort

@@ -23,6 +23,7 @@ from chatbot.tools import streets
 from chatbot.tools import facilities
 from chatbot.tools import energy
 from chatbot.tools import hazards
+from chatbot.tools import tonight
 from chatbot.tools.base import Handler, LocationNotShared, Tool, ToolContext, ToolError
 from chatbot.web import WebError
 
@@ -37,8 +38,10 @@ DOMAINS += (roadreports,)
 DOMAINS += (facilities,)
 # The island's power (demand, wind, solar and the grid's carbon), after that.
 DOMAINS += (energy,)
-# Hazards (earthquakes, weather warnings and fire danger), last.
+# Hazards (earthquakes, weather warnings and fire danger), after that.
 DOMAINS += (hazards,)
+# Tonight in Nicosia (duty pharmacies, Visit Cyprus events, open-now places), last.
+DOMAINS += (tonight,)
 
 TOOLS: list[Tool] = [t for domain in DOMAINS for t in domain.TOOLS]
 TOOL_DEFS: list[dict] = [t.definition for t in TOOLS]

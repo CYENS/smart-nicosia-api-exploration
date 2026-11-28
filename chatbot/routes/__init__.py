@@ -23,8 +23,10 @@ def routers() -> list:
     from chatbot.routes import facilities
     from chatbot.routes import energy
     from chatbot.routes import hazards
+    from chatbot.routes import tonight
 
     return [live.router, memory.router, chat.router, buildings.router, entities.router,
             clock.router, mobility.router, sources.router, devices.router, watch.router,
             environment.router, here.router, views.router, scenarios.router,
-            streets.router, reports.router, facilities.router, energy.router, hazards.router]
+            streets.router, reports.router, facilities.router, energy.router, hazards.router,
+            tonight.router]
