@@ -185,7 +185,13 @@ speed_kmh): national Bluetooth road segments, no coordinates.
 residential; keys no2, o3, pm10, ts the start of the hour); may not exist before the first read.
 - coverage(device_type, device, source, start_ts, end_ts): stretches the store holds every \
 reading for ('' = all devices of the type).
-- job_runs(job, started_at, finished_at, status, requests, rows_written, message)."""
+- job_runs(job, started_at, finished_at, status, requests, rows_written, message).
+- duty_pharmacies(id, duty_date, reg_no, surname, first_name, pharmacist, address, directions, \
+municipality, pharmacy_tel, lat, lon, precision, precision_label, located_by, osm_id, overture_id, \
+source_url, fetched_at): official overnight duty pharmacy roster (no personal home phone stored).
+- city_events(id, title, start_ts, end_ts, venue_name, venue_address, municipality, categories, \
+url, description, lat, lon, precision, precision_label, located_by, fetched_at): Visit Cyprus \
+events calendar in Nicosia (usable for past replays and future closure planning)."""
 
 RUN_SQL = {
     "name": "run_sql",

@@ -41,7 +41,7 @@ class Source:
 
 
 GROUPS = ("City sensors", "Mobility", "Weather", "Hazards", "Map, places and routes", "Buildings",
-          "Energy", "This twin", "Figures the scenarios assume")
+          "Energy", "Tonight in Nicosia", "This twin", "Figures the scenarios assume")
 
 SOURCES: tuple[Source, ...] = (
     Source(
@@ -289,6 +289,32 @@ SOURCES: tuple[Source, ...] = (
         refresh="Fetched once per area, then kept",
         credit="Buildings: DLS Cyprus"),
     Source(
+        "duty_pharmacies", "Nicosia pharmacies on duty", "the Ministry of Health roster",
+        "Ministry of Health, Pharmaceutical Services, through data.gov.cy",
+        "The six Nicosia pharmacies on overnight duty each night until 08:00 next morning, "
+        "discovered from the quarterly Nicosia schedule with street directions and pharmacy phone",
+        "Tonight in Nicosia", url="https://www.data.gov.cy/el/resource/leykosia",
+        licence=CC_BY, licence_url="https://creativecommons.org/licenses/by/4.0/",
+        refresh="Read at most once every 12 hours and stored in the twin's memory",
+        credit="Duty pharmacies: data.gov.cy"),
+    Source(
+        "dls_addresses", "Official DLS street addresses (INSPIRE AD_Addresses)", "DLS official addresses",
+        "Department of Lands and Surveys, Republic of Cyprus",
+        "Official Greater Nicosia street addresses used alongside OpenStreetMap and Overture to "
+        "locate duty pharmacies and venues with clear precision",
+        "Tonight in Nicosia",
+        url="https://eservices.dls.moi.gov.cy/inspire/rest/services/INSPIRE/AD_Addresses/MapServer",
+        licence=CC_BY, licence_url="https://creativecommons.org/licenses/by/4.0/",
+        refresh="Queried per street on demand and cached for 30 days",
+        credit="Addresses: DLS INSPIRE AD_Addresses"),
+    Source(
+        "visit_cyprus", "Visit Cyprus events calendar", "Visit Cyprus",
+        "Deputy Ministry of Tourism, Republic of Cyprus",
+        "Festivals, concerts, theatre and exhibitions across Nicosia, with times and venues",
+        "Tonight in Nicosia", url="https://www.visitcyprus.com/events/",
+        refresh="Read at most once every 6 hours and stored in the twin's memory",
+        credit="Events: Visit Cyprus"),
+    Source(
         "dls_lidar", "LiDAR flight of 2019 (DLS surface model)", "the 2019 LiDAR flight",
         "Department of Lands and Surveys: the surface model (half a metre a cell) and the terrain "
         "model of its 2019 flight, published as open files",
@@ -443,6 +469,7 @@ TOOL_SOURCES: dict[str, tuple[str, ...]] = {
     "compare_with_reference": ("smart_nicosia", "eea_air", "met_stations", "twin_memory"),
     "get_grid": ("tso_grid", "oil_co2", "twin_memory", "openstreetmap"),
     "get_hazards": ("emsc", "meteoalarm", "effis", "geoboundaries", "twin_memory"),
+    "whats_on_tonight": ("duty_pharmacies", "dls_addresses", "visit_cyprus", "openstreetmap"),
 }
 
 _tool: ContextVar[str | None] = ContextVar("source_tool", default=None)

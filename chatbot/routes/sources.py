@@ -275,6 +275,46 @@ def _hazards(feed: str) -> Callable:
     return probe
 
 
+def _duty_pharmacies(agent) -> dict:
+    t = getattr(agent, "tonight", None)
+    if t is None:
+        return status(None)
+    r = t.roster
+    if not r.rows:
+        return status("unavailable" if r.error else "waiting",
+                      note=r.error or "loading Nicosia quarterly duty roster")
+    note = f"{len(r.rows)} duty shifts" + (f"; refresh failed ({r.error})" if r.error else "")
+    return status("stale" if r.error else "live", r.fetched_at or None, note)
+
+
+def _dls_addresses(agent) -> dict:
+    t = getattr(agent, "tonight", None)
+    if t is None:
+        return status(None)
+    c = t.dls_addr
+    if not c._streets and not c.last_read_at:
+        return status("waiting", note="queried per street when matching duty addresses")
+    note = f"{len(c._streets)} street lookups cached"
+    if c.last_error:
+        return status("stale", c.last_read_at or None, f"{note}; {c.last_error}")
+    return status("live", c.last_read_at or None, note)
+
+
+def _visit_cyprus(agent) -> dict:
+    t = getattr(agent, "tonight", None)
+    if t is None:
+        return status(None)
+    cal = t.calendar
+    if not cal.fetched_at and not cal.error and not cal.events:
+        return status("waiting", note="loading Visit Cyprus Nicosia events calendar")
+    if cal.error and not cal.events:
+        return status("unavailable", note=cal.error)
+    note = f"{len(cal.events)} upcoming Nicosia events"
+    if cal.error:
+        return status("stale", cal.fetched_at or None, f"{note}; {cal.error}")
+    return status("live", cal.fetched_at or None, note)
+
+
 PROBES: dict[str, Callable] = {
     "met_stations": lambda a: _station_feed(a, "met"),
     "eea_air": lambda a: _station_feed(a, "eea"),
@@ -307,6 +347,9 @@ PROBES: dict[str, Callable] = {
     "emsc": _hazards("earthquakes"),
     "meteoalarm": _hazards("warnings"),
     "effis": _hazards("fire"),
+    "duty_pharmacies": _duty_pharmacies,
+    "dls_addresses": _dls_addresses,
+    "visit_cyprus": _visit_cyprus,
 }
 
 

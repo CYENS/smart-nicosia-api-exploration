@@ -352,7 +352,8 @@ def test_the_tool_list_keeps_its_order():
         "get_road_reports",
         "find_parking", "find_chargers", "find_bikes",
         "get_grid",
-        "get_hazards"]
+        "get_hazards",
+        "whats_on_tonight"]
 
 
 def test_the_context_names_what_the_user_has_open():

@@ -31,6 +31,8 @@ STATE_COLORS: dict[str, str] = {
     "viewpoint": "#22d3ee", "public lookout": "#c084fc", "high ground": "#a3e635",
     # Buildings as the 2019 flight found them against the 2014 survey (find_height_changes).
     "taller": "#34d399", "lower": "#fbbf24", "gone": "#f43f5e",
+    # Tonight in Nicosia (whats_on_tonight).
+    "on duty": "#10b981", "event": "#ec4899", "open now": "#f59e0b",
 }
 
 
