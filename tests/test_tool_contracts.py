@@ -69,8 +69,6 @@ RESULT_FIELDS = {"sun_pct"}
 # Gaps this test found on main that are fixed in a later change: test id -> what is missing.
 # Each is an expected failure, strict, so the fix has to take it off this list.
 KNOWN_GAPS: dict[str, str] = {
-    "test_the_tool_says_where_its_data_comes_from[get_entity]": "no TOOL_SOURCES entry",
-    "test_the_tool_says_where_its_data_comes_from[set_city_time]": "no TOOL_SOURCES entry",
     "test_prompt_gives_every_tool_some_guidance[city_overview]": "not named in the prompt",
     "test_prompt_gives_every_tool_some_guidance[get_alarms]": "not named in the prompt",
     "test_prompt_gives_every_tool_some_guidance[geocode]": "not named in the prompt",
@@ -217,7 +215,7 @@ def test_every_label_names_a_tool():
 
 @pytest.mark.parametrize("name", NAMES)
 def test_the_tool_says_where_its_data_comes_from(name):
-    if name in contracts.NO_SOURCES:
+    if name in contracts.NO_SOURCES or name in contracts.OWN_SOURCES:
         assert name not in sources.TOOL_SOURCES, f"{name} is both exempt and listed"
         return
     used = sources.TOOL_SOURCES.get(name)
@@ -227,7 +225,7 @@ def test_the_tool_says_where_its_data_comes_from(name):
 
 
 def test_exemptions_name_real_tools():
-    for table in (contracts.NO_SOURCES, contracts.MAX_CHARS, NO_GUIDANCE, EXAMPLES):
+    for table in (contracts.NO_SOURCES, contracts.OWN_SOURCES, contracts.MAX_CHARS, NO_GUIDANCE, EXAMPLES):
         assert set(table) <= set(NAMES), sorted(set(table) - set(NAMES))
     tests = {name for name, _ in globals().items() if name.startswith("test_")}
     for gap in KNOWN_GAPS:

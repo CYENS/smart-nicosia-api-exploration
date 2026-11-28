@@ -80,3 +80,9 @@ def api() -> FakeApi:
 @pytest.fixture
 def client(cfg, api) -> Client:
     return Client(cfg, fetch=api.fetch, sleep=lambda s: None)
+
+
+# Every tool any test runs through run_tool is checked against the tool contract: compact
+# results, refs in the store that name their sources, ids linked to the map, ui commands the
+# page handles (tests/tool_contracts.py).
+from tool_contracts import _tool_contract, pytest_configure, pytest_terminal_summary  # noqa: E402,F401

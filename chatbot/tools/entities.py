@@ -93,6 +93,10 @@ def h_get_entity(ctx: ToolContext, a: dict) -> dict:
         entity = DETAIL_RESOLVERS[entity["kind"]](entities_of(ctx), entity, when)
     out = for_model(entity)
     feats = layer_features(entity)
+    # What it was read from: a kind that knows says so (a spot: chatbot/sources.py ids), else the
+    # sources the entity lists.
+    read_from = entity.get("_source_ids") or [s["source"] for s in entity.get("sources") or []
+                                              if isinstance(s, dict) and s.get("source")]
     if feats:
         states = [f["properties"]["state"] for f in feats]
         out["layer_ref"] = ctx.store.add_layer(
@@ -101,8 +105,7 @@ def h_get_entity(ctx: ToolContext, a: dict) -> dict:
             title=entity["name"], legend=legend_for(states),
             value_fields=[r["key"] for r in entity["readings"] if isinstance(r["value"], (int, float))],
             count=1 + sum(1 for r in entity["relations"] if r.get("id") and r.get("lon") is not None),
-            # A kind that knows what it read says so (a spot: chatbot/sources.py ids).
-            sources=entity.get("_source_ids"))
+            sources=read_from)
     # A kind with its own series (a road segment's speeds from the memory) has one too.
     if a.get("history", True) and (entity.get("has_series") or entity["kind"] in SERIES_RESOLVERS):
         end = None
@@ -118,7 +121,8 @@ def h_get_entity(ctx: ToolContext, a: dict) -> dict:
                     out["series_24h"][k] = s[k]
             out["data_ref"] = ctx.store.add_dataset(
                 f"{entity['id']}_24h", series_rows(entity, s),
-                title=f"{entity['name']}: {s['label'].lower()}, last 24 hours", link={"key": "id"})
+                title=f"{entity['name']}: {s['label'].lower()}, last 24 hours", link={"key": "id"},
+                sources=["twin_memory", *read_from])
         elif entity["kind"] in SERIES_RESOLVERS:
             out["series_24h"] = "the twin's memory holds no readings of it for the last 24 hours yet"
         else:

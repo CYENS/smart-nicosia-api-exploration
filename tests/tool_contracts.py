@@ -80,6 +80,16 @@ NO_SOURCES = {
     "list_scenarios": "the scenario lab's own catalogue of what-ifs and their parameters",
 }
 
+# Tools whose things each name their own sources, so TOOL_SOURCES can't list them in advance;
+# what they store is still checked for sources.
+OWN_SOURCES = {
+    "get_entity": "every kind of thing lists its sources; its layer and its day carry them",
+}
+
+# Fields that make a row a moment in a series: such rows link to the map through the time line
+# (a chart over time follows the clock), so they need no id link.
+TIME_FIELDS = ("time", "day", "date", "hour", "ts", "at", "start")
+
 # Size bounds, in characters of the JSON the model reads. Tools whose answer is the data itself
 # get a wider bound; everything else parks its rows in the store.
 DEFAULT_MAX_CHARS = 12_000
@@ -121,10 +131,12 @@ def _refs(value: object, key: str = "") -> list[tuple[str, str]]:
 
 
 def _feature_ids(layer: dict) -> set[str]:
+    """The values the page's highlight matches (lib/map/engine.ts highlightOnMap): a feature's
+    id, and a bus's line id."""
     ids = set()
     for f in layer.get("features") or []:
         props = f.get("properties") or {}
-        for v in (f.get("id"), props.get("id")):
+        for v in (f.get("id"), props.get("id"), props.get("line_id")):
             if v is not None:
                 ids.add(str(v))
     return ids
@@ -179,15 +191,17 @@ def result_problems(tool: str, result: dict, store) -> list[str]:
                 continue
             with_id = [r for r in rows if r.get("id") not in (None, "")]
             link = ds.get("link") or {}
-            if with_id and not link:
+            in_time = rows and all(any(k in r for k in TIME_FIELDS) for r in rows)
+            if with_id and not link and not in_time:
                 problems.append(f"dataset {ref} has rows with ids but no link: pass "
                                 "link={'key': 'id'} so its charts highlight the map")
             if link.get("key") == "id" and rows and len(with_id) < len(rows):
                 problems.append(f"dataset {ref} is linked by id but {len(rows) - len(with_id)} "
                                 "of its rows have none")
             ds["_checked_ids"] = {str(r["id"]) for r in with_id}
-    # A dataset linked by id and a layer from the same call: its ids must be on that layer, or
-    # hovering a bar highlights nothing.
+    # A dataset linked by id and a layer from the same call: its ids must be the layer's, or
+    # hovering a bar highlights nothing. (A layer may leave some rows out to stay readable, so
+    # only a dataset none of whose ids are drawn is wrong: ids written another way.)
     if made_layers:
         on_map = set().union(*(_feature_ids(layer) for layer in made_layers))
         for key, ref in _refs(result):
@@ -195,10 +209,10 @@ def result_problems(tool: str, result: dict, store) -> list[str]:
             if not ds or (ds.get("link") or {}).get("key") != "id":
                 continue
             ids = ds.pop("_checked_ids", set())
-            missing = sorted(ids - on_map)
-            if on_map and missing:
-                problems.append(f"dataset {ref} has ids no layer of this call draws: "
-                                f"{missing[:5]}{' ...' if len(missing) > 5 else ''}")
+            if on_map and ids and not ids & on_map:
+                sample = sorted(ids)[:3]
+                problems.append(f"dataset {ref} is linked by id but no layer of this call draws "
+                                f"any of its ids ({sample}): write them as the features do")
     for ds in datasets.values():
         if isinstance(ds, dict):
             ds.pop("_checked_ids", None)

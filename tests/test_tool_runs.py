@@ -22,7 +22,7 @@ from conftest import load
 def city(api, client):
     api.on("getTenantDevices", load("devices_2026-10-19.json"))
     api.on("getLatestTelemetry", load("latest_parking_YP974.json"))
-    api.on("getAlarms", lambda p: load("alarms_tenant.json")[:int(p["limit"])])  # as the API does
+    api.on("getAlarms", load("alarms_tenant.json"))  # all 20, whatever the limit asked
     api.on("generalReports", load("speed_five_min.json"))
     readings_at = max(int(r["timestamp"]) for r in load("latest_parking_YP974.json"))
     now = datetime.fromtimestamp(readings_at / 1000 + 600, tz=timezone.utc)
