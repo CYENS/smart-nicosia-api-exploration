@@ -7,7 +7,6 @@ import { useEffect, useId } from "react"
 
 import { Button } from "@/components/ui/button"
 import { Field, FieldLabel } from "@/components/ui/field"
-import { Skeleton } from "@/components/ui/skeleton"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { ACCESS_LEGEND, HEAT_BANDS, HEAT_COLORS, PEOPLE_LEGEND, SLOPE_LEGEND } from "@/lib/fabric/colors"
 import {
@@ -57,7 +56,9 @@ function HeatSummary() {
   if (heat.status === "loading") return <span aria-live="polite">Loading Landsat morning surface grid...</span>
   if (heat.status === "error") return <span aria-live="polite">Could not load ground heat: {heat.error}</span>
   const h = heat.payload ?? sum.data?.heat
-  if (sum.status === "loading" && !h) return <Skeleton className="h-3.5 w-44" />
+  if (sum.status === "loading" && !h) {
+    return <span className="inline-block h-3 w-40 animate-pulse rounded bg-muted align-middle" aria-label="Loading summary" />
+  }
   if (h && h.min_c !== null && h.max_c !== null) {
     return (
       <span aria-live="polite">
@@ -104,7 +105,9 @@ function PeopleSummary() {
   const people = useFabric((s) => s.people)
   if (people.status === "loading") return <span aria-live="polite">Loading population hexagons...</span>
   if (people.status === "error") return <span aria-live="polite">Could not load population: {people.error}</span>
-  if (sum.status === "loading" && !sum.data) return <Skeleton className="h-3.5 w-44" />
+  if (sum.status === "loading" && !sum.data) {
+    return <span className="inline-block h-3 w-40 animate-pulse rounded bg-muted align-middle" aria-label="Loading summary" />
+  }
   if (sum.data?.ready) {
     return (
       <span aria-live="polite">
@@ -150,7 +153,9 @@ function AccessSummary() {
   const acc = useFabric((s) => s.access)
   if (acc.status === "loading") return <span aria-live="polite">Loading 15-minute access scores...</span>
   if (acc.status === "error") return <span aria-live="polite">Could not load access scores: {acc.error}</span>
-  if (sum.status === "loading" && !sum.data) return <Skeleton className="h-3.5 w-44" />
+  if (sum.status === "loading" && !sum.data) {
+    return <span className="inline-block h-3 w-40 animate-pulse rounded bg-muted align-middle" aria-label="Loading summary" />
+  }
   const a = sum.data?.access
   if (a && a.mean_15min !== null && a.mean_step_free !== null) {
     return (
