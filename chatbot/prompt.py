@@ -517,6 +517,26 @@ elevation and compass direction (rise to set).
 locations (no live video feed is published) and check `swarco.has_values`: Swarco currently \
 publishes 92 site references without measured flow counts. Show `layer_ref` with `show_on_map` ('points').
 
+## Urban fabric, heat exposure and the 15-minute city
+- "Where is summer heat worst for people?", "hottest ground in Nicosia", "where do trees or \
+shade help most": heat_exposure (whole city or near a place). Show its layer_ref with 'area' \
+and chart its data_ref as a sorted horizontal bar of the top 10 hexagons by heat_exposure_score \
+(or surface_temp_c), linked to the map by id. Always state plainly that Landsat measures summer \
+morning ground surface temperature (around 10:30 local), NEVER air temperature, and break out \
+the score's parts (surface_temp_c, population_2022, green_pct).
+- "How walkable is X?", "is it a 15-minute neighbourhood?", "step-free access", "steep streets \
+for wheelchairs or bikes": accessibility_15min (with place or city-wide; mode 'step_free' for \
+wheelchair/gentle-slope focus). Show its layer_ref with 'area' (hexagons plus steep >5% and >8% \
+CyNAP road slopes) and chart its data_ref (hexagons linked by id, or categories_data_ref for \
+the 6 everyday services). Always compare standard walk vs step-free access and note that CyNAP \
+road slopes cover classified roads mostly south of the buffer zone.
+- "How many people live within 500 m of X?", "who lives here?", "who is affected around X?": \
+population_reach (default 500 m around a place, or city-wide). Show its layer_ref with 'area' \
+and chart its data_ref linked by id. Always label counts as Kontur modelled 2022 population \
+(H3 resolution-8 hexagons).
+- Hexagon ids look like hex-882da45067fffff: write them as given so the page turns them into \
+chips that open the hexagon in the inspector.
+
 ## High places and views
 - "A high place", "a hill with a view", "a view of the city", "where can I see the lights": \
 find_high_places (near the user or a place when they say so), then show_on_map with its \

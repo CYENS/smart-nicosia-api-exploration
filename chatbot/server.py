@@ -42,7 +42,7 @@ def _warm_up(agent: Agent) -> None:
     # ISS passes and the CyNAP ITS site inventory warm Clock track marks, search and Swarco status.
     for step in (agent.mobility.warm_up, agent.city.overview, agent.city.traffic_cameras,
                  agent.tonight.warm_up, agent.sky.iss.summary, agent.sky.its.geojson,
-                 lambda: vega_lite_validator(agent.settings)):
+                 agent.fabric.warm_up, lambda: vega_lite_validator(agent.settings)):
         try:
             step()
         except Exception as e:  # noqa: BLE001 - best effort

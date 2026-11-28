@@ -40,8 +40,9 @@ class Source:
         return asdict(self)
 
 
-GROUPS = ("City sensors", "Mobility", "Sky", "Weather", "Hazards", "Map, places and routes", "Buildings",
-          "Energy", "Tonight in Nicosia", "This twin", "Figures the scenarios assume")
+GROUPS = ("City sensors", "Mobility", "Sky", "Weather", "Hazards", "Urban fabric",
+          "Map, places and routes", "Buildings", "Energy", "Tonight in Nicosia",
+          "This twin", "Figures the scenarios assume")
 
 SOURCES: tuple[Source, ...] = (
     Source(
@@ -454,6 +455,48 @@ SOURCES: tuple[Source, ...] = (
         licence=CC_BY, licence_url="https://creativecommons.org/licenses/by/4.0/",
         refresh="Checked non-intrusively every 15 minutes while active",
         credit="Swarco feed: PWD / CyNAP, CC BY 4.0"),
+    Source(
+        "cynap_gradients", "Road network gradients (CyNAP)", "the road gradients feed", MINISTRY,
+        "Road gradient percentages every 100 m across Cyprus, flagging moderate (>5%) and steep "
+        "(>8%) stretches for step-free accessibility and cycling",
+        "Urban fabric",
+        url="https://traffic4cyprus.org.cy/dataset/road_network_gradients",
+        licence=CC_BY, licence_url="https://creativecommons.org/licenses/by/4.0/",
+        refresh="Read again once a day, keeping a saved copy if it cannot be read",
+        credit="Slopes: traffic4cyprus, CC BY 4.0"),
+    Source(
+        "kontur_population", "Population hexagons (Kontur)", "Kontur 2022 population",
+        "Kontur (via HDX)",
+        "Modelled 2022 population in H3 resolution-8 hexagons (~0.7 km²), covering both sides of "
+        "the buffer zone; produced for visualisation",
+        "Urban fabric",
+        url="https://data.humdata.org/dataset/kontur-population-cyprus",
+        licence=CC_BY, licence_url="https://creativecommons.org/licenses/by/4.0/",
+        refresh="Static 2022 release, clipped offline to Greater Nicosia",
+        credit="Population: Kontur 2022, CC BY 4.0"),
+    Source(
+        "landsat_lst", "Summer morning ground surface temperature (Landsat 8/9)",
+        "Landsat ground heat",
+        "USGS, via Microsoft Planetary Computer",
+        "Summer morning (~10:30 local) land surface temperature composited from clear Landsat "
+        "Collection 2 Level-2 thermal scenes (100 m band, ground skin temperature, not air temperature)",
+        "Urban fabric",
+        url="https://planetarycomputer.microsoft.com/dataset/landsat-c2-l2",
+        licence="USGS Public Domain",
+        licence_url="https://www.usgs.gov/information-policies-and-copyrights",
+        refresh="Seasonal summer composite, built offline",
+        credit="Surface heat: USGS Landsat"),
+    Source(
+        "overture_base", "Overture Maps base infrastructure and land use", "Overture base layers",
+        "Overture Maps Foundation",
+        "Parks, green land use, schools, pedestrian crossings, benches, recycling points and kerbs "
+        "across Greater Nicosia",
+        "Urban fabric",
+        url="https://docs.overturemaps.org/attribution/",
+        licence="CDLA-Permissive-2.0 (some rows ODbL)",
+        licence_url="https://cdla.dev/permissive-2-0/",
+        refresh="Clipped from Overture monthly release during build",
+        credit="Base layers: Overture Maps"),
 )
 
 BY_ID: dict[str, Source] = {s.id: s for s in SOURCES}
@@ -510,6 +553,9 @@ TOOL_SOURCES: dict[str, tuple[str, ...]] = {
     "whats_on_tonight": ("duty_pharmacies", "dls_addresses", "visit_cyprus", "openstreetmap"),
     "get_sky": ("adsb_lol", "celestrak_iss", "twin_memory"),
     "get_its_infrastructure": ("cynap_its", "swarco_traffic"),
+    "heat_exposure": ("landsat_lst", "kontur_population", "overture_base", "dls"),
+    "accessibility_15min": ("openstreetmap", "overture", "overture_base", "bus_timetable", "cynap_gradients", "kontur_population"),
+    "population_reach": ("kontur_population", "overture_base"),
 }
 
 _tool: ContextVar[str | None] = ContextVar("source_tool", default=None)

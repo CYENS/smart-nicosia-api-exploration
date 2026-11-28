@@ -99,6 +99,27 @@ def build_spot(ents, eid: str, near, at: datetime | None = None) -> dict | None:
     )
     entity["environment"] = data  # the inspector's own section reads it whole
     entity["_for_model"] = {"environment": _for_model(data)}
+    fab = getattr(ents, "fabric", None)
+    if fab is not None and fab.ready:
+        sf = fab.spot_fabric(lat, lon)
+        entity["fabric"] = sf
+        entity["_for_model"]["fabric"] = sf
+        if sf.get("hex_id"):
+            entity["relations"].append({
+                "relation": "fabric_hex",
+                "label": "Enclosing H3 hexagon",
+                "id": sf["hex_id"],
+                "kind": "fabric_hex",
+                "name": sf.get("hex_name") or sf["hex_id"],
+                "detail": f"{sf.get('population_2022', 0):,} modelled residents (2022)",
+                "lon": lon,
+                "lat": lat,
+            })
+        entity["sources"] = entity["sources"] + [
+            {"source": "landsat_lst", "name": "USGS Landsat 8/9", "detail": "summer morning ground surface temp (~10:30 local)", "url": "https://planetarycomputer.microsoft.com/dataset/landsat-c2-l2"},
+            {"source": "kontur_population", "name": "Kontur population (2022)", "detail": "H3 res-8 modelled population (CC BY 4.0)", "url": "https://data.humdata.org/dataset/kontur-population-cyprus"},
+            {"source": "cynap_gradients", "name": "CyNAP road gradients", "detail": "100 m road slopes (CC BY 4.0)", "url": "https://traffic4cyprus.org.cy/dataset/road_network_gradients"},
+        ]
     return entity
 
 

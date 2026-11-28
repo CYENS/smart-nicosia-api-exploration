@@ -354,7 +354,8 @@ def test_the_tool_list_keeps_its_order():
         "get_grid",
         "get_hazards",
         "whats_on_tonight",
-        "get_sky", "get_its_infrastructure"]
+        "get_sky", "get_its_infrastructure",
+        "heat_exposure", "accessibility_15min", "population_reach"]
 
 
 def test_the_context_names_what_the_user_has_open():

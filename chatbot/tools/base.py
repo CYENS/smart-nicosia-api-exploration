@@ -23,6 +23,7 @@ from chatbot.store import SessionStore
 if TYPE_CHECKING:
     from chatbot.entities import Entities
     from chatbot.environment.service import Environment
+    from chatbot.fabric import Fabric
     from chatbot.lidar import Flight
     from chatbot.mobility import Mobility
     from chatbot.moments import Moments
@@ -84,6 +85,7 @@ class ToolContext:
     streets: Streets | None = None  # the street rules: limits, zones, crossings (chatbot/streets)
     tonight: Tonight | None = None  # duty pharmacies, city events, open-now places (chatbot/tonight)
     sky: SkyService | None = None  # aircraft, ISS passes, CyNAP ITS sites, bus archive (chatbot/sky)
+    fabric: Fabric | None = None  # heat, Kontur population, 15-min access & gradients (chatbot/fabric)
 
 
 # -- schema helpers -----------------------------------------------------------------------------

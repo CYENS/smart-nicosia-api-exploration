@@ -30,6 +30,8 @@ from chatbot.entities import Entities
 from chatbot.environment import spot as _spot  # noqa: F401 - registers the spot kind
 from chatbot.environment import station_kinds as _station_kinds  # noqa: F401 - the measuring stations
 from chatbot.environment.service import Environment
+from chatbot.fabric import Fabric
+from chatbot.fabric import entities as _fabric_entities  # noqa: F401 - registers fabric_hex kind
 from chatbot.eoa import Registry
 from chatbot.followups import TagFilter, merge_actions
 from chatbot.geo import Places
@@ -212,6 +214,8 @@ class Agent:
         self.grid = Grid(settings, memory)
         self.entities.grid = self.grid
         history.register_factor("grid_co2", self.grid.carbon_at)  # the lamps' CO2
+        self.fabric = Fabric(settings, places=places, mobility=self.mobility)
+        self.entities.fabric = self.fabric
         # The scenario lab: runs what-ifs on the memory and keeps the runs (chatbot/scenarios).
         self.scenarios = Lab(ScenarioContext(settings, memory, city, router, places, registers,
                                              self.mobility, cache_dir=default_cache_dir()))
@@ -270,7 +274,8 @@ class Agent:
                                watcher=self.watcher, environment=self.environment,
                                terrain=self.terrain,
                                scenarios=self.scenarios, lidar=self.lidar,
-                               streets=self.streets, tonight=self.tonight, sky=self.sky)
+                               streets=self.streets, tonight=self.tonight, sky=self.sky,
+                               fabric=self.fabric)
         conv.messages.append({"role": "user", "content": [
             {"type": "text", "text": format_context(context, self.city.now()) + text}]})
 

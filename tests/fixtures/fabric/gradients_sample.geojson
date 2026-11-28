@@ -1,0 +1,29 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "id": 2001,
+      "geometry": {"type": "Point", "coordinates": [33.3685, 35.1495]},
+      "properties": {"local_road_code": "B1", "road_name": "Leof. Lemesou", "KM_Ref": 4.2, "Slope": 1.8}
+    },
+    {
+      "type": "Feature",
+      "id": 2002,
+      "geometry": {"type": "Point", "coordinates": [33.3694, 35.1662]},
+      "properties": {"local_road_code": "E901", "road_name": "Kennedy Ave", "KM_Ref": 1.1, "Slope": 6.4}
+    },
+    {
+      "type": "Feature",
+      "id": 2003,
+      "geometry": {"type": "Point", "coordinates": [33.3945, 35.1498]},
+      "properties": {"local_road_code": "E902", "road_name": "Aglantzia Hill", "KM_Ref": 0.4, "Slope": 9.3}
+    },
+    {
+      "type": "Feature",
+      "id": 9999,
+      "geometry": {"type": "Point", "coordinates": [33.0400, 34.7100]},
+      "properties": {"local_road_code": "A1", "road_name": "Outside Nicosia", "Slope": 8.8}
+    }
+  ]
+}
