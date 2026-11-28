@@ -181,7 +181,7 @@ class AircraftTracker:
         self._read_ok_at: float | None = None
         self._error: str | None = None
         self._written: dict[str, int] = {}
-        self._last_prune = 0.0
+        self._last_prune = float("-inf")  # prune on the first write, however long the machine has been up
         self.fetches = 0
 
     def health(self) -> dict | None:

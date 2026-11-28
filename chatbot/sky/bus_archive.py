@@ -89,7 +89,7 @@ class BusArchiver:
         self.retention_days = retention_days
         self._lock = threading.Lock()
         self._seen: dict[str, int] = {}  # vehicle_id -> last reported_s
-        self._last_prune = 0.0
+        self._last_prune = float("-inf")  # prune on the first write, however long the machine has been up
         self._stop = threading.Event()
         self._thread: threading.Thread | None = None
         self.rows_written = 0
