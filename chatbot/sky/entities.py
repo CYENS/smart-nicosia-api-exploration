@@ -105,7 +105,6 @@ def _aircraft_entity(ac: dict, now: datetime, *, recorded: bool = False) -> dict
         E.attr("Category", ac.get("category")),
         E.attr("Distance from centre", f"{ac['distance_km']} km" if ac.get("distance_km") is not None else None),
         E.attr("ICAO hex", ac["hex"].upper()),
-        E.attr("Coverage", COVERAGE_NOTE),
     ]
     sources = [{"source": "adsb_lol", "name": "adsb.lol ADS-B", "detail": "community aircraft receivers, ODbL",
                 "url": "https://adsb.lol", "as_of": _iso(as_of_dt)}]
