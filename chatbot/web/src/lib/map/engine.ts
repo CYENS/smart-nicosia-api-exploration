@@ -1926,7 +1926,8 @@ function highlightOnMap(value: unknown) {
     const shapes: Feature[] = []
     for (const e of state.layers.values()) {
       for (const f of e.data.features) {
-        if (String(f.properties?.id) !== want) continue
+        // A bus also answers to its line's id, so a bar per line lights up that line's buses.
+        if (String(f.properties?.id) !== want && String(f.properties?.line_id ?? "") !== want) continue
         if (f.geometry?.type === "Point") hlFeatures.push({ type: "Feature", geometry: f.geometry, properties: {} })
         else if (f.properties._kind === "footprint") shapes.push(f)
       }

@@ -75,7 +75,7 @@ def h_run_scenario(ctx: ToolContext, a: dict) -> dict:
     except ScenarioError as e:
         raise ToolError(str(e)) from None
     res = run_["result"]
-    sources = res.get("sources") or []
+    sources = res.get("sources") or None  # else the tool's own (chatbot/sources.py)
     out: dict = {"run_id": run_["id"], "link": f"#/s/{run_['id']}", "label": run_["label"],
                  "period": run_["period"]["label"], "saved": run_.get("saved", False),
                  "kpis": [_kpi_brief(k) for k in res["kpis"]],
@@ -154,7 +154,7 @@ def h_compare_scenarios(ctx: ToolContext, a: dict) -> dict:
             "kpis": table, "params_that_differ": differ,
             "data_ref": ctx.store.add_dataset("scenario_compare", rows, title=f"{ra['label']} and {rb['label']}",
                                               sources=list(dict.fromkeys(ra["result"].get("sources", [])
-                                                                         + rb["result"].get("sources", [])))),
+                                                                         + rb["result"].get("sources", []))) or None),
             "_summary": f"{ra['id']} against {rb['id']}"}
 
 

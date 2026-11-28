@@ -109,7 +109,9 @@ def h_get_buses(ctx: ToolContext, a: dict) -> dict:
                               value_fields=["delay_min"])
     ctx.store.layers[ref]["meta"]["live"] = {"kind": "buses", "lines": sorted(wanted) if wanted else None,
                                              "near": {"lat": near[0], "lon": near[1], "radius_m": near[3]} if near else None}
-    data = ctx.store.add_dataset("buses_by_line", rows, title=f"Buses running per line{where}")
+    # Linked by the line id: hovering a line's bar lights up its buses (they carry line_id).
+    data = ctx.store.add_dataset("buses_by_line", rows, title=f"Buses running per line{where}",
+                                 link={"key": "id"})
     as_of = datetime.fromtimestamp(snap.fetched_at, tz=TZ).strftime("%H:%M:%S")
     sample = sorted(running, key=lambda b: -(b.get("delay_s") or 0))[:12]
     res = {

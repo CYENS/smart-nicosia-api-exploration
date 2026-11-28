@@ -353,7 +353,7 @@ def alarms(city: CityData, limit: int) -> dict:
     city.record("alarms", {"ACTIVE_UNACK": data or []})
     by_name = {d.name: d for d in city.devices()}
     out = []
-    for a in data or []:
+    for a in (data or [])[:limit]:  # the API may send more than asked for
         p = parse.parse_alarm(a)
         d = by_name.get(p["device"])
         start = p["start_ms"] or p["created_ms"]

@@ -430,6 +430,7 @@ TOOL_SOURCES: dict[str, tuple[str, ...]] = {
     "environment_surface": ("smart_nicosia", "open_meteo"),
     "find_high_places": ("terrain_tiles", "openstreetmap", "dls", "geocoding"),
     "view_from": ("terrain_tiles", "dls", "openstreetmap", "twin_memory"),
+    "set_city_time": ("twin_memory", "smart_nicosia"),
     "run_scenario": ("twin_memory", "smart_nicosia"),
     "compare_scenarios": ("twin_memory",),
     # The street rules (chatbot/tools/streets.py).
